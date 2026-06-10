@@ -3,22 +3,11 @@ import { notFound } from 'next/navigation'
 import { getCategoryProducts, getCategories } from '@/lib/queries'
 import { ProductCard } from '@/components/ProductCard'
 
-export const revalidate = 3600
+export const dynamic = 'force-dynamic'
 
 type Props = {
   params: Promise<{ categorie: string }>
   searchParams: Promise<{ sort?: string }>
-}
-
-export const dynamicParams = true
-
-export async function generateStaticParams() {
-  try {
-    const categories = await getCategories()
-    return categories.map(({ category }) => ({ categorie: category }))
-  } catch {
-    return []
-  }
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
