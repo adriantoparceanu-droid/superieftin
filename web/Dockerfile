@@ -3,11 +3,12 @@ FROM node:22-slim AS builder
 WORKDIR /app
 
 # Dependente (separate pentru cache Docker)
-COPY package.json package-lock.json ./
+# Nu copiem package-lock.json: lockfile generat pe macOS pune lightningcss
+# si binarul sau linux in node_modules diferite (web/ vs root), ceea ce rupe build-ul.
+# npm install fara lockfile rezolva nativ pentru platforma curenta.
+COPY package.json ./
 COPY web/package.json ./web/
 COPY worker/package.json ./worker/
-# npm install in loc de npm ci: rezolva dependente native optionale (lightningcss)
-# pentru platforma curenta (Linux), indiferent de ce e in lockfile
 RUN npm install --include=optional
 
 # Surse + build
