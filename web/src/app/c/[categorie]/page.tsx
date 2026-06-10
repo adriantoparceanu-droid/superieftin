@@ -10,9 +10,15 @@ type Props = {
   searchParams: Promise<{ sort?: string }>
 }
 
+export const dynamicParams = true
+
 export async function generateStaticParams() {
-  const categories = await getCategories()
-  return categories.map(({ category }) => ({ categorie: category }))
+  try {
+    const categories = await getCategories()
+    return categories.map(({ category }) => ({ categorie: category }))
+  } catch {
+    return []
+  }
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

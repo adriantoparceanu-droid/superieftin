@@ -17,9 +17,9 @@ export const metadata: Metadata = {
 
 export default async function HomePage() {
   const [discounts, cheapest, categories] = await Promise.all([
-    getTopDiscounts(24),
-    getCheapestProducts(24),
-    getCategories(),
+    getTopDiscounts(24).catch(() => []),
+    getCheapestProducts(24).catch(() => []),
+    getCategories().catch(() => []),
   ])
 
   const hasRealDiscounts = discounts.length > 0
