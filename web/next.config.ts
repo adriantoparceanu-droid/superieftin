@@ -1,6 +1,7 @@
 import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
+  output: 'standalone',
   env: {
     NEXT_PUBLIC_SITE_URL: process.env.DOMAIN
       ? `https://${process.env.DOMAIN}`

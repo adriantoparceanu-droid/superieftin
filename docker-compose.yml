@@ -4,8 +4,8 @@
 services:
   web:
     build:
-      context: ./web
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: web/Dockerfile
     restart: unless-stopped
     ports:
       - "127.0.0.1:3000:3000"  # accesibil doar local, Nginx face proxy
@@ -22,8 +22,8 @@ services:
 
   worker:
     build:
-      context: ./worker
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: worker/Dockerfile
     restart: unless-stopped
     environment:
       - NODE_ENV=production
@@ -31,12 +31,32 @@ services:
       - REDIS_URL=${REDIS_URL}
       - SCRAPE_INTERVAL_HOURS=${SCRAPE_INTERVAL_HOURS:-8}
       - SCRAPE_RATE_LIMIT_MS=${SCRAPE_RATE_LIMIT_MS:-2000}
+      - AFFILIATE_NETWORK=${AFFILIATE_NETWORK}
+      - AFFILIATE_ID=${AFFILIATE_ID}
+      - PROFITSHARE_API_USER=${PROFITSHARE_API_USER}
+      - PROFITSHARE_API_KEY=${PROFITSHARE_API_KEY}
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+
+  # Serviciu one-shot pentru migratii — rulat cu: docker compose run --rm migrate
+  migrate:
+    build:
+      context: .
+      dockerfile: worker/Dockerfile
+    command: ["node", "worker/dist/migrate.js"]
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: no
+    profiles:
+      - tools
 
   postgres:
     image: postgres:16-alpine
@@ -59,6 +79,7 @@ services:
     restart: unless-stopped
     volumes:
       - redis_data:/data
+    command: redis-server --appendonly yes
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s

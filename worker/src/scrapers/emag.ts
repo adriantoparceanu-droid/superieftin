@@ -37,7 +37,7 @@ function toSlug(name: string): string {
     .toLowerCase()
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
-    .replace(/[șțșțăî]/g, (c) => ({ ș: 's', ț: 't', ș: 's', ț: 't', ă: 'a', î: 'i' }[c] || c))
+    .replace(/[șțăî]/g, (c) => ({ ș: 's', ț: 't', ă: 'a', î: 'i' }[c] || c))
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '')
     .slice(0, 120)

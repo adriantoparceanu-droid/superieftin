@@ -1,0 +1,27 @@
+# Git
+.git
+.gitignore
+
+# Env (secrete - NU in imagine)
+.env
+.env.*
+web/.env.local
+
+# Build artifacts
+node_modules
+web/.next
+worker/dist
+**/.turbo
+
+# Logs
+*.log
+npm-debug.log*
+
+# Dev config
+.claude
+*.local
+Caddyfile.local
+
+# OS
+.DS_Store
+Thumbs.db
