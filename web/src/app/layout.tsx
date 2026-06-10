@@ -1,9 +1,21 @@
 import type { Metadata } from 'next'
-import { Geist } from 'next/font/google'
+import { Archivo_Black, Instrument_Sans } from 'next/font/google'
 import './globals.css'
 import { Header } from '@/components/Header'
 
-const geist = Geist({ subsets: ['latin'], variable: '--font-geist-sans' })
+const archivoBlack = Archivo_Black({
+  weight: '400',
+  subsets: ['latin'],
+  variable: '--font-archivo-black',
+  display: 'swap',
+})
+
+const instrumentSans = Instrument_Sans({
+  weight: ['400', '600'],
+  subsets: ['latin'],
+  variable: '--font-instrument-sans',
+  display: 'swap',
+})
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://superieftin.ro'
 
@@ -26,7 +38,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ro" className={geist.variable}>
+    <html lang="ro" className={`${archivoBlack.variable} ${instrumentSans.variable}`}>
       <body className="min-h-screen bg-gray-50 text-gray-900 antialiased">
         <Header />
         <main className="max-w-6xl mx-auto px-4 py-6">
