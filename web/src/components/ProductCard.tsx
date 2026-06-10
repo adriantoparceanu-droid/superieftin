@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { calculateDiscount, formatPrice, verdictColor } from '@/lib/discount'
+import { PriceTag } from './PriceTag'
+import { VerdictBadge } from './VerdictBadge'
 import type { ProductWithDiscount } from '@/lib/queries'
 
 interface ProductCardProps {
@@ -8,11 +9,9 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product }: ProductCardProps) {
-  const info = calculateDiscount(product.current_price, product.median_price)
-
   return (
-    <article className="bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-md transition-shadow flex flex-col">
-      <Link href={`/p/${product.slug}`} className="block relative aspect-square bg-gray-50">
+    <article className="bg-surface rounded-lg border border-line overflow-hidden hover:border-brand transition-colors flex flex-col">
+      <Link href={`/p/${product.slug}`} className="block relative h-[120px] bg-gray-50">
         {product.image_url ? (
           <Image
             src={product.image_url}
@@ -23,52 +22,35 @@ export function ProductCard({ product }: ProductCardProps) {
             unoptimized
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center text-gray-300 text-4xl">
-            📱
-          </div>
-        )}
-        {info.verdict === 'real' && (
-          <div className="absolute top-2 left-2 bg-green-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-            −{info.discountPct}%
-          </div>
-        )}
-        {info.verdict === 'good' && (
-          <div className="absolute top-2 left-2 bg-blue-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-            −{info.discountPct}%
+          <div className="absolute inset-0 flex items-center justify-center text-[var(--color-line)] text-4xl">
+            📦
           </div>
         )}
       </Link>
 
       <div className="p-3 flex flex-col flex-1">
+        <VerdictBadge discountPct={product.discount_pct} />
+
         <Link href={`/p/${product.slug}`}>
-          <h2 className="text-sm font-medium text-gray-900 line-clamp-2 leading-snug hover:text-red-600 transition-colors mb-2">
+          <h2 className="text-sm font-medium text-[var(--color-text)] line-clamp-2 leading-snug hover:text-brand transition-colors mt-1 mb-1">
             {product.name}
           </h2>
         </Link>
 
-        <div className="mt-auto space-y-2">
-          <div className="flex items-baseline justify-between gap-2">
-            <span className="text-lg font-bold text-gray-900">
-              {formatPrice(product.current_price)}
-            </span>
-            {product.median_price && info.verdict !== 'normal' && info.verdict !== 'no-data' && (
-              <span className="text-xs text-gray-400 line-through">
-                {formatPrice(product.median_price)}
-              </span>
-            )}
-          </div>
+        {product.brand && (
+          <p className="text-xs text-muted mb-2">{product.brand}</p>
+        )}
 
-          <div className={`text-xs border rounded-full px-2 py-0.5 inline-block ${verdictColor(info.verdict)}`}>
-            {info.labelRo}
-          </div>
+        <div className="mt-auto space-y-2">
+          <PriceTag price={product.current_price} discountPct={product.discount_pct} />
 
           <Link
             href={`/go/${product.offer_id}`}
-            className="block w-full text-center text-sm font-semibold bg-red-600 hover:bg-red-700 text-white rounded-lg py-2 transition-colors"
+            className="block w-full text-center text-sm font-semibold bg-yellow-400 hover:bg-yellow-500 text-gray-900 rounded-md py-2 transition-colors focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
             target="_blank"
             rel="noopener sponsored"
           >
-            Cumpără →
+            Vezi la {product.retailer_name}
           </Link>
         </div>
       </div>

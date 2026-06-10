@@ -28,7 +28,7 @@ function formatLei(value: number) {
 export function PriceHistoryChart({ data, currentPrice, medianPrice }: PriceHistoryChartProps) {
   if (data.length < 2) {
     return (
-      <div className="flex items-center justify-center h-32 bg-gray-50 rounded-lg text-sm text-gray-400">
+      <div className="flex items-center justify-center h-32 rounded-lg text-sm text-muted" style={{ background: 'var(--color-page)' }}>
         Date insuficiente — istoricul se construiește cu fiecare scraping.
       </div>
     )
@@ -50,8 +50,8 @@ export function PriceHistoryChart({ data, currentPrice, medianPrice }: PriceHist
         <AreaChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
           <defs>
             <linearGradient id="priceGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#dc2626" stopOpacity={0.15} />
-              <stop offset="95%" stopColor="#dc2626" stopOpacity={0} />
+              <stop offset="5%" stopColor="var(--color-brand)" stopOpacity={0.15} />
+              <stop offset="95%" stopColor="var(--color-brand)" stopOpacity={0} />
             </linearGradient>
           </defs>
           <XAxis
@@ -85,19 +85,19 @@ export function PriceHistoryChart({ data, currentPrice, medianPrice }: PriceHist
           {currentPrice && (
             <ReferenceLine
               y={currentPrice}
-              stroke="#dc2626"
+              stroke="var(--color-brand)"
               strokeDasharray="4 2"
-              label={{ value: 'acum', position: 'insideBottomRight', fontSize: 10, fill: '#dc2626' }}
+              label={{ value: 'acum', position: 'insideBottomRight', fontSize: 10, fill: 'var(--color-brand)' }}
             />
           )}
           <Area
             type="monotone"
             dataKey="price"
-            stroke="#dc2626"
+            stroke="var(--color-brand)"
             strokeWidth={2}
             fill="url(#priceGrad)"
             dot={false}
-            activeDot={{ r: 4, fill: '#dc2626' }}
+            activeDot={{ r: 4, fill: 'var(--color-brand)' }}
           />
         </AreaChart>
       </ResponsiveContainer>

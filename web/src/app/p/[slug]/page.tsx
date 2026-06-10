@@ -3,8 +3,10 @@ import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { getProductDetail, getPriceHistory, getAllProductSlugs } from '@/lib/queries'
-import { calculateDiscount, formatPrice, verdictColor } from '@/lib/discount'
+import { calculateDiscount, formatPrice } from '@/lib/discount'
 import { PriceHistoryChart } from '@/components/PriceHistoryChart'
+import { PriceTag } from '@/components/PriceTag'
+import { VerdictBadge } from '@/components/VerdictBadge'
 
 export const revalidate = 3600
 
@@ -108,7 +110,7 @@ export default async function ProductPage({ params }: Props) {
       <div className="grid lg:grid-cols-2 gap-8">
         {/* Coloana stanga: imagine + verdict */}
         <div className="space-y-4">
-          <div className="bg-white rounded-xl border border-gray-100 aspect-square relative overflow-hidden">
+          <div className="bg-surface rounded-lg border border-line aspect-square relative overflow-hidden">
             {product.image_url ? (
               <Image
                 src={product.image_url}
@@ -120,41 +122,34 @@ export default async function ProductPage({ params }: Props) {
                 priority
               />
             ) : (
-              <div className="absolute inset-0 flex items-center justify-center text-gray-200 text-8xl">
-                📱
+              <div className="absolute inset-0 flex items-center justify-center text-[var(--color-line)] text-8xl">
+                📦
               </div>
             )}
           </div>
 
           {/* Verdict reducere reala */}
           {discountInfo && (
-            <div className={`rounded-xl border p-4 ${verdictColor(discountInfo.verdict)}`}>
-              <div className="font-semibold text-base mb-1">{discountInfo.labelRo}</div>
-              {discountInfo.verdict === 'real' && (
-                <p className="text-sm opacity-80">
+            <div className="rounded-lg border border-line bg-surface p-4">
+              <div className="font-semibold text-base mb-1 text-[var(--color-text)]">
+                {discountInfo.verdict === 'real' || discountInfo.verdict === 'good'
+                  ? <VerdictBadge discountPct={discountInfo.discountPct} />
+                  : null}
+              </div>
+              {(discountInfo.verdict === 'real' || discountInfo.verdict === 'good') && (
+                <p className="text-sm text-muted">
                   Prețul actual este cu {discountInfo.discountPct}% mai mic decât mediana
                   ultimelor 30 de zile — aceasta este o reducere reală, verificată statistic.
                 </p>
               )}
-              {discountInfo.verdict === 'good' && (
-                <p className="text-sm opacity-80">
-                  Prețul este ușor sub medie — merită considerat.
-                </p>
-              )}
               {discountInfo.verdict === 'normal' && (
-                <p className="text-sm opacity-80">
-                  Prețul este în intervalul obișnuit pentru acest produs.
-                </p>
+                <p className="text-sm text-muted">Prețul este în intervalul obișnuit pentru acest produs.</p>
               )}
               {discountInfo.verdict === 'higher' && (
-                <p className="text-sm opacity-80">
-                  Prețul actual este mai mare ca de obicei — poate merită să aștepți.
-                </p>
+                <p className="text-sm text-muted">Prețul actual este mai mare ca de obicei — poate merită să aștepți.</p>
               )}
               {discountInfo.verdict === 'no-data' && (
-                <p className="text-sm opacity-80">
-                  Monitorizăm prețul — în curând vei putea vedea evoluția istorică.
-                </p>
+                <p className="text-sm text-muted">Istoric insuficient pentru verificare</p>
               )}
             </div>
           )}
@@ -177,33 +172,26 @@ export default async function ProductPage({ params }: Props) {
               return (
                 <div
                   key={offer.offer_id}
-                  className="bg-white rounded-xl border border-gray-100 p-4 flex items-center gap-4"
+                  className="bg-surface rounded-lg border border-line p-4 flex items-center gap-4"
                 >
                   <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-gray-700 capitalize">{offer.retailer_name}</div>
+                    <div className="font-semibold text-[var(--color-text)] capitalize">{offer.retailer_name}</div>
                     {offer.last_checked && (
-                      <div className="text-xs text-gray-400 mt-0.5">
+                      <div className="text-xs text-muted mt-0.5">
                         Verificat: {new Date(offer.last_checked).toLocaleDateString('ro-RO')}
                       </div>
                     )}
                   </div>
-                  <div className="text-right">
-                    <div className="text-xl font-bold text-gray-900">
-                      {formatPrice(offer.current_price)}
-                    </div>
-                    {offer.median_price && offerDiscount.verdict !== 'normal' && offerDiscount.verdict !== 'no-data' && (
-                      <div className={`text-xs border rounded-full px-2 py-0.5 mt-1 inline-block ${verdictColor(offerDiscount.verdict)}`}>
-                        {offerDiscount.labelRo}
-                      </div>
-                    )}
+                  <div className="text-right shrink-0">
+                    <PriceTag price={offer.current_price} discountPct={offerDiscount.verdict === 'real' || offerDiscount.verdict === 'good' ? offerDiscount.discountPct : null} />
                   </div>
                   <Link
                     href={`/go/${offer.offer_id}`}
-                    className="shrink-0 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+                    className="shrink-0 bg-yellow-400 hover:bg-yellow-500 text-gray-900 text-sm font-semibold px-4 py-2 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                     target="_blank"
                     rel="noopener sponsored"
                   >
-                    Cumpără
+                    Cumpără la {offer.retailer_name}
                   </Link>
                 </div>
               )
@@ -215,7 +203,7 @@ export default async function ProductPage({ params }: Props) {
             <h2 className="font-semibold text-gray-800 mb-3">
               Istoricul prețului (90 de zile)
             </h2>
-            <div className="bg-white rounded-xl border border-gray-100 p-4">
+            <div className="bg-surface rounded-lg border border-line p-4">
               <PriceHistoryChart
                 data={history}
                 currentPrice={bestOffer?.current_price ?? null}
