@@ -19,7 +19,7 @@ function escapeXml(str: string): string {
 export const revalidate = 86400
 
 export async function GET() {
-  const products = await getProductsForFeed()
+  const products = await getProductsForFeed().catch(() => [])
 
   const items = products
     .filter(p => p.current_price && p.affiliate_url)
