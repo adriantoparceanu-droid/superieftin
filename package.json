@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "npm run dev --workspace=web",
     "dev:worker": "npm run dev --workspace=worker",
+    "scrape:now": "npm run scrape:now --workspace=worker",
     "db:migrate": "node db/migrate.mjs",
     "db:seed": "node db/seed.mjs",
     "build": "npm run build --workspace=web"

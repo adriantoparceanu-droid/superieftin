@@ -1,0 +1,6 @@
+# Caddyfile pentru development local
+# Proxiaza http://superieftin.test -> Next.js pe localhost:3000
+
+http://superieftin.test {
+    reverse_proxy localhost:3000
+}
