@@ -115,8 +115,15 @@ export async function scrapeEmagCategory(categoryPath: string, maxPages = 5): Pr
       })
 
       if (resp.status === 404) break
-      if (resp.status !== 200) {
+      if (resp.status === 511 || resp.status === 429) {
+        // Rate limit / captcha — asteapta si opreste
+        await sleep(RATE_LIMIT_MS * 3)
+        errorCount += 2
+      } else if (resp.status !== 200) {
         errorCount++
+      }
+      if (resp.status !== 200) {
+        if (errorCount > 3) break
         continue
       }
 
@@ -141,7 +148,11 @@ export async function scrapeEmagCategory(categoryPath: string, maxPages = 5): Pr
     } catch (err: unknown) {
       errorCount++
       const msg = err instanceof Error ? err.message : String(err)
-      if (errorCount > 3) throw new Error(`Prea multe erori scraping eMAG (${errorPath(url)}): ${msg}`)
+      if (errorCount > 3) {
+        // Nu arunca eroarea — returneaza produsele colectate pana acum
+        console.error(`[emag] Prea multe erori (${errorPath(url)}): ${msg}. Returnez ${all.length} produse colectate.`)
+        break
+      }
     }
   }
 
