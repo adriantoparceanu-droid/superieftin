@@ -39,16 +39,20 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ro" className={`${archivoBlack.variable} ${instrumentSans.variable}`}>
-      <body className="min-h-screen bg-gray-50 text-gray-900 antialiased">
+      <body className="min-h-screen antialiased" style={{ background: 'var(--color-page)', color: 'var(--color-text)' }}>
         <Header />
         <main className="max-w-6xl mx-auto px-4 py-6">
           {children}
         </main>
-        <footer className="mt-12 border-t border-gray-100 bg-white">
-          <div className="max-w-6xl mx-auto px-4 py-6 text-sm text-gray-400 flex flex-col sm:flex-row justify-between gap-2">
-            <p>© {new Date().getFullYear()} superieftin.ro — Comparator de prețuri pentru România</p>
-            <p>
-              Prețurile includ linkuri de afiliere. Ultima actualizare: în timp real.
+        <footer className="mt-12 border-t border-line bg-surface">
+          <div className="max-w-6xl mx-auto px-4 py-6 flex flex-col gap-3">
+            <p className="text-xs text-muted">
+              superieftin.ro folosește linkuri de afiliere. Dacă cumperi prin linkurile noastre,
+              primim un comision mic din partea retailerului, fără cost suplimentar pentru tine.
+              Prețurile și reducerile sunt verificate independent.
+            </p>
+            <p className="text-xs text-muted">
+              © {new Date().getFullYear()} superieftin.ro — Comparator de prețuri pentru România
             </p>
           </div>
         </footer>
