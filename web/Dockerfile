@@ -6,7 +6,9 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY web/package.json ./web/
 COPY worker/package.json ./worker/
-RUN npm ci
+# npm install in loc de npm ci: rezolva dependente native optionale (lightningcss)
+# pentru platforma curenta (Linux), indiferent de ce e in lockfile
+RUN npm install --include=optional
 
 # Surse + build
 COPY . .
