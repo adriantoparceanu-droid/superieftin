@@ -32,12 +32,34 @@ Exclusiv prin variabile de mediu. Codul nu știe și nu trebuie să știe unde r
 - local: `DATABASE_URL` arată spre DBngin (`localhost:5432`), `REDIS_URL` spre `localhost:6379`
 - producție: aceleași variabile arată spre containerele `postgres` și `redis` din rețeaua Docker
 
-Fluxul de livrare:
+Fluxul de livrare **cod**:
 ```
 Mac (Cursor + Claude Code)                    VPS (producție)
   cod + npm run dev          → git push →  GitHub  → git pull → ./deploy.sh
   test pe localhost:3000                              live pe superieftin.ro
 ```
+
+### Fluxul de scraping și sincronizare date (situație reală)
+
+**Problema:** IP-ul VPS-ului (datacenter) este blocat de eMAG la nivel CDN (CloudFront returnează 511). Scraping-ul direct de pe VPS nu funcționează.
+
+**Soluție adoptată:** scraping local (IP rezidențial) + sync manual la producție.
+
+```
+Mac (IP rezidențial)                          VPS (producție)
+  npm run scrape:now (worker local)
+  → date în PostgreSQL local
+  → ./sync-to-live.sh          →  SSH + pg_dump/psql  →  DB producție
+```
+
+**Scripturi:**
+- `worker/package.json` → `npm run scrape:now --workspace=worker` — rulează scraping-ul imediat local
+- `./sync-to-live.sh` — dump tabele locale (products, offers, price_history) și import pe VPS via SSH
+
+**Când să faci sync:**
+- după fiecare sesiune de scraping local (minim o dată la 24h pentru ca mediana să funcționeze)
+- după adăugarea de noi categorii sau retaileri
+- `./sync-to-live.sh` face totul automat: dump → upload → import → restart web
 
 ---
 
