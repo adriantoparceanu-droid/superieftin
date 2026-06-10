@@ -32,7 +32,7 @@ export async function psRequest<T>(path: string, params: Record<string, string |
 }
 
 // Construieste URL de afiliere Profitshare pentru un produs eMAG
-export function buildAffiliateUrl(productUrl: string, affiliateIdentifier = 'piC', advertiserIdentifier = '9'): string {
-  const encoded = encodeURIComponent(productUrl)
-  return `https://event.profitshare.ro/click?affiliate_id=${affiliateIdentifier}&advertiser_id=${advertiserIdentifier}&url=${encoded}`
+// Format descoperit din scriptul publisher: l.profitshare.ro/lps/<advertiserHash>/<affiliateHash>/?redirect=<url>
+export function buildAffiliateUrl(productUrl: string, affiliateHash = 'piC', advertiserHash = '9'): string {
+  return `https://l.profitshare.ro/lps/${advertiserHash}/${affiliateHash}/?redirect=${encodeURIComponent(productUrl)}`
 }
