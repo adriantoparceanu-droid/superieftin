@@ -18,7 +18,7 @@ timeout 60 bash -c 'until docker compose exec -T postgres pg_isready -U "${POSTG
 echo "    PostgreSQL ready."
 
 echo "==> [4/5] Rulare migratii baza de date..."
-docker compose run --rm --profile tools migrate
+docker compose --profile tools run --rm migrate
 
 echo "==> [5/5] Pornire / restart servicii web si worker..."
 docker compose up -d web worker
