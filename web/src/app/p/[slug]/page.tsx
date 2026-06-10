@@ -7,6 +7,7 @@ import { calculateDiscount, formatPrice } from '@/lib/discount'
 import { PriceHistoryChart } from '@/components/PriceHistoryChart'
 import { PriceTag } from '@/components/PriceTag'
 import { VerdictBadge } from '@/components/VerdictBadge'
+import { Sparkline } from '@/components/Sparkline'
 
 export const revalidate = 3600
 
@@ -97,14 +98,14 @@ export default async function ProductPage({ params }: Props) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
 
       {/* Breadcrumb */}
-      <nav className="text-sm text-gray-400 mb-6 flex gap-1.5 items-center flex-wrap">
-        <Link href="/" className="hover:text-gray-700">Acasă</Link>
+      <nav className="text-sm text-muted mb-6 flex gap-1.5 items-center flex-wrap">
+        <Link href="/" className="hover:text-[var(--color-text)] transition-colors">Acasă</Link>
         <span>/</span>
-        <Link href={`/c/${product.category}`} className="hover:text-gray-700 capitalize">
+        <Link href={`/c/${product.category}`} className="hover:text-[var(--color-text)] transition-colors capitalize">
           {product.category.replace(/-/g, ' ')}
         </Link>
         <span>/</span>
-        <span className="text-gray-600 truncate max-w-xs">{product.name}</span>
+        <span className="text-[var(--color-text)] truncate max-w-xs">{product.name}</span>
       </nav>
 
       <div className="grid lg:grid-cols-2 gap-8">
@@ -159,14 +160,14 @@ export default async function ProductPage({ params }: Props) {
         <div className="space-y-6">
           <div>
             {product.brand && (
-              <span className="text-sm text-gray-400 uppercase tracking-wide">{product.brand}</span>
+              <span className="text-xs text-muted uppercase tracking-wide">{product.brand}</span>
             )}
-            <h1 className="text-xl font-bold text-gray-900 mt-1 leading-snug">{product.name}</h1>
+            <h1 className="text-xl font-black font-archivo text-[var(--color-text)] mt-1 leading-snug">{product.name}</h1>
           </div>
 
           {/* Oferte per retailer */}
           <div className="space-y-3">
-            <h2 className="font-semibold text-gray-800">Prețuri per magazin</h2>
+            <h2 className="font-semibold text-[var(--color-text)]">Prețuri per magazin</h2>
             {product.offers.map((offer) => {
               const offerDiscount = calculateDiscount(offer.current_price, offer.median_price)
               return (
@@ -200,9 +201,15 @@ export default async function ProductPage({ params }: Props) {
 
           {/* Grafic istoric pret */}
           <div>
-            <h2 className="font-semibold text-gray-800 mb-3">
-              Istoricul prețului (90 de zile)
-            </h2>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-semibold text-[var(--color-text)]">Istoricul prețului (90 de zile)</h2>
+              {history.length >= 2 && (
+                <Sparkline
+                  points={history.map(d => d.price)}
+                  belowMedian={discountInfo?.verdict === 'real' || discountInfo?.verdict === 'good'}
+                />
+              )}
+            </div>
             <div className="bg-surface rounded-lg border border-line p-4">
               <PriceHistoryChart
                 data={history}
@@ -210,16 +217,16 @@ export default async function ProductPage({ params }: Props) {
                 medianPrice={bestOffer?.median_price ?? null}
               />
               {history.length >= 2 && (
-                <div className="mt-3 flex gap-4 text-xs text-gray-500">
+                <div className="mt-3 flex gap-4 text-xs text-muted tabular-nums">
                   <span>
-                    Min: <strong>{formatPrice(Math.min(...history.map(d => d.price)))}</strong>
+                    Min: <strong className="text-[var(--color-text)]">{formatPrice(Math.min(...history.map(d => d.price)))}</strong>
                   </span>
                   <span>
-                    Max: <strong>{formatPrice(Math.max(...history.map(d => d.price)))}</strong>
+                    Max: <strong className="text-[var(--color-text)]">{formatPrice(Math.max(...history.map(d => d.price)))}</strong>
                   </span>
                   {bestOffer?.median_price && (
                     <span>
-                      Medie 30z: <strong>{formatPrice(bestOffer.median_price)}</strong>
+                      Medie 30z: <strong className="text-[var(--color-text)]">{formatPrice(bestOffer.median_price)}</strong>
                     </span>
                   )}
                 </div>

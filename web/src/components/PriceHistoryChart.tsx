@@ -56,14 +56,14 @@ export function PriceHistoryChart({ data, currentPrice, medianPrice }: PriceHist
           </defs>
           <XAxis
             dataKey="date"
-            tick={{ fontSize: 11, fill: '#9ca3af' }}
+            tick={{ fontSize: 11, fill: '#718096' }}
             tickLine={false}
             axisLine={false}
             interval="preserveStartEnd"
           />
           <YAxis
             domain={[minP, maxP]}
-            tick={{ fontSize: 11, fill: '#9ca3af' }}
+            tick={{ fontSize: 11, fill: '#718096' }}
             tickLine={false}
             axisLine={false}
             tickFormatter={v => `${v}`}
@@ -72,14 +72,14 @@ export function PriceHistoryChart({ data, currentPrice, medianPrice }: PriceHist
           <Tooltip
             formatter={(value) => [typeof value === 'number' ? formatLei(value) : value, 'Preț']}
             labelFormatter={label => `Data: ${label}`}
-            contentStyle={{ fontSize: 12, border: '1px solid #e5e7eb', borderRadius: 8 }}
+            contentStyle={{ fontSize: 12, border: '1px solid var(--color-line)', borderRadius: 8, background: 'var(--color-surface)' }}
           />
           {medianPrice && (
             <ReferenceLine
               y={medianPrice}
-              stroke="#9ca3af"
+              stroke="#718096"
               strokeDasharray="4 2"
-              label={{ value: 'medie 30z', position: 'insideTopRight', fontSize: 10, fill: '#9ca3af' }}
+              label={{ value: 'medie 30z', position: 'insideTopRight', fontSize: 10, fill: '#718096' }}
             />
           )}
           {currentPrice && (
