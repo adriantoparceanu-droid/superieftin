@@ -1,0 +1,21 @@
+{
+  "name": "superieftin",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "npm run dev --workspace=web",
+    "dev:worker": "npm run dev --workspace=worker",
+    "db:migrate": "node db/migrate.mjs",
+    "db:seed": "node db/seed.mjs",
+    "build": "npm run build --workspace=web"
+  },
+  "workspaces": [
+    "web",
+    "worker"
+  ],
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "pg": "^8.13.3"
+  }
+}
