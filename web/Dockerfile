@@ -1,5 +1,5 @@
-# --- Build ---
-FROM node:22-alpine AS builder
+# --- Build (Debian slim - compatibil cu binare native Tailwind/lightningcss) ---
+FROM node:22-slim AS builder
 WORKDIR /app
 
 # Dependente (separate pentru cache Docker)
