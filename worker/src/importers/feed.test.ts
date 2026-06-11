@@ -121,3 +121,21 @@ test('mapFeedRow — categorie nemapata primeste slug auto, rand invalid e respi
   assert.equal(mapFeedRow({ ...base, productName: '' }, new Map()), null)
   assert.equal(mapFeedRow({ ...base, link: '' }, new Map()), null)
 })
+
+test('mapFeedRow — numele lungi primesc part_no in slug (variantele nu se prabusesc)', () => {
+  const base: FeedRow = {
+    advertiserName: 'CITGrup.ro', category: 'calculatoare', manufacturer: 'DELL', productCode: '',
+    productName: '', affLink: '', link: 'https://citgrup.ro/x', picture: '',
+    priceVat: '1000', priceDiscountedVat: '', availability: 'in_stock',
+  }
+  const prefix = 'Calculator All in One, Dell OptiPlex 7060 Micro, Monitor 24 inch LED IPS Dell P2422H, Black, 1920 by 1080, Intel Core i7'
+  const v1 = mapFeedRow({ ...base, productName: `${prefix}, 32 GB DDR4, 1 TB SSD, Windows 10 Pro`, productCode: 'CIT-001' }, new Map())!
+  const v2 = mapFeedRow({ ...base, productName: `${prefix}, 32 GB DDR4, 512 GB SSD, Windows 11 Pro`, productCode: 'CIT-002' }, new Map())!
+  assert.notEqual(v1.slug, v2.slug)
+  assert.ok(v1.slug.includes('cit-001'))
+  assert.ok(v1.slug.length <= 120)
+
+  // Numele scurte raman cu slug-ul clasic, fara part_no
+  const short = mapFeedRow({ ...base, productName: 'Telefon Allview M9 Join', productCode: 'M9J' }, new Map())!
+  assert.equal(short.slug, 'telefon-allview-m9-join')
+})

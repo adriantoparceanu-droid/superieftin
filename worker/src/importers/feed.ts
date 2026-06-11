@@ -141,9 +141,18 @@ export function mapFeedRow(row: FeedRow, categoryMap: Map<string, string>): Impo
 
   const price = parseFeedPrice(row.priceDiscountedVat) ?? parseFeedPrice(row.priceVat)
 
+  // Numele foarte lungi (ex. configuratii refurbished) difera doar dupa limita de
+  // trunchiere a slug-ului — variante distincte s-ar prabusi in acelasi produs.
+  // Cand slug-ul ar fi trunchiat, includem codul de produs pentru unicitate.
+  let slug = toSlug(name)
+  const wasTruncated = name.replace(/[^a-zA-Z0-9]+/g, '-').length > 120
+  if (wasTruncated && row.productCode) {
+    slug = (slug.slice(0, 90).replace(/-+$/, '') + '-' + toSlug(row.productCode)).slice(0, 120)
+  }
+
   return {
     name,
-    slug: toSlug(name),
+    slug,
     brand: row.manufacturer || null,
     category,
     partNo: row.productCode || null,
@@ -151,6 +160,8 @@ export function mapFeedRow(row: FeedRow, categoryMap: Map<string, string>): Impo
     url,
     affiliateUrl: affiliateUrl || url,
     price,
-    inStock: row.availability === 'in_stock',
+    // Advertiserii folosesc valori variate ('in_stock', 'disponibil la comanda' etc.) —
+    // tratam produsul ca disponibil daca nu e explicit epuizat
+    inStock: !/^(out[ _-]?of[ _-]?stock|outofstock|indisponibil|epuizat|stoc epuizat)$/i.test(row.availability.trim()),
   }
 }

@@ -38,14 +38,14 @@ async function upsertRetailer(adv: PsAdvertiser): Promise<number> {
 
   // Intai dupa ps_advertiser_id, apoi dupa slug (leaga retailerii istorici), apoi INSERT
   const byPsId = await pool.query<{ id: number }>(`
-    UPDATE retailers SET name = $2, logo_url = $3,
+    UPDATE retailers SET name = $2, logo_url = $3, is_active = true,
       scraper_config = coalesce(scraper_config, '{}'::jsonb) || $4::jsonb
     WHERE ps_advertiser_id = $1 RETURNING id
   `, [adv.id, adv.name, logo, config])
   if (byPsId.rows[0]) return byPsId.rows[0].id
 
   const bySlug = await pool.query<{ id: number }>(`
-    UPDATE retailers SET ps_advertiser_id = $2, name = $3, logo_url = $4,
+    UPDATE retailers SET ps_advertiser_id = $2, name = $3, logo_url = $4, is_active = true,
       scraper_config = coalesce(scraper_config, '{}'::jsonb) || $5::jsonb
     WHERE slug = $1 RETURNING id
   `, [slug, adv.id, adv.name, logo, config])
