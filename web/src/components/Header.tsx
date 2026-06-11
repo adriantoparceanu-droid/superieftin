@@ -23,7 +23,8 @@ function Dropdown({ items }: { items: MenuItem[] }) {
 }
 
 export async function Header() {
-  const menu = await getMenu()
+  // fallback gol: la build-ul Docker nu exista DB (pre-randarea /_not-found incarca layout-ul)
+  const menu = await getMenu().catch(() => [])
   const visible = menu.slice(0, MAX_VISIBLE_ITEMS)
   const overflow = menu.slice(MAX_VISIBLE_ITEMS)
 
