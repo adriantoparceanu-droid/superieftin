@@ -5,14 +5,16 @@
   "type": "module",
   "scripts": {
     "dev": "tsx --env-file=/Users/cosmin/Documents/Claude/Superieftin.ro/.env watch src/index.ts",
-    "scrape:now": "tsx --env-file=/Users/cosmin/Documents/Claude/Superieftin.ro/.env src/index.ts --now",
+    "sync:now": "tsx --env-file=/Users/cosmin/Documents/Claude/Superieftin.ro/.env src/index.ts --now",
+    "price-check:now": "tsx --env-file=/Users/cosmin/Documents/Claude/Superieftin.ro/.env src/index.ts --now --price-check",
+    "test": "tsx --test src/lib/profitshare.test.ts src/importers/feed.test.ts",
     "build": "tsc",
     "start": "node dist/index.js"
   },
   "dependencies": {
     "axios": "^1.17.0",
     "bullmq": "^5.56.4",
-    "cheerio": "^1.2.0",
+    "csv-parse": "^6.2.1",
     "dotenv": "^16.4.5",
     "ioredis": "^5.6.1",
     "pg": "^8.13.3",

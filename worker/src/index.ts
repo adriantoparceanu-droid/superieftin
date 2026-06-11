@@ -6,63 +6,62 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 config({ path: resolve(__dirname, '../../.env'), override: true })
 
 import pino from 'pino'
-import { scrapeQueue, scrapeQueueEvents } from './lib/queue.js'
-import { startScrapeWorker } from './workers/scrape.worker.js'
+import { syncQueue, cleanupLegacyScrapeQueue } from './lib/queue.js'
+import { startSyncWorker } from './workers/sync.worker.js'
+import { startBotWorker } from './workers/bot.worker.js'
 import pool from './lib/db.js'
 
 const logger = pino({ level: 'info' })
-const SCRAPE_INTERVAL_HOURS = parseFloat(process.env.SCRAPE_INTERVAL_HOURS || '8')
 
-async function getActiveRetailer(slug: string) {
-  const result = await pool.query(
-    'SELECT id, slug, scraper_config FROM retailers WHERE slug = $1 AND is_active = true',
-    [slug]
-  )
-  return result.rows[0]
-}
+// Feed-urile Profitshare se regenereaza in jurul orei 03:00 — sincronizam dupa.
+const FEED_SYNC_CRON = process.env.FEED_SYNC_CRON || '0 4 * * *'
+const PRICE_CHECK_INTERVAL_HOURS = parseFloat(process.env.PRICE_CHECK_INTERVAL_HOURS || '3')
 
 async function scheduleRepeatingJobs() {
-  const retailer = await getActiveRetailer('emag')
-  if (!retailer) {
-    logger.warn('Retailer emag nu este activ in DB')
-    return
-  }
-
-  // Job repeating — ruleaza la fiecare N ore
-  await scrapeQueue.add(
-    'emag-telefoane-mobile',
-    {
-      retailerId: retailer.id,
-      retailerSlug: retailer.slug,
-      categoryPath: 'telefoane-mobile',
-      maxPages: 10,
-    },
-    {
-      repeat: { every: SCRAPE_INTERVAL_HOURS * 3600 * 1000 },
-      jobId: 'emag-telefoane-mobile-repeat',
-    }
+  await syncQueue.add(
+    'feed-sync',
+    { type: 'feed-sync' },
+    { repeat: { pattern: FEED_SYNC_CRON }, jobId: 'feed-sync-repeat' }
   )
+  logger.info({ cron: FEED_SYNC_CRON }, 'Job repeating programat: feed-sync')
 
-  logger.info({ interval: `${SCRAPE_INTERVAL_HOURS}h` }, 'Job repeating programat: emag-telefoane-mobile')
+  await syncQueue.add(
+    'price-check',
+    { type: 'price-check' },
+    { repeat: { every: PRICE_CHECK_INTERVAL_HOURS * 3600 * 1000 }, jobId: 'price-check-repeat' }
+  )
+  logger.info({ interval: `${PRICE_CHECK_INTERVAL_HOURS}h` }, 'Job repeating programat: price-check')
 }
 
-async function scrapeNow() {
-  const retailer = await getActiveRetailer('emag')
-  if (!retailer) {
-    logger.error('Retailer emag nu exista sau nu e activ')
-    process.exit(1)
+async function invalidateCache() {
+  const siteUrl = process.env.SITE_URL
+  const secret = process.env.REVALIDATE_SECRET
+  if (!siteUrl || !secret) return
+  try {
+    const res = await fetch(`${siteUrl}/api/revalidate`, {
+      method: 'POST',
+      headers: { 'x-revalidate-secret': secret },
+    })
+    if (res.ok) logger.info('Cache site invalidat')
+    else logger.warn({ status: res.status }, 'Cache invalidation esuat')
+  } catch (err) {
+    logger.warn({ err }, 'Nu s-a putut contacta site-ul pentru invalidare cache')
   }
+}
 
-  // Rulam direct, fara coada BullMQ, pentru a evita probleme de timing
-  const { runScrapeJob } = await import('./workers/scrape.worker.js')
-  logger.info('Scraping manual pornit (direct)...')
-  const result = await runScrapeJob({
-    retailerId: retailer.id,
-    retailerSlug: retailer.slug,
-    categoryPath: 'telefoane-mobile',
-    maxPages: 10,
-  })
-  logger.info(result, 'Scraping finalizat')
+// Rulare manuala imediata: npm run sync:now [-- --price-check]
+async function syncNow() {
+  const { runFeedSync, runPriceCheck } = await import('./workers/sync.worker.js')
+  if (process.argv.includes('--price-check')) {
+    const result = await runPriceCheck()
+    logger.info(result, 'price-check finalizat')
+  } else {
+    const result = await runFeedSync()
+    logger.info(result, 'feed-sync finalizat')
+  }
+  const { checkAndSendAlerts } = await import('./workers/alerts.worker.js')
+  await checkAndSendAlerts().catch((err) => logger.error({ err }, 'Eroare verificare alerte'))
+  await invalidateCache()
   await pool.end()
   process.exit(0)
 }
@@ -70,11 +69,13 @@ async function scrapeNow() {
 async function main() {
   logger.info('Worker pornit')
 
-  startScrapeWorker()
+  await cleanupLegacyScrapeQueue()
 
   if (process.argv.includes('--now')) {
-    await scrapeNow()
+    await syncNow()
   } else {
+    startSyncWorker()
+    startBotWorker() // ruleaza in background — loop infinit non-blocking
     await scheduleRepeatingJobs()
   }
 }

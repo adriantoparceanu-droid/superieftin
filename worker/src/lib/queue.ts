@@ -8,6 +8,18 @@ export const connection = {
   maxRetriesPerRequest: null as null,
 }
 
-export const scrapeQueue = new Queue('scrape', { connection })
+export const syncQueue = new Queue('sync', { connection })
 
-export const scrapeQueueEvents = new QueueEvents('scrape', { connection })
+export const syncQueueEvents = new QueueEvents('sync', { connection })
+
+// Curata coada veche de scraping (joburile repeating ramase in Redis de la versiunea anterioara)
+export async function cleanupLegacyScrapeQueue(): Promise<void> {
+  const legacy = new Queue('scrape', { connection })
+  try {
+    await legacy.obliterate({ force: true })
+  } catch {
+    // coada poate sa nu existe — ignoram
+  } finally {
+    await legacy.close()
+  }
+}
