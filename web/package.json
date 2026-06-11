@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@types/pg": "^8.20.0",
+    "bullmq": "^5.78.0",
     "ioredis": "^5.11.1",
     "next": "16.2.9",
     "pg": "^8.21.0",
