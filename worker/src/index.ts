@@ -49,10 +49,15 @@ async function invalidateCache() {
   }
 }
 
-// Rulare manuala imediata: npm run sync:now [-- --price-check]
+// Rulare manuala imediata: npm run sync:now [-- --price-check | --file=/cale/feed.xml [--retailer=slug]]
 async function syncNow() {
-  const { runFeedSync, runPriceCheck } = await import('./workers/sync.worker.js')
-  if (process.argv.includes('--price-check')) {
+  const { runFeedSync, runPriceCheck, runFileImport } = await import('./workers/sync.worker.js')
+  const fileArg = process.argv.find((a) => a.startsWith('--file='))?.split('=')[1]
+  if (fileArg) {
+    const retailerSlug = process.argv.find((a) => a.startsWith('--retailer='))?.split('=')[1]
+    const result = await runFileImport(fileArg, retailerSlug)
+    logger.info(result, 'import din fisier finalizat')
+  } else if (process.argv.includes('--price-check')) {
     const result = await runPriceCheck()
     logger.info(result, 'price-check finalizat')
   } else {

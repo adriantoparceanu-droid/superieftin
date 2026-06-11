@@ -153,6 +153,64 @@ async function syncOneFeed(
   }
 }
 
+// Import dintr-un fisier de feed local (XML/CSV in formatul Profitshare) — plasa de
+// siguranta cand feed-ul nu poate fi descarcat. Retailerul se identifica din adv_name
+// (rezolvat in DB), sau explicit prin retailerSlug.
+export async function runFileImport(filePath: string, retailerSlug?: string, jobId = 'direct') {
+  const log = logger.child({ job: jobId, task: 'file-import', file: filePath })
+  const startTime = Date.now()
+
+  const categoryMap = await loadCategoryMap()
+  const type = filePath.toLowerCase().endsWith('.csv') ? 'csv' : 'xml'
+
+  const { rows: retailers } = await pool.query<{ id: number; name: string; slug: string }>(
+    'SELECT id, name, slug FROM retailers'
+  )
+  const byName = new Map(retailers.map((r) => [r.name.toLowerCase(), r.id]))
+  const bySlug = new Map(retailers.map((r) => [r.slug, r.id]))
+  const forcedRetailerId = retailerSlug ? bySlug.get(retailerSlug) : undefined
+  if (retailerSlug && !forcedRetailerId) {
+    throw new Error(`Retailerul '${retailerSlug}' nu exista in DB`)
+  }
+
+  log.info({ type }, 'Import din fisier pornit')
+  let imported = 0, errors = 0, skipped = 0
+  const touchedRetailers = new Set<number>()
+
+  for await (const row of parseFeedFile(filePath, type)) {
+    const product = mapFeedRow(row, categoryMap)
+    if (!product) continue
+    const retailerId = forcedRetailerId
+      ?? byName.get(row.advertiserName.toLowerCase())
+      ?? bySlug.get(advertiserSlug(row.advertiserName))
+    if (!retailerId) {
+      skipped++
+      if (skipped === 1) log.warn({ advertiser: row.advertiserName }, 'Advertiser necunoscut — randuri sarite (foloseste --retailer=<slug>)')
+      continue
+    }
+    try {
+      await upsertProduct(product, retailerId)
+      touchedRetailers.add(retailerId)
+      imported++
+    } catch (err) {
+      errors++
+      if (errors <= 5) log.error({ slug: product.slug, err }, 'Eroare upsert produs')
+    }
+  }
+
+  for (const retailerId of touchedRetailers) {
+    await pool.query(`
+      UPDATE offers SET in_stock = false
+      WHERE retailer_id = $1 AND in_stock = true
+        AND last_checked < now() - make_interval(days => $2)
+    `, [retailerId, STALE_OFFER_DAYS])
+  }
+
+  const duration = ((Date.now() - startTime) / 1000).toFixed(1)
+  log.info({ imported, errors, skipped, duration: `${duration}s` }, 'Import din fisier finalizat')
+  return { imported, errors, skipped, duration }
+}
+
 export async function runFeedSync(jobId = 'direct') {
   const log = logger.child({ job: jobId, task: 'feed-sync' })
   const startTime = Date.now()
