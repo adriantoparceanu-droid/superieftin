@@ -15,6 +15,9 @@ RUN npm install --include=optional
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
+# NEXT_PUBLIC_* se inline-uiesc in bundle la build — vin ca build args din compose
+ARG NEXT_PUBLIC_GA_MEASUREMENT_ID
+ENV NEXT_PUBLIC_GA_MEASUREMENT_ID=$NEXT_PUBLIC_GA_MEASUREMENT_ID
 RUN npm run build --workspace=web
 
 # --- Runner (imagine minimala) ---

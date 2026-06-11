@@ -6,6 +6,9 @@ services:
     build:
       context: .
       dockerfile: web/Dockerfile
+      args:
+        # NEXT_PUBLIC_* se inline-uiesc la build, nu la runtime
+        - NEXT_PUBLIC_GA_MEASUREMENT_ID=${NEXT_PUBLIC_GA_MEASUREMENT_ID}
     restart: unless-stopped
     ports:
       - "127.0.0.1:3000:3000"  # accesibil doar local, Nginx face proxy
@@ -14,6 +17,12 @@ services:
       - DATABASE_URL=${DATABASE_URL}
       - REDIS_URL=${REDIS_URL}
       - DOMAIN=${DOMAIN}
+      - TELEGRAM_BOT_USERNAME=${TELEGRAM_BOT_USERNAME}
+      - REVALIDATE_SECRET=${REVALIDATE_SECRET}
+      - ADMIN_SESSION_SECRET=${ADMIN_SESSION_SECRET}
+      - UPLOAD_DIR=/app/uploads
+    volumes:
+      - uploads:/app/uploads
     depends_on:
       postgres:
         condition: service_healthy
@@ -35,7 +44,15 @@ services:
       - AFFILIATE_ID=${AFFILIATE_ID}
       - PROFITSHARE_API_USER=${PROFITSHARE_API_USER}
       - PROFITSHARE_API_KEY=${PROFITSHARE_API_KEY}
+      - FEED_SYNC_CRON=${FEED_SYNC_CRON:-0 4 * * *}
+      - PRICE_CHECK_INTERVAL_HOURS=${PRICE_CHECK_INTERVAL_HOURS:-3}
+      - PRICE_CHECK_LIMIT=${PRICE_CHECK_LIMIT:-150}
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_BOT_USERNAME=${TELEGRAM_BOT_USERNAME}
+      - SITE_URL=${SITE_URL}
+      - REVALIDATE_SECRET=${REVALIDATE_SECRET}
+    volumes:
+      - uploads:/app/uploads
     depends_on:
       postgres:
         condition: service_healthy
@@ -90,3 +107,4 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  uploads:
