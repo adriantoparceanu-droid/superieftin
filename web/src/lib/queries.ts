@@ -454,6 +454,49 @@ export const getMenu = unstable_cache(
   { revalidate: 3600, tags: ['menu'] }
 )
 
+// Imagine reprezentativa per categorie vizibila (pentru grila de pe homepage):
+// produsul cu cele mai multe click-uri recente, altfel cel mai recent actualizat cu imagine
+export const getCategoryThumbs = unstable_cache(
+  async (): Promise<Record<string, string>> => {
+    const { rows } = await pool.query<{ slug: string; image_url: string }>(`
+      SELECT DISTINCT ON (c.id) c.slug, p.image_url
+      FROM categories c
+      JOIN products p ON (p.category_id = c.id
+        OR p.category_id IN (SELECT id FROM categories ch WHERE ch.parent_id = c.id))
+      JOIN offers o ON o.product_id = p.id AND o.in_stock = true AND o.current_price IS NOT NULL
+      WHERE c.is_visible = true AND c.parent_id IS NULL AND p.image_url IS NOT NULL
+      ORDER BY c.id,
+        (SELECT count(*) FROM click_events ce JOIN offers o2 ON o2.id = ce.offer_id
+         WHERE o2.product_id = p.id AND ce.clicked_at > now() - interval '30 days') DESC,
+        p.updated_at DESC
+    `)
+    return Object.fromEntries(rows.map((r) => [r.slug, r.image_url]))
+  },
+  ['category-thumbs'],
+  { revalidate: 3600, tags: ['categories', 'products'] }
+)
+
+export interface PublicRetailer {
+  name: string
+  slug: string
+  logo_url: string
+}
+
+// Retailerii activi cu logo (caruselul de pe homepage)
+export const getActiveRetailersPublic = unstable_cache(
+  async (): Promise<PublicRetailer[]> => {
+    const { rows } = await pool.query<PublicRetailer>(`
+      SELECT name, slug, logo_url FROM retailers
+      WHERE is_active = true AND logo_url IS NOT NULL
+        AND EXISTS (SELECT 1 FROM offers o WHERE o.retailer_id = retailers.id)
+      ORDER BY name
+    `)
+    return rows
+  },
+  ['public-retailers'],
+  { revalidate: 3600, tags: ['products'] }
+)
+
 // Produsele unui tag (pagina /t/[slug])
 export const getTagBySlug = unstable_cache(
   async (slug: string): Promise<{ id: number; name: string; slug: string } | null> => {
