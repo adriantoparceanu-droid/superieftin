@@ -8,14 +8,16 @@ import { connection } from '../lib/queue.js'
 import { getAdvertisers, getFeeds, getProductsByPartNo, buildAffiliateUrl, type PsAdvertiser, type PsFeed } from '../lib/profitshare.js'
 import { downloadFeed, parseFeedFile, mapFeedRow } from '../importers/feed.js'
 import { upsertProduct, upsertOfferPrice } from '../lib/upsert.js'
+import { loadFeedRules, type RuleLookup } from '../lib/feedRules.js'
 import { toSlug } from '../lib/slug.js'
 import { checkAndSendAlerts } from './alerts.worker.js'
 
 const logger = pino({ level: 'info' })
 
-export interface SyncJobData {
-  type: 'feed-sync' | 'price-check'
-}
+export type SyncJobData =
+  | { type: 'feed-sync' }
+  | { type: 'price-check' }
+  | { type: 'file-import'; filePath: string; retailerSlug?: string; filename?: string }
 
 // Sub acest prag (fata de sincronizarea anterioara) un feed e considerat suspect si respins.
 const MIN_FEED_RATIO = 0.5
@@ -58,11 +60,21 @@ async function upsertRetailer(adv: PsAdvertiser): Promise<number> {
   return inserted.rows[0].id
 }
 
-async function loadCategoryMap(): Promise<Map<string, string>> {
-  const { rows } = await pool.query<{ ps_category: string; site_category: string }>(
-    'SELECT ps_category, site_category FROM category_map'
-  )
-  return new Map(rows.map((r) => [r.ps_category, r.site_category]))
+async function recordFeedSync(params: {
+  feedLink: string
+  feedName: string | null
+  psUpdatedAt: Date | null
+  productsCount: number
+  status: 'success' | 'rejected'
+  source: 'profitshare' | 'upload'
+  filename?: string | null
+  unmappedCount?: number | null
+}): Promise<void> {
+  await pool.query(`
+    INSERT INTO feed_syncs (feed_link, feed_name, ps_updated_at, products_count, status, source, filename, unmapped_count)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+  `, [params.feedLink, params.feedName, params.psUpdatedAt, params.productsCount,
+      params.status, params.source, params.filename ?? null, params.unmappedCount ?? null])
 }
 
 // --- Sincronizare feed-uri ---------------------------------------------------
@@ -70,7 +82,7 @@ async function loadCategoryMap(): Promise<Map<string, string>> {
 async function syncOneFeed(
   feed: PsFeed,
   advertisersById: Map<string, PsAdvertiser>,
-  categoryMap: Map<string, string>,
+  resolveRule: RuleLookup,
 ): Promise<{ imported: number; errors: number } | 'skipped' | 'rejected'> {
   const log = logger.child({ feed: feed.name, type: feed.type })
 
@@ -105,26 +117,28 @@ async function syncOneFeed(
     // Pasul 1: numaram randurile valide — nu atingem DB-ul daca feed-ul pare trunchiat
     let validCount = 0
     for await (const row of parseFeedFile(tmpFile, feed.type)) {
-      if (mapFeedRow(row, categoryMap)) validCount++
+      if (mapFeedRow(row)) validCount++
     }
     if (lastSync?.products_count && validCount < lastSync.products_count * MIN_FEED_RATIO) {
       log.error({ validCount, previous: lastSync.products_count }, 'Feed suspect (sub 50% din sincronizarea anterioara) — respins')
-      await pool.query(`
-        INSERT INTO feed_syncs (feed_link, feed_name, ps_updated_at, products_count, status)
-        VALUES ($1, $2, $3, $4, 'rejected')
-      `, [feed.link, feed.name, feedUpdatedAt, validCount])
+      await recordFeedSync({
+        feedLink: feed.link, feedName: feed.name, psUpdatedAt: feedUpdatedAt,
+        productsCount: validCount, status: 'rejected', source: 'profitshare',
+      })
       return 'rejected'
     }
 
     // Pasul 2: import efectiv
-    let imported = 0, errors = 0
+    let imported = 0, errors = 0, unmapped = 0
     for await (const row of parseFeedFile(tmpFile, feed.type)) {
-      const product = mapFeedRow(row, categoryMap)
+      const product = mapFeedRow(row)
       if (!product) continue
-      const retailerId = retailerByName.get(row.advertiserName.toLowerCase())
-        ?? retailerByName.values().next().value
+      const retailerId = (retailerByName.get(row.advertiserName.toLowerCase())
+        ?? retailerByName.values().next().value)!
+      const rule = resolveRule(retailerId, product.feedCategory)
+      if (!rule) unmapped++
       try {
-        await upsertProduct(product, retailerId!)
+        await upsertProduct(product, retailerId, rule)
         imported++
       } catch (err) {
         errors++
@@ -141,12 +155,12 @@ async function syncOneFeed(
       `, [retailerId, STALE_OFFER_DAYS])
     }
 
-    await pool.query(`
-      INSERT INTO feed_syncs (feed_link, feed_name, ps_updated_at, products_count, status)
-      VALUES ($1, $2, $3, $4, 'success')
-    `, [feed.link, feed.name, feedUpdatedAt, imported])
+    await recordFeedSync({
+      feedLink: feed.link, feedName: feed.name, psUpdatedAt: feedUpdatedAt,
+      productsCount: imported, status: 'success', source: 'profitshare', unmappedCount: unmapped,
+    })
 
-    log.info({ imported, errors }, 'Feed importat')
+    log.info({ imported, errors, unmapped }, 'Feed importat')
     return { imported, errors }
   } finally {
     await unlink(tmpFile).catch(() => {})
@@ -156,11 +170,11 @@ async function syncOneFeed(
 // Import dintr-un fisier de feed local (XML/CSV in formatul Profitshare) — plasa de
 // siguranta cand feed-ul nu poate fi descarcat. Retailerul se identifica din adv_name
 // (rezolvat in DB), sau explicit prin retailerSlug.
-export async function runFileImport(filePath: string, retailerSlug?: string, jobId = 'direct') {
+export async function runFileImport(filePath: string, retailerSlug?: string, jobId = 'direct', filename?: string) {
   const log = logger.child({ job: jobId, task: 'file-import', file: filePath })
   const startTime = Date.now()
 
-  const categoryMap = await loadCategoryMap()
+  const resolveRule = await loadFeedRules()
   const type = filePath.toLowerCase().endsWith('.csv') ? 'csv' : 'xml'
 
   const { rows: retailers } = await pool.query<{ id: number; name: string; slug: string }>(
@@ -174,11 +188,11 @@ export async function runFileImport(filePath: string, retailerSlug?: string, job
   }
 
   log.info({ type }, 'Import din fisier pornit')
-  let imported = 0, errors = 0, skipped = 0
+  let imported = 0, errors = 0, skipped = 0, unmapped = 0
   const touchedRetailers = new Set<number>()
 
   for await (const row of parseFeedFile(filePath, type)) {
-    const product = mapFeedRow(row, categoryMap)
+    const product = mapFeedRow(row)
     if (!product) continue
     const retailerId = forcedRetailerId
       ?? byName.get(row.advertiserName.toLowerCase())
@@ -188,8 +202,10 @@ export async function runFileImport(filePath: string, retailerSlug?: string, job
       if (skipped === 1) log.warn({ advertiser: row.advertiserName }, 'Advertiser necunoscut — randuri sarite (foloseste --retailer=<slug>)')
       continue
     }
+    const rule = resolveRule(retailerId, product.feedCategory)
+    if (!rule) unmapped++
     try {
-      await upsertProduct(product, retailerId)
+      await upsertProduct(product, retailerId, rule)
       touchedRetailers.add(retailerId)
       imported++
     } catch (err) {
@@ -206,19 +222,25 @@ export async function runFileImport(filePath: string, retailerSlug?: string, job
     `, [retailerId, STALE_OFFER_DAYS])
   }
 
+  await recordFeedSync({
+    feedLink: `upload:${filename ?? filePath}`, feedName: filename ?? filePath.split('/').pop() ?? null,
+    psUpdatedAt: null, productsCount: imported, status: 'success', source: 'upload',
+    filename: filename ?? null, unmappedCount: unmapped,
+  })
+
   const duration = ((Date.now() - startTime) / 1000).toFixed(1)
-  log.info({ imported, errors, skipped, duration: `${duration}s` }, 'Import din fisier finalizat')
-  return { imported, errors, skipped, duration }
+  log.info({ imported, errors, skipped, unmapped, duration: `${duration}s` }, 'Import din fisier finalizat')
+  return { imported, errors, skipped, unmapped, duration }
 }
 
 export async function runFeedSync(jobId = 'direct') {
   const log = logger.child({ job: jobId, task: 'feed-sync' })
   const startTime = Date.now()
 
-  const [advertisers, feeds, categoryMap] = await Promise.all([
+  const [advertisers, feeds, resolveRule] = await Promise.all([
     getAdvertisers(),
     getFeeds(),
-    loadCategoryMap(),
+    loadFeedRules(),
   ])
   const advertisersById = new Map(advertisers.map((a) => [String(a.id), a]))
   const activeFeeds = feeds.filter((f) => f.status === 'active')
@@ -227,7 +249,7 @@ export async function runFeedSync(jobId = 'direct') {
   let totalImported = 0, totalErrors = 0, synced = 0
   for (const feed of activeFeeds) {
     try {
-      const result = await syncOneFeed(feed, advertisersById, categoryMap)
+      const result = await syncOneFeed(feed, advertisersById, resolveRule)
       if (typeof result === 'object') {
         totalImported += result.imported
         totalErrors += result.errors
@@ -328,7 +350,10 @@ export function startSyncWorker() {
   const worker = new Worker<SyncJobData>(
     'sync',
     async (job: Job<SyncJobData>) =>
-      job.data.type === 'price-check' ? runPriceCheck(job.id) : runFeedSync(job.id),
+      job.data.type === 'price-check' ? runPriceCheck(job.id)
+        : job.data.type === 'file-import' ? runFileImport(job.data.filePath, job.data.retailerSlug, job.id, job.data.filename)
+            .finally(() => unlink((job.data as { filePath: string }).filePath).catch(() => {}))
+        : runFeedSync(job.id),
     {
       connection,
       concurrency: 1,

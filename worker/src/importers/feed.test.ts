@@ -80,8 +80,7 @@ test('parseXmlFeed — extrage blocurile <product> si decodeaza entitatile', asy
   }
 })
 
-test('mapFeedRow — pret redus prioritar, link afiliat normalizat, mapare categorie', () => {
-  const categoryMap = new Map([['all in one', 'desktop-all-in-one']])
+test('mapFeedRow — pret redus prioritar, link afiliat normalizat, feedCategory bruta', () => {
   const row: FeedRow = {
     advertiserName: 'PCMadd.com',
     category: 'All in One',
@@ -95,31 +94,32 @@ test('mapFeedRow — pret redus prioritar, link afiliat normalizat, mapare categ
     priceDiscountedVat: '2100.00',
     availability: 'in_stock',
   }
-  const product = mapFeedRow(row, categoryMap)!
+  const product = mapFeedRow(row)!
   assert.equal(product.price, 2100)
   assert.equal(product.affiliateUrl, 'https://profitshare.ro/lps/G2p/piC/?redirect=x')
-  assert.equal(product.category, 'desktop-all-in-one')
+  assert.equal(product.category, 'all-in-one')
+  assert.equal(product.feedCategory, 'All in One')
   assert.equal(product.partNo, '7490i5')
   assert.equal(product.brand, 'DELL')
   assert.equal(product.inStock, true)
   assert.equal(product.slug, 'aio-dell-optiplex-7490')
 })
 
-test('mapFeedRow — categorie nemapata primeste slug auto, rand invalid e respins', () => {
+test('mapFeedRow — categoria devine slug auto, rand invalid e respins', () => {
   const base: FeedRow = {
     advertiserName: 'X', category: 'Sucuri, Siropuri', manufacturer: '', productCode: '',
     productName: 'Produs Y', affLink: '', link: 'https://x.ro/y', picture: '',
     priceVat: '0', priceDiscountedVat: '', availability: 'out_of_stock',
   }
-  const product = mapFeedRow(base, new Map())!
+  const product = mapFeedRow(base)!
   assert.equal(product.category, 'sucuri-siropuri')
   assert.equal(product.price, null)        // pret 0 = invalid
   assert.equal(product.partNo, null)
   assert.equal(product.inStock, false)
   assert.equal(product.affiliateUrl, 'https://x.ro/y')  // fallback pe link direct
 
-  assert.equal(mapFeedRow({ ...base, productName: '' }, new Map()), null)
-  assert.equal(mapFeedRow({ ...base, link: '' }, new Map()), null)
+  assert.equal(mapFeedRow({ ...base, productName: '' }), null)
+  assert.equal(mapFeedRow({ ...base, link: '' }), null)
 })
 
 test('mapFeedRow — numele lungi primesc part_no in slug (variantele nu se prabusesc)', () => {
@@ -129,13 +129,13 @@ test('mapFeedRow — numele lungi primesc part_no in slug (variantele nu se prab
     priceVat: '1000', priceDiscountedVat: '', availability: 'in_stock',
   }
   const prefix = 'Calculator All in One, Dell OptiPlex 7060 Micro, Monitor 24 inch LED IPS Dell P2422H, Black, 1920 by 1080, Intel Core i7'
-  const v1 = mapFeedRow({ ...base, productName: `${prefix}, 32 GB DDR4, 1 TB SSD, Windows 10 Pro`, productCode: 'CIT-001' }, new Map())!
-  const v2 = mapFeedRow({ ...base, productName: `${prefix}, 32 GB DDR4, 512 GB SSD, Windows 11 Pro`, productCode: 'CIT-002' }, new Map())!
+  const v1 = mapFeedRow({ ...base, productName: `${prefix}, 32 GB DDR4, 1 TB SSD, Windows 10 Pro`, productCode: 'CIT-001' })!
+  const v2 = mapFeedRow({ ...base, productName: `${prefix}, 32 GB DDR4, 512 GB SSD, Windows 11 Pro`, productCode: 'CIT-002' })!
   assert.notEqual(v1.slug, v2.slug)
   assert.ok(v1.slug.includes('cit-001'))
   assert.ok(v1.slug.length <= 120)
 
   // Numele scurte raman cu slug-ul clasic, fara part_no
-  const short = mapFeedRow({ ...base, productName: 'Telefon Allview M9 Join', productCode: 'M9J' }, new Map())!
+  const short = mapFeedRow({ ...base, productName: 'Telefon Allview M9 Join', productCode: 'M9J' })!
   assert.equal(short.slug, 'telefon-allview-m9-join')
 })

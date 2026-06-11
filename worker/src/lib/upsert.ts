@@ -1,9 +1,12 @@
 import pool from './db.js'
 import type { ImportedProduct } from './types.js'
+import type { FeedRule } from './feedRules.js'
 
 // Upsert tranzactional: products -> offers -> price_history.
 // Unificarea produselor intre retaileri: intai dupa (part_no, brand), apoi fallback pe slug.
-export async function upsertProduct(product: ImportedProduct, retailerId: number): Promise<void> {
+// `rule` (din feed_category_map) seteaza categoria site-ului si tagurile; fara regula,
+// produsul ramane nemapat (category_id NULL) si apare in inbox-ul de mapare din admin.
+export async function upsertProduct(product: ImportedProduct, retailerId: number, rule: FeedRule | null = null): Promise<void> {
   const client = await pool.connect()
   try {
     await client.query('BEGIN')
@@ -21,26 +24,47 @@ export async function upsertProduct(product: ImportedProduct, retailerId: number
         await client.query(`
           UPDATE products SET
             image_url = COALESCE(image_url, $2),
+            feed_category = $3,
+            category = COALESCE($4, category),
+            category_id = COALESCE($5, category_id),
             updated_at = now()
           WHERE id = $1
-        `, [productId, product.imageUrl])
+        `, [productId, product.imageUrl, product.feedCategory, rule?.categorySlug ?? null, rule?.categoryId ?? null])
       }
     }
 
     // 2) Fallback pe slug (mecanismul istoric) — completeaza part_no daca lipsea
     if (!productId) {
       const result = await client.query<{ id: string }>(`
-        INSERT INTO products (name, slug, category, brand, part_no, image_url, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, now())
+        INSERT INTO products (name, slug, category, category_id, feed_category, brand, part_no, image_url, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, now())
         ON CONFLICT (slug) DO UPDATE SET
           name = EXCLUDED.name,
           brand = COALESCE(EXCLUDED.brand, products.brand),
           part_no = COALESCE(products.part_no, EXCLUDED.part_no),
           image_url = COALESCE(EXCLUDED.image_url, products.image_url),
+          feed_category = EXCLUDED.feed_category,
+          category = COALESCE(EXCLUDED.category, products.category),
+          category_id = COALESCE(EXCLUDED.category_id, products.category_id),
           updated_at = now()
         RETURNING id
-      `, [product.name, product.slug, product.category, product.brand, product.partNo, product.imageUrl])
+      `, [
+        product.name, product.slug,
+        rule?.categorySlug ?? product.category,
+        rule?.categoryId ?? null,
+        product.feedCategory,
+        product.brand, product.partNo, product.imageUrl,
+      ])
       productId = result.rows[0].id
+    }
+
+    // Tagurile din regula de mapare
+    if (rule?.tagIds.length) {
+      await client.query(`
+        INSERT INTO product_tags (product_id, tag_id)
+        SELECT $1, unnest($2::int[])
+        ON CONFLICT DO NOTHING
+      `, [productId, rule.tagIds])
     }
 
     // Pretul anterior, citit INAINTE de upsert (RETURNING dupa ON CONFLICT DO UPDATE

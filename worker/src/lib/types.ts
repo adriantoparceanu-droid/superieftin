@@ -3,7 +3,8 @@ export interface ImportedProduct {
   name: string
   slug: string
   brand: string | null
-  category: string
+  category: string        // slug legacy, generat din categoria de feed
+  feedCategory: string    // categoria bruta din feed — baza pentru regulile de mapare
   partNo: string | null
   imageUrl: string | null
   url: string

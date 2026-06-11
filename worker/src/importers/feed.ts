@@ -128,13 +128,14 @@ function parseFeedPrice(raw: string): number | null {
 }
 
 // Transforma un rand de feed in produs normalizat. Returneaza null pentru randuri inutilizabile.
-export function mapFeedRow(row: FeedRow, categoryMap: Map<string, string>): ImportedProduct | null {
+// Maparea catre categoriile site-ului (feed_category_map) se rezolva la upsert, nu aici.
+export function mapFeedRow(row: FeedRow): ImportedProduct | null {
   const name = row.productName
   const url = row.link
   if (!name || !url) return null
 
-  const psCategory = row.category.toLowerCase().trim()
-  const category = categoryMap.get(psCategory) || toSlug(psCategory || 'diverse')
+  const feedCategory = row.category.trim()
+  const category = toSlug(feedCategory.toLowerCase() || 'diverse')
 
   // Linkul afiliat din feed e protocol-relative (//profitshare.ro/...)
   const affiliateUrl = row.affLink.startsWith('//') ? 'https:' + row.affLink : row.affLink
@@ -155,6 +156,7 @@ export function mapFeedRow(row: FeedRow, categoryMap: Map<string, string>): Impo
     slug,
     brand: row.manufacturer || null,
     category,
+    feedCategory,
     partNo: row.productCode || null,
     imageUrl: row.picture || null,
     url,

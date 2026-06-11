@@ -7,7 +7,8 @@
     "dev": "tsx --env-file=/Users/cosmin/Documents/Claude/Superieftin.ro/.env watch src/index.ts",
     "sync:now": "tsx --env-file=/Users/cosmin/Documents/Claude/Superieftin.ro/.env src/index.ts --now",
     "price-check:now": "tsx --env-file=/Users/cosmin/Documents/Claude/Superieftin.ro/.env src/index.ts --now --price-check",
-    "test": "tsx --test src/lib/profitshare.test.ts src/importers/feed.test.ts",
+    "test": "tsx --test src/lib/profitshare.test.ts src/lib/password.test.ts src/importers/feed.test.ts",
+    "admin:create": "tsx --env-file=/Users/cosmin/Documents/Claude/Superieftin.ro/.env src/scripts/create-admin.ts",
     "build": "tsc",
     "start": "node dist/index.js"
   },
