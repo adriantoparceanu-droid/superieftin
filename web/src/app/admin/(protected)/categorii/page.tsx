@@ -3,6 +3,16 @@ import {
   moveCategoryAction, deleteCategoryAction,
 } from '@/lib/admin/actions'
 import { getCategoriesTree, type AdminCategory } from '@/lib/admin/queries'
+import { CategoryIcon, CATEGORY_ICON_NAMES } from '@/components/CategoryIcon'
+
+function IconSelect({ name, defaultValue }: { name: string; defaultValue?: string | null }) {
+  return (
+    <select name={name} defaultValue={defaultValue ?? ''} className="border border-line rounded px-1 py-1 text-xs">
+      <option value="">(fără)</option>
+      {CATEGORY_ICON_NAMES.map((n) => <option key={n} value={n}>{n}</option>)}
+    </select>
+  )
+}
 
 function CategoryRow({ cat, all, level }: { cat: AdminCategory; all: AdminCategory[]; level: number }) {
   const topLevel = all.filter((c) => !c.parent_id && c.id !== cat.id)
@@ -12,7 +22,8 @@ function CategoryRow({ cat, all, level }: { cat: AdminCategory; all: AdminCatego
         <form action={updateCategoryAction} className="flex items-center gap-2" id={`cat-${cat.id}`}>
           <input type="hidden" name="id" value={cat.id} />
           <span className="text-muted">{level > 0 ? '└' : ''}</span>
-          <input name="icon" defaultValue={cat.icon ?? ''} placeholder="🏷" className="w-10 border border-line rounded px-1 py-1 text-sm text-center" />
+          <CategoryIcon name={cat.icon} className="w-4 h-4 text-brand shrink-0" />
+          <IconSelect name="icon" defaultValue={cat.icon} />
           <input name="name" defaultValue={cat.name} className="border border-line rounded px-2 py-1 text-sm flex-1 min-w-32" />
           <select name="parent_id" defaultValue={cat.parent_id ?? ''} className="border border-line rounded px-1 py-1 text-xs" disabled={all.some((c) => c.parent_id === cat.id)}>
             <option value="">(nivel 1)</option>
@@ -63,7 +74,7 @@ export default async function CategoriiPage() {
         </div>
         <div>
           <label className="block text-xs text-muted mb-1">Iconiță</label>
-          <input name="icon" placeholder="📦" className="w-14 border border-line rounded-lg px-2 py-1.5 text-sm text-center" />
+          <IconSelect name="icon" />
         </div>
         <div>
           <label className="block text-xs text-muted mb-1">Părinte (opțional)</label>

@@ -1,5 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import { CategoryIcon } from './CategoryIcon'
 import type { CategoryInfo } from '@/lib/queries'
 
 interface Props {
@@ -29,11 +30,14 @@ export function CategoryGrid({ activeCategories, thumbs = {} }: Props) {
                   className="object-contain p-3 group-hover:scale-105 transition-transform" unoptimized
                 />
               ) : (
-                <div className="absolute inset-0 flex items-center justify-center text-4xl">{cat.icon || '🛒'}</div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <CategoryIcon name={cat.icon} className="w-10 h-10 text-muted group-hover:text-brand transition-colors" />
+                </div>
               )}
             </div>
             <div className="px-3 py-2.5 text-center">
-              <p className="text-sm font-semibold text-[var(--color-text)] leading-tight group-hover:text-brand transition-colors">
+              <p className="text-sm font-semibold text-[var(--color-text)] leading-tight group-hover:text-brand transition-colors flex items-center justify-center gap-1.5">
+                <CategoryIcon name={cat.icon} className="w-4 h-4 text-brand shrink-0" />
                 {cat.name ?? cat.category}
               </p>
               <p className="text-[11px] text-muted mt-0.5">{cat.count.toLocaleString('ro-RO')} produse</p>
