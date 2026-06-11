@@ -1,7 +1,8 @@
 import Image from 'next/image'
-import Link from 'next/link'
 import { PriceTag } from './PriceTag'
 import { VerdictBadge } from './VerdictBadge'
+import { AffiliateLink } from './analytics/AffiliateLink'
+import { SelectItemLink } from './analytics/SelectItemLink'
 import type { ProductWithDiscount } from '@/lib/queries'
 
 interface ProductCardProps {
@@ -9,9 +10,17 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product }: ProductCardProps) {
+  const gaItem = {
+    item_name: product.name,
+    item_category: product.category,
+    item_brand: product.brand,
+    price: product.current_price,
+    affiliation: product.retailer_name,
+  }
+
   return (
     <article className="bg-surface rounded-lg border border-line overflow-hidden hover:border-brand transition-colors flex flex-col">
-      <Link href={`/p/${product.slug}`} className="block relative h-[120px] bg-gray-50">
+      <SelectItemLink href={`/p/${product.slug}`} item={gaItem} className="block relative h-[120px] bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2">
         {product.image_url ? (
           <Image
             src={product.image_url}
@@ -26,16 +35,16 @@ export function ProductCard({ product }: ProductCardProps) {
             📦
           </div>
         )}
-      </Link>
+      </SelectItemLink>
 
       <div className="p-3 flex flex-col flex-1">
         <VerdictBadge discountPct={product.discount_pct} />
 
-        <Link href={`/p/${product.slug}`}>
+        <SelectItemLink href={`/p/${product.slug}`} item={gaItem} className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 rounded">
           <h2 className="text-sm font-medium text-[var(--color-text)] line-clamp-2 leading-snug hover:text-brand transition-colors mt-1 mb-1">
             {product.name}
           </h2>
-        </Link>
+        </SelectItemLink>
 
         {product.brand && (
           <p className="text-xs text-muted mb-2">{product.brand}</p>
@@ -44,14 +53,16 @@ export function ProductCard({ product }: ProductCardProps) {
         <div className="mt-auto space-y-2">
           <PriceTag price={product.current_price} discountPct={product.discount_pct} />
 
-          <Link
-            href={`/go/${product.offer_id}`}
+          <AffiliateLink
+            offerId={product.offer_id}
+            productName={product.name}
+            merchantName={product.retailer_name}
+            price={product.current_price}
+            category={product.category}
             className="block w-full text-center text-sm font-semibold bg-yellow-400 hover:bg-yellow-500 text-gray-900 rounded-md py-2 transition-colors focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
-            target="_blank"
-            rel="noopener sponsored"
           >
             Vezi la {product.retailer_name}
-          </Link>
+          </AffiliateLink>
         </div>
       </div>
     </article>

@@ -8,6 +8,8 @@ import { PriceHistoryChart } from '@/components/PriceHistoryChart'
 import { PriceTag } from '@/components/PriceTag'
 import { VerdictBadge } from '@/components/VerdictBadge'
 import { Sparkline } from '@/components/Sparkline'
+import { TrackViewItem } from '@/components/analytics/TrackViewItem'
+import { AffiliateLink } from '@/components/analytics/AffiliateLink'
 
 export const revalidate = 3600
 
@@ -45,6 +47,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       images: product.image_url ? [{ url: product.image_url, alt: product.name }] : [],
     },
   }
+}
+
+function formatVerified(isoDate: string) {
+  const diffH = Math.floor((Date.now() - new Date(isoDate).getTime()) / 3600000)
+  if (diffH < 1) return 'Verificat azi'
+  if (diffH < 24) return `Verificat acum ${diffH} ${diffH === 1 ? 'oră' : 'ore'}`
+  return 'Verificat azi'
 }
 
 export default async function ProductPage({ params }: Props) {
@@ -96,12 +105,21 @@ export default async function ProductPage({ params }: Props) {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
+      <TrackViewItem
+        item={{
+          item_name: product.name,
+          item_category: product.category,
+          item_brand: product.brand,
+          price: product.offers[0]?.current_price ?? null,
+        }}
+        value={product.offers[0]?.current_price ?? null}
+      />
 
       {/* Breadcrumb */}
       <nav className="text-sm text-muted mb-6 flex gap-1.5 items-center flex-wrap">
-        <Link href="/" className="hover:text-[var(--color-text)] transition-colors">Acasă</Link>
+        <Link href="/" className="hover:text-[var(--color-text)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 rounded">Acasă</Link>
         <span>/</span>
-        <Link href={`/c/${product.category}`} className="hover:text-[var(--color-text)] transition-colors capitalize">
+        <Link href={`/c/${product.category}`} className="hover:text-[var(--color-text)] transition-colors capitalize focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 rounded">
           {product.category.replace(/-/g, ' ')}
         </Link>
         <span>/</span>
@@ -177,27 +195,50 @@ export default async function ProductPage({ params }: Props) {
                 >
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-[var(--color-text)] capitalize">{offer.retailer_name}</div>
-                    {offer.last_checked && (
-                      <div className="text-xs text-muted mt-0.5">
-                        Verificat: {new Date(offer.last_checked).toLocaleDateString('ro-RO')}
-                      </div>
-                    )}
+                    <div className="flex items-center gap-2 mt-0.5">
+                      {!offer.in_stock && (
+                        <span className="text-xs text-muted">Indisponibil</span>
+                      )}
+                      {offer.last_checked && (
+                        <span className="text-xs text-muted">{formatVerified(offer.last_checked)}</span>
+                      )}
+                    </div>
                   </div>
                   <div className="text-right shrink-0">
                     <PriceTag price={offer.current_price} discountPct={offerDiscount.verdict === 'real' || offerDiscount.verdict === 'good' ? offerDiscount.discountPct : null} />
                   </div>
-                  <Link
-                    href={`/go/${offer.offer_id}`}
-                    className="shrink-0 bg-yellow-400 hover:bg-yellow-500 text-gray-900 text-sm font-semibold px-4 py-2 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
-                    target="_blank"
-                    rel="noopener sponsored"
+                  <AffiliateLink
+                    offerId={offer.offer_id}
+                    productName={product.name}
+                    merchantName={offer.retailer_name}
+                    price={offer.current_price}
+                    category={product.category}
+                    className="shrink-0 bg-yellow-400 hover:bg-yellow-500 text-gray-900 text-sm font-semibold px-4 py-2 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                   >
-                    Cumpără la {offer.retailer_name}
-                  </Link>
+                    Cumpără la {offer.retailer_name} →
+                  </AffiliateLink>
                 </div>
               )
             })}
           </div>
+
+          {/* Buton alerta Telegram */}
+          {process.env.TELEGRAM_BOT_USERNAME && (
+            <a
+              href={`https://t.me/${process.env.TELEGRAM_BOT_USERNAME}?start=offer_${bestOffer?.offer_id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 w-full border border-line rounded-lg py-2.5 text-sm font-semibold text-[var(--color-text)] hover:border-brand hover:text-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+            >
+              🔔 Alertă de preț
+            </a>
+          )}
+
+          {/* Nota de afiliere */}
+          <p className="text-xs text-muted">
+            superieftin.ro folosește linkuri de afiliere. Dacă cumperi prin linkurile noastre,
+            primim un comision mic din partea retailerului, fără cost suplimentar pentru tine.
+          </p>
 
           {/* Grafic istoric pret */}
           <div>
