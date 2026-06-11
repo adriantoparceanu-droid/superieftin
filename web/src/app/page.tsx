@@ -89,7 +89,7 @@ export default async function HomePage() {
             <p className="text-xs text-muted">{totalProducts.toLocaleString('ro-RO')} produse monitorizate</p>
           )}
         </div>
-        <CategoryGrid activeCategories={categories} thumbs={thumbs} />
+        <CategoryGrid activeCategories={categories} />
       </section>
 
       {/* Top reduceri / cele mai mici preturi — carusel */}
