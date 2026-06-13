@@ -1,9 +1,12 @@
 import type { MetadataRoute } from 'next'
 import { getAllProductSlugs, getCategories } from '@/lib/queries'
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://superieftin.ro'
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.superieftin.ro'
 
-export const revalidate = 86400
+// Generat la runtime, nu la build: la build hostul `postgres` nu se rezolvă,
+// iar query-urile ar da eroare → sitemap gol. Datele sunt deja cache-uite 24h
+// prin unstable_cache în queries.ts, deci nu lovim DB la fiecare request.
+export const dynamic = 'force-dynamic'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [slugs, categories] = await Promise.all([

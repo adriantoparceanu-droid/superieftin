@@ -62,11 +62,11 @@ export default async function HomePage() {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: 'superieftin.ro',
-    url: 'https://superieftin.ro',
+    url: 'https://www.superieftin.ro',
     description: 'Comparator de prețuri cu istoric — reduceri reale pe piața din România',
     potentialAction: {
       '@type': 'SearchAction',
-      target: 'https://superieftin.ro/cautare?q={search_term_string}',
+      target: 'https://www.superieftin.ro/cautare?q={search_term_string}',
       'query-input': 'required name=search_term_string',
     },
   }

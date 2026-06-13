@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getProductsForFeed } from '@/lib/queries'
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://superieftin.ro'
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.superieftin.ro'
 
 const CATEGORY_MAP: Record<string, string> = {
   'telefoane-mobile': 'Electronics > Communications > Telephony > Mobile Phones',

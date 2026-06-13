@@ -74,7 +74,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
     return `/c/${categorie}${qs ? `?${qs}` : ''}`
   }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://superieftin.ro'
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.superieftin.ro'
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',

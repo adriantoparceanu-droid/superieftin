@@ -18,7 +18,7 @@ const instrumentSans = Instrument_Sans({
   display: 'swap',
 })
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://superieftin.ro'
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.superieftin.ro'
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

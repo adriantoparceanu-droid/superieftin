@@ -68,7 +68,7 @@ export default async function ProductPage({ params }: Props) {
     ? calculateDiscount(bestOffer.current_price, bestOffer.median_price)
     : null
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://superieftin.ro'
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.superieftin.ro'
 
   const jsonLd = {
     '@context': 'https://schema.org',

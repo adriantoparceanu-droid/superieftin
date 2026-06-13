@@ -10,7 +10,7 @@ export async function GET(
 
   const id = parseInt(offerId, 10)
   if (isNaN(id) || id <= 0) {
-    return NextResponse.redirect('https://superieftin.ro', { status: 302 })
+    return NextResponse.redirect('https://www.superieftin.ro', { status: 302 })
   }
 
   const result = await pool.query<{ affiliate_url: string | null; url: string }>(
@@ -19,7 +19,7 @@ export async function GET(
   )
 
   if (result.rows.length === 0) {
-    return NextResponse.redirect('https://superieftin.ro', { status: 302 })
+    return NextResponse.redirect('https://www.superieftin.ro', { status: 302 })
   }
 
   const { affiliate_url, url } = result.rows[0]
