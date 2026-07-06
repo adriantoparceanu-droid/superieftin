@@ -14,8 +14,11 @@ import pool from './lib/db.js'
 const logger = pino({ level: 'info' })
 
 // Feed-urile Profitshare se regenereaza in jurul orei 03:00 — sincronizam dupa.
+// Snapshot-ul de istoric ruleaza la finalul feed-sync-ului (preturi proaspete, fara resync).
 const FEED_SYNC_CRON = process.env.FEED_SYNC_CRON || '0 4 * * *'
 const PRICE_CHECK_INTERVAL_HOURS = parseFloat(process.env.PRICE_CHECK_INTERVAL_HOURS || '3')
+// Dupa feed-sync (04:00) — completeaza imaginile produselor noi de la CDN-uri blocate (Cloudflare).
+const IMAGE_BACKFILL_CRON = process.env.IMAGE_BACKFILL_CRON || '30 5 * * *'
 
 async function scheduleRepeatingJobs() {
   await syncQueue.add(
@@ -31,6 +34,13 @@ async function scheduleRepeatingJobs() {
     { repeat: { every: PRICE_CHECK_INTERVAL_HOURS * 3600 * 1000 }, jobId: 'price-check-repeat' }
   )
   logger.info({ interval: `${PRICE_CHECK_INTERVAL_HOURS}h` }, 'Job repeating programat: price-check')
+
+  await syncQueue.add(
+    'image-backfill',
+    { type: 'image-backfill' },
+    { repeat: { pattern: IMAGE_BACKFILL_CRON }, jobId: 'image-backfill-repeat' }
+  )
+  logger.info({ cron: IMAGE_BACKFILL_CRON }, 'Job repeating programat: image-backfill')
 }
 
 async function invalidateCache() {
@@ -41,6 +51,7 @@ async function invalidateCache() {
     const res = await fetch(`${siteUrl}/api/revalidate`, {
       method: 'POST',
       headers: { 'x-revalidate-secret': secret },
+      signal: AbortSignal.timeout(30000),  // altfel un site nereactiv blocheaza process.exit
     })
     if (res.ok) logger.info('Cache site invalidat')
     else logger.warn({ status: res.status }, 'Cache invalidation esuat')
@@ -51,7 +62,7 @@ async function invalidateCache() {
 
 // Rulare manuala imediata: npm run sync:now [-- --price-check | --file=/cale/feed.xml [--retailer=slug]]
 async function syncNow() {
-  const { runFeedSync, runPriceCheck, runFileImport } = await import('./workers/sync.worker.js')
+  const { runFeedSync, runPriceCheck, runPriceSnapshot, runFileImport, runImageBackfill } = await import('./workers/sync.worker.js')
   const fileArg = process.argv.find((a) => a.startsWith('--file='))?.split('=')[1]
   if (fileArg) {
     const retailerSlug = process.argv.find((a) => a.startsWith('--retailer='))?.split('=')[1]
@@ -60,6 +71,12 @@ async function syncNow() {
   } else if (process.argv.includes('--price-check')) {
     const result = await runPriceCheck()
     logger.info(result, 'price-check finalizat')
+  } else if (process.argv.includes('--image-backfill')) {
+    const result = await runImageBackfill()
+    logger.info(result, 'backfill imagini finalizat')
+  } else if (process.argv.includes('--snapshot')) {
+    const result = await runPriceSnapshot()
+    logger.info(result, 'snapshot preturi finalizat')
   } else {
     const result = await runFeedSync()
     logger.info(result, 'feed-sync finalizat')

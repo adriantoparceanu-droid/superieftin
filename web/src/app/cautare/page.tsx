@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { searchProducts, searchProductCount, PAGE_SIZE } from '@/lib/queries'
+import { searchProducts, searchProductCount, logSearch, PAGE_SIZE } from '@/lib/queries'
 import { TrackSearch } from '@/components/analytics/TrackSearch'
 import { ProductCard } from '@/components/ProductCard'
 import { Pagination } from '@/components/Pagination'
@@ -34,6 +34,9 @@ export default async function SearchPage({ searchParams }: Props) {
         searchProductCount(query),
       ])
     : [[], 0]
+
+  // Logheaza termenul o singura data per cautare (doar prima pagina), non-blocking.
+  if (query && currentPage === 1) void logSearch(query, totalCount)
 
   const totalPages = Math.ceil(totalCount / PAGE_SIZE)
 

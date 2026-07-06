@@ -8,7 +8,8 @@ export interface ImportedProduct {
   partNo: string | null
   imageUrl: string | null
   url: string
-  affiliateUrl: string
+  affiliateUrl: string | null      // null = neafiliat (se afiseaza fara comision)
+  affiliateNetwork: string | null  // reteaua din care provine linkul (NULL = neafiliat)
   price: number | null   // pret final cu TVA (cel redus, daca exista)
   inStock: boolean
 }

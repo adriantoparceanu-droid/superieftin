@@ -116,7 +116,8 @@ test('mapFeedRow — categoria devine slug auto, rand invalid e respins', () => 
   assert.equal(product.price, null)        // pret 0 = invalid
   assert.equal(product.partNo, null)
   assert.equal(product.inStock, false)
-  assert.equal(product.affiliateUrl, 'https://x.ro/y')  // fallback pe link direct
+  assert.equal(product.affiliateUrl, null)        // fara link in feed => neafiliat
+  assert.equal(product.affiliateNetwork, null)
 
   assert.equal(mapFeedRow({ ...base, productName: '' }), null)
   assert.equal(mapFeedRow({ ...base, link: '' }), null)

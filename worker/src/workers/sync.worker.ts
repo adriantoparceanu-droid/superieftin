@@ -5,10 +5,14 @@ import { join } from 'path'
 import { unlink } from 'fs/promises'
 import pool from '../lib/db.js'
 import { connection } from '../lib/queue.js'
-import { getAdvertisers, getFeeds, getProductsByPartNo, buildAffiliateUrl, type PsAdvertiser, type PsFeed } from '../lib/profitshare.js'
+import { getAdvertisers, getFeeds, getProductsByPartNo, PsApiError, type PsAdvertiser, type PsFeed } from '../lib/profitshare.js'
 import { downloadFeed, parseFeedFile, mapFeedRow } from '../importers/feed.js'
-import { upsertProduct, upsertOfferPrice } from '../lib/upsert.js'
+import { parseTpFeed, mapTpFeedRow } from '../importers/twoperformant-feed.js'
+import { upsertProduct, upsertOfferPrice, upsertRetailerByDomain } from '../lib/upsert.js'
 import { loadFeedRules, type RuleLookup } from '../lib/feedRules.js'
+import { resolver, syncAffiliateAdvertisers, extractDomain } from '../lib/affiliate/index.js'
+import { isBlockedImageHost, blockedImageHostRegex } from '../lib/images.js'
+import type { ImportedProduct } from '../lib/types.js'
 import { toSlug } from '../lib/slug.js'
 import { checkAndSendAlerts } from './alerts.worker.js'
 
@@ -17,12 +21,17 @@ const logger = pino({ level: 'info' })
 export type SyncJobData =
   | { type: 'feed-sync' }
   | { type: 'price-check' }
+  | { type: 'price-snapshot' }
+  | { type: 'image-backfill' }
   | { type: 'file-import'; filePath: string; retailerSlug?: string; filename?: string }
+  | { type: 'scrape'; scraperName: string }
 
 // Sub acest prag (fata de sincronizarea anterioara) un feed e considerat suspect si respins.
 const MIN_FEED_RATIO = 0.5
 // Cate produse prioritare verificam prin API per rulare (60 cereri/min => ~3 min la 150).
 const PRICE_CHECK_LIMIT = parseInt(process.env.PRICE_CHECK_LIMIT || '150')
+// Cate imagini blocate reparam prin API per rulare (60 cereri/min => ~10 min la 600).
+const IMAGE_BACKFILL_LIMIT = parseInt(process.env.IMAGE_BACKFILL_LIMIT || '600')
 // Ofertele nevazute in feed-uri de atatea zile se marcheaza fara stoc (istoricul ramane).
 const STALE_OFFER_DAYS = 3
 
@@ -66,7 +75,7 @@ async function recordFeedSync(params: {
   psUpdatedAt: Date | null
   productsCount: number
   status: 'success' | 'rejected'
-  source: 'profitshare' | 'upload'
+  source: 'profitshare' | 'upload' | 'scraper' | 'snapshot' | '2performant'
   filename?: string | null
   unmappedCount?: number | null
 }): Promise<void> {
@@ -75,6 +84,17 @@ async function recordFeedSync(params: {
     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
   `, [params.feedLink, params.feedName, params.psUpdatedAt, params.productsCount,
       params.status, params.source, params.filename ?? null, params.unmappedCount ?? null])
+}
+
+// Verifica afilierea pe baza domeniului si suprascrie linkul/reteaua produsului.
+// Daca rezolverul nu gaseste un advertiser, pastram ce a setat mapFeedRow (linkul din
+// feed, daca exista) — altfel produsul ramane neafiliat si se afiseaza fara comision.
+function applyAffiliate(product: ImportedProduct): void {
+  const aff = resolver.resolve(product.url)
+  if (aff) {
+    product.affiliateUrl = aff.affiliateUrl
+    product.affiliateNetwork = aff.network
+  }
 }
 
 // --- Sincronizare feed-uri ---------------------------------------------------
@@ -137,6 +157,7 @@ async function syncOneFeed(
         ?? retailerByName.values().next().value)!
       const rule = resolveRule(retailerId, product.feedCategory)
       if (!rule) unmapped++
+      applyAffiliate(product)
       try {
         await upsertProduct(product, retailerId, rule)
         imported++
@@ -175,6 +196,7 @@ export async function runFileImport(filePath: string, retailerSlug?: string, job
   const startTime = Date.now()
 
   const resolveRule = await loadFeedRules()
+  await resolver.refresh()  // import standalone: harta de advertiseri poate fi neincarcata
   const type = filePath.toLowerCase().endsWith('.csv') ? 'csv' : 'xml'
 
   const { rows: retailers } = await pool.query<{ id: number; name: string; slug: string }>(
@@ -204,6 +226,7 @@ export async function runFileImport(filePath: string, retailerSlug?: string, job
     }
     const rule = resolveRule(retailerId, product.feedCategory)
     if (!rule) unmapped++
+    applyAffiliate(product)
     try {
       await upsertProduct(product, retailerId, rule)
       touchedRetailers.add(retailerId)
@@ -242,6 +265,12 @@ export async function runFeedSync(jobId = 'direct') {
     getFeeds(),
     loadFeedRules(),
   ])
+
+  // Populeaza harta domeniu->advertiser (toate retelele) si o incarca in rezolver,
+  // ca afilierea sa se verifice la fiecare produs cu date proaspete.
+  await syncAffiliateAdvertisers()
+  await resolver.refresh()
+
   const advertisersById = new Map(advertisers.map((a) => [String(a.id), a]))
   const activeFeeds = feeds.filter((f) => f.status === 'active')
   log.info({ feeds: activeFeeds.length, advertisers: advertisers.length }, 'Sincronizare feed-uri pornita')
@@ -261,9 +290,19 @@ export async function runFeedSync(jobId = 'direct') {
     }
   }
 
+  // Feed-uri externe (produse 2Performant per advertiser), dupa feed-urile Profitshare.
+  const external = await syncExternalFeeds(resolveRule)
+  totalImported += external.imported
+  totalErrors += external.errors
+
+  // Dupa ce preturile proaspete au fost importate, consemneaza istoricul zilnic pentru toate
+  // ofertele cu pret (foloseste pretul curent proaspat — fara snapshot stale, fara resync).
+  // Garda de 20h din runPriceSnapshot sare peste ofertele deja consemnate de feed-sync.
+  const snapshot = await runPriceSnapshot(jobId)
+
   const duration = ((Date.now() - startTime) / 1000).toFixed(1)
-  log.info({ synced, totalImported, totalErrors, duration: `${duration}s` }, 'Sincronizare feed-uri finalizata')
-  return { synced, imported: totalImported, errors: totalErrors, duration }
+  log.info({ synced, totalImported, totalErrors, external: external.imported, snapshot: snapshot.recorded, duration: `${duration}s` }, 'Sincronizare feed-uri finalizata')
+  return { synced, imported: totalImported, errors: totalErrors, external: external.imported, snapshot: snapshot.recorded, duration }
 }
 
 // --- Verificare rapida de pret prin API (filters[part_no]) -------------------
@@ -271,6 +310,8 @@ export async function runFeedSync(jobId = 'direct') {
 export async function runPriceCheck(jobId = 'direct') {
   const log = logger.child({ job: jobId, task: 'price-check' })
   const startTime = Date.now()
+
+  await resolver.refresh()  // harta de advertiseri pentru afiliere
 
   // Produse prioritare: cu alerte active sau accesate recent, care au cod de produs
   const candidates = await pool.query<{ id: string; part_no: string; brand: string | null; slug: string }>(`
@@ -291,8 +332,8 @@ export async function runPriceCheck(jobId = 'direct') {
 
   log.info({ candidates: candidates.rows.length }, 'Verificare preturi pornita')
 
-  const retailers = await pool.query<{ id: number; ps_advertiser_id: number; scraper_config: any }>(`
-    SELECT id, ps_advertiser_id, scraper_config FROM retailers WHERE ps_advertiser_id IS NOT NULL
+  const retailers = await pool.query<{ id: number; ps_advertiser_id: number }>(`
+    SELECT id, ps_advertiser_id FROM retailers WHERE ps_advertiser_id IS NOT NULL
   `)
   const retailerByAdvId = new Map(retailers.rows.map((r) => [r.ps_advertiser_id, r]))
 
@@ -314,11 +355,13 @@ export async function runPriceCheck(jobId = 'direct') {
           if (!brandOk) continue
         }
 
-        const cfg = retailer.scraper_config || {}
-        const affiliateUrl = cfg.advertiserHash && cfg.affiliateHash
-          ? buildAffiliateUrl(psProduct.link, cfg.affiliateHash, cfg.advertiserHash)
-          : psProduct.link
-        await upsertOfferPrice(candidate.id, retailer.id, psProduct.price_vat, psProduct.link, affiliateUrl)
+        // Afilierea se rezolva pe domeniu (comision maxim intre retele); fara afiliere
+        // oferta se salveaza oricum, cu link brut.
+        const aff = resolver.resolve(psProduct.link)
+        await upsertOfferPrice(
+          candidate.id, retailer.id, psProduct.price_vat, psProduct.link,
+          aff?.affiliateUrl ?? null, aff?.network ?? null,
+        )
         updated++
       }
     } catch (err) {
@@ -332,6 +375,222 @@ export async function runPriceCheck(jobId = 'direct') {
   return { checked: candidates.rows.length, updated, errors, duration }
 }
 
+// --- Backfill imagini (CDN-uri blocate de Cloudflare) ------------------------
+
+// Repara imaginile produselor de la retaileri cu CDN blocat (forit.ro, vexio.ro): feed-ul da doar
+// URL-uri blocate (403 in browser), asa ca luam imaginea de pe CDN-ul Profitshare (profitsmart.ro)
+// prin API-ul affiliate-products si o salvam. Tinteste produsele fara imagine sau cu imagine blocata.
+// Ruleaza o data (backfill istoric) si periodic (produse noi ramase fara imagine dupa feed-sync).
+export async function runImageBackfill(jobId = 'direct') {
+  const log = logger.child({ job: jobId, task: 'image-backfill' })
+  const startTime = Date.now()
+
+  // Produse cu cod de produs care nu au o imagine utilizabila (lipsa sau pe host blocat),
+  // impreuna cu advertiserii Profitshare de la care sunt vandute (pentru a alege imaginea corecta).
+  const candidates = await pool.query<{ id: string; part_no: string; brand: string | null; adv_ids: number[] }>(`
+    SELECT p.id, p.part_no, p.brand,
+           array_agg(DISTINCT r.ps_advertiser_id) FILTER (WHERE r.ps_advertiser_id IS NOT NULL) AS adv_ids
+    FROM products p
+    JOIN offers o ON o.product_id = p.id
+    JOIN retailers r ON r.id = o.retailer_id
+    WHERE p.part_no IS NOT NULL
+      AND (p.image_url IS NULL OR p.image_url ~ $1)
+    GROUP BY p.id
+    LIMIT $2
+  `, [blockedImageHostRegex(), IMAGE_BACKFILL_LIMIT])
+
+  log.info({ candidates: candidates.rows.length }, 'Backfill imagini pornit')
+
+  // La depasirea limitei API (60/60s) asteptam si reincercam, altfel produsele lovite de
+  // rate-limit ar ramane nereparate pana la urmatoarea rulare.
+  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
+  async function fetchProducts(partNo: string) {
+    for (let attempt = 0; ; attempt++) {
+      try {
+        return await getProductsByPartNo(partNo)
+      } catch (err) {
+        if (err instanceof PsApiError && err.code === 'TOO_MANY_REQUESTS' && attempt < 3) {
+          await sleep(61000)
+          continue
+        }
+        throw err
+      }
+    }
+  }
+
+  let updated = 0, cleared = 0, notFound = 0, errors = 0
+  for (const c of candidates.rows) {
+    try {
+      const { products } = await fetchProducts(c.part_no)
+      const advIds = new Set(c.adv_ids ?? [])
+      // Preferam imaginea de la un advertiser al produsului; altfel una care confirma brandul
+      // (SKU-urile advertiserilor pot coincide pentru produse diferite). Doar imagini ne-blocate.
+      const usable = products.filter((p) => p.image && !isBlockedImageHost(p.image))
+      const byAdv = usable.find((p) => advIds.has(p.advertiser_id))
+      const byBrand = usable.find((p) =>
+        c.brand && p.name.toLowerCase().includes(c.brand.toLowerCase()))
+      // API-ul intoarce URL-uri http://; le urcam la https ca sa nu fie blocate ca mixed-content.
+      const image = (byAdv?.image ?? byBrand?.image ?? null)?.replace(/^http:\/\//, 'https://') ?? null
+      if (image) {
+        await pool.query('UPDATE products SET image_url = $2, updated_at = now() WHERE id = $1', [c.id, image])
+        updated++
+      } else {
+        // Fara alternativa in API: golim URL-ul blocat ca sa apara placeholder-ul curat in loc de
+        // imagine rupta. Ramane candidat la rulari viitoare daca API-ul o reindexeaza (image_url NULL).
+        const res = await pool.query(
+          `UPDATE products SET image_url = NULL, updated_at = now() WHERE id = $1 AND image_url ~ $2`,
+          [c.id, blockedImageHostRegex()])
+        if (res.rowCount) cleared++
+        notFound++
+      }
+    } catch (err) {
+      errors++
+      if (errors <= 5) log.error({ partNo: c.part_no, err }, 'Eroare backfill imagine')
+    }
+  }
+
+  const duration = ((Date.now() - startTime) / 1000).toFixed(1)
+  log.info({ checked: candidates.rows.length, updated, cleared, notFound, errors, duration: `${duration}s` }, 'Backfill imagini finalizat')
+  return { checked: candidates.rows.length, updated, cleared, notFound, errors, duration }
+}
+
+// --- Feed-uri externe (produse 2Performant per advertiser) -------------------
+
+// Importa feed-urile configurate in external_feeds (format 2Performant: <items><item>).
+// Produsele vin deja afiliate (aff_code din feed); retailerul se deduce din campaign_name.
+export async function syncExternalFeeds(resolveRule: RuleLookup): Promise<{ imported: number; errors: number }> {
+  const log = logger.child({ task: 'external-feeds' })
+  const { rows: feeds } = await pool.query<{ url: string; network: string; label: string | null }>(
+    `SELECT url, network, label FROM external_feeds WHERE is_active = true AND network = '2performant'`
+  )
+  let totalImported = 0, totalErrors = 0
+
+  for (const feed of feeds) {
+    const tmpFile = join(tmpdir(), `tp-feed-${Date.now()}.xml`)
+    const retailerByDomain = new Map<string, number>()
+    let imported = 0, errors = 0
+    try {
+      await downloadFeed(feed.url, tmpFile)
+      for await (const row of parseTpFeed(tmpFile)) {
+        const product = mapTpFeedRow(row)
+        if (!product) continue
+        const domain = extractDomain(row.campaignName)
+        if (!domain) continue
+        let retailerId = retailerByDomain.get(domain)
+        if (retailerId === undefined) {
+          retailerId = await upsertRetailerByDomain(domain, row.campaignName.trim())
+          retailerByDomain.set(domain, retailerId)
+        }
+        const rule = resolveRule(retailerId, product.feedCategory)
+        try {
+          await upsertProduct(product, retailerId, rule)
+          imported++
+        } catch (err) {
+          errors++
+          if (errors <= 5) log.error({ slug: product.slug, err }, 'Eroare upsert produs 2P')
+        }
+      }
+      // Ofertele disparute din feed de mai multe zile -> fara stoc
+      for (const retailerId of retailerByDomain.values()) {
+        await pool.query(`
+          UPDATE offers SET in_stock = false
+          WHERE retailer_id = $1 AND in_stock = true AND last_checked < now() - make_interval(days => $2)
+        `, [retailerId, STALE_OFFER_DAYS])
+      }
+      await recordFeedSync({
+        feedLink: feed.url, feedName: feed.label, psUpdatedAt: null,
+        productsCount: imported, status: 'success', source: '2performant',
+      })
+      log.info({ feed: feed.label, imported, errors }, 'Feed 2Performant importat')
+      totalImported += imported; totalErrors += errors
+    } catch (err) {
+      totalErrors++
+      log.error({ feed: feed.label, err }, 'Eroare import feed 2Performant')
+    } finally {
+      await unlink(tmpFile).catch(() => {})
+    }
+  }
+  return { imported: totalImported, errors: totalErrors }
+}
+
+// --- Snapshot zilnic de preturi (construieste istoricul) ---------------------
+
+// Creeaza partitiile lunare lipsa pentru price_history (luna curenta + urmatoarele 2).
+// Migratia 002 le creeaza doar la instalare; ruland zilnic, nu ramanem niciodata fara
+// partitia lunii in care urmeaza sa scriem.
+async function ensurePriceHistoryPartitions(): Promise<void> {
+  await pool.query(`
+    DO $$
+    DECLARE start_date DATE; end_date DATE; partition_name TEXT; i INT;
+    BEGIN
+      FOR i IN 0..2 LOOP
+        start_date := date_trunc('month', now() + (i || ' months')::INTERVAL)::DATE;
+        end_date   := (start_date + INTERVAL '1 month')::DATE;
+        partition_name := 'price_history_' || to_char(start_date, 'YYYY_MM');
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+          WHERE c.relname = partition_name AND n.nspname = 'public'
+        ) THEN
+          EXECUTE format('CREATE TABLE %I PARTITION OF price_history FOR VALUES FROM (%L) TO (%L)',
+            partition_name, start_date, end_date);
+        END IF;
+      END LOOP;
+    END $$;
+  `)
+}
+
+// Inregistreaza un punct de istoric pentru FIECARE oferta cu pret, o data pe zi.
+// Independent de feed-uri si de API — acopera si ofertele din feed-uri nesincronizate sau
+// scrapate, ca seria zilnica de preturi sa fie continua (scopul principal al site-ului).
+// Garda de 20h evita dublarea cand pretul a fost deja consemnat azi de feed-sync/price-check.
+export async function runPriceSnapshot(jobId = 'direct') {
+  const log = logger.child({ job: jobId, task: 'price-snapshot' })
+  const startTime = Date.now()
+  await ensurePriceHistoryPartitions()
+
+  const res = await pool.query(`
+    INSERT INTO price_history (offer_id, price, in_stock, recorded_at)
+    SELECT o.id, o.current_price, o.in_stock, now()
+    FROM offers o
+    WHERE o.current_price IS NOT NULL
+      AND NOT EXISTS (
+        SELECT 1 FROM price_history ph
+        WHERE ph.offer_id = o.id AND ph.recorded_at > now() - interval '20 hours'
+      )
+    ON CONFLICT DO NOTHING
+  `)
+  const recorded = res.rowCount ?? 0
+
+  // Apare in "Prospetime feed/scraper" si "Sincronizari recente" din admin.
+  await recordFeedSync({
+    feedLink: 'price-snapshot', feedName: 'Snapshot preturi (zilnic)', psUpdatedAt: null,
+    productsCount: recorded, status: 'success', source: 'snapshot',
+  })
+
+  const duration = ((Date.now() - startTime) / 1000).toFixed(1)
+  log.info({ recorded, duration: `${duration}s` }, 'Snapshot preturi finalizat')
+  return { recorded, duration }
+}
+
+// --- Scraping site-uri fara feed ---------------------------------------------
+
+export async function runScrape(scraperName: string, jobId = 'direct') {
+  const log = logger.child({ job: jobId, task: 'scrape', scraper: scraperName })
+  const { getScraper, ingestScraper } = await import('../scrapers/ingest.js')
+  const scraper = getScraper(scraperName)
+  if (!scraper) throw new Error(`Scraper necunoscut: '${scraperName}'`)
+  const result = await ingestScraper(scraper)
+
+  // Jurnalizeaza verificarea (apare in "Prospetime feed/scraper" din admin).
+  await recordFeedSync({
+    feedLink: `scraper:${scraper.name}`, feedName: scraper.name, psUpdatedAt: null,
+    productsCount: result.imported, status: 'success', source: 'scraper',
+  })
+
+  log.info(result, 'Scraping finalizat')
+  return result
+}
+
 // --- Worker BullMQ ------------------------------------------------------------
 
 async function invalidateSiteCache() {
@@ -341,6 +600,7 @@ async function invalidateSiteCache() {
   const res = await fetch(`${siteUrl}/api/revalidate`, {
     method: 'POST',
     headers: { 'x-revalidate-secret': secret },
+    signal: AbortSignal.timeout(30000),  // fara timeout, un site nereactiv ar tine workerul agatat
   })
   if (res.ok) logger.info('Cache site invalidat')
   else logger.warn({ status: res.status }, 'Cache invalidation esuat')
@@ -351,6 +611,9 @@ export function startSyncWorker() {
     'sync',
     async (job: Job<SyncJobData>) =>
       job.data.type === 'price-check' ? runPriceCheck(job.id)
+        : job.data.type === 'price-snapshot' ? runPriceSnapshot(job.id)
+        : job.data.type === 'image-backfill' ? runImageBackfill(job.id)
+        : job.data.type === 'scrape' ? runScrape(job.data.scraperName, job.id)
         : job.data.type === 'file-import' ? runFileImport(job.data.filePath, job.data.retailerSlug, job.id, job.data.filename)
             .finally(() => unlink((job.data as { filePath: string }).filePath).catch(() => {}))
         : runFeedSync(job.id),

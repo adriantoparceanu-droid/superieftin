@@ -46,11 +46,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <GoogleAnalytics />
       <body className="min-h-screen antialiased" style={{ background: 'var(--color-page)', color: 'var(--color-text)' }}>
         <Header />
-        <main className="max-w-6xl mx-auto px-4 py-6">
+        <main className="max-w-7xl mx-auto px-4 py-6">
           {children}
         </main>
         <footer className="mt-12 border-t border-line bg-surface">
-          <div className="max-w-6xl mx-auto px-4 py-6 flex flex-col gap-3">
+          <div className="max-w-7xl mx-auto px-4 py-6 flex flex-col gap-3">
             <p className="text-xs text-muted">
               superieftin.ro folosește linkuri de afiliere. Dacă cumperi prin linkurile noastre,
               primim un comision mic din partea retailerului, fără cost suplimentar pentru tine.

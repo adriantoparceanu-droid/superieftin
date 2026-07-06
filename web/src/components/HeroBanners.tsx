@@ -11,9 +11,9 @@ interface Props {
 // Hero in stil Porto: banner principal 2/3 + banner secundar 1/3, 100% CSS + date reale
 export function HeroBanners({ heroProduct, isRealDiscount, secondaryCategory }: Props) {
   return (
-    <section className="grid lg:grid-cols-3 gap-4 mb-6">
+    <section className={`grid gap-4 h-full ${secondaryCategory ? 'lg:grid-cols-3' : 'grid-cols-1'}`}>
       {/* Banner principal */}
-      <div className="lg:col-span-2 relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand to-brand-dark text-white p-7 sm:p-10 flex flex-col justify-between min-h-72">
+      <div className={`relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand to-brand-dark text-white p-7 sm:p-10 flex flex-col justify-between min-h-72 ${secondaryCategory ? 'lg:col-span-2' : ''}`}>
         <div className="relative z-10 max-w-md">
           <p className="text-xs font-bold uppercase tracking-widest text-white/80 mb-2">
             {isRealDiscount ? 'Verificat azi' : 'Monitorizat zilnic'}

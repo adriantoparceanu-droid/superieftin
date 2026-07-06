@@ -18,6 +18,31 @@ export interface PsAdvertiser {
   url: string
   advertiser_identifier: string  // hash advertiser pentru linkuri l.profitshare.ro
   affiliate_identifier: string   // hash-ul tau de afiliat
+  // Forma reala: obiect cu intrari numerotate { type, value: '1.00% - 20.00%' } plus o
+  // cheie 'affiliate_statuses' { active, approved }. Citit defensiv.
+  commissions?: Record<string, unknown>
+}
+
+// Comisionul reprezentativ al unui advertiser (maximul procentelor cunoscute), sau null.
+export function advertiserCommission(adv: PsAdvertiser): number | null {
+  const values: number[] = []
+  for (const [key, entry] of Object.entries(adv.commissions ?? {})) {
+    if (key === 'affiliate_statuses' || !entry || typeof entry !== 'object') continue
+    const value = (entry as { value?: unknown }).value
+    if (typeof value !== 'string') continue
+    for (const m of value.matchAll(/([\d.,]+)\s*%/g)) {
+      const n = parseFloat(m[1].replace(',', '.'))
+      if (!isNaN(n)) values.push(n)
+    }
+  }
+  return values.length ? Math.max(...values) : null
+}
+
+// 'active' doar daca esti aprobat in programul advertiserului (altfel linkul nu aduce
+// comision). Advertiserii neaprobati raman, dar nu produc link afiliat.
+export function advertiserStatus(adv: PsAdvertiser): string {
+  const st = adv.commissions?.affiliate_statuses as { active?: string; approved?: string } | undefined
+  return st?.approved === 'yes' && st?.active === 'yes' ? 'active' : 'inactive'
 }
 
 export interface PsFeed {

@@ -12,6 +12,7 @@ export async function POST(req: NextRequest) {
   revalidateTag('price-history', 'max')
   revalidateTag('categories', 'max')
   revalidateTag('menu', 'max')
+  revalidateTag('banners', 'max')
 
   return NextResponse.json({ revalidated: true })
 }

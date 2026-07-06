@@ -1,6 +1,25 @@
 import pool from './db.js'
 import type { ImportedProduct } from './types.js'
 import type { FeedRule } from './feedRules.js'
+import { toSlug } from './slug.js'
+
+// Creeaza/intoarce un retailer pentru un magazin fara feed (sursa: scraper). Spre deosebire
+// de advertiserii Profitshare, acesta nu are ps_advertiser_id — afilierea se rezolva ulterior
+// pe domeniu din affiliate_advertisers. Identificare dupa slug (derivat din domeniu).
+export async function upsertRetailerByDomain(domain: string, name?: string, baseUrl?: string): Promise<number> {
+  const slug = toSlug(domain.split('.')[0] || domain)
+  const displayName = name || domain
+  const base = baseUrl || `https://${domain}`
+
+  const existing = await pool.query<{ id: number }>('SELECT id FROM retailers WHERE slug = $1', [slug])
+  if (existing.rows[0]) return existing.rows[0].id
+
+  const inserted = await pool.query<{ id: number }>(`
+    INSERT INTO retailers (name, slug, base_url, is_active)
+    VALUES ($1, $2, $3, true) RETURNING id
+  `, [displayName, slug, base])
+  return inserted.rows[0].id
+}
 
 // Upsert tranzactional: products -> offers -> price_history.
 // Unificarea produselor intre retaileri: intai dupa (part_no, brand), apoi fallback pe slug.
@@ -75,16 +94,17 @@ export async function upsertProduct(product: ImportedProduct, retailerId: number
     const prevPrice = prev.rows[0]?.current_price ? parseFloat(prev.rows[0].current_price) : null
 
     const offerResult = await client.query<{ id: string }>(`
-      INSERT INTO offers (product_id, retailer_id, url, affiliate_url, current_price, in_stock, last_checked)
-      VALUES ($1, $2, $3, $4, $5, $6, now())
+      INSERT INTO offers (product_id, retailer_id, url, affiliate_url, affiliate_network, current_price, in_stock, last_checked)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, now())
       ON CONFLICT (product_id, retailer_id) DO UPDATE SET
         url = EXCLUDED.url,
         affiliate_url = EXCLUDED.affiliate_url,
+        affiliate_network = EXCLUDED.affiliate_network,
         current_price = EXCLUDED.current_price,
         in_stock = EXCLUDED.in_stock,
         last_checked = now()
       RETURNING id
-    `, [productId, retailerId, product.url, product.affiliateUrl, product.price, product.inStock])
+    `, [productId, retailerId, product.url, product.affiliateUrl, product.affiliateNetwork, product.price, product.inStock])
 
     const offerId = offerResult.rows[0].id
 
@@ -125,7 +145,8 @@ export async function upsertOfferPrice(
   retailerId: number,
   price: number,
   url: string,
-  affiliateUrl: string,
+  affiliateUrl: string | null,
+  affiliateNetwork: string | null = null,
 ): Promise<void> {
   const client = await pool.connect()
   try {
@@ -137,13 +158,15 @@ export async function upsertOfferPrice(
     const prevPrice = prev.rows[0]?.current_price ? parseFloat(prev.rows[0].current_price) : null
 
     const offerResult = await client.query<{ id: string }>(`
-      INSERT INTO offers (product_id, retailer_id, url, affiliate_url, current_price, in_stock, last_checked)
-      VALUES ($1, $2, $3, $4, $5, true, now())
+      INSERT INTO offers (product_id, retailer_id, url, affiliate_url, affiliate_network, current_price, in_stock, last_checked)
+      VALUES ($1, $2, $3, $4, $5, $6, true, now())
       ON CONFLICT (product_id, retailer_id) DO UPDATE SET
+        affiliate_url = EXCLUDED.affiliate_url,
+        affiliate_network = EXCLUDED.affiliate_network,
         current_price = EXCLUDED.current_price,
         last_checked = now()
       RETURNING id
-    `, [productId, retailerId, url, affiliateUrl, price])
+    `, [productId, retailerId, url, affiliateUrl, affiliateNetwork, price])
 
     if (price !== prevPrice) {
       await client.query(`

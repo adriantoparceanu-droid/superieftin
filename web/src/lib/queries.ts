@@ -45,6 +45,8 @@ export interface OfferRow {
 export interface PricePoint {
   price: number
   recorded_at: string
+  retailer_id: number
+  retailer_name: string
 }
 
 export interface CategoryInfo {
@@ -54,12 +56,24 @@ export interface CategoryInfo {
   icon?: string | null
 }
 
-// Filtru de categorie dupa slug, incluzand subcategoriile (parintele isi aduna copiii)
+// Filtru de categorie dupa slug, incluzand subcategoriile (parintele isi aduna copiii).
+// Folosit doar in modul optional "vezi tot" (?tot=1).
 const CATEGORY_FILTER_SQL = `
   p.category_id IN (
     SELECT c.id FROM categories c
     WHERE c.slug = $1 OR c.parent_id = (SELECT id FROM categories WHERE slug = $1)
   )`
+
+// Filtru strict: doar produsele categoriei selectate, fara subcategorii (drill-down).
+// Implicit pe paginile de categorie — clientul vede exact ce a ales; subcategoriile
+// se navigheaza separat, prin cardurile din pagina parinte.
+const CATEGORY_FILTER_DIRECT = `
+  p.category_id = (SELECT id FROM categories WHERE slug = $1)`
+
+// Alege filtrul in functie de modul (agregat vs strict).
+function categoryFilter(includeSub: boolean): string {
+  return includeSub ? CATEGORY_FILTER_SQL : CATEGORY_FILTER_DIRECT
+}
 
 // Top reduceri reale: produse cu pret curent sub mediana ultimelor 30 de zile
 export const getTopDiscounts = unstable_cache(
@@ -225,7 +239,8 @@ export const getCategoryProducts = unstable_cache(
     category: string,
     page = 1,
     sort: 'discount' | 'price' | 'name' = 'price',
-    brand: string | null = null
+    brand: string | null = null,
+    includeSub = false
   ): Promise<ProductWithDiscount[]> => {
     const offset = (page - 1) * PAGE_SIZE
     const orderBy = sort === 'discount'
@@ -266,7 +281,7 @@ export const getCategoryProducts = unstable_cache(
       JOIN offers o ON o.product_id = p.id
       JOIN retailers r ON r.id = o.retailer_id
       LEFT JOIN median_prices mp ON mp.offer_id = o.id
-      WHERE ${CATEGORY_FILTER_SQL}
+      WHERE ${categoryFilter(includeSub)}
         AND o.current_price IS NOT NULL
         AND o.in_stock = true
         AND ($4::text IS NULL OR p.brand = $4)
@@ -280,12 +295,12 @@ export const getCategoryProducts = unstable_cache(
 )
 
 export const getCategoryProductCount = unstable_cache(
-  async (category: string, brand: string | null = null): Promise<number> => {
+  async (category: string, brand: string | null = null, includeSub = false): Promise<number> => {
     const { rows } = await pool.query(`
       SELECT COUNT(DISTINCT p.id)::int AS count
       FROM products p
       JOIN offers o ON o.product_id = p.id
-      WHERE ${CATEGORY_FILTER_SQL}
+      WHERE ${categoryFilter(includeSub)}
         AND o.current_price IS NOT NULL
         AND o.in_stock = true
         AND ($2::text IS NULL OR p.brand = $2)
@@ -297,12 +312,12 @@ export const getCategoryProductCount = unstable_cache(
 )
 
 export const getCategoryBrands = unstable_cache(
-  async (category: string): Promise<string[]> => {
+  async (category: string, includeSub = false): Promise<string[]> => {
     const { rows } = await pool.query(`
       SELECT DISTINCT p.brand
       FROM products p
       JOIN offers o ON o.product_id = p.id
-      WHERE ${CATEGORY_FILTER_SQL}
+      WHERE ${categoryFilter(includeSub)}
         AND p.brand IS NOT NULL
         AND p.brand != ''
         AND o.current_price IS NOT NULL
@@ -313,6 +328,35 @@ export const getCategoryBrands = unstable_cache(
   },
   ['category-brands'],
   { revalidate: 3600, tags: ['products'] }
+)
+
+export interface SubcategoryInfo {
+  slug: string
+  name: string
+  icon: string | null
+  count: number
+}
+
+// Subcategoriile vizibile ale unei categorii (dupa slug-ul parintelui), fiecare cu numarul
+// de produse in stoc. Folosit pentru navigarea drill-down (carduri pe pagina parinte /
+// pastile de "surori" pe pagina unui copil). Doar cele cu produse.
+export const getSubcategories = unstable_cache(
+  async (parentSlug: string): Promise<SubcategoryInfo[]> => {
+    const { rows } = await pool.query<SubcategoryInfo>(`
+      SELECT c.slug, c.name, c.icon,
+             (SELECT COUNT(DISTINCT p.id)::int
+              FROM products p JOIN offers o ON o.product_id = p.id
+              WHERE p.category_id = c.id
+                AND o.current_price IS NOT NULL AND o.in_stock = true) AS count
+      FROM categories c
+      WHERE c.is_visible = true
+        AND c.parent_id = (SELECT id FROM categories WHERE slug = $1)
+      ORDER BY c.sort_order, c.id
+    `, [parentSlug])
+    return rows.filter((r) => r.count > 0)
+  },
+  ['subcategories'],
+  { revalidate: 3600, tags: ['categories', 'products'] }
 )
 
 // Pagina de produs: detalii + toate ofertele
@@ -370,9 +414,12 @@ export const getPriceHistory = unstable_cache(
     const { rows } = await pool.query<PricePoint>(`
       SELECT
         ph.price::float AS price,
-        ph.recorded_at::text AS recorded_at
+        ph.recorded_at::text AS recorded_at,
+        o.retailer_id,
+        r.name AS retailer_name
       FROM price_history ph
       JOIN offers o ON o.id = ph.offer_id
+      JOIN retailers r ON r.id = o.retailer_id
       WHERE o.product_id = $1
         AND ph.recorded_at >= now() - INTERVAL '90 days'
       ORDER BY ph.recorded_at ASC
@@ -428,30 +475,68 @@ export interface MenuItem {
   id: number
   label: string
   href: string
+  icon: string | null       // iconita categoriei (din /admin/categorii); null pt. link-uri custom
   parent_id: number | null
   children?: MenuItem[]
 }
 
-// Meniul site-ului, construit in /admin/meniu (2 niveluri)
+// Meniul site-ului, construit in /admin/meniu — arbore recursiv pe pana la 3 niveluri.
 export const getMenu = unstable_cache(
   async (): Promise<MenuItem[]> => {
-    const { rows } = await pool.query<{ id: number; label: string; category_slug: string | null; url: string | null; parent_id: number | null }>(`
-      SELECT m.id, m.label, c.slug AS category_slug, m.url, m.parent_id
+    const { rows } = await pool.query<{ id: number; label: string; category_slug: string | null; url: string | null; icon: string | null; parent_id: number | null }>(`
+      SELECT m.id, m.label, c.slug AS category_slug, m.url, c.icon, m.parent_id
       FROM menu_items m LEFT JOIN categories c ON c.id = m.category_id
       WHERE m.is_visible = true
       ORDER BY m.parent_id NULLS FIRST, m.sort_order, m.id
     `)
     const toHref = (r: { category_slug: string | null; url: string | null }) =>
       r.category_slug ? `/c/${r.category_slug}` : (r.url ?? '/')
-    const top = rows.filter((r) => !r.parent_id).map((r) => ({
-      id: r.id, label: r.label, href: toHref(r), parent_id: null,
-      children: rows.filter((ch) => ch.parent_id === r.id)
-        .map((ch) => ({ id: ch.id, label: ch.label, href: toHref(ch), parent_id: r.id })),
-    }))
-    return top
+
+    // Grupare pe parinte, pastrand ordinea din query (sort_order)
+    const byParent = new Map<number | null, typeof rows>()
+    for (const r of rows) {
+      if (!byParent.has(r.parent_id)) byParent.set(r.parent_id, [])
+      byParent.get(r.parent_id)!.push(r)
+    }
+    const build = (parentId: number | null): MenuItem[] =>
+      (byParent.get(parentId) ?? []).map((r) => {
+        const children = build(r.id)
+        return {
+          id: r.id, label: r.label, href: toHref(r), icon: r.icon, parent_id: parentId,
+          ...(children.length ? { children } : {}),
+        }
+      })
+    return build(null)
   },
   ['menu'],
   { revalidate: 3600, tags: ['menu'] }
+)
+
+export interface Banner {
+  id: number
+  slot: string                  // 'main' | 'small_left' | 'small_right'
+  type: 'image' | 'html'
+  title: string | null
+  image_url: string | null
+  link_url: string | null
+  alt: string | null
+  html: string | null
+}
+
+// Bannerul activ pentru fiecare slot de pe homepage (unul per slot, dupa ordine).
+// Gestionate din /admin/bannere. Returneaza o harta slot -> banner.
+export const getBanners = unstable_cache(
+  async (): Promise<Record<string, Banner>> => {
+    const { rows } = await pool.query<Banner>(`
+      SELECT DISTINCT ON (slot) id, slot, type, title, image_url, link_url, alt, html
+      FROM banners
+      WHERE is_active = true
+      ORDER BY slot, sort_order, id DESC
+    `)
+    return Object.fromEntries(rows.map((r) => [r.slot, r]))
+  },
+  ['banners'],
+  { revalidate: 3600, tags: ['banners'] }
 )
 
 // Imagine reprezentativa per categorie vizibila (pentru grila de pe homepage):
@@ -614,6 +699,19 @@ export async function trackClick(offerId: string): Promise<void> {
     await pool.query(
       'INSERT INTO click_events (offer_id) VALUES ($1)',
       [offerId]
+    )
+  } catch {
+    // Non-critical — tabelul poate sa nu existe inca
+  }
+}
+
+// Logheaza un termen cautat (pentru raportul "cele mai cautate" din admin).
+// Non-blocking: erorile se inghit, nu afecteaza raspunsul cautarii.
+export async function logSearch(term: string, resultsCount: number): Promise<void> {
+  try {
+    await pool.query(
+      'INSERT INTO search_queries (term, results_count) VALUES ($1, $2)',
+      [term.slice(0, 200), resultsCount]
     )
   } catch {
     // Non-critical — tabelul poate sa nu existe inca

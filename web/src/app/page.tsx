@@ -1,12 +1,15 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import {
-  getTopDiscounts, getCheapestProducts, getCategories, getCategoryThumbs,
-  getActiveRetailersPublic, getMenu, getCategoryProducts,
+  getTopDiscounts, getCheapestProducts, getCategories,
+  getActiveRetailersPublic, getMenu, getCategoryProducts, getBanners,
+  type Banner as BannerData,
 } from '@/lib/queries'
 import { ProductCard } from '@/components/ProductCard'
 import { ProductCarousel } from '@/components/ProductCarousel'
 import { CategoryGrid } from '@/components/CategoryGrid'
+import { CategoryMenu } from '@/components/CategoryMenu'
+import { Banner } from '@/components/Banner'
 import { HeroBanners } from '@/components/HeroBanners'
 import { BenefitsBar } from '@/components/BenefitsBar'
 import { RetailerStrip } from '@/components/RetailerStrip'
@@ -28,26 +31,26 @@ const FEATURED_SECTIONS = 3
 const SECTION_PRODUCTS = 6
 
 export default async function HomePage() {
-  const [discounts, cheapest, categories, thumbs, retailers, menu] = await Promise.all([
+  const [discounts, cheapest, categories, retailers, menu, banners] = await Promise.all([
     getTopDiscounts(12).catch(() => []),
     getCheapestProducts(12).catch(() => []),
     getCategories().catch(() => []),
-    getCategoryThumbs().catch(() => ({}) as Record<string, string>),
     getActiveRetailersPublic().catch(() => []),
     getMenu().catch(() => []),
+    getBanners().catch(() => ({} as Record<string, BannerData>)),
   ])
 
-  // Hero: produsul cu cea mai mare reducere reala; fallback pe cel mai mic pret cu imagine
+  const bannerMain = banners['main'] ?? null
+  const bannerSmalls = [banners['small_left'], banners['small_right']].filter(Boolean)
+
+  // Hero (fallback cand slotul mare n-are banner): produsul cu cea mai mare reducere reala
   const isRealDiscount = discounts.length > 0
   const heroProduct = discounts[0] ?? cheapest.find((p) => p.image_url) ?? null
 
-  // Banner secundar + sectiuni featured: primele categorii din meniul administrabil
+  // Sectiuni featured: primele categorii din meniul administrabil
   const menuCategories = menu
     .filter((m) => m.href.startsWith('/c/'))
     .map((m) => ({ label: m.label, slug: m.href.replace('/c/', '') }))
-  const secondaryCategory = menuCategories[0]
-    ? { name: menuCategories[0].label, slug: menuCategories[0].slug, image: thumbs[menuCategories[0].slug] ?? null }
-    : null
 
   const featured = menuCategories.slice(0, FEATURED_SECTIONS)
   const featuredProducts = await Promise.all(
@@ -75,22 +78,29 @@ export default async function HomePage() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
-      <div className="pt-4">
-        <HeroBanners heroProduct={heroProduct} isRealDiscount={isRealDiscount} secondaryCategory={secondaryCategory} />
+      {/* Rand principal stil Porto: meniu vertical (stanga) + coloana de bannere (dreapta):
+          un banner mare sus + doua mici sub el, toate administrabile din /admin/bannere.
+          Slotul mare cade pe hero-ul generat automat cat timp nu exista banner activ. */}
+      <div className="grid lg:grid-cols-[250px_1fr] gap-4 items-start pt-2 mb-6">
+        <CategoryMenu menu={menu} />
+        {/* Bannerele se incadreaza intr-un cadru de max 970px (dimensiune standard Profitshare/IAB);
+            continutul mai mic se scaleaza la latimea cadrului. Cele doua mici impart cadrul in doua. */}
+        <div className="flex flex-col gap-4 min-w-0 w-full max-w-[970px]">
+          {bannerMain ? (
+            <Banner banner={bannerMain} />
+          ) : (
+            <HeroBanners heroProduct={heroProduct} isRealDiscount={isRealDiscount} secondaryCategory={null} />
+          )}
+          {bannerSmalls.length > 0 && (
+            <div className="grid sm:grid-cols-2 gap-4">
+              {banners['small_left'] && <Banner banner={banners['small_left']} />}
+              {banners['small_right'] && <Banner banner={banners['small_right']} />}
+            </div>
+          )}
+        </div>
       </div>
 
       <BenefitsBar />
-
-      {/* Categorii cu imagini de produse */}
-      <section className="mb-10">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-bold font-archivo text-[var(--color-text)]">Categorii</h2>
-          {totalProducts > 0 && (
-            <p className="text-xs text-muted">{totalProducts.toLocaleString('ro-RO')} produse monitorizate</p>
-          )}
-        </div>
-        <CategoryGrid activeCategories={categories} />
-      </section>
 
       {/* Top reduceri / cele mai mici preturi — carusel */}
       <section className="mb-10">
@@ -106,6 +116,17 @@ export default async function HomePage() {
             Monitorizăm prețurile — reducerile reale apar pe măsură ce acumulăm date.
           </div>
         )}
+      </section>
+
+      {/* Departamente populare (categorii cu iconite) */}
+      <section id="toate-categoriile" className="mb-10 scroll-mt-20">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-bold font-archivo text-[var(--color-text)]">Departamente populare</h2>
+          {totalProducts > 0 && (
+            <p className="text-xs text-muted">{totalProducts.toLocaleString('ro-RO')} produse monitorizate</p>
+          )}
+        </div>
+        <CategoryGrid activeCategories={categories} />
       </section>
 
       {/* Sectiuni pe categorii (primele din meniul administrabil) */}

@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import crypto from 'crypto'
-import { buildSignatureString, buildAffiliateUrl } from './profitshare.js'
+import { buildSignatureString, buildAffiliateUrl, advertiserCommission, advertiserStatus, type PsAdvertiser } from './profitshare.js'
 
 // Vector de test cu valorile din documentatia oficiala (sectiunea Authentication).
 test('semnatura HMAC — constructia stringului conform documentatiei', () => {
@@ -26,4 +26,23 @@ test('semnatura HMAC — hash determinist (regresie pentru implementarea validat
 test('buildAffiliateUrl — formatul l.profitshare.ro cu redirect encodat', () => {
   const url = buildAffiliateUrl('https://www.emag.ro/telefon-x?a=1&b=2', 'piC', '9')
   assert.equal(url, 'https://l.profitshare.ro/lps/9/piC/?redirect=' + encodeURIComponent('https://www.emag.ro/telefon-x?a=1&b=2'))
+})
+
+// Forma reala a campului commissions (verificata pe API-ul live, advertiser eMAG).
+const emagAdv: PsAdvertiser = {
+  id: '35', name: 'eMAG.ro', logo: '', category: 'Retail', url: 'https://www.emag.ro/',
+  advertiser_identifier: '9', affiliate_identifier: 'piC',
+  commissions: { '0': { type: 'CPS', value: '1.00% - 20.00%' }, affiliate_statuses: { active: 'yes', approved: 'yes' } },
+}
+
+test('advertiserCommission — ia maximul din intervalul de procente', () => {
+  assert.equal(advertiserCommission(emagAdv), 20)
+  assert.equal(advertiserCommission({ ...emagAdv, commissions: { '0': { value: '5%' } } }), 5)
+  assert.equal(advertiserCommission({ ...emagAdv, commissions: undefined }), null)
+})
+
+test('advertiserStatus — active doar daca esti aprobat in program', () => {
+  assert.equal(advertiserStatus(emagAdv), 'active')
+  assert.equal(advertiserStatus({ ...emagAdv, commissions: { affiliate_statuses: { active: 'yes', approved: 'no' } } }), 'inactive')
+  assert.equal(advertiserStatus({ ...emagAdv, commissions: {} }), 'inactive')
 })

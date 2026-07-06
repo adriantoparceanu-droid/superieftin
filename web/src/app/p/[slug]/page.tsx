@@ -246,7 +246,13 @@ export default async function ProductPage({ params }: Props) {
               <h2 className="font-semibold text-[var(--color-text)]">Istoricul prețului (90 de zile)</h2>
               {history.length >= 2 && (
                 <Sparkline
-                  points={history.map(d => d.price)}
+                  points={Object.values(
+                    history.reduce<Record<string, number>>((acc, d) => {
+                      const day = d.recorded_at.slice(0, 10)
+                      acc[day] = acc[day] === undefined ? d.price : Math.min(acc[day], d.price)
+                      return acc
+                    }, {})
+                  )}
                   belowMedian={discountInfo?.verdict === 'real' || discountInfo?.verdict === 'good'}
                 />
               )}

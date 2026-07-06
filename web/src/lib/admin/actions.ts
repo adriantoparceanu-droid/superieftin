@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidateTag } from 'next/cache'
+import { revalidateTag, refresh } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'
@@ -20,10 +20,19 @@ function toSlug(name: string): string {
     .slice(0, 120)
 }
 
+// Invalideaza cache-ul site-ului public (date tag-uite) SI reimprospateaza router-ul
+// client, ca paginile de admin (date necachate) sa arate imediat starea noua fara refresh manual.
 function revalidateAll() {
   revalidateTag('products', 'max')
   revalidateTag('categories', 'max')
   revalidateTag('menu', 'max')
+  refresh()
+}
+
+// Ca revalidateAll, dar doar pentru meniu (header) + refresh admin.
+function revalidateMenu() {
+  revalidateTag('menu', 'max')
+  refresh()
 }
 
 // ---------- Autentificare ----------
@@ -56,11 +65,28 @@ export async function createCategoryAction(formData: FormData) {
   if (!name) return
   const parentId = formData.get('parent_id') ? Number(formData.get('parent_id')) : null
   const icon = String(formData.get('icon') ?? '').trim() || null
-  await pool.query(`
+  const inserted = await pool.query<{ id: number }>(`
     INSERT INTO categories (name, slug, parent_id, icon, sort_order)
     VALUES ($1, $2, $3, $4, (SELECT coalesce(max(sort_order), 0) + 1 FROM categories))
     ON CONFLICT (slug) DO NOTHING
+    RETURNING id
   `, [name, toSlug(name), parentId, icon])
+
+  // Categorie nouă → apare automat și în meniul din header (sub părinte, dacă acesta
+  // are deja un item de meniu). Se poate reordona/ascunde ulterior din /admin/meniu.
+  const categoryId = inserted.rows[0]?.id
+  if (categoryId) {
+    const menuParentId = parentId
+      ? (await pool.query<{ id: number }>(
+          'SELECT id FROM menu_items WHERE category_id = $1 ORDER BY id LIMIT 1', [parentId]
+        )).rows[0]?.id ?? null
+      : null
+    await pool.query(`
+      INSERT INTO menu_items (label, category_id, parent_id, sort_order, is_visible)
+      SELECT $1, $2, $3, (SELECT coalesce(max(sort_order), 0) + 1 FROM menu_items), true
+      WHERE NOT EXISTS (SELECT 1 FROM menu_items WHERE category_id = $2)
+    `, [name, categoryId, menuParentId])
+  }
   revalidateAll()
 }
 
@@ -87,27 +113,42 @@ export async function toggleCategoryVisibilityAction(formData: FormData) {
   revalidateAll()
 }
 
-export async function moveCategoryAction(formData: FormData) {
+// Persista intregul arbore de categorii dupa drag-and-drop (parinte + ordine per categorie).
+// Categoriile au maxim 2 niveluri (o categorie cu copii nu poate deveni subcategorie).
+export async function reorderCategoriesAction(
+  items: { id: number; parentId: number | null; sortOrder: number }[]
+) {
   await requireAdmin()
-  const id = Number(formData.get('id'))
-  const direction = String(formData.get('direction'))
-  if (!id) return
-  // Schimba sort_order cu vecinul (in cadrul aceluiasi parinte)
-  await pool.query(`
-    WITH current AS (SELECT id, parent_id, sort_order FROM categories WHERE id = $1),
-    neighbor AS (
-      SELECT c.id, c.sort_order FROM categories c, current cur
-      WHERE c.parent_id IS NOT DISTINCT FROM cur.parent_id
-        AND ${direction === 'up' ? 'c.sort_order < cur.sort_order' : 'c.sort_order > cur.sort_order'}
-      ORDER BY c.sort_order ${direction === 'up' ? 'DESC' : 'ASC'} LIMIT 1
-    )
-    UPDATE categories c SET sort_order = CASE
-      WHEN c.id = (SELECT id FROM current) THEN (SELECT sort_order FROM neighbor)
-      ELSE (SELECT sort_order FROM current)
-    END
-    WHERE c.id IN ((SELECT id FROM current), (SELECT id FROM neighbor))
-      AND EXISTS (SELECT 1 FROM neighbor)
-  `, [id])
+  if (!Array.isArray(items) || !items.length) return
+
+  const parentOf = new Map<number, number | null>(items.map((i) => [i.id, i.parentId]))
+  const depthOf = (id: number): number => {
+    let d = 0
+    let p = parentOf.get(id) ?? null
+    const seen = new Set<number>()
+    while (p != null && !seen.has(p)) { seen.add(p); d++; p = parentOf.get(p) ?? null }
+    return d
+  }
+  for (const it of items) {
+    if (depthOf(it.id) > 1) throw new Error('Categoriile pot avea maxim 2 niveluri')
+  }
+
+  const client = await pool.connect()
+  try {
+    await client.query('BEGIN')
+    for (const it of items) {
+      await client.query(
+        'UPDATE categories SET parent_id = $2, sort_order = $3 WHERE id = $1',
+        [it.id, it.parentId, it.sortOrder]
+      )
+    }
+    await client.query('COMMIT')
+  } catch (err) {
+    await client.query('ROLLBACK')
+    throw err
+  } finally {
+    client.release()
+  }
   revalidateAll()
 }
 
@@ -228,12 +269,12 @@ export async function createMenuItemAction(formData: FormData) {
   const categoryId = formData.get('category_id') ? Number(formData.get('category_id')) : null
   const url = String(formData.get('url') ?? '').trim() || null
   if (!label || (!categoryId && !url)) return
-  const parentId = formData.get('parent_id') ? Number(formData.get('parent_id')) : null
+  // Itemii noi se creeaza la nivel 1; imbricarea se face apoi prin drag-and-drop.
   await pool.query(`
     INSERT INTO menu_items (label, category_id, url, parent_id, sort_order)
-    VALUES ($1, $2, $3, $4, (SELECT coalesce(max(sort_order), 0) + 1 FROM menu_items))
-  `, [label, categoryId, categoryId ? null : url, parentId])
-  revalidateTag('menu', 'max')
+    VALUES ($1, $2, $3, NULL, (SELECT coalesce(max(sort_order), 0) + 1 FROM menu_items))
+  `, [label, categoryId, categoryId ? null : url])
+  revalidateMenu()
 }
 
 export async function toggleMenuItemAction(formData: FormData) {
@@ -241,30 +282,46 @@ export async function toggleMenuItemAction(formData: FormData) {
   const id = Number(formData.get('id'))
   if (!id) return
   await pool.query('UPDATE menu_items SET is_visible = NOT is_visible WHERE id = $1', [id])
-  revalidateTag('menu', 'max')
+  revalidateMenu()
 }
 
-export async function moveMenuItemAction(formData: FormData) {
+// Persista intregul arbore dupa drag-and-drop: noul parinte + ordine pentru fiecare item.
+// Valideaza adancimea (max 3 niveluri) chiar daca UI o impune deja.
+export async function reorderMenuAction(
+  items: { id: number; parentId: number | null; sortOrder: number }[]
+) {
   await requireAdmin()
-  const id = Number(formData.get('id'))
-  const direction = String(formData.get('direction'))
-  if (!id) return
-  await pool.query(`
-    WITH current AS (SELECT id, parent_id, sort_order FROM menu_items WHERE id = $1),
-    neighbor AS (
-      SELECT m.id, m.sort_order FROM menu_items m, current cur
-      WHERE m.parent_id IS NOT DISTINCT FROM cur.parent_id
-        AND ${direction === 'up' ? 'm.sort_order < cur.sort_order' : 'm.sort_order > cur.sort_order'}
-      ORDER BY m.sort_order ${direction === 'up' ? 'DESC' : 'ASC'} LIMIT 1
-    )
-    UPDATE menu_items m SET sort_order = CASE
-      WHEN m.id = (SELECT id FROM current) THEN (SELECT sort_order FROM neighbor)
-      ELSE (SELECT sort_order FROM current)
-    END
-    WHERE m.id IN ((SELECT id FROM current), (SELECT id FROM neighbor))
-      AND EXISTS (SELECT 1 FROM neighbor)
-  `, [id])
-  revalidateTag('menu', 'max')
+  if (!Array.isArray(items) || !items.length) return
+
+  const parentOf = new Map<number, number | null>(items.map((i) => [i.id, i.parentId]))
+  const depthOf = (id: number): number => {
+    let d = 0
+    let p = parentOf.get(id) ?? null
+    const seen = new Set<number>()
+    while (p != null && !seen.has(p)) { seen.add(p); d++; p = parentOf.get(p) ?? null }
+    return d
+  }
+  for (const it of items) {
+    if (depthOf(it.id) > 2) throw new Error('Adâncime maximă depășită (max 3 niveluri)')
+  }
+
+  const client = await pool.connect()
+  try {
+    await client.query('BEGIN')
+    for (const it of items) {
+      await client.query(
+        'UPDATE menu_items SET parent_id = $2, sort_order = $3 WHERE id = $1',
+        [it.id, it.parentId, it.sortOrder]
+      )
+    }
+    await client.query('COMMIT')
+  } catch (err) {
+    await client.query('ROLLBACK')
+    throw err
+  } finally {
+    client.release()
+  }
+  revalidateMenu()
 }
 
 export async function deleteMenuItemAction(formData: FormData) {
@@ -272,7 +329,7 @@ export async function deleteMenuItemAction(formData: FormData) {
   const id = Number(formData.get('id'))
   if (!id) return
   await pool.query('DELETE FROM menu_items WHERE id = $1', [id])
-  revalidateTag('menu', 'max')
+  revalidateMenu()
 }
 
 // ---------- Import feed ----------
@@ -315,6 +372,7 @@ export async function createAdminUserAction(formData: FormData) {
     VALUES ($1, $2, $3)
     ON CONFLICT (email) DO UPDATE SET password_hash = EXCLUDED.password_hash, is_active = true
   `, [email, hashPassword(password), name])
+  refresh()
 }
 
 export async function toggleAdminUserAction(formData: FormData) {
@@ -322,4 +380,83 @@ export async function toggleAdminUserAction(formData: FormData) {
   const id = Number(formData.get('id'))
   if (!id || id === current.id) return  // nu te dezactivezi singur
   await pool.query('UPDATE admin_users SET is_active = NOT is_active WHERE id = $1', [id])
+  refresh()
+}
+
+// ---------- Surse feed (external_feeds) ----------
+
+export async function addExternalFeedAction(formData: FormData) {
+  await requireAdmin()
+  const url = String(formData.get('url') ?? '').trim()
+  const network = String(formData.get('network') ?? '').trim() || '2performant'
+  const label = String(formData.get('label') ?? '').trim() || null
+  if (!/^https?:\/\//i.test(url)) return  // URL valid obligatoriu
+  await pool.query(
+    `INSERT INTO external_feeds (url, network, label) VALUES ($1, $2, $3)
+     ON CONFLICT (url) DO UPDATE SET network = EXCLUDED.network, label = EXCLUDED.label, is_active = true`,
+    [url, network, label]
+  )
+  refresh()
+}
+
+export async function toggleExternalFeedAction(formData: FormData) {
+  await requireAdmin()
+  const id = Number(formData.get('id'))
+  if (!id) return
+  await pool.query('UPDATE external_feeds SET is_active = NOT is_active WHERE id = $1', [id])
+  refresh()
+}
+
+export async function deleteExternalFeedAction(formData: FormData) {
+  await requireAdmin()
+  const id = Number(formData.get('id'))
+  if (!id) return
+  await pool.query('DELETE FROM external_feeds WHERE id = $1', [id])
+  refresh()
+}
+
+// ---------- Bannere homepage ----------
+
+function revalidateBanners() {
+  revalidateTag('banners', 'max')
+  refresh()
+}
+
+const BANNER_SLOTS = ['main', 'small_left', 'small_right']
+
+export async function createBannerAction(formData: FormData) {
+  await requireAdmin()
+  const slot = String(formData.get('slot') ?? '')
+  if (!BANNER_SLOTS.includes(slot)) return
+  const type = formData.get('type') === 'html' ? 'html' : 'image'
+  const title = String(formData.get('title') ?? '').trim() || null
+  const html = String(formData.get('html') ?? '').trim() || null
+  const imageUrl = String(formData.get('image_url') ?? '').trim() || null
+  const linkUrl = String(formData.get('link_url') ?? '').trim() || null
+  const alt = String(formData.get('alt') ?? '').trim() || null
+
+  // Nevalid daca lipseste continutul potrivit tipului ales
+  if (type === 'html' ? !html : !imageUrl) return
+
+  await pool.query(`
+    INSERT INTO banners (slot, type, title, image_url, link_url, alt, html, sort_order)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, (SELECT coalesce(max(sort_order), 0) + 1 FROM banners WHERE slot = $1))
+  `, [slot, type, title, imageUrl, linkUrl, alt, html])
+  revalidateBanners()
+}
+
+export async function toggleBannerAction(formData: FormData) {
+  await requireAdmin()
+  const id = Number(formData.get('id'))
+  if (!id) return
+  await pool.query('UPDATE banners SET is_active = NOT is_active, updated_at = now() WHERE id = $1', [id])
+  revalidateBanners()
+}
+
+export async function deleteBannerAction(formData: FormData) {
+  await requireAdmin()
+  const id = Number(formData.get('id'))
+  if (!id) return
+  await pool.query('DELETE FROM banners WHERE id = $1', [id])
+  revalidateBanners()
 }

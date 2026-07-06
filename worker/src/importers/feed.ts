@@ -2,6 +2,7 @@ import axios from 'axios'
 import { createReadStream, createWriteStream } from 'fs'
 import { parse } from 'csv-parse'
 import { toSlug } from '../lib/slug.js'
+import { isBlockedImageHost } from '../lib/images.js'
 import type { ImportedProduct } from '../lib/types.js'
 
 // Un rand de feed Profitshare, normalizat. CSV si XML au exact aceleasi campuri
@@ -137,8 +138,12 @@ export function mapFeedRow(row: FeedRow): ImportedProduct | null {
   const feedCategory = row.category.trim()
   const category = toSlug(feedCategory.toLowerCase() || 'diverse')
 
-  // Linkul afiliat din feed e protocol-relative (//profitshare.ro/...)
-  const affiliateUrl = row.affLink.startsWith('//') ? 'https:' + row.affLink : row.affLink
+  // Linkul afiliat din feed e protocol-relative (//profitshare.ro/...). Daca feed-ul nu
+  // are link afiliat, ramane null (neafiliat) — rezolverul poate completa ulterior din
+  // harta de advertiseri. Nu mai cadem pe URL-ul brut: acela nu aduce comision.
+  const affiliateUrl = row.affLink
+    ? (row.affLink.startsWith('//') ? 'https:' + row.affLink : row.affLink)
+    : null
 
   const price = parseFeedPrice(row.priceDiscountedVat) ?? parseFeedPrice(row.priceVat)
 
@@ -158,9 +163,12 @@ export function mapFeedRow(row: FeedRow): ImportedProduct | null {
     category,
     feedCategory,
     partNo: row.productCode || null,
-    imageUrl: row.picture || null,
+    // Imaginile de pe CDN-uri blocate de Cloudflare (forit.ro, vexio.ro) dau 403 in browser;
+    // le lasam null, iar runImageBackfill le completeaza de pe CDN-ul Profitshare via API.
+    imageUrl: row.picture && !isBlockedImageHost(row.picture) ? row.picture : null,
     url,
-    affiliateUrl: affiliateUrl || url,
+    affiliateUrl,
+    affiliateNetwork: affiliateUrl ? 'profitshare' : null,
     price,
     // Advertiserii folosesc valori variate ('in_stock', 'disponibil la comanda' etc.) —
     // tratam produsul ca disponibil daca nu e explicit epuizat

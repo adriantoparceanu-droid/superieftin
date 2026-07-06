@@ -290,7 +290,7 @@ Site indexabil de Google, cu pagini de produs care arată istoricul prețului, �
    - La cataloage mari: paginare sau generare în fișier static regenerat de worker după fiecare rulare de scraping.
    - Același feed e reutilizabil pentru Facebook/Instagram Catalog și alte comparatoare.
    - **Notă de politică (pentru utilizator, nu pentru cod):** Merchant Center standard cere ca pagina de destinație să permită cumpărarea directă — un site de afiliere intră de regulă prin programul CSS (Comparison Shopping Services) din UE, nu prin contul standard. Feedul se construiește acum; înscrierea în Merchant Center/CSS e o decizie de business separată, de verificat la momentul respectiv.
-8. Design simplu, rapid, mobile-first. Viteza percepută contează pentru SEO (Core Web Vitals).
+8. **Design:** toate deciziile vizuale (culori, tipografie, componente, microcopy) se iau din documentul separat `superieftin-design-brief.md` — citește-l înainte de a construi orice interfață. Mobile-first; viteza percepută contează pentru SEO (Core Web Vitals).
 
 ### Verificare Faza 3
 - Lighthouse: Performance și SEO peste 90 pe pagina de produs
@@ -344,6 +344,37 @@ Site indexabil de Google, cu pagini de produs care arată istoricul prețului, �
 
 ### Opțional (recomandat după primele deploy-uri manuale)
 GitHub Actions: workflow care la push pe `main` intră prin SSH pe VPS și rulează `./deploy.sh`. Deploy automat la fiecare push.
+
+---
+
+## FAZA 4.5 — Aliniere design (site live → design brief)
+
+> Context: site-ul a fost construit și pus live înainte ca `superieftin-design-brief.md` să fie aplicat. Această fază aliniază UI-ul existent la brief, **incremental, fără redesign big-bang**. Regula fazei: un pas = un commit = un deploy. Dacă ceva arată rău live, se face revert la un singur pas. Nicio explorare estetică în afara brief-ului.
+
+### Pasul 1 — Fundația (zero schimbări vizuale)
+Citește `superieftin-design-brief.md`. Fă un audit al UI-ului actual față de brief: lista locurilor cu culori/fonturi hardcodate și componentele care diferă. Apoi implementează doar atât: tokenii din brief în `tailwind.config` și CSS variables, plus încărcarea fonturilor Archivo Black și Instrument Sans cu `font-display: swap`. Nu modifica nicio componentă vizual. Salvează auditul în `design-audit.md` — e harta pașilor următori.
+
+**Verificare:** site-ul arată identic; tokenii există în config; auditul e salvat.
+
+### Pasul 2 — Eticheta de Verdict (componenta-semnătură)
+Construiește `PriceTag`, `VerdictBadge` și `Sparkline` conform secțiunii 4 din brief, exclusiv pe tokeni. Înlocuiește afișarea actuală de preț cu `PriceTag` pe cardul de produs și pe pagina de produs. `tabular-nums` obligatoriu pe toate cifrele.
+
+**Verificare (pe telefon real):** preț + verdict + sparkline se citesc instant; verde/roșu apar doar la verdict.
+
+### Pasul 3 — Cardul de produs și grila
+Aliniază `ProductCard` și grila la secțiunea 5 din brief: 2 coloane mobil / 3-4 desktop, imagine max 40% din card, CTA galben unic „Vezi la {retailer}", bordură `line` 1px, fără umbre grele.
+
+### Pasul 4 — Pagina de produs și homepage
+Pagina de produs: graficul mare de istoric (30/90 zile) cu prețul „vechi" pretins de retailer marcat pe grafic când e peste maximul real. Homepage: hero direct cu marfa („Cele mai mari reduceri REALE azi" + carduri), fără banner decorativ.
+
+### Pasul 5 — Microcopy + igienă
+Aplică secțiunea 6 din brief: verdictele formulate identic peste tot, butoanele spun ce fac, **nota de transparență afiliere în footer și pe pagina de produs** (obligație legală — dacă lipsește de pe site, acest punct se face PRIMUL, înaintea pașilor 1-4). Apoi secțiunea 7: `prefers-reduced-motion` respectat, focus vizibil pe tastatură.
+
+### Verificare Faza 4.5
+- Nicio culoare/font hardcodat rămas în componente (totul prin tokeni) — re-rulează auditul de la Pasul 1
+- Lighthouse pe pagina de produs live: Performance și SEO ≥ 90 pe mobil
+- Nota de afiliere vizibilă în footer și pe pagina de produs
+- Fluxul complet pe telefon real: homepage → categorie → produs → click retailer, fără elemente care „zgârie"
 
 ---
 
@@ -425,6 +456,6 @@ TELEGRAM_BOT_TOKEN=<botul de producție>
 
 1. Pune acest fișier în rădăcina proiectului local; Claude Code îl citește la începutul fiecărei sesiuni.
 2. Cere fazele pe rând: *„Citește superieftin-plan-proiect.md și implementează Faza 1"* — apoi verifici, apoi Faza 2, și tot așa.
-3. Nu trece la faza următoare până nu trec toate punctele de la „Verificare".
-4. VPS-ul și domeniul devin necesare abia la Faza 4 — până atunci totul rulează pe Mac cu DBngin.
+3. Nu trece la faza următoare până nu trec toate punctele de la „Verificare". Faza 4.5 (aliniere design) se execută după go-live, pas cu pas, un deploy per pas.
+4. VPS-ul și domeniul devin necesare abia la Faza 4 — până atunci totul rulează pe Mac cu DBngin. Documentul `superieftin-design-brief.md` stă lângă acest fișier și guvernează toate deciziile vizuale.
 5. Orice abatere de la plan (librărie diferită, schemă modificată) cere-i lui Claude Code să o justifice și actualizează acest document, ca el să rămână sursa de adevăr.

@@ -1,11 +1,12 @@
 'use client'
 
 import {
-  AreaChart,
-  Area,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   Tooltip,
+  Legend,
   ResponsiveContainer,
   ReferenceLine,
 } from 'recharts'
@@ -17,6 +18,9 @@ interface PriceHistoryChartProps {
   medianPrice: number | null
 }
 
+// Paleta de culori per retailer (prima e brandul).
+const COLORS = ['#E53E3E', '#3182CE', '#38A169', '#D69E2E', '#805AD5', '#DD6B20', '#319795', '#D53F8C']
+
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('ro-RO', { day: 'numeric', month: 'short' })
 }
@@ -26,34 +30,37 @@ function formatLei(value: number) {
 }
 
 export function PriceHistoryChart({ data, currentPrice, medianPrice }: PriceHistoryChartProps) {
-  if (data.length < 2) {
+  // Retailerii distincti, in ordinea aparitiei
+  const retailers = [...new Set(data.map(d => d.retailer_name))]
+
+  // Pivot pe zi: un rand per zi cu cate o coloana per retailer (ultimul pret din ziua aceea).
+  // Datele vin sortate crescator, deci ultima scriere = cel mai recent pret al zilei.
+  const byDay = new Map<string, Record<string, number | string>>()
+  for (const d of data) {
+    const dayKey = d.recorded_at.slice(0, 10)
+    let row = byDay.get(dayKey)
+    if (!row) { row = { fullDate: dayKey, date: formatDate(d.recorded_at) }; byDay.set(dayKey, row) }
+    row[d.retailer_name] = d.price
+  }
+  const chartData = [...byDay.values()].sort((a, b) => String(a.fullDate).localeCompare(String(b.fullDate)))
+
+  // Avem nevoie de cel putin 2 zile ca sa desenam o linie.
+  if (chartData.length < 2) {
     return (
       <div className="flex items-center justify-center h-32 rounded-lg text-sm text-muted" style={{ background: 'var(--color-page)' }}>
-        Date insuficiente — istoricul se construiește cu fiecare scraping.
+        Date insuficiente — istoricul se construiește cu fiecare verificare.
       </div>
     )
   }
-
-  const chartData = data.map(d => ({
-    date: formatDate(d.recorded_at),
-    price: d.price,
-    fullDate: d.recorded_at,
-  }))
 
   const prices = data.map(d => d.price)
   const minP = Math.floor(Math.min(...prices) * 0.97)
   const maxP = Math.ceil(Math.max(...prices) * 1.03)
 
   return (
-    <div className="w-full h-48">
+    <div className="w-full h-56">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-          <defs>
-            <linearGradient id="priceGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="var(--color-brand)" stopOpacity={0.15} />
-              <stop offset="95%" stopColor="var(--color-brand)" stopOpacity={0} />
-            </linearGradient>
-          </defs>
+        <LineChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
           <XAxis
             dataKey="date"
             tick={{ fontSize: 11, fill: '#718096' }}
@@ -70,10 +77,11 @@ export function PriceHistoryChart({ data, currentPrice, medianPrice }: PriceHist
             width={48}
           />
           <Tooltip
-            formatter={(value) => [typeof value === 'number' ? formatLei(value) : value, 'Preț']}
+            formatter={(value) => (typeof value === 'number' ? formatLei(value) : value)}
             labelFormatter={label => `Data: ${label}`}
             contentStyle={{ fontSize: 12, border: '1px solid var(--color-line)', borderRadius: 8, background: 'var(--color-surface)' }}
           />
+          <Legend wrapperStyle={{ fontSize: 12 }} />
           {medianPrice && (
             <ReferenceLine
               y={medianPrice}
@@ -90,16 +98,20 @@ export function PriceHistoryChart({ data, currentPrice, medianPrice }: PriceHist
               label={{ value: 'acum', position: 'insideBottomRight', fontSize: 10, fill: 'var(--color-brand)' }}
             />
           )}
-          <Area
-            type="monotone"
-            dataKey="price"
-            stroke="var(--color-brand)"
-            strokeWidth={2}
-            fill="url(#priceGrad)"
-            dot={false}
-            activeDot={{ r: 4, fill: 'var(--color-brand)' }}
-          />
-        </AreaChart>
+          {retailers.map((name, i) => (
+            <Line
+              key={name}
+              type="monotone"
+              dataKey={name}
+              name={name}
+              stroke={COLORS[i % COLORS.length]}
+              strokeWidth={2}
+              dot={false}
+              activeDot={{ r: 4 }}
+              connectNulls
+            />
+          ))}
+        </LineChart>
       </ResponsiveContainer>
     </div>
   )
