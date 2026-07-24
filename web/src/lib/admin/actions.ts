@@ -460,3 +460,96 @@ export async function deleteBannerAction(formData: FormData) {
   await pool.query('DELETE FROM banners WHERE id = $1', [id])
   revalidateBanners()
 }
+
+// ---------- Categorii scrapate eMAG (scraper_categories) ----------
+
+// Adauga o categorie de scanat eMAG SI leaga produsele direct la o categorie de site:
+// creeaza regula feed_category_map (retailer emag) pe un token stabil (feed_category), ca
+// produsele scanate sa fie mapate automat la prima rulare, fara mapare manuala ulterioara.
+export async function addScraperCategoryAction(formData: FormData) {
+  await requireAdmin()
+  const path = String(formData.get('path') ?? '').trim().replace(/^\/+|\/+$/g, '')
+  const label = String(formData.get('label') ?? '').trim()
+  const categoryId = Number(formData.get('category_id'))
+  const maxPages = Math.max(1, Math.min(20, Number(formData.get('max_pages')) || 3))
+  if (!path || !label || !categoryId) return
+
+  const emag = await pool.query<{ id: number }>(`SELECT id FROM retailers WHERE slug = 'emag'`)
+  const retailerId = emag.rows[0]?.id
+  if (!retailerId) return
+
+  // Token de feed determinist per categorie eMAG (path-ul), pe care se leaga regula de mapare.
+  const feedCategory = `emag:${path}`
+
+  const client = await pool.connect()
+  try {
+    await client.query('BEGIN')
+    await client.query(`
+      INSERT INTO scraper_categories (retailer_id, path, label, feed_category, max_pages)
+      VALUES ($1, $2, $3, $4, $5)
+      ON CONFLICT (retailer_id, path) DO UPDATE SET
+        label = EXCLUDED.label, feed_category = EXCLUDED.feed_category,
+        max_pages = EXCLUDED.max_pages, updated_at = now()
+    `, [retailerId, path, label, feedCategory, maxPages])
+
+    await client.query(`
+      INSERT INTO feed_category_map (retailer_id, feed_category, category_id, tag_ids)
+      VALUES ($1, $2, $3, '{}')
+      ON CONFLICT (COALESCE(retailer_id, 0), lower(feed_category))
+      DO UPDATE SET category_id = EXCLUDED.category_id
+    `, [retailerId, feedCategory, categoryId])
+    await client.query('COMMIT')
+  } catch (err) {
+    await client.query('ROLLBACK')
+    throw err
+  } finally {
+    client.release()
+  }
+  revalidateAll()
+}
+
+// Pune in coada worker-ului un refresh al catalogului de categorii disponibile (sitemap
+// eMAG) — cererea catre eMAG o face worker-ul, nu containerul web. Rezultatul apare in
+// pagina dupa cateva secunde (worker-ul trebuie sa ruleze).
+export async function refreshEmagCatalogAction() {
+  await requireAdmin()
+  const { Queue } = await import('bullmq')
+  const queue = new Queue('sync', {
+    connection: { url: process.env.REDIS_URL || 'redis://localhost:6379', maxRetriesPerRequest: null },
+  })
+  await queue.add('catalog-refresh', { type: 'catalog-refresh' })
+  await queue.close()
+  refresh()
+}
+
+export async function toggleScraperCategoryAction(formData: FormData) {
+  await requireAdmin()
+  const id = Number(formData.get('id'))
+  if (!id) return
+  await pool.query('UPDATE scraper_categories SET enabled = NOT enabled, updated_at = now() WHERE id = $1', [id])
+  refresh()
+}
+
+export async function updateScraperCategoryMaxPagesAction(formData: FormData) {
+  await requireAdmin()
+  const id = Number(formData.get('id'))
+  const maxPages = Math.max(1, Math.min(20, Number(formData.get('max_pages')) || 3))
+  if (!id) return
+  await pool.query('UPDATE scraper_categories SET max_pages = $2, updated_at = now() WHERE id = $1', [id, maxPages])
+  refresh()
+}
+
+export async function deleteScraperCategoryAction(formData: FormData) {
+  await requireAdmin()
+  const id = Number(formData.get('id'))
+  if (!id) return
+  // Sterge si regula de mapare creata pentru aceasta categorie (feed_category = token emag).
+  await pool.query(`
+    DELETE FROM feed_category_map m
+    USING scraper_categories sc
+    WHERE sc.id = $1 AND m.retailer_id = sc.retailer_id
+      AND lower(m.feed_category) = lower(sc.feed_category)
+  `, [id])
+  await pool.query('DELETE FROM scraper_categories WHERE id = $1', [id])
+  refresh()
+}

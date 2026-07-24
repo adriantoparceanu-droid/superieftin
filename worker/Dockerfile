@@ -6,6 +6,9 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY web/package.json ./web/
 COPY worker/package.json ./worker/
+# Playwright e folosit DOAR local (scraping eMAG de pe IP rezidential). In productie nu
+# descarcam browserul (WAF-ul blocheaza oricum IP-ul de datacenter) — imagine zvelta.
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 RUN npm ci
 
 # Surse worker + build TypeScript

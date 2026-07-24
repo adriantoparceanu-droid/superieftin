@@ -314,3 +314,93 @@ export async function getFeedFreshness(): Promise<FeedFreshnessRow[]> {
   // Cele mai vechi verificari primele (atrag atentia asupra surselor stagnante).
   return rows.sort((a, b) => b.age_seconds - a.age_seconds)
 }
+
+// ---------- Categorii scrapate (retaileri fara feed, ex. eMAG) ----------
+
+export interface ScraperCategoryRow {
+  id: number
+  retailer_id: number
+  retailer_name: string
+  path: string
+  label: string
+  feed_category: string
+  category_name: string | null   // categoria de site tinta (din feed_category_map)
+  max_pages: number
+  enabled: boolean
+}
+
+// Optiuni pentru selectorul de categorie-tinta: doar categoriile-frunza (fara copii),
+// etichetate „Parinte › Copil" ca sa fie clare in dropdown.
+export interface CategoryOption {
+  id: number
+  label: string
+}
+
+export async function getCategoryOptions(): Promise<CategoryOption[]> {
+  const { rows } = await pool.query<CategoryOption>(`
+    SELECT c.id,
+           CASE WHEN p.name IS NOT NULL THEN p.name || ' › ' || c.name ELSE c.name END AS label
+    FROM categories c
+    LEFT JOIN categories p ON p.id = c.parent_id
+    WHERE NOT EXISTS (SELECT 1 FROM categories ch WHERE ch.parent_id = c.id)
+    ORDER BY label
+  `)
+  return rows
+}
+
+export interface AvailableCategory {
+  path: string
+  label: string
+  taken: boolean   // exista deja in scraper_categories — nu se re-selecteaza
+}
+
+export interface AvailableCatalog {
+  categories: AvailableCategory[]
+  lastSyncedAt: Date | null
+}
+
+// Catalogul categoriilor disponibile pe eMAG (populat de worker din sitemap-ul oficial),
+// din care adminul alege ce se scaneaza — vezi available_scraper_categories (migratia 014).
+export async function getAvailableEmagCategories(): Promise<AvailableCatalog> {
+  const { rows } = await pool.query<AvailableCategory & { last_seen_at: Date }>(`
+    SELECT ac.path, ac.label, ac.last_seen_at,
+           EXISTS (
+             SELECT 1 FROM scraper_categories sc
+             WHERE sc.retailer_id = ac.retailer_id AND sc.path = ac.path
+           ) AS taken
+    FROM available_scraper_categories ac
+    JOIN retailers r ON r.id = ac.retailer_id
+    WHERE r.slug = 'emag'
+    ORDER BY ac.label
+  `)
+  const lastSyncedAt = rows.length
+    ? rows.reduce((max, r) => (r.last_seen_at > max ? r.last_seen_at : max), rows[0].last_seen_at)
+    : null
+  return {
+    categories: rows.map(({ path, label, taken }) => ({ path, label, taken })),
+    lastSyncedAt,
+  }
+}
+
+// Categoriile scrapate momentan tin doar de eMAG (singurul scraper inregistrat
+// in worker/src/scrapers/ingest.ts) — nu e un selector generic de retaileri.
+export async function getScraperCategories(): Promise<ScraperCategoryRow[]> {
+  const { rows } = await pool.query<ScraperCategoryRow>(`
+    SELECT sc.id, sc.retailer_id, r.name AS retailer_name, sc.path, sc.label,
+           sc.feed_category, sc.max_pages, sc.enabled,
+           cat.name AS category_name
+    FROM scraper_categories sc
+    JOIN retailers r ON r.id = sc.retailer_id
+    -- Regula de mapare aplicata: cea specifica retailerului are prioritate fata de cea globala.
+    LEFT JOIN LATERAL (
+      SELECT m.category_id FROM feed_category_map m
+      WHERE lower(m.feed_category) = lower(sc.feed_category)
+        AND (m.retailer_id = sc.retailer_id OR m.retailer_id IS NULL)
+      ORDER BY (m.retailer_id IS NOT NULL) DESC LIMIT 1
+    ) m ON true
+    LEFT JOIN categories cat ON cat.id = m.category_id
+    WHERE r.slug = 'emag'
+    ORDER BY sc.label
+  `)
+  return rows
+}

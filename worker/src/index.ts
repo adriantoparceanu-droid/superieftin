@@ -19,6 +19,8 @@ const FEED_SYNC_CRON = process.env.FEED_SYNC_CRON || '0 4 * * *'
 const PRICE_CHECK_INTERVAL_HOURS = parseFloat(process.env.PRICE_CHECK_INTERVAL_HOURS || '3')
 // Dupa feed-sync (04:00) — completeaza imaginile produselor noi de la CDN-uri blocate (Cloudflare).
 const IMAGE_BACKFILL_CRON = process.env.IMAGE_BACKFILL_CRON || '30 5 * * *'
+// Inainte de feed-sync, ca sa nu se suprapuna (scraping conservator, poate dura zeci de minute).
+const EMAG_SCRAPE_CRON = process.env.EMAG_SCRAPE_CRON || '0 2 * * *'
 
 async function scheduleRepeatingJobs() {
   await syncQueue.add(
@@ -41,6 +43,13 @@ async function scheduleRepeatingJobs() {
     { repeat: { pattern: IMAGE_BACKFILL_CRON }, jobId: 'image-backfill-repeat' }
   )
   logger.info({ cron: IMAGE_BACKFILL_CRON }, 'Job repeating programat: image-backfill')
+
+  await syncQueue.add(
+    'emag-scrape',
+    { type: 'scrape', scraperName: 'emag' },
+    { repeat: { pattern: EMAG_SCRAPE_CRON }, jobId: 'emag-scrape-repeat' }
+  )
+  logger.info({ cron: EMAG_SCRAPE_CRON }, 'Job repeating programat: emag-scrape')
 }
 
 async function invalidateCache() {
@@ -62,12 +71,18 @@ async function invalidateCache() {
 
 // Rulare manuala imediata: npm run sync:now [-- --price-check | --file=/cale/feed.xml [--retailer=slug]]
 async function syncNow() {
-  const { runFeedSync, runPriceCheck, runPriceSnapshot, runFileImport, runImageBackfill } = await import('./workers/sync.worker.js')
+  const { runFeedSync, runPriceCheck, runPriceSnapshot, runFileImport, runImageBackfill, runScrape, runCatalogRefresh } = await import('./workers/sync.worker.js')
   const fileArg = process.argv.find((a) => a.startsWith('--file='))?.split('=')[1]
   if (fileArg) {
     const retailerSlug = process.argv.find((a) => a.startsWith('--retailer='))?.split('=')[1]
     const result = await runFileImport(fileArg, retailerSlug)
     logger.info(result, 'import din fisier finalizat')
+  } else if (process.argv.includes('--scrape-emag')) {
+    const result = await runScrape('emag')
+    logger.info(result, 'scraping emag finalizat')
+  } else if (process.argv.includes('--catalog')) {
+    const result = await runCatalogRefresh()
+    logger.info(result, 'catalog categorii finalizat')
   } else if (process.argv.includes('--price-check')) {
     const result = await runPriceCheck()
     logger.info(result, 'price-check finalizat')

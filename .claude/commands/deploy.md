@@ -49,6 +49,23 @@ docker compose build <tinta>
 docker compose up -d <tinta>
 ```
 
+> ⚠️ **Dacă ai migrații noi** în `db/migrations/`: migrațiile sunt **baked în imagine**
+> (`COPY db ./db` în worker/Dockerfile), iar serviciul `migrate` NU e inclus în
+> `docker compose build web worker`. Trebuie reconstruit explicit ÎNAINTE de a rula
+> migrațiile, altfel `migrate` folosește o imagine veche și raportează „succes" fără să
+> aplice migrațiile noi:
+>
+> ```bash
+> docker compose --profile tools build migrate
+> docker compose --profile tools run --rm migrate   # ruleaza migratiile
+> ```
+>
+> Rulează migrațiile ÎNAINTE de `up -d` (codul nou poate depinde de schema/funcțiile noi).
+>
+> **Migrație care schimbă meniul/categoriile FĂRĂ rebuild de cod web**: `revalidateTag` nu
+> invalidează fiabil `unstable_cache`. Recreează containerul web pentru cache proaspăt:
+> `docker compose up -d --force-recreate web`.
+
 **Pasul 4 — Verificare**
 
 - Rulează `docker ps` și confirmă că containerele au status `Up`

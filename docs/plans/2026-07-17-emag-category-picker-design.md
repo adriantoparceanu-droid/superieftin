@@ -43,6 +43,19 @@ adminul alege dintr-o listă cu căutare, nu mai tastează path-uri.
 - Refresh automat la cadența scraper-ului existent (cron 02:00) — fără cron nou.
 - Fără ștergere la dispariția din sitemap — doar `last_seen_at` învechit.
 
+## Addendum — reorganizare taxonomie (aceeași zi)
+
+Selectorul a fost extins: în loc de câmp text „feed category", adminul alege **categoria de site
+țintă**, iar acțiunea creează automat regula `feed_category_map` (retailer emag, token `emag:<path>`).
+Reorganizarea meniului a intrat prin migrația `015_taxonomy_reorg.sql`:
+
+- Meniu pe 2 niveluri (Telefoane & Accesorii / Laptopuri & Calculatoare / TV & Audio).
+- Condiția (Refurbished/Second Hand) devine **tag**, nu categorie.
+- **Descoperire la verificare**: bulk-ul CITGrup (~18k „refurbished/second-hand") nu erau telefoane
+  cum presupunea planul, ci calculatoare/servere/workstation-uri/laptopuri amestecate sub o
+  categorie de feed. Split pe tip după denumire via funcția SQL `reclassify_catchall_products()`,
+  apelată și de worker după fiecare feed-sync.
+
 ## Testare
 
 - Teste unitare pentru parsarea sitemap-ului și derivarea etichetei (`emag-catalog.test.ts`,

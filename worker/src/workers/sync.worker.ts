@@ -25,6 +25,7 @@ export type SyncJobData =
   | { type: 'image-backfill' }
   | { type: 'file-import'; filePath: string; retailerSlug?: string; filename?: string }
   | { type: 'scrape'; scraperName: string }
+  | { type: 'catalog-refresh' }
 
 // Sub acest prag (fata de sincronizarea anterioara) un feed e considerat suspect si respins.
 const MIN_FEED_RATIO = 0.5
@@ -294,6 +295,15 @@ export async function runFeedSync(jobId = 'direct') {
   const external = await syncExternalFeeds(resolveRule)
   totalImported += external.imported
   totalErrors += external.errors
+
+  // Bulk-ul catch-all (CITGrup: refurbished/second-hand cu tipuri amestecate sub o singura
+  // categorie de feed) se imparte pe tip dupa denumire + tag de conditie. Best-effort:
+  // functia e creata de migratia 015; daca lipseste, sync-ul nu trebuie sa cada.
+  try {
+    await pool.query('SELECT reclassify_catchall_products()')
+  } catch (err) {
+    log.warn({ err }, 'Reclasificare catch-all esuata (migratia 015 aplicata?)')
+  }
 
   // Dupa ce preturile proaspete au fost importate, consemneaza istoricul zilnic pentru toate
   // ofertele cu pret (foloseste pretul curent proaspat — fara snapshot stale, fara resync).
@@ -574,6 +584,15 @@ export async function runPriceSnapshot(jobId = 'direct') {
 
 // --- Scraping site-uri fara feed ---------------------------------------------
 
+// Improspateaza catalogul de categorii disponibile (selectorul din admin/scraper-categorii).
+export async function runCatalogRefresh(jobId = 'direct') {
+  const log = logger.child({ job: jobId, task: 'catalog-refresh' })
+  const { syncEmagCategoryCatalog } = await import('../scrapers/emag-catalog.js')
+  const result = await syncEmagCategoryCatalog()
+  log.info(result, 'Catalog categorii actualizat')
+  return result
+}
+
 export async function runScrape(scraperName: string, jobId = 'direct') {
   const log = logger.child({ job: jobId, task: 'scrape', scraper: scraperName })
   const { getScraper, ingestScraper } = await import('../scrapers/ingest.js')
@@ -614,6 +633,7 @@ export function startSyncWorker() {
         : job.data.type === 'price-snapshot' ? runPriceSnapshot(job.id)
         : job.data.type === 'image-backfill' ? runImageBackfill(job.id)
         : job.data.type === 'scrape' ? runScrape(job.data.scraperName, job.id)
+        : job.data.type === 'catalog-refresh' ? runCatalogRefresh(job.id)
         : job.data.type === 'file-import' ? runFileImport(job.data.filePath, job.data.retailerSlug, job.id, job.data.filename)
             .finally(() => unlink((job.data as { filePath: string }).filePath).catch(() => {}))
         : runFeedSync(job.id),

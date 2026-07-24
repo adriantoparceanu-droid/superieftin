@@ -9,7 +9,9 @@
     "price-check:now": "tsx --env-file=/Users/cosmin/Documents/Claude/Superieftin.ro/.env src/index.ts --now --price-check",
     "snapshot:now": "tsx --env-file=/Users/cosmin/Documents/Claude/Superieftin.ro/.env src/index.ts --now --snapshot",
     "backfill-images:now": "tsx --env-file=/Users/cosmin/Documents/Claude/Superieftin.ro/.env src/index.ts --now --image-backfill",
-    "test": "tsx --test src/lib/profitshare.test.ts src/lib/password.test.ts src/importers/feed.test.ts src/lib/affiliate/affiliate.test.ts src/lib/twoperformant.test.ts",
+    "scrape-emag:now": "tsx --env-file=/Users/cosmin/Documents/Claude/Superieftin.ro/.env src/index.ts --now --scrape-emag",
+    "catalog:now": "tsx --env-file=/Users/cosmin/Documents/Claude/Superieftin.ro/.env src/index.ts --now --catalog",
+    "test": "tsx --test src/lib/profitshare.test.ts src/lib/password.test.ts src/importers/feed.test.ts src/lib/affiliate/affiliate.test.ts src/lib/twoperformant.test.ts src/scrapers/emag-catalog.test.ts",
     "admin:create": "tsx --env-file=/Users/cosmin/Documents/Claude/Superieftin.ro/.env src/scripts/create-admin.ts",
     "build": "tsc",
     "start": "node dist/index.js"
@@ -17,6 +19,7 @@
   "dependencies": {
     "axios": "^1.17.0",
     "bullmq": "^5.56.4",
+    "cheerio": "^1.2.0",
     "csv-parse": "^6.2.1",
     "dotenv": "^16.4.5",
     "ioredis": "^5.6.1",
@@ -26,6 +29,7 @@
   "devDependencies": {
     "@types/node": "^22.19.20",
     "@types/pg": "^8.20.0",
+    "playwright": "^1.61.1",
     "tsx": "^4.22.4",
     "typescript": "^5.9.3"
   }

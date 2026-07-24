@@ -1,14 +1,14 @@
 import pino from 'pino'
 import { upsertProduct, upsertRetailerByDomain } from '../lib/upsert.js'
 import { loadFeedRules } from '../lib/feedRules.js'
-import { resolver } from '../lib/affiliate/index.js'
+import { resolver, syncAffiliateAdvertisers } from '../lib/affiliate/index.js'
+import { EmagScraper } from './emag.js'
 import type { Scraper } from './types.js'
 
 const logger = pino({ level: 'info' })
 
-// Registry de scrapere. Inregistreaza aici scraperele concrete pe masura ce le construiesti.
-// Ex: import { EmagScraper } from './emag.js'; export const scrapers = [new EmagScraper()]
-export const scrapers: Scraper[] = []
+// Registry de scrapere.
+export const scrapers: Scraper[] = [new EmagScraper()]
 
 export function getScraper(name: string): Scraper | undefined {
   return scrapers.find((s) => s.name === name)
@@ -24,6 +24,8 @@ export async function ingestScraper(scraper: Scraper): Promise<{ imported: numbe
     loadFeedRules(),
     upsertRetailerByDomain(scraper.domain, undefined, `https://${scraper.domain}`),
   ])
+  // Date proaspete din API (nu doar cache-ul DB) — altfel afilierea ar folosi un hash stale.
+  await syncAffiliateAdvertisers()
   await resolver.refresh()
 
   let imported = 0, errors = 0, affiliated = 0
