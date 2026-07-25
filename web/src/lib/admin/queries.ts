@@ -404,3 +404,29 @@ export async function getScraperCategories(): Promise<ScraperCategoryRow[]> {
   `)
   return rows
 }
+
+export interface EmagSyncStatusRow {
+  category_name: string
+  product_count: number
+  last_synced: Date | null   // cand a ajuns pe acest server (updated_at la ultimul sync)
+  last_scraped: Date | null  // cand a fost scanat de la eMAG (last_checked al ofertei)
+}
+
+// Stare sincronizare eMAG pe ACEST server (pe prod = ce e live). Grupat pe categoria
+// de site a produsului. eMAG se scaneaza local si se urca prin sync-emag-to-live.sh.
+export async function getEmagSyncStatus(): Promise<EmagSyncStatusRow[]> {
+  const { rows } = await pool.query<EmagSyncStatusRow>(`
+    SELECT COALESCE(c.name, p.category, '(nemapat)') AS category_name,
+           COUNT(*)::int    AS product_count,
+           MAX(p.updated_at) AS last_synced,
+           MAX(o.last_checked) AS last_scraped
+    FROM offers o
+    JOIN retailers r ON r.id = o.retailer_id
+    JOIN products  p ON p.id = o.product_id
+    LEFT JOIN categories c ON c.id = p.category_id
+    WHERE r.slug = 'emag'
+    GROUP BY COALESCE(c.name, p.category, '(nemapat)')
+    ORDER BY product_count DESC
+  `)
+  return rows
+}

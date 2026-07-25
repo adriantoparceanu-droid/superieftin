@@ -4,15 +4,27 @@ import {
   updateScraperCategoryMaxPagesAction,
   deleteScraperCategoryAction,
 } from '@/lib/admin/actions'
-import { getScraperCategories, getAvailableEmagCategories, getCategoryOptions } from '@/lib/admin/queries'
+import { getScraperCategories, getAvailableEmagCategories, getCategoryOptions, getEmagSyncStatus } from '@/lib/admin/queries'
 import ScraperCategoryPicker from '@/components/admin/ScraperCategoryPicker'
 
+function fmt(d: Date | null): string {
+  return d ? new Date(d).toLocaleString('ro-RO', { dateStyle: 'short', timeStyle: 'short' }) : '—'
+}
+
 export default async function ScraperCategoriiPage() {
-  const [categories, catalog, categoryOptions] = await Promise.all([
+  const [categories, catalog, categoryOptions, syncStatus] = await Promise.all([
     getScraperCategories(),
     getAvailableEmagCategories(),
     getCategoryOptions(),
+    getEmagSyncStatus(),
   ])
+
+  const totalProducts = syncStatus.reduce((s, r) => s + r.product_count, 0)
+  const lastSync = syncStatus.reduce<Date | null>((max, r) => {
+    if (!r.last_synced) return max
+    const d = new Date(r.last_synced)
+    return !max || d > max ? d : max
+  }, null)
 
   return (
     <div className="max-w-4xl">
@@ -21,6 +33,45 @@ export default async function ScraperCategoriiPage() {
         eMAG nu oferă feed de produse — categoriile de mai jos sunt singurele scanate de scraper (nu tot site-ul).
         Dezactivează o categorie ca s-o scoți din scanare fără s-o ștergi, sau ajustează numărul de pagini
         (afectează direct câte produse și câte cereri se fac la eMAG per rulare).
+      </p>
+
+      {/* Stare sincronizare — ce e LIVE pe acest server. eMAG se scaneaza local si se urca
+          prin sync-emag-to-live.sh (automat zilnic la 07:00). */}
+      <div className="bg-white border border-line rounded-xl overflow-hidden mb-6">
+        <div className="px-4 py-3 border-b border-line bg-surface flex items-center justify-between">
+          <h2 className="font-semibold">Stare sincronizare (live)</h2>
+          <span className="text-sm text-muted">
+            {totalProducts.toLocaleString('ro-RO')} produse · ultimul sync: <strong>{fmt(lastSync)}</strong>
+          </span>
+        </div>
+        <table className="w-full text-sm">
+          <thead className="bg-surface text-left text-muted">
+            <tr>
+              <th className="px-4 py-2">Categorie</th>
+              <th className="px-4 py-2 text-right">Produse live</th>
+              <th className="px-4 py-2">Ultimul sync (pe live)</th>
+              <th className="px-4 py-2">Ultima scanare (eMAG)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {syncStatus.map((r) => (
+              <tr key={r.category_name} className="border-t border-line">
+                <td className="px-4 py-2 font-medium">{r.category_name}</td>
+                <td className="px-4 py-2 text-right">{r.product_count.toLocaleString('ro-RO')}</td>
+                <td className="px-4 py-2 text-muted">{fmt(r.last_synced)}</td>
+                <td className="px-4 py-2 text-muted">{fmt(r.last_scraped)}</td>
+              </tr>
+            ))}
+            {syncStatus.length === 0 && (
+              <tr><td colSpan={4} className="px-4 py-6 text-center text-muted">Niciun produs eMAG sincronizat încă.</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <p className="text-xs text-muted mb-3">
+        Notă: catalogul și adăugarea de categorii de mai jos funcționează doar în admin-ul <strong>local</strong>
+        (scraper-ul rulează local, pe IP rezidențial). Pe live, tabelul de mai sus e cel relevant.
       </p>
 
       <form action={refreshEmagCatalogAction} className="flex items-center gap-3 mb-3">
