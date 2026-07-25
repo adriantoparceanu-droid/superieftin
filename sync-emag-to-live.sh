@@ -31,7 +31,7 @@ trap 'rm -rf "$DUMP_DIR"' EXIT
 
 echo "==> [1/4] Export oferte eMAG din DB local..."
 psql "$LOCAL_DB" --csv -c "
-  SELECT p.slug, p.name, p.category, p.brand, p.image_url,
+  SELECT p.slug, p.name, p.category, p.feed_category, p.part_no, p.brand, p.image_url,
          o.url, o.affiliate_url, o.current_price, o.currency, o.in_stock, o.last_checked
   FROM offers o
   JOIN retailers r ON r.id = o.retailer_id
@@ -51,17 +51,29 @@ SQL_FILE="$DUMP_DIR/upsert.sql"
 {
   echo "BEGIN;"
   echo "CREATE TEMP TABLE emag_stg ("
-  echo "  slug text, name text, category text, brand text, image_url text,"
+  echo "  slug text, name text, category text, feed_category text, part_no text,"
+  echo "  brand text, image_url text,"
   echo "  url text, affiliate_url text, current_price numeric, currency text,"
   echo "  in_stock boolean, last_checked timestamptz"
   echo ") ON COMMIT DROP;"
-  echo "COPY emag_stg (slug, name, category, brand, image_url, url, affiliate_url, current_price, currency, in_stock, last_checked) FROM STDIN WITH (FORMAT csv, HEADER true);"
+  echo "COPY emag_stg (slug, name, category, feed_category, part_no, brand, image_url, url, affiliate_url, current_price, currency, in_stock, last_checked) FROM STDIN WITH (FORMAT csv, HEADER true);"
   cat "$DUMP_DIR/emag.csv"
   echo "\\."
-  # Produse noi (nu suprascriem produse canonice existente ale altor retaileri)
-  echo "INSERT INTO products (name, slug, category, brand, image_url)"
-  echo "SELECT DISTINCT ON (slug) name, slug, category, brand, image_url FROM emag_stg"
-  echo "ON CONFLICT (slug) DO NOTHING;"
+  # Produse: category_id se rezolva pe prod din slug-ul categoriei (id-urile pot diferi
+  # intre local si prod, slug-ul e stabil). category_id NULL = 'nemapat' in admin.
+  # NU sincronizam part_no: exista index unic (part_no, brand) care ar declansa unificarea
+  # cross-retailer (ex. acelasi MPN Apple la eMAG si alt retailer) — asta se face la ingest
+  # local, nu intr-un sync SQL naiv. Ofertele eMAG raman de-sine-statatoare pe prod.
+  echo "INSERT INTO products (name, slug, category, category_id, feed_category, brand, image_url)"
+  echo "SELECT DISTINCT ON (s.slug) s.name, s.slug, s.category,"
+  echo "       (SELECT c.id FROM categories c WHERE c.slug = s.category),"
+  echo "       s.feed_category, s.brand, s.image_url"
+  echo "FROM emag_stg s ORDER BY s.slug"
+  echo "ON CONFLICT (slug) DO UPDATE SET"
+  echo "  category      = COALESCE(EXCLUDED.category, products.category),"
+  echo "  category_id   = COALESCE(products.category_id, EXCLUDED.category_id),"
+  echo "  feed_category = COALESCE(products.feed_category, EXCLUDED.feed_category),"
+  echo "  updated_at    = now();"
   # Oferte eMAG: upsert dupa (product_id, retailer_id)
   echo "INSERT INTO offers (product_id, retailer_id, url, affiliate_url, current_price, currency, in_stock, last_checked)"
   echo "SELECT p.id, (SELECT id FROM retailers WHERE slug='emag'),"
@@ -86,3 +98,8 @@ ssh "$VPS_HOST" "cd $VPS_APP && $PSQL_PROD -c \"
   SELECT r.slug, COUNT(*) AS oferte
   FROM offers o JOIN retailers r ON r.id=o.retailer_id
   GROUP BY r.slug ORDER BY oferte DESC;\""
+# Mapare: cate produse eMAG au ramas nemapate (category_id NULL) — ar trebui 0
+ssh "$VPS_HOST" "cd $VPS_APP && $PSQL_PROD -c \"
+  SELECT COUNT(*) AS emag_nemapate
+  FROM products p JOIN offers o ON o.product_id=p.id JOIN retailers r ON r.id=o.retailer_id
+  WHERE r.slug='emag' AND p.category_id IS NULL;\""
