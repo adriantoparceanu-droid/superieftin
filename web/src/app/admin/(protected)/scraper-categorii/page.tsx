@@ -8,7 +8,10 @@ import { getScraperCategories, getAvailableEmagCategories, getCategoryOptions, g
 import ScraperCategoryPicker from '@/components/admin/ScraperCategoryPicker'
 
 function fmt(d: Date | null): string {
-  return d ? new Date(d).toLocaleString('ro-RO', { dateStyle: 'short', timeStyle: 'short' }) : '—'
+  // TimeZone explicit: altfel live (container UTC) și local (ora Mac-ului) afișează diferit.
+  return d
+    ? new Date(d).toLocaleString('ro-RO', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Europe/Bucharest' })
+    : '—'
 }
 
 export default async function ScraperCategoriiPage() {

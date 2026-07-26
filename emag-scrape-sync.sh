@@ -5,7 +5,7 @@
 # pe iMac, nu pe VPS. Vezi CLAUDE.md, sectiunea "eMAG e scanabil DOAR local".
 set -uo pipefail
 
-REPO="/Users/cosmin/Documents/Claude/Superieftin.ro"
+REPO="/Users/cosmin/dev/Superieftin.ro"
 LOG="$HOME/Library/Logs/superieftin-emag.log"
 
 # nvm nu e in PATH-ul launchd — il incarcam (rezista la upgrade de node).
@@ -36,10 +36,17 @@ echo "[$(ts)] scrape OK" >> "$LOG"
 
 # 2. Sync pe productie (upsert doar eMAG; scriptul se opreste singur daca 0 oferte local)
 cd "$REPO" || exit 1
-./sync-emag-to-live.sh >> "$LOG" 2>&1
-rc=$?
-if [ $rc -ne 0 ]; then
-  echo "[$(ts)] sync a esuat (cod $rc)." >> "$LOG"
+# Retry: un blip de rețea (ex. la 07:00) nu trebuie să piardă sync-ul zilei. Upsert-ul
+# e idempotent și tranzacțional, deci reîncercarea e sigură.
+sync_rc=1
+for attempt in 1 2 3; do
+  if ./sync-emag-to-live.sh >> "$LOG" 2>&1; then sync_rc=0; break; fi
+  sync_rc=$?
+  echo "[$(ts)] sync încercarea $attempt a eșuat (cod $sync_rc); reîncerc în 60s..." >> "$LOG"
+  sleep 60
+done
+if [ $sync_rc -ne 0 ]; then
+  echo "[$(ts)] sync a eșuat definitiv după 3 încercări (cod $sync_rc)." >> "$LOG"
   exit 1
 fi
 
