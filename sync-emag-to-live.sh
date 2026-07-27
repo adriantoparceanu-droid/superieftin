@@ -83,6 +83,11 @@ SQL_FILE="$DUMP_DIR/upsert.sql"
   echo "  url = EXCLUDED.url, affiliate_url = EXCLUDED.affiliate_url,"
   echo "  current_price = EXCLUDED.current_price, currency = EXCLUDED.currency,"
   echo "  in_stock = EXCLUDED.in_stock, last_checked = EXCLUDED.last_checked;"
+  # Prod oglindeste exact setul local eMAG: sterge ofertele eMAG care nu mai sunt in
+  # export (curatate local dupa TTL). Scoped la retailer eMAG — restul raman neatinsi.
+  echo "DELETE FROM offers o USING retailers r"
+  echo "WHERE o.retailer_id = r.id AND r.slug = 'emag'"
+  echo "  AND NOT EXISTS (SELECT 1 FROM emag_stg s WHERE s.url = o.url);"
   echo "COMMIT;"
 } > "$SQL_FILE"
 

@@ -1,4 +1,5 @@
 import pino from 'pino'
+import pool from '../lib/db.js'
 import { upsertProduct, upsertRetailerByDomain } from '../lib/upsert.js'
 import { loadFeedRules } from '../lib/feedRules.js'
 import { resolver, syncAffiliateAdvertisers } from '../lib/affiliate/index.js'
@@ -6,6 +7,13 @@ import { EmagScraper } from './emag.js'
 import type { Scraper } from './types.js'
 
 const logger = pino({ level: 'info' })
+
+// Scanarea acopera doar cateva pagini/categorie, nu tot catalogul — deci ofertele
+// nevazute nu mai sunt "reconfirmate" ca la feed-uri. Le imbatranim in doua trepte:
+// dupa STALE_DAYS fara stoc (ca la feed-sync), dupa TTL_DAYS le stergem (altfel se
+// acumuleaza oferte moarte cu pret/stoc inghetat).
+const STALE_DAYS = 3
+const OFFER_TTL_DAYS = parseInt(process.env.SCRAPER_OFFER_TTL_DAYS || '30')
 
 // Registry de scrapere.
 export const scrapers: Scraper[] = [new EmagScraper()]
@@ -46,6 +54,23 @@ export async function ingestScraper(scraper: Scraper): Promise<{ imported: numbe
     }
   }
 
-  log.info({ imported, errors, affiliated }, 'Scraper ingerat')
+  // Pruning DOAR daca scanarea a adus produse — altfel un blocaj (WAF, 0 importate) ar
+  // marca/sterge gresit toate ofertele bune.
+  let hidden = 0, deleted = 0
+  if (imported > 0) {
+    const h = await pool.query(
+      `UPDATE offers SET in_stock = false
+       WHERE retailer_id = $1 AND in_stock = true AND last_checked < now() - make_interval(days => $2)`,
+      [retailerId, STALE_DAYS],
+    )
+    hidden = h.rowCount ?? 0
+    const d = await pool.query(
+      `DELETE FROM offers WHERE retailer_id = $1 AND last_checked < now() - make_interval(days => $2)`,
+      [retailerId, OFFER_TTL_DAYS],
+    )
+    deleted = d.rowCount ?? 0
+  }
+
+  log.info({ imported, errors, affiliated, hidden, deleted }, 'Scraper ingerat')
   return { imported, errors, affiliated }
 }
