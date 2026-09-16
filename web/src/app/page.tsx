@@ -87,12 +87,21 @@ export default async function HomePage() {
             continutul mai mic se scaleaza la latimea cadrului. Cele doua mici impart cadrul in doua. */}
         <div className="flex flex-col gap-4 min-w-0 w-full max-w-[970px]">
           {bannerMain ? (
-            <Banner banner={bannerMain} />
+            <>
+              {/* Bannerele Profitshare (format desktop 970px) nu se afiseaza pe mobil;
+                  hero-ul auto (cu cautare) ramane vizibil acolo. */}
+              <div className="hidden lg:block">
+                <Banner banner={bannerMain} />
+              </div>
+              <div className="lg:hidden">
+                <HeroBanners heroProduct={heroProduct} isRealDiscount={isRealDiscount} secondaryCategory={null} />
+              </div>
+            </>
           ) : (
             <HeroBanners heroProduct={heroProduct} isRealDiscount={isRealDiscount} secondaryCategory={null} />
           )}
           {bannerSmalls.length > 0 && (
-            <div className="grid sm:grid-cols-2 gap-4">
+            <div className="hidden lg:grid lg:grid-cols-2 gap-4">
               {banners['small_left'] && <Banner banner={banners['small_left']} />}
               {banners['small_right'] && <Banner banner={banners['small_right']} />}
             </div>

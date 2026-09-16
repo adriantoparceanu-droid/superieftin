@@ -14,6 +14,7 @@ const NAV: NavEntry[] = [
       { href: '/admin/import', label: 'Import manual' },
       { href: '/admin/advertiseri', label: 'Advertiseri' },
       { href: '/admin/mapare', label: 'Mapare categorii' },
+      { href: '/admin/scraper-categorii', label: 'Categorii scanate (eMAG)' },
     ],
   },
   { href: '/admin/categorii', label: 'Categorii' },

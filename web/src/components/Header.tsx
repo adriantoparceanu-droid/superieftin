@@ -7,7 +7,9 @@ const MAX_VISIBLE_ITEMS = 5
 // Un item de dropdown; daca are copii, deschide un flyout lateral la hover/focus.
 // Numele de grup „sub" se rezolva la cel mai apropiat parinte cu group/sub, deci
 // imbricarea pe mai multe niveluri (max 3) functioneaza fara nume distincte per nivel.
-function MenuLink({ item }: { item: MenuItem }) {
+// flyoutAlign: spre ce parte se deschide flyout-ul — „right" (spre stanga itemului, right-full)
+// pentru dropdown-uri ancorate la marginea dreapta (ex. „Mai multe"), altfel ar iesi din pagina.
+function MenuLink({ item, flyoutAlign = 'left' }: { item: MenuItem; flyoutAlign?: 'left' | 'right' }) {
   const hasChildren = !!item.children?.length
   if (!hasChildren) {
     return (
@@ -16,6 +18,7 @@ function MenuLink({ item }: { item: MenuItem }) {
       </Link>
     )
   }
+  const flyoutSide = flyoutAlign === 'right' ? 'right-full pr-1' : 'left-full pl-1'
   return (
     <div className="relative group/sub">
       <Link
@@ -25,20 +28,27 @@ function MenuLink({ item }: { item: MenuItem }) {
         <span>{item.label}</span>
         <span className="text-muted">›</span>
       </Link>
-      <div className="absolute left-full top-0 pl-1 hidden group-hover/sub:block group-focus-within/sub:block z-50">
+      <div className={`absolute ${flyoutSide} top-0 hidden group-hover/sub:block group-focus-within/sub:block z-50`}>
         <div className="bg-white border border-line rounded-xl shadow-lg py-2 min-w-48 max-h-96 overflow-y-auto">
-          {item.children!.map((c) => <MenuLink key={c.id} item={c} />)}
+          {item.children!.map((c) => <MenuLink key={c.id} item={c} flyoutAlign={flyoutAlign} />)}
         </div>
       </div>
     </div>
   )
 }
 
-function Dropdown({ items }: { items: MenuItem[] }) {
+// align: „left" ancoreaza panoul la marginea stanga a trigger-ului (itemi normali, cu loc la dreapta);
+// „right" il ancoreaza la marginea dreapta (ex. „Mai multe", ultimul item din navbar, lipit de marginea
+// paginii) — altfel panoul creste spre dreapta si iese din viewport.
+function Dropdown({ items, align = 'left' }: { items: MenuItem[]; align?: 'left' | 'right' }) {
   return (
-    <div className="absolute right-0 sm:right-auto sm:left-0 top-full pt-2 hidden group-hover:block group-focus-within:block z-50">
+    <div
+      className={`absolute top-full pt-2 hidden group-hover:block group-focus-within:block z-50 ${
+        align === 'right' ? 'right-0' : 'right-0 sm:right-auto sm:left-0'
+      }`}
+    >
       <div className="bg-white border border-line rounded-xl shadow-lg py-2 min-w-48 max-h-96 overflow-y-auto">
-        {items.map((item) => <MenuLink key={item.id} item={item} />)}
+        {items.map((item) => <MenuLink key={item.id} item={item} flyoutAlign={align} />)}
       </div>
     </div>
   )
@@ -97,24 +107,26 @@ export async function Header() {
               >
                 Mai multe ▾
               </button>
-              <Dropdown items={overflow} />
+              <Dropdown items={overflow} align="right" />
             </div>
           )}
-          {/* Mobil: tot meniul intr-un singur dropdown, indentat pe niveluri */}
+          {/* Mobil: tot meniul intr-un singur dropdown, indentat pe niveluri.
+              <details>/<summary> nativ (nu group-focus-within): pe Safari iOS un <button>
+              fara onClick nu primeste focus la tap, deci CSS-only :focus-within nu se declansa
+              niciodata si meniul nu se putea deschide pe mobil. */}
           {menu.length > 0 && (
-            <div className="relative group sm:hidden">
-              <button
-                type="button"
-                className="hover:text-[var(--color-text)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 rounded whitespace-nowrap"
+            <details className="relative sm:hidden">
+              <summary
+                className="list-none [&::-webkit-details-marker]:hidden cursor-pointer hover:text-[var(--color-text)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 rounded whitespace-nowrap"
               >
                 Categorii ▾
-              </button>
-              <div className="absolute right-0 top-full pt-2 hidden group-hover:block group-focus-within:block z-50">
+              </summary>
+              <div className="absolute right-0 top-full pt-2 z-50">
                 <div className="bg-white border border-line rounded-xl shadow-lg py-2 min-w-56 max-h-96 overflow-y-auto">
                   <MobileItems items={menu} />
                 </div>
               </div>
-            </div>
+            </details>
           )}
         </nav>
       </div>
