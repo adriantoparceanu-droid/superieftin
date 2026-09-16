@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Search } from 'lucide-react'
 import { getMenu, type MenuItem } from '@/lib/queries'
 
 // Cate intrari incap confortabil in bara de navigatie; restul intra in „Mai multe"
@@ -74,6 +75,24 @@ function MobileItems({ items, depth = 0 }: { items: MenuItem[]; depth?: number }
   )
 }
 
+// Search global, prezent pe orice pagina (nu doar pe homepage, unde traia inainte
+// exclusiv in hero si disparea cand era activ un banner). Pe desktop e vizibil
+// permanent; pe mobil e o iconita care deschide inputul intr-un <details> (acelasi
+// pattern nativ, fara JS, ca la meniul „Categorii" — functioneaza si pe Safari iOS).
+function SearchForm({ autoFocus, className = '' }: { autoFocus?: boolean; className?: string }) {
+  return (
+    <form action="/cautare" method="get" className={`flex gap-2 ${className}`}>
+      <input
+        name="q" type="search" placeholder="Caută produs sau brand..." autoComplete="off" autoFocus={autoFocus}
+        className="flex-1 min-w-0 px-3 py-1.5 rounded-lg border border-line bg-white text-sm text-[var(--color-text)] placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand"
+      />
+      <button type="submit" className="px-3 py-1.5 bg-brand hover:bg-brand-dark text-white text-sm font-semibold rounded-lg transition-colors shrink-0">
+        Caută
+      </button>
+    </form>
+  )
+}
+
 export async function Header() {
   // fallback gol: la build-ul Docker nu exista DB (pre-randarea /_not-found incarca layout-ul)
   const menu = await getMenu().catch(() => [])
@@ -82,11 +101,30 @@ export async function Header() {
 
   return (
     <header className="bg-surface border-b border-line sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
+      <div className="max-w-7xl mx-auto px-4 h-14 flex items-center gap-4">
         <Link href="/" className="font-black font-archivo text-xl text-brand tracking-tight shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 rounded">
           superieftin<span className="text-[var(--color-text)]">.ro</span>
         </Link>
-        <nav className="flex items-center gap-5 text-sm text-muted">
+
+        <SearchForm className="hidden sm:flex flex-1 max-w-md" />
+
+        {/* ml-auto: pe mobil nu exista niciun element flex-1 inainte (SearchForm desktop e hidden),
+            deci fara el iconita + nav-ul ar ramane lipite de logo in loc sa stea la marginea dreapta. */}
+        <details className="relative sm:hidden ml-auto">
+          <summary
+            aria-label="Caută"
+            className="list-none [&::-webkit-details-marker]:hidden cursor-pointer flex items-center p-1.5 -m-1.5 rounded hover:text-[var(--color-text)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 text-muted"
+          >
+            <Search size={20} />
+          </summary>
+          <div className="absolute right-0 top-full pt-2 z-50 w-72 max-w-[calc(100vw-2rem)]">
+            <div className="bg-white border border-line rounded-xl shadow-lg p-3">
+              <SearchForm autoFocus />
+            </div>
+          </div>
+        </details>
+
+        <nav className="flex items-center gap-5 text-sm text-muted shrink-0">
           {visible.map((item) => (
             <div key={item.id} className="relative group hidden sm:block">
               <Link
