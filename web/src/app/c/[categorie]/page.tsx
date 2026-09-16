@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { getCategoryProducts, getCategoryProductCount, getCategoryBrands, getCategoryBySlug, getSubcategories, PAGE_SIZE } from '@/lib/queries'
+import { getCategoryProducts, getCategoryProductCount, getCategoryBrands, getCategoryBySlug, getSubcategories, getRandomCategoryProducts, PAGE_SIZE } from '@/lib/queries'
 import { ProductCard } from '@/components/ProductCard'
 import { Pagination } from '@/components/Pagination'
 import { CategoryIcon } from '@/components/CategoryIcon'
@@ -51,6 +51,12 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   // Ce afisam ca navigare de subcategorii: copiii proprii (pe parinte) sau surorile (pe copil).
   const navSubs = ownSubs.length ? ownSubs : siblings
   const hasChildren = ownSubs.length > 0
+
+  // Categoriile-parinte (ex. "Laptopuri & Calculatoare") nu au niciodata produse proprii —
+  // fara asta pagina arata goala in modul implicit (fara ?tot=1). Aducem o selectie
+  // aleatorie din subcategoriile afisate mai sus, ca vizitatorul sa vada mereu ceva.
+  const showRandomFallback = products.length === 0 && hasChildren && !brandValue
+  const randomProducts = showRandomFallback ? await getRandomCategoryProducts(categorie) : []
 
   const totalPages = Math.ceil(totalCount / PAGE_SIZE)
   const label = category.name
@@ -146,11 +152,17 @@ export default async function CategoryPage({ params, searchParams }: Props) {
       <div className="mb-5">
         <h1 className="text-2xl font-black font-archivo text-[var(--color-text)] capitalize">{label}</h1>
         <p className="text-sm text-muted mt-1">
-          {totalCount.toLocaleString('ro-RO')} produse
-          {includeSub && hasChildren && ' (inclusiv subcategoriile)'}
-          {brandValue && <> · marca <strong className="text-[var(--color-text)]">{brandValue}</strong></>}
-          {discountCount > 0 && ` · ${discountCount} cu reducere reală`}
-          {totalPages > 1 && ` · pagina ${currentPage} din ${totalPages}`}
+          {showRandomFallback ? (
+            'Alege o subcategorie mai jos, sau răsfoiește o selecție din toate'
+          ) : (
+            <>
+              {totalCount.toLocaleString('ro-RO')} produse
+              {includeSub && hasChildren && ' (inclusiv subcategoriile)'}
+              {brandValue && <> · marca <strong className="text-[var(--color-text)]">{brandValue}</strong></>}
+              {discountCount > 0 && ` · ${discountCount} cu reducere reală`}
+              {totalPages > 1 && ` · pagina ${currentPage} din ${totalPages}`}
+            </>
+          )}
         </p>
       </div>
 
@@ -195,7 +207,8 @@ export default async function CategoryPage({ params, searchParams }: Props) {
         </div>
       )}
 
-      {/* Filtre: Sort + Marcă */}
+      {/* Filtre: Sort + Marcă — nu au sens pe selectia aleatorie din subcategorii (nimic de sortat/filtrat) */}
+      {!showRandomFallback && (
       <div className="flex flex-col gap-3 mb-6">
         {/* Sort */}
         <div className="flex gap-2 flex-wrap items-center">
@@ -249,6 +262,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
           </div>
         )}
       </div>
+      )}
 
       {/* Grid produse */}
       {products.length > 0 ? (
@@ -264,6 +278,17 @@ export default async function CategoryPage({ params, searchParams }: Props) {
             buildUrl={buildUrl}
           />
         </>
+      ) : randomProducts.length > 0 ? (
+        <div>
+          <span className="text-xs font-semibold text-muted uppercase tracking-wide">
+            Selecție aleatorie din subcategorii
+          </span>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mt-2">
+            {randomProducts.map(product => (
+              <ProductCard key={product.offer_id} product={product} />
+            ))}
+          </div>
+        </div>
       ) : (
         <div className="text-center py-16 text-muted">
           <p className="text-5xl mb-4">📦</p>

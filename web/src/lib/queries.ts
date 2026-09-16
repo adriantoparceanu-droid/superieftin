@@ -330,6 +330,56 @@ export const getCategoryBrands = unstable_cache(
   { revalidate: 3600, tags: ['products'] }
 )
 
+// Fallback pentru categoriile-parinte fara produse proprii (ex. „Laptopuri & Calculatoare"):
+// pagina lor implicita (fara ?tot=1) arata 0 produse, doar cardurile de subcategorii —
+// vizitatorul nu vede nimic de cumparat. Aducem o selectie aleatorie din subcategorii,
+// intotdeauna agregat (CATEGORY_FILTER_SQL), indiferent de parametrul includeSub al paginii.
+export const getRandomCategoryProducts = unstable_cache(
+  async (category: string, limit = 24): Promise<ProductWithDiscount[]> => {
+    const { rows } = await pool.query<ProductWithDiscount>(`
+      WITH median_prices AS (
+        SELECT
+          offer_id,
+          PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY price) AS median_price
+        FROM price_history
+        WHERE recorded_at >= now() - INTERVAL '30 days'
+        GROUP BY offer_id
+      )
+      SELECT
+        p.id::text,
+        p.name,
+        p.slug,
+        p.category,
+        p.brand,
+        p.image_url,
+        o.id::text AS offer_id,
+        o.current_price::float AS current_price,
+        o.affiliate_url,
+        o.in_stock,
+        r.name AS retailer_name,
+        r.slug AS retailer_slug,
+        mp.median_price::float AS median_price,
+        CASE
+          WHEN mp.median_price IS NOT NULL AND o.current_price < mp.median_price * 0.95
+          THEN ROUND(((mp.median_price - o.current_price) / mp.median_price * 100)::numeric, 1)::float
+          ELSE NULL
+        END AS discount_pct
+      FROM products p
+      JOIN offers o ON o.product_id = p.id
+      JOIN retailers r ON r.id = o.retailer_id
+      LEFT JOIN median_prices mp ON mp.offer_id = o.id
+      WHERE ${CATEGORY_FILTER_SQL}
+        AND o.current_price IS NOT NULL
+        AND o.in_stock = true
+      ORDER BY random()
+      LIMIT $2
+    `, [category, limit])
+    return rows
+  },
+  ['category-random-products'],
+  { revalidate: 3600, tags: ['products'] }
+)
+
 export interface SubcategoryInfo {
   slug: string
   name: string
