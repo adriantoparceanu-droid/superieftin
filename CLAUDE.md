@@ -34,6 +34,13 @@ cd worker && npm test               # teste unitare (node --test via tsx)
 # reconstruiește ÎNTÂI imaginea migrate (nu e în `build web worker`), apoi rulează:
 #   docker compose --profile tools build migrate
 #   docker compose --profile tools run --rm migrate
+
+# Curățenie VPS: cronul userului superieftin rulează duminica 04:00 ./cleanup-vps.sh
+#   (copie locală de referință; scriptul instalat pe server e /home/superieftin/app/cleanup.sh) —
+#   recreează containerul web (golește cache-ul Next.js/ISR care crește nelimitat în stratul
+#   scriptibil, ~2.4GB acumulați în 15h la instalare) și rulează `docker image prune -f`
+#   (doar imagini dangling). Nu atinge alte stack-uri de pe același VPS (ex. pricetoday).
+#   Log: /home/superieftin/logs/cleanup.log. Rulare manuală: ssh superieftin@13.140.163.156 /home/superieftin/app/cleanup.sh
 ```
 
 ## Reguli critice
