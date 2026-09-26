@@ -1,0 +1,64 @@
+# ȘABLON — copiază fișierul, redenumește (ex. laptopuri.yaml) și completează.
+# Câmpurile `id` le completează automat ads:apply după crearea în Google Ads.
+
+campaign:
+  name: "SE | Search | Laptopuri"          # prefix SE = superieftin, ușor de filtrat
+  id: null
+  status: PAUSED                           # rămâne PAUSED; activezi tu
+  daily_budget: 30                         # RON, ≤ guardrails
+  bidding:
+    strategy: MAXIMIZE_CLICKS
+    max_cpc: 1.50
+  source_research: ads/research/AAAA-LL-ZZ-laptopuri.md   # de unde vine decizia
+
+  negative_keywords:                       # la nivel de campanie
+    - gratis
+    - second hand
+    - folosit
+    - service
+    - reparatie
+    - piese
+    - driver
+    - olx
+
+  ad_groups:
+    - name: "Reduceri laptop"
+      id: null
+      final_url: https://www.superieftin.ro/reduceri-reale/laptopuri
+      keywords:
+        phrase:
+          - reducere laptop
+          - laptop la reducere
+          - oferte laptop
+        exact:
+          - reduceri laptopuri
+      negative_keywords: []
+      ads:
+        - type: RSA
+          id: null
+          headlines:                       # max 30 caractere fiecare, 8–15 bucăți
+            - Reduceri Reale la Laptopuri
+            - Verificate față de Mediană
+            - Istoric Preț 90 de Zile
+            - Fără Reduceri False
+            - Compară Mai Multe Magazine
+            - Doar Prețuri Sub Mediană
+            - Alertă Gratuită de Preț
+            - Laptopuri Verificate Zilnic
+          descriptions:                    # max 90 caractere fiecare, 3–4 bucăți
+            - Comparăm prețul de azi cu mediana ultimelor 30 de zile. Vezi doar reduceri reale.
+            - Istoric de preț pe 90 de zile și prețuri de la mai multe magazine online.
+            - Setează o alertă și află când prețul laptopului dorit scade cu adevărat.
+          path1: reduceri
+          path2: laptopuri
+
+  extensions:
+    sitelinks:
+      - text: Cum Verificăm Reducerile
+        url: https://www.superieftin.ro/despre
+      - text: Reduceri la Televizoare
+        url: https://www.superieftin.ro/reduceri-reale/televizoare
+    callouts:
+      - Actualizat Zilnic
+      - Istoric 90 de Zile
+      - Fără Cont Necesar

@@ -72,3 +72,4 @@ cd worker && npm test               # teste unitare (node --test via tsx)
 ## Întreținerea acestui fișier
 
 După orice modificare structurală (scraper/importer nou, rută admin nouă, schimbare în fluxul de deploy sau migrații, convenție nouă), actualizează acest CLAUDE.md în același commit. Documentează doar ce nu se poate deduce din cod; fișierul trebuie să rămână scurt și adevărat — o informație veche e mai rea decât una lipsă.
+@docs/ads-program/REGULI.md

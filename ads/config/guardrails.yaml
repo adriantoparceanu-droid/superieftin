@@ -1,0 +1,31 @@
+# LIMITE DURE — scripturile refuză orice depășire.
+# Le modifici DOAR tu, manual. Valorile de mai jos sunt un start prudent pentru test.
+
+currency: RON
+
+budget:
+  max_daily_per_campaign: 50      # RON / zi / campanie
+  max_daily_total: 150            # RON / zi, suma tuturor campaniilor active
+  max_monthly_total: 4000         # RON / lună, plafon de siguranță
+
+bidding:
+  max_cpc: 3.00                   # RON — niciun CPC maxim peste această valoare
+  allowed_strategies:             # tROAS se adaugă după ce ai conversii suficiente
+    - MANUAL_CPC
+    - MAXIMIZE_CLICKS
+
+targeting:
+  countries: [RO]
+  languages: [ro]
+  networks:
+    search: true
+    search_partners: false
+    display: false
+
+excluded_categories:
+  - sanatate-naturale
+
+safety:
+  new_entities_status: PAUSED     # nu schimba
+  require_policy_pass: true       # nu schimba
+  default_env: test

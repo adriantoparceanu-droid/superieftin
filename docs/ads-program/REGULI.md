@@ -1,0 +1,81 @@
+# Reguli program Google Ads — superieftin.ro
+
+> Fișier importat din CLAUDE.md. Aceste reguli au prioritate pentru orice task legat de
+> reclame, tracking, consimțământ sau dashboard-ul de ads.
+
+## Context business
+- superieftin.ro este un comparator de prețuri cu linkuri de afiliere Profitshare.
+  Nu vindem direct. Venitul = comisioane Profitshare.
+- Propunerea de valoare: reducere reală = preț actual cu minim 5% sub MEDIANA ultimelor 30 de zile.
+- Google Shopping NU este permis pentru acest model (politica Merchant Center interzice
+  linkurile de afiliere în afara programului CSS). Folosim doar campanii Search.
+- Retaileri actuali: ITGalaxy, ForIT, CITGrup, Vexio, Vegis (lista poate crește).
+
+## Reguli de siguranță (NU se negociază)
+1. **Nicio campanie nu se activează automat.** Orice campanie, grup de anunțuri sau anunț
+   nou se creează cu status `PAUSED`. Activarea o face proprietarul manual.
+2. **Plafoanele din `ads/config/guardrails.yaml` sunt limite dure.** Scripturile refuză
+   orice buget peste ele. Nu modifica fișierul de guardrails fără cerere explicită.
+3. **Dry-run implicit.** Orice script care scrie în Google Ads rulează implicit în mod
+   `plan` (arată ce ar schimba). Scrierea reală cere `--confirm`.
+4. **Mediu de test mai întâi.** Variabila `ADS_ENV=test|prod`. Codul nou se rulează întâi
+   pe contul de test. Rularea pe `prod` cere și flag-ul `--prod`.
+5. **Secretele stau doar în `.env`.** Niciodată în cod, commit-uri, loguri sau rapoarte.
+6. **Nu modifica conținutul existent din CLAUDE.md.**
+7. **Consimțământ (GDPR):** `gclid`, `gbraid`, `wbraid` se salvează și se trimit la Google
+   DOAR dacă utilizatorul a acordat `ad_storage` și `ad_user_data`. Fără consimțământ,
+   clickul se înregistrează anonim (fără ID-uri Google).
+8. **Categoria Sănătate & Naturale este exclusă din reclame** până la o decizie explicită
+   a proprietarului. Nicio afirmație de sănătate (vindecă, tratează, detoxifică etc.).
+9. **Afirmațiile din anunțuri trebuie să fie adevărate pe landing page** în momentul
+   publicării (ex: „-40%” în anunț = -40% față de mediană, vizibil pe pagină).
+10. **`policy-reviewer` trebuie să dea PASS** înainte de orice `ads:apply --confirm`.
+11. **Dashboard-ul nu poate activa campanii** și nu poate depăși guardrails. Poate doar
+    pune pe pauză și ajusta bugete în limite.
+
+## Variabile de mediu așteptate (.env)
+```
+ADS_ENV=test
+# NOTĂ: din 9 sept. 2026 developer token-ul NU mai e folosit. Nivelul de acces
+# (Test / Explorer / Basic) aparține proiectului Google Cloud care deține OAuth client-ul.
+# Folosește versiuni recente ale librăriilor, care nu cer developer token.
+GOOGLE_ADS_CLIENT_ID=
+GOOGLE_ADS_CLIENT_SECRET=
+GOOGLE_ADS_REFRESH_TOKEN=
+GOOGLE_ADS_LOGIN_CUSTOMER_ID=      # ID-ul contului Manager (MCC), fără liniuțe
+GOOGLE_ADS_CUSTOMER_ID_TEST=       # contul de test
+GOOGLE_ADS_CUSTOMER_ID_PROD=       # contul real
+PROFITSHARE_API_USER=
+PROFITSHARE_API_KEY=
+ADMIN_DASHBOARD_PASSWORD=          # sau integrarea cu auth-ul existent
+GA4_PROPERTY_ID=                   # din Faza 4, pentru citire prin MCP
+```
+
+## Google Analytics 4 — rolul lui
+- Profitshare = sursa de adevăr pentru bani. Google Ads = sursa pentru cost.
+- GA4 = comportament: DE CE un cuvânt cheie pierde bani (bounce, viteză, pagină slabă).
+- Evenimentul GA4 `affiliate_click` se importă în Google Ads DOAR ca conversie SECUNDARĂ.
+  Conversia principală rămâne „Comision Profitshare”. Altfel Google numără dublu.
+- Accesul agenților la GA4 este DOAR citire (MCP oficial, scope `analytics.readonly`).
+  Setările GA4 le face proprietarul manual.
+
+## Stil de lucru
+- Proprietarul are nivel începător–intermediar: comentarii clare în română, care explică
+  „de ce”, nu doar „ce”. Fără abstracțiuni inutile.
+- Respectă stack-ul și convențiile existente (detectează-le din cod, nu presupune).
+- Când există mai multe variante tehnice importante, prezintă 2–3 variante cu pro/contra
+  și AȘTEAPTĂ alegerea proprietarului. Nu decide singur deciziile de arhitectură.
+- Fiecare fază lucrează pe un branch separat: `ads/faza-X-descriere`.
+- La final de task: rezumat scurt (ce s-a schimbat, ce trebuie verificat manual, riscuri).
+
+## Comenzi standard (create în Faza 3, cu nume adaptate la package manager-ul proiectului)
+- `ads:validate` — verifică fișierele YAML (limite caractere, bugete, URL-uri care răspund 200)
+- `ads:plan` — arată diferențele dintre YAML și contul Google Ads (nu scrie nimic)
+- `ads:apply --confirm` — publică modificările (orice element nou = PAUSED)
+- `ads:report` — trage performanța + comisioanele și scrie în `ads/reports/`
+- `tracking:sync` — sincronizează conversiile Profitshare → Google Ads
+
+## Agenți disponibili
+Vezi `.claude/agents/`. Delegă fiecare task agentului responsabil:
+site-dev, tracking, market-research, ads-builder, policy-reviewer, ads-analyst.
+Workflow-ul complet: `docs/ads-program/WORKFLOW.md`.
