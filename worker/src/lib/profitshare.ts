@@ -160,3 +160,114 @@ export async function getProductsByPartNo(partNo: string, page = 1): Promise<{ p
 export function buildAffiliateUrl(productUrl: string, affiliateHash: string, advertiserHash: string): string {
   return `https://l.profitshare.ro/lps/${advertiserHash}/${affiliateHash}/?redirect=${encodeURIComponent(productUrl)}`
 }
+
+// --- Comisioane (Faza 2 — tracking conversii) -----------------------------------------------
+
+// Un rand din `affiliate-commissions`, asa cum vine de la API (structura verificata live pe
+// 2026-09-26). Sumele vin ca text; pe comenzi cu mai multe produse, campurile items_* au cate o
+// valoare per produs, separate prin `|` (ex. items_commision = "12.50|3.10").
+export interface PsCommissionRaw {
+  order_id: number | string
+  order_status: string              // pending | approved | canceled (verificat live)
+  advertiser_id: number | string
+  hash: string | null               // subID-ul trimis pe link = click_id-ul nostru (sau null)
+  order_date: string                // "YYYY-MM-DD HH:MM:SS", ora Romaniei (vezi parseRoDateTime)
+  order_updated?: string
+  items_status?: string
+  items_commision?: string          // SUMA comisionului per produs (RON)
+  items_commision_value?: string    // PROCENTUL per produs — nu il folosim ca valoare
+  advertiser_name?: string
+  [k: string]: unknown
+}
+
+export type CommissionStatus = 'pending' | 'approved' | 'rejected'
+
+export interface ParsedCommission {
+  externalId: string                // order_id → orderId / transactionId la Google (idempotent)
+  clickId: string | null
+  advertiserId: string
+  status: CommissionStatus
+  amount: number                    // RON, rotunjit la 2 zecimale
+  orderTime: Date
+  unknownStatus?: string            // status necunoscut (tratat ca pending) — de logat
+}
+
+// Profitshare scrie data fara fus orar, in ora Romaniei. Calculam offset-ul real al zilei
+// (EET +02:00 iarna / EEST +03:00 vara) cu Intl, ca sa nu depindem de fusul serverului.
+export function parseRoDateTime(s: string): Date {
+  const m = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})$/.exec(s.trim())
+  if (!m) throw new Error(`Dată Profitshare nerecunoscută: „${s}”`)
+  const [y, mo, d, h, mi, se] = m.slice(1).map(Number)
+  const asUtc = Date.UTC(y, mo - 1, d, h, mi, se)
+  // Offset-ul Bucurestiului la acel moment (aproximat intai ca UTC, apoi corectat)
+  const offsetAt = (t: number) => {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Europe/Bucharest', hourCycle: 'h23',
+      year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit',
+    }).formatToParts(new Date(t))
+    const get = (type: string) => Number(parts.find((p) => p.type === type)?.value)
+    return Date.UTC(get('year'), get('month') - 1, get('day'), get('hour'), get('minute'), get('second')) - t
+  }
+  let t = asUtc - offsetAt(asUtc)
+  t = asUtc - offsetAt(t)   // a doua trecere corecteaza zilele de schimbare a orei
+  return new Date(t)
+}
+
+const STATUS_MAP: Record<string, CommissionStatus> = {
+  pending: 'pending',
+  approved: 'approved',
+  paid: 'approved',        // nevazut inca in date reale; „platit” = aprobat
+  canceled: 'rejected',
+  cancelled: 'rejected',
+  rejected: 'rejected',
+}
+
+// Transforma un rand API in forma noastra. Suma = comisioanele produselor NEanulate; daca
+// toata comanda e anulata, pastram suma totala (doar informativ — nu se mai trimite nimic).
+export function parseCommission(raw: PsCommissionRaw): ParsedCommission {
+  const orderStatus = String(raw.order_status ?? '').toLowerCase().trim()
+  const status = STATUS_MAP[orderStatus] ?? 'pending'
+  const amounts = String(raw.items_commision ?? '').split('|').map((x) => parseFloat(x.replace(',', '.')))
+  const statuses = String(raw.items_status ?? '').split('|').map((x) => x.toLowerCase().trim())
+  let total = 0
+  let active = 0
+  amounts.forEach((a, i) => {
+    if (!Number.isFinite(a)) return
+    total += a
+    if (STATUS_MAP[statuses[i] ?? orderStatus] !== 'rejected') active += a
+  })
+  const amount = Math.round((status === 'rejected' ? total : active) * 100) / 100
+  // hash gol / null = link fara subID (comenzi dinainte de /go cu click_id)
+  const hash = typeof raw.hash === 'string' && /^[a-z0-9]{6,32}$/i.test(raw.hash.trim()) ? raw.hash.trim() : null
+  return {
+    externalId: String(raw.order_id),
+    clickId: hash,
+    advertiserId: String(raw.advertiser_id),
+    status,
+    amount,
+    orderTime: parseRoDateTime(raw.order_date),
+    ...(STATUS_MAP[orderStatus] ? {} : { unknownStatus: orderStatus || '(gol)' }),
+  }
+}
+
+// Comisioanele din ultimele `days` zile (dupa data comenzii), toate paginile.
+// Filtrul `filters[click_hash]` e ignorat de server (verificat live) → potrivirea cu click_id
+// se face local, in tracking-sync.
+export async function getCommissions(days = 90, now = new Date()): Promise<PsCommissionRaw[]> {
+  const ymd = (d: Date) => d.toISOString().slice(0, 10)
+  const from = new Date(now.getTime() - days * 86400_000)
+  const all: PsCommissionRaw[] = []
+  let page = 1
+  for (;;) {
+    const res = await psRequest<Paginated<'commissions', PsCommissionRaw>>('affiliate-commissions', {
+      'filters[date_from]': ymd(from),
+      'filters[date_to]': ymd(now),
+      page,
+    })
+    // Fara comisioane API-ul poate intoarce lista goala sau lipsa → tratam defensiv
+    all.push(...(res.result?.commissions ?? []))
+    if (!res.result || page >= (res.result.total_pages ?? 1)) break
+    page++
+  }
+  return all
+}
