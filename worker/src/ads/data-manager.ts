@@ -34,7 +34,9 @@ export function pickAdIdentifier(ids: ClickIds): Record<string, string> | null {
 
 // Corpul cererii events:ingest — fara date personale (fara email/telefon/IP): doar
 // identificatorul clickului, valoarea, ora si ID-ul comenzii. Consimtamantul e declarat
-// explicit: trimitem DOAR clickuri cu acordul „Publicitate” (ad_user_data + ad_personalization).
+// explicit: trimitem DOAR clickuri cu acordul „Publicitate” → adUserData GRANTED (masurarea
+// conversiei). adPersonalization e MEREU DENIED: bannerul nu cere acord pentru reclame
+// personalizate (remarketing), iar pentru masurare nici nu e necesar (GDPR, Poarta 2 — B2).
 export function buildIngestBody(cfg: AdsConfig, conversionActionId: string, ev: ConversionEventInput, validateOnly: boolean) {
   const adIdentifiers = pickAdIdentifier(ev.ids)
   if (!adIdentifiers) throw new Error('Conversie fără gclid/gbraid/wbraid — nu se poate trimite')
@@ -44,7 +46,7 @@ export function buildIngestBody(cfg: AdsConfig, conversionActionId: string, ev: 
       ...(cfg.loginCustomerId ? { loginAccount: { accountType: 'GOOGLE_ADS', accountId: cfg.loginCustomerId } } : {}),
       productDestinationId: conversionActionId,
     }],
-    consent: { adUserData: 'CONSENT_GRANTED', adPersonalization: 'CONSENT_GRANTED' },
+    consent: { adUserData: 'CONSENT_GRANTED', adPersonalization: 'CONSENT_DENIED' },
     validateOnly,
     events: [{
       adIdentifiers,

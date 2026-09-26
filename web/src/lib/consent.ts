@@ -21,7 +21,7 @@ export const OPEN_SETTINGS_EVENT = 'se:open-cookie-settings'
 export interface ConsentChoice {
   v: number
   analytics: boolean   // GA4 → analytics_storage
-  ads: boolean         // Google Ads → ad_storage + ad_user_data + ad_personalization
+  ads: boolean         // Google Ads → ad_storage + ad_user_data (ad_personalization ramane mereu denied)
   ts: number           // momentul alegerii (ms)
 }
 
@@ -52,14 +52,19 @@ export function hasAnalyticsConsent(): boolean {
   return readConsent()?.analytics === true
 }
 
-// Mapare alegere → semnalele Consent Mode v2
+// Mapare alegere → semnalele Consent Mode v2.
+// ad_personalization ramane MEREU 'denied': bannerul cere acord pentru masurarea reclamelor
+// („Publicitate”), NU pentru reclame personalizate / remarketing. Un acord pe care nu l-am cerut
+// nu poate fi dat implicit (GDPR, Poarta 2 — B2/R5). Aliniat cu payload-ul trimis din worker
+// (Data Manager: adPersonalization = CONSENT_DENIED). Versiunea de consimtamant NU creste:
+// restrangem prelucrarea, nu o extindem, deci acordurile existente raman valabile.
 function toGtagConsent(c: Pick<ConsentChoice, 'analytics' | 'ads'>) {
   const ads = c.ads ? 'granted' : 'denied'
   return {
     analytics_storage: c.analytics ? 'granted' : 'denied',
     ad_storage: ads,
     ad_user_data: ads,
-    ad_personalization: ads,
+    ad_personalization: 'denied',
   }
 }
 
@@ -101,7 +106,7 @@ try {
       var ads = c.ads === true ? 'granted' : 'denied';
       gtag('consent', 'update', {
         analytics_storage: c.analytics === true ? 'granted' : 'denied',
-        ad_storage: ads, ad_user_data: ads, ad_personalization: ads
+        ad_storage: ads, ad_user_data: ads, ad_personalization: 'denied'
       });
     }
   }

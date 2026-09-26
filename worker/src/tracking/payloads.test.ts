@@ -73,7 +73,8 @@ test('buildIngestBody — Data Manager: destinatie, consimtamant, RON, transacti
   }, true)
   assert.deepEqual(body, {
     destinations: [{ operatingAccount: { accountType: 'GOOGLE_ADS', accountId: '2760086909' }, productDestinationId: '999' }],
-    consent: { adUserData: 'CONSENT_GRANTED', adPersonalization: 'CONSENT_GRANTED' },
+    // B2 (GDPR): personalizarea NU e acordata de banner → mereu DENIED
+    consent: { adUserData: 'CONSENT_GRANTED', adPersonalization: 'CONSENT_DENIED' },
     validateOnly: true,
     events: [{
       adIdentifiers: { gclid: 'Cj0KCQtest' }, conversionValue: 12.35, currency: 'RON',
