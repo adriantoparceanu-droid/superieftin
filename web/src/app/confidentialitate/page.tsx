@@ -66,12 +66,14 @@ export default function ConfidentialitatePage() {
           </tr>
           <tr>
             <td>
-              <strong>Google Ads</strong>: identificatorul clickului pe reclamă (<code>gclid</code>,{' '}
-              <code>gbraid</code>, <code>wbraid</code>, păstrat în cookie-ul <code>se_gclid</code> și asociat
-              codului de click spre magazin) și, dacă ai cumpărat, ora comenzii, codul comenzii din rețeaua
-              de afiliere și valoarea comisionului nostru, trimise la Google Ads ca „conversie offline”
+              <strong>Google Ads</strong>: identificatorul clickului pe reclama Google cu care ai ajuns pe site
+              (<code>gclid</code>, <code>gbraid</code> sau <code>wbraid</code>), păstrat în cookie-ul{' '}
+              <code>se_gclid</code> și asociat codului de click spre magazin; dacă ai cumpărat, trimitem la
+              Google Ads, ca „conversie offline”, doar identificatorul, valoarea comisionului nostru în lei,
+              ora și ID-ul comenzii (detalii mai jos)
             </td>
-            <td>Măsurăm dacă reclamele noastre aduc cumpărături reale</td>
+            <td>Legăm o eventuală comandă de reclama care a adus vizita, ca să măsurăm dacă reclamele
+              noastre aduc cumpărături reale</td>
             <td>Consimțământ (categoria „Publicitate”)</td>
           </tr>
           <tr>
@@ -88,8 +90,8 @@ export default function ConfidentialitatePage() {
         </tbody>
       </table>
       <p>
-        Nu cerem cont, nu vindem date și nu trimitem către Google adresa de email, telefonul sau
-        alte date de contact.
+        Nu cerem cont, nu vindem date și nu trimitem către Google adresa de email, telefonul, adresa
+        IP sau alte date de contact.
       </p>
       <p>
         Imaginile produselor și logourile magazinelor se încarcă direct de pe serverele magazinelor
@@ -104,6 +106,44 @@ export default function ConfidentialitatePage() {
         loc o vizită), pe care le folosește doar pentru statistici estimate, agregate. Dacă refuzi
         categoria „Publicitate”, nu salvăm identificatorii clickurilor pe reclame.
       </p>
+
+      <h2>Identificatorul clickului pe reclama Google, pe scurt</h2>
+      <ul>
+        <li>
+          <strong>Înainte să alegi</strong>, nu stocăm nimic pe dispozitivul tău (nici cookie, nici{' '}
+          <code>sessionStorage</code> sau <code>localStorage</code>). Identificatorul din adresa paginii
+          rămâne doar în memoria paginii deschise și se pierde la reîncărcare sau la închiderea filei.
+          Dacă accepți „Publicitate” între timp, abia atunci scriem cookie-ul <code>se_gclid</code>
+          (identificatorul și momentul sosirii pe site, valabil 90 de zile de la sosire).
+        </li>
+        <li><strong>Dacă refuzi</strong>, nu păstrăm identificatorul deloc.</li>
+        <li>
+          <strong>Pe serverul nostru</strong>, identificatorul se leagă de un click spre magazin doar dacă
+          în acel moment ai acordul „Publicitate”. Îl ștergem automat după 90 de zile de la clickul pe
+          reclamă, indiferent dacă a dus sau nu la o comandă. Codul intern al clickului rămâne, fără
+          identificatorul Google, ca să putem potrivi comisioanele primite de la rețeaua de afiliere.
+        </li>
+        <li>
+          <strong>Ce trimitem la Google</strong> (Google Ireland Ltd., prin Data Manager API / Google Ads,
+          ca „conversie offline”): doar identificatorul clickului, valoarea comisionului nostru în lei,
+          ora și ID-ul comenzii. Nu trimitem email, telefon sau adresa IP. Dacă o comandă deja raportată
+          se anulează, îi cerem lui Google să o retragă, pe baza ID-ului comenzii.
+        </li>
+        <li>
+          <strong>Nu folosim datele pentru reclame personalizate.</strong> Nu cerem și nu declarăm acord
+          pentru reclame personalizate sau remarketing: semnalul <code>ad_personalization</code> este
+          mereu „refuzat”, atât pe site, cât și în datele trimise la Google.
+        </li>
+        <li>
+          <strong>Dacă îți retragi acordul</strong> (din „Setări cookies”), ștergem cookie-ul{' '}
+          <code>se_gclid</code> de pe dispozitiv și trimitem serverului nostru, o singură dată, doar
+          identificatorul (fără alte date), ca să-l ștergem din clickurile deja înregistrate. După
+          retragere nu mai trimitem la Google conversii pentru acele clickuri; conversiile trimise
+          înainte, cât aveai acordul, rămân la Google. Pentru această cerere, adresa ta IP este folosită
+          doar temporar, în memorie, ca protecție împotriva abuzurilor; nu o salvăm și nu o scriem în
+          jurnale.
+        </li>
+      </ul>
 
       <h2>Linkurile spre magazine</h2>
       <p>
@@ -129,9 +169,10 @@ export default function ConfidentialitatePage() {
       <h2>Cât timp păstrăm datele</h2>
       <ul>
         <li>Alegerea despre cookie-uri: 6 luni, apoi te întrebăm din nou.</li>
-        <li>Identificatorul clickului pe reclamă (<code>gclid</code> etc.): cel mult 90 de zile — atât în
-          cookie-ul <code>se_gclid</code>, cât și pe serverul nostru (după 90 de zile de la click îl ștergem
-          automat; codul de click rămâne, fără identificatorul Google).</li>
+        <li>Identificatorul clickului pe reclamă (<code>gclid</code> etc.): 90 de zile de la clickul pe
+          reclamă — atât în cookie-ul <code>se_gclid</code>, cât și pe serverul nostru, unde îl ștergem
+          automat, indiferent dacă a dus la o comandă (codul de click rămâne, fără identificatorul Google).
+          Îl ștergem mai devreme dacă îți retragi acordul.</li>
         <li>Datele Google Analytics: 14 luni (setarea din Google Analytics).</li>
         <li>Alertele Telegram: până le ștergi (comanda <code>/sterge</code>) sau ne ceri ștergerea.</li>
         <li>Jurnalele tehnice: cât e necesar pentru securitate, de regulă câteva săptămâni.</li>

@@ -44,15 +44,13 @@ export default function CookiesPage() {
             <td><code>se_gclid</code></td>
             <td>Publicitate</td>
             <td>
-              Păstrează identificatorul clickului pe reclama Google cu care ai ajuns pe site
-              (<code>gclid</code>, <code>gbraid</code> sau <code>wbraid</code>). Când mergi spre un magazin,
-              îl asociem codului de click; dacă rezultă o comandă, trimitem la Google Ads identificatorul,
-              ora comenzii și valoarea comisionului nostru, ca să știm ce reclame aduc cumpărături reale.
-              Se setează numai dacă accepți „Publicitate” și se șterge dacă îți retragi acordul. Până alegi,
-              identificatorul stă doar în memoria temporară a filei (<code>sessionStorage</code>), nu e
-              trimis nicăieri și dispare când închizi fila.
+              Conține identificatorul clickului pe reclama Google cu care ai ajuns pe site
+              (<code>gclid</code>, <code>gbraid</code> sau <code>wbraid</code>) și momentul în care ai ajuns.
+              Scopul: dacă mergi apoi spre un magazin și cumperi ceva, să putem lega comanda de reclama
+              care ți-a adus vizita, ca să știm ce reclame aduc cumpărături reale. Se scrie numai dacă accepți
+              „Publicitate” și se șterge dacă îți retragi acordul (detalii mai jos).
             </td>
-            <td>90 de zile</td>
+            <td>90 de zile de la sosirea pe site</td>
           </tr>
           <tr>
             <td>Cookie-uri Profitshare (ex. <code>PROFITSHARESESSID</code>)</td>
@@ -66,6 +64,31 @@ export default function CookiesPage() {
           </tr>
         </tbody>
       </table>
+
+      <h2>Identificatorul reclamei Google: ce se întâmplă, pas cu pas</h2>
+      <ul>
+        <li>
+          <strong>Înainte să alegi:</strong> nu salvăm nimic pe dispozitivul tău — nici cookie, nici
+          altă formă de stocare a browserului (<code>sessionStorage</code>, <code>localStorage</code>).
+          Identificatorul din adresa paginii rămâne doar în memoria paginii deschise și se pierde dacă
+          reîncarci pagina sau închizi fila. Dacă accepți „Publicitate” între timp, abia atunci scriem
+          cookie-ul <code>se_gclid</code>.
+        </li>
+        <li>
+          <strong>Dacă refuzi:</strong> nu păstrăm identificatorul deloc.
+        </li>
+        <li>
+          <strong>Dacă îți retragi acordul</strong> (din „Setări cookies”): ștergem cookie-ul{' '}
+          <code>se_gclid</code> de pe dispozitiv și trimitem serverului nostru, o singură dată, doar
+          identificatorul (fără alte date), ca să-l ștergem și din clickurile spre magazine deja
+          înregistrate. După aceea nu mai trimitem la Google conversii pentru acele clickuri.
+          Conversiile trimise înainte, cât aveai acordul, rămân la Google.
+        </li>
+      </ul>
+      <p>
+        Ce se întâmplă pe serverul nostru și ce ajunge la Google este descris în{' '}
+        <Link href="/confidentialitate">Politica de confidențialitate</Link>.
+      </p>
 
       <h2>Cookie-uri ale altor site-uri</h2>
       <p>
