@@ -1,13 +1,16 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import pool from '@/lib/db'
-import { OFFER_AVAILABLE_SQL, PRODUCT_GONE_DAYS } from '@/lib/availability'
+import { OFFER_AVAILABLE_SQL, PRODUCT_GONE_DAYS, PRODUCT_GONE_FROM } from '@/lib/availability'
 
 // Produs fara nicio oferta disponibila de PRODUCT_GONE_DAYS zile → 410 Gone (Google il scoate
 // din index mai repede decat la 404). Pana atunci pagina afiseaza „indisponibil”, neindexata.
 // De ce aici si nu in pagina: o pagina Next poate intoarce doar 404 (notFound), nu 410.
 // Proxy-ul ruleaza in Node (Next 16), deci poate interoga Postgres direct.
 export async function proxy(request: NextRequest) {
+  // Perioada de gratie de la lansare (vezi PRODUCT_GONE_FROM) — fara interogare DB pana atunci
+  if (Date.now() < PRODUCT_GONE_FROM.getTime()) return NextResponse.next()
+
   const slug = decodeURIComponent(request.nextUrl.pathname.slice('/p/'.length)).split('/')[0]
   if (!slug) return NextResponse.next()
 
