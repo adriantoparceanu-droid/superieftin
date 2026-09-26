@@ -4,12 +4,18 @@
 > reclame, tracking, consimțământ sau dashboard-ul de ads.
 
 ## Context business
-- superieftin.ro este un comparator de prețuri cu linkuri de afiliere Profitshare.
-  Nu vindem direct. Venitul = comisioane Profitshare.
+- superieftin.ro este un comparator de prețuri cu linkuri de afiliere Profitshare
+  (majoritatea ofertelor) și 2Performant (evomag). Nu vindem direct.
+  Venitul = comisioane din aceste rețele.
 - Propunerea de valoare: reducere reală = preț actual cu minim 5% sub MEDIANA ultimelor 30 de zile.
 - Google Shopping NU este permis pentru acest model (politica Merchant Center interzice
   linkurile de afiliere în afara programului CSS). Folosim doar campanii Search.
-- Retaileri actuali: ITGalaxy, ForIT, CITGrup, Vexio, Vegis (lista poate crește).
+- Retaileri actuali (lista poate crește; sursa de adevăr e tabela `retailers`):
+  - Profitshare: CITGrup, ITGalaxy, ForIT, Vexio, Vegis, eMAG (scanat local, linkuri
+    afiliate Profitshare — ~86% din oferte; restul nu aduc comision)
+  - 2Performant: evomag
+  - Vegis = categoria Sănătate & Naturale → exclus din reclame (regula 8)
+- Reclamele trimit DOAR spre oferte cu `affiliate_url` (fără link afiliat = cost fără venit).
 
 ## Reguli de siguranță (NU se negociază)
 1. **Nicio campanie nu se activează automat.** Orice campanie, grup de anunțuri sau anunț
@@ -21,7 +27,9 @@
 4. **Mediu de test mai întâi.** Variabila `ADS_ENV=test|prod`. Codul nou se rulează întâi
    pe contul de test. Rularea pe `prod` cere și flag-ul `--prod`.
 5. **Secretele stau doar în `.env`.** Niciodată în cod, commit-uri, loguri sau rapoarte.
-6. **Nu modifica conținutul existent din CLAUDE.md.**
+6. **Nu șterge și nu rescrie regulile existente din CLAUDE.md.** Adăugările de documentare
+   cerute de secțiunea „Întreținerea acestui fișier” (rută nouă, migrație, comandă nouă)
+   sunt permise și obligatorii, în același commit cu modificarea.
 7. **Consimțământ (GDPR):** `gclid`, `gbraid`, `wbraid` se salvează și se trimit la Google
    DOAR dacă utilizatorul a acordat `ad_storage` și `ad_user_data`. Fără consimțământ,
    clickul se înregistrează anonim (fără ID-uri Google).
