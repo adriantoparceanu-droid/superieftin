@@ -5,6 +5,7 @@ import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { GoogleAnalytics } from '@/components/analytics/GoogleAnalytics'
 import { CookieBanner } from '@/components/consent/CookieBanner'
+import { AdClickCapture } from '@/components/consent/AdClickCapture'
 
 const archivoBlack = Archivo_Black({
   weight: '400',
@@ -53,6 +54,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </main>
         <Footer />
         <CookieBanner />
+        <AdClickCapture />
       </body>
     </html>
   )

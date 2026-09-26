@@ -41,3 +41,20 @@ export function parseAdClickCookie(value: string | undefined | null): AdClickIds
     return null
   }
 }
+
+// --- Doar in browser (apelate din AdClickCapture) ---------------------------------------
+
+export function writeAdClickCookie(ids: AdClickIds): void {
+  const secure = location.protocol === 'https:' ? '; Secure' : ''
+  const maxAge = AD_CLICK_MAX_AGE_DAYS * 86400
+  document.cookie = `${AD_CLICK_COOKIE}=${encodeURIComponent(JSON.stringify(ids))}; Max-Age=${maxAge}; Path=/; SameSite=Lax${secure}`
+}
+
+export function clearAdClickCookie(): void {
+  document.cookie = `${AD_CLICK_COOKIE}=; Max-Age=0; Path=/; SameSite=Lax`
+}
+
+export function readAdClickCookie(): AdClickIds | null {
+  const raw = document.cookie.split('; ').find((c) => c.startsWith(AD_CLICK_COOKIE + '='))
+  return raw ? parseAdClickCookie(raw.slice(AD_CLICK_COOKIE.length + 1)) : null
+}
