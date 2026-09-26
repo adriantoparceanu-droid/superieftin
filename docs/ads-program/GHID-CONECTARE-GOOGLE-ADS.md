@@ -132,7 +132,7 @@ GA4 → Admin → Colectarea datelor și modificarea lor → **Păstrarea datelo
 **14 luni** → Salvează. Implicit sunt doar 2 luni; fără asta pierzi istoricul util pentru research.
 
 ### Faza 2 (Claude Code + tu)
-Agentul `tracking` adaugă evenimentul `affiliate_click` în cod și scrie
+Agentul `tracking` adaugă evenimentul `click_affiliate_link` în cod și scrie
 `ghid-setari-ga4.md` cu setările pe care le faci manual în GA4.
 
 ### Faza 4 — acces pentru agenți, doar citire

@@ -50,16 +50,16 @@ Dacă subID-ul NU vine înapoi prin API, propune 2 variante alternative de potri
    memoria sesiunii curente (fără persistare până la consimțământ).
 2. `/go/[id]`: generează click_id, scrie în `ad_clicks`, adaugă click_id ca subID în
    linkul Profitshare, redirect 302. Trebuie să rămână rapid.
-3. Eveniment GA4 `affiliate_click`, trimis la click pe link înainte de redirect
+3. Eveniment GA4 `click_affiliate_link` (EXISTĂ deja în `web/src/components/analytics/AffiliateLink.tsx` — se extinde, nu se înlocuiește), trimis la click pe link înainte de redirect
    (cu `transport_type: 'beacon'` ca să nu se piardă), respectând Consent Mode.
    Parametri: `store`, `product_id`, `category`, `price`, `discount_pct`.
    NU trimite click_id sau date personale în GA4.
    În Google Ads se importă ca conversie SECUNDARĂ, doar pentru observare.
 4. Scrie `docs/ads-program/ghid-setari-ga4.md` cu pașii manuali pentru proprietar:
-   `affiliate_click` ca eveniment cheie, dimensiuni personalizate pentru parametri,
+   `click_affiliate_link` ca eveniment cheie, dimensiuni personalizate pentru parametri,
    filtru pentru traficul intern, legătura GA4 ↔ Google Ads, Google Signals oprit.
 5. `tracking:sync` (zilnic, prin cron-ul disponibil în infrastructura proiectului):
-   a. Citește comisioanele noi/modificate din Profitshare (ultimele 45 de zile).
+   a. Citește comisioanele noi/modificate din Profitshare (ultimele 90 de zile — aprobarea vine după ~48–65 de zile).
    b. Upsert în `affiliate_conversions`, potrivire cu `ad_clicks` după click_id.
    c. Pentru potrivirile cu gclid și consimțământ, încă netrimise: upload ca click
       conversion pe acțiunea „Comision Profitshare”, valoare = comision, RON.
@@ -75,5 +75,5 @@ Pe contul de test: simulează un click cu gclid de test, o conversie Profitshare
 ## Nu faci
 - Nu trimiți date personale (email, telefon, IP) la Google.
 - Nu modifici UI-ul (e treaba lui `site-dev`), în afară de handler-ul `/go/` și de
-  trimiterea evenimentului `affiliate_click`.
+  trimiterea evenimentului `click_affiliate_link`.
 - Nu schimbi setări în GA4 — doar scrii ghidul pentru proprietar.

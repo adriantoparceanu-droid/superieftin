@@ -62,7 +62,7 @@ GA4_PROPERTY_ID=                   # din Faza 4, pentru citire prin MCP
 ## Google Analytics 4 — rolul lui
 - Profitshare = sursa de adevăr pentru bani. Google Ads = sursa pentru cost.
 - GA4 = comportament: DE CE un cuvânt cheie pierde bani (bounce, viteză, pagină slabă).
-- Evenimentul GA4 `affiliate_click` se importă în Google Ads DOAR ca conversie SECUNDARĂ.
+- Evenimentul GA4 `click_affiliate_link` se importă în Google Ads DOAR ca conversie SECUNDARĂ.
   Conversia principală rămâne „Comision Profitshare”. Altfel Google numără dublu.
 - Accesul agenților la GA4 este DOAR citire (MCP oficial, scope `analytics.readonly`).
   Setările GA4 le face proprietarul manual.

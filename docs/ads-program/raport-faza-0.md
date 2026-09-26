@@ -141,3 +141,15 @@ worker-ului e TypeScript; C nu se justifică pentru volumul nostru.
 
 Faza 1 (site) nu depinde de Google Ads și poate porni imediat după ce alegi soluția de
 cookies (`docs/ads-program/prompts/faza-1.md`).
+
+---
+
+## Decizii Poarta 0 (2026-09-26)
+1. Conturile Google: proprietarul le creează; punctele 5–6 se reiau după.
+2. ✅ SubID prin `&hash=click_id` (Profitshare) / `&st=click_id` (2Performant) în `/go`,
+   activat devreme, separat de restul tracking-ului (branch `ads/faza-2a-subid`).
+3. ✅ Fereastră de sync 90 de zile.
+4. ✅ Păstrăm evenimentul GA4 `click_affiliate_link` (redenumit peste tot în pachet),
+   extins cu parametrii lipsă.
+5. Librăria Google Ads: după testul pe contul de test.
+6. Faza 1: cookies = **C. Banner propriu**.
