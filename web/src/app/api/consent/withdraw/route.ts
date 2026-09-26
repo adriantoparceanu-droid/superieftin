@@ -13,7 +13,7 @@ import { rateLimit, clientIp } from '@/lib/rate-limit'
 //
 // Primeste DOAR gclid/gbraid/wbraid (form-urlencoded, ca de la sendBeacon), nicio alta data.
 // Nu salveaza nimic nou si nu logheaza ID-ul. Raspuns: 204 fara continut (400 input invalid,
-// 429 prea multe cereri).
+// 413 corp prea mare, 429 prea multe cereri; alte metode decat POST → 405, automat din Next).
 
 const MAX_BODY = 2000                 // 3 ID-uri × max. 300 caractere + nume de campuri
 const LIMIT = 10                      // cereri per IP ...
@@ -21,11 +21,48 @@ const WINDOW_MS = 10 * 60_000         // ... la 10 minute (un vizitator real tri
 
 const empty = (status: number) => new Response(null, { status, headers: { 'Cache-Control': 'no-store' } })
 
+// R6: corpul se citeste cu plafon, ca un POST urias sa nu fie tinut intreg in memorie inainte de
+// verificarea lungimii (req.text() citea tot, apoi compara).
+//   - Content-Length prezent si > MAX_BODY → 413 imediat, fara sa citim nimic;
+//   - Content-Length invalid (nu e numar) → 400;
+//   - Content-Length lipsa (corp „chunked”) → NU respingem cu 411: sendBeacon/fetch trimit de
+//     regula lungimea, dar nu vrem sa pierdem o retragere legitima din cauza unui proxy care o
+//     scoate. In schimb citim bucata cu bucata si ne oprim (413) cand depasim MAX_BODY.
+// Returneaza textul sau un cod HTTP de eroare.
+async function readLimitedBody(req: NextRequest): Promise<string | number> {
+  const lenHeader = req.headers.get('content-length')
+  if (lenHeader !== null) {
+    if (!/^\d+$/.test(lenHeader.trim())) return 400
+    if (Number(lenHeader) > MAX_BODY) return 413
+  }
+  if (!req.body) return ''
+  const reader = req.body.getReader()
+  const chunks: Uint8Array[] = []
+  let total = 0
+  try {
+    for (;;) {
+      const { done, value } = await reader.read()
+      if (done) break
+      total += value.byteLength
+      if (total > MAX_BODY) { void reader.cancel().catch(() => {}); return 413 }
+      chunks.push(value)
+    }
+  } catch {
+    return 400                            // conexiune intrerupta / corp stricat
+  }
+  const buf = new Uint8Array(total)
+  let off = 0
+  for (const c of chunks) { buf.set(c, off); off += c.byteLength }
+  return new TextDecoder().decode(buf)
+}
+
 export async function POST(req: NextRequest) {
   if (!rateLimit(`withdraw:${clientIp(req.headers)}`, LIMIT, WINDOW_MS)) return empty(429)
 
-  const text = await req.text().catch(() => '')
-  if (!text || text.length > MAX_BODY) return empty(400)
+  const body = await readLimitedBody(req)
+  if (typeof body === 'number') return empty(body)
+  const text = body
+  if (!text) return empty(400)
 
   const params = new URLSearchParams(text)
   // Orice camp necunoscut = cerere invalida: nu acceptam „si alte date” pe langa ID-uri
