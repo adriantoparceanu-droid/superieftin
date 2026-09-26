@@ -104,7 +104,10 @@ export default function ConfidentialitatePage() {
         Folosim Google Consent Mode v2. Până accepți, cookie-urile Google nu sunt setate. Google
         poate primi totuși semnale fără cookie-uri și fără identificatori (de exemplu, că a avut
         loc o vizită), pe care le folosește doar pentru statistici estimate, agregate. Dacă refuzi
-        categoria „Publicitate”, nu salvăm identificatorii clickurilor pe reclame.
+        categoria „Publicitate”, nu salvăm identificatorii clickurilor pe reclame — în afara
+        jurnalelor tehnice ale serverului și ale Cloudflare, în care adresa completă a paginii
+        (inclusiv identificatorul din ea) poate apărea; acestea se păstrează de regulă câteva
+        săptămâni, doar pentru securitate, nu le folosim pentru reclame și nu le trimitem la Google.
       </p>
 
       <h2>Identificatorul clickului pe reclama Google, pe scurt</h2>
@@ -116,7 +119,12 @@ export default function ConfidentialitatePage() {
           Dacă accepți „Publicitate” între timp, abia atunci scriem cookie-ul <code>se_gclid</code>
           (identificatorul și momentul sosirii pe site, valabil 90 de zile de la sosire).
         </li>
-        <li><strong>Dacă refuzi</strong>, nu păstrăm identificatorul deloc.</li>
+        <li>
+          <strong>Dacă refuzi</strong>, nu păstrăm identificatorul, în afara jurnalelor tehnice ale
+          serverului și ale Cloudflare, în care adresa completă a paginii (inclusiv identificatorul din
+          ea) poate apărea. Aceste jurnale se păstrează de regulă câteva săptămâni, doar pentru
+          securitate; nu le folosim pentru reclame și nu le trimitem la Google.
+        </li>
         <li>
           <strong>Pe serverul nostru</strong>, identificatorul se leagă de un click spre magazin doar dacă
           în acel moment ai acordul „Publicitate”. Îl ștergem automat după 90 de zile de la clickul pe
@@ -139,9 +147,11 @@ export default function ConfidentialitatePage() {
           <code>se_gclid</code> de pe dispozitiv și trimitem serverului nostru, o singură dată, doar
           identificatorul (fără alte date), ca să-l ștergem din clickurile deja înregistrate. După
           retragere nu mai trimitem la Google conversii pentru acele clickuri; conversiile trimise
-          înainte, cât aveai acordul, rămân la Google. Pentru această cerere, adresa ta IP este folosită
-          doar temporar, în memorie, ca protecție împotriva abuzurilor; nu o salvăm și nu o scriem în
-          jurnale.
+          înainte, cât aveai acordul, rămân la Google. Pentru această cerere, aplicația folosește adresa
+          ta IP doar temporar, în memorie, ca protecție împotriva abuzurilor, și nu o salvează separat.
+          Ca la orice cerere către site, adresa IP apare însă în jurnalele tehnice ale serverului și ale
+          Cloudflare (vezi „Cât timp păstrăm datele”), păstrate de regulă câteva săptămâni, doar pentru
+          securitate.
         </li>
       </ul>
 

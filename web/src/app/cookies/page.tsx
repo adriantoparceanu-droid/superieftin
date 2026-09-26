@@ -75,7 +75,10 @@ export default function CookiesPage() {
           cookie-ul <code>se_gclid</code>.
         </li>
         <li>
-          <strong>Dacă refuzi:</strong> nu păstrăm identificatorul deloc.
+          <strong>Dacă refuzi:</strong> nu păstrăm identificatorul, în afara jurnalelor tehnice ale
+          serverului și ale Cloudflare, în care adresa completă a paginii (inclusiv identificatorul din
+          ea) poate apărea. Aceste jurnale se păstrează de regulă câteva săptămâni, doar pentru
+          securitate; nu le folosim pentru reclame și nu le trimitem la Google.
         </li>
         <li>
           <strong>Dacă îți retragi acordul</strong> (din „Setări cookies”): ștergem cookie-ul{' '}
