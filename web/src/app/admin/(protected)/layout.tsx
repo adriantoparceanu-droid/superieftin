@@ -10,6 +10,7 @@ const NAV: NavEntry[] = [
   {
     group: 'Feeduri',
     children: [
+      { href: '/admin/magazine', label: 'Magazine & surse' },
       { href: '/admin/surse-feed', label: 'Surse feed' },
       { href: '/admin/import', label: 'Import manual' },
       { href: '/admin/advertiseri', label: 'Advertiseri' },

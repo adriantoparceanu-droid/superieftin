@@ -113,7 +113,7 @@ export const getTopDiscounts = unstable_cache(
       JOIN retailers r ON r.id = o.retailer_id
       JOIN median_prices mp ON mp.offer_id = o.id
       WHERE o.current_price IS NOT NULL
-        AND o.in_stock = true
+        AND ${OFFER_AVAILABLE_SQL}
         AND o.current_price < mp.median_price * 0.95
         -- doar preturi proaspete (FRESH_HOURS din lib/discount.ts)
         AND o.last_checked >= now() - INTERVAL '48 hours'
@@ -160,7 +160,7 @@ export const getLandingProducts = unstable_cache(
         JOIN median_prices mp ON mp.offer_id = o.id
         WHERE ${CATEGORY_FILTER_SQL}
           AND o.current_price IS NOT NULL
-          AND o.in_stock = true
+          AND ${OFFER_AVAILABLE_SQL}
           AND o.affiliate_url IS NOT NULL
           -- doar preturi proaspete (FRESH_HOURS din lib/discount.ts)
           AND o.last_checked >= now() - INTERVAL '48 hours'
@@ -212,7 +212,7 @@ export const getCheapestProducts = unstable_cache(
       JOIN retailers r ON r.id = o.retailer_id
       LEFT JOIN latest_history lh ON lh.offer_id = o.id
       WHERE o.current_price IS NOT NULL
-        AND o.in_stock = true
+        AND ${OFFER_AVAILABLE_SQL}
       ORDER BY o.current_price ASC
       LIMIT $1
     `, [limit])
@@ -258,7 +258,7 @@ const SEARCH_SQL = `
   JOIN retailers r ON r.id = o.retailer_id
   LEFT JOIN median_prices mp ON mp.offer_id = o.id
   WHERE o.current_price IS NOT NULL
-    AND o.in_stock = true
+    AND ${OFFER_AVAILABLE_SQL}
     AND (
       p.name ILIKE '%' || $1 || '%'
       OR p.brand ILIKE '%' || $1 || '%'
@@ -285,7 +285,7 @@ export const searchProductCount = unstable_cache(
        FROM products p
        JOIN offers o ON o.product_id = p.id
        WHERE o.current_price IS NOT NULL
-         AND o.in_stock = true
+         AND ${OFFER_AVAILABLE_SQL}
          AND (p.name ILIKE '%' || $1 || '%' OR p.brand ILIKE '%' || $1 || '%')`,
       [query.trim()]
     )
@@ -344,7 +344,7 @@ export const getCategoryProducts = unstable_cache(
       LEFT JOIN median_prices mp ON mp.offer_id = o.id
       WHERE ${categoryFilter(includeSub)}
         AND o.current_price IS NOT NULL
-        AND o.in_stock = true
+        AND ${OFFER_AVAILABLE_SQL}
         AND ($4::text IS NULL OR p.brand = $4)
       ORDER BY ${orderBy}
       LIMIT $2 OFFSET $3
@@ -363,7 +363,7 @@ export const getCategoryProductCount = unstable_cache(
       JOIN offers o ON o.product_id = p.id
       WHERE ${categoryFilter(includeSub)}
         AND o.current_price IS NOT NULL
-        AND o.in_stock = true
+        AND ${OFFER_AVAILABLE_SQL}
         AND ($2::text IS NULL OR p.brand = $2)
     `, [category, brand])
     return rows[0]?.count ?? 0
@@ -382,7 +382,7 @@ export const getCategoryBrands = unstable_cache(
         AND p.brand IS NOT NULL
         AND p.brand != ''
         AND o.current_price IS NOT NULL
-        AND o.in_stock = true
+        AND ${OFFER_AVAILABLE_SQL}
       ORDER BY p.brand ASC
     `, [category])
     return rows.map(r => r.brand as string)
@@ -431,7 +431,7 @@ export const getRandomCategoryProducts = unstable_cache(
       LEFT JOIN median_prices mp ON mp.offer_id = o.id
       WHERE ${CATEGORY_FILTER_SQL}
         AND o.current_price IS NOT NULL
-        AND o.in_stock = true
+        AND ${OFFER_AVAILABLE_SQL}
       ORDER BY random()
       LIMIT $2
     `, [category, limit])
@@ -458,7 +458,7 @@ export const getSubcategories = unstable_cache(
              (SELECT COUNT(DISTINCT p.id)::int
               FROM products p JOIN offers o ON o.product_id = p.id
               WHERE p.category_id = c.id
-                AND o.current_price IS NOT NULL AND o.in_stock = true) AS count
+                AND o.current_price IS NOT NULL AND ${OFFER_AVAILABLE_SQL}) AS count
       FROM categories c
       WHERE c.is_visible = true
         AND c.parent_id = (SELECT id FROM categories WHERE slug = $1)
@@ -670,7 +670,7 @@ export const getCategoryThumbs = unstable_cache(
       FROM categories c
       JOIN products p ON (p.category_id = c.id
         OR p.category_id IN (SELECT id FROM categories ch WHERE ch.parent_id = c.id))
-      JOIN offers o ON o.product_id = p.id AND o.in_stock = true AND o.current_price IS NOT NULL
+      JOIN offers o ON o.product_id = p.id AND ${OFFER_AVAILABLE_SQL} AND o.current_price IS NOT NULL
       WHERE c.is_visible = true AND c.parent_id IS NULL AND p.image_url IS NOT NULL
       ORDER BY c.id,
         (SELECT count(*) FROM click_events ce JOIN offers o2 ON o2.id = ce.offer_id
@@ -741,7 +741,7 @@ export const getTagProducts = unstable_cache(
       JOIN offers o ON o.product_id = p.id
       JOIN retailers r ON r.id = o.retailer_id
       LEFT JOIN median_prices mp ON mp.offer_id = o.id
-      WHERE o.current_price IS NOT NULL AND o.in_stock = true
+      WHERE o.current_price IS NOT NULL AND ${OFFER_AVAILABLE_SQL}
       ORDER BY current_price ASC NULLS LAST
       LIMIT $2 OFFSET $3
     `, [slug, PAGE_SIZE, offset])
@@ -759,7 +759,7 @@ export const getTagProductCount = unstable_cache(
       JOIN product_tags pt ON pt.product_id = p.id
       JOIN tags t ON t.id = pt.tag_id AND t.slug = $1
       JOIN offers o ON o.product_id = p.id
-      WHERE o.current_price IS NOT NULL AND o.in_stock = true
+      WHERE o.current_price IS NOT NULL AND ${OFFER_AVAILABLE_SQL}
     `, [slug])
     return rows[0]?.count ?? 0
   },
@@ -808,7 +808,7 @@ export const getProductsForFeed = unstable_cache(
         o.affiliate_url
       FROM products p
       JOIN offers o ON o.product_id = p.id
-      WHERE o.in_stock = true AND o.current_price IS NOT NULL
+      WHERE ${OFFER_AVAILABLE_SQL} AND o.current_price IS NOT NULL
       ORDER BY p.name ASC
       LIMIT 5000
     `)

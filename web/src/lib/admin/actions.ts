@@ -553,3 +553,48 @@ export async function deleteScraperCategoryAction(formData: FormData) {
   await pool.query('DELETE FROM scraper_categories WHERE id = $1', [id])
   refresh()
 }
+
+// ---------- Magazine & surse (pauza / nota) ----------
+
+// Pauza ascunde IMEDIAT toate ofertele magazinului de pe site (filtrul OFFER_AVAILABLE_SQL),
+// fara sa stearga nimic; datele se actualizeaza in continuare din feed, deci la reactivare
+// ofertele revin cu preturi proaspete.
+export async function pauseRetailerAction(formData: FormData) {
+  await requireAdmin()
+  const id = Number(formData.get('id'))
+  const reason = String(formData.get('reason') ?? '').trim().slice(0, 300) || 'Pus pe pauză din admin'
+  if (!id) return
+  await pool.query(
+    `UPDATE retailers SET paused_at = now(), pause_reason = $2,
+       source_state = 'paused', source_reason = $2, source_state_since = now()
+     WHERE id = $1`,
+    [id, reason]
+  )
+  revalidateTag('discounts', 'max')
+  revalidateAll()
+}
+
+export async function resumeRetailerAction(formData: FormData) {
+  await requireAdmin()
+  const id = Number(formData.get('id'))
+  if (!id) return
+  // Starea reala se recalculeaza la urmatorul feed-sync; pana atunci „reactivat”
+  await pool.query(
+    `UPDATE retailers SET paused_at = NULL, pause_reason = NULL,
+       source_state = NULL, source_reason = 'Reactivat — starea se recalculează la următoarea sincronizare',
+       source_state_since = now()
+     WHERE id = $1`,
+    [id]
+  )
+  revalidateTag('discounts', 'max')
+  revalidateAll()
+}
+
+export async function saveRetailerNoteAction(formData: FormData) {
+  await requireAdmin()
+  const id = Number(formData.get('id'))
+  const note = String(formData.get('note') ?? '').trim().slice(0, 1000) || null
+  if (!id) return
+  await pool.query('UPDATE retailers SET admin_note = $2 WHERE id = $1', [id, note])
+  refresh()
+}

@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import {
   getRetailerStats, getUnmappedCount, getRecentSyncs,
-  getPlatformStats, getTopClickedProducts, getTopSearches, getFeedFreshness,
+  getPlatformStats, getTopClickedProducts, getTopSearches, getFeedFreshness, getBlockedRetailers,
 } from '@/lib/admin/queries'
 
 // Paginile admin sunt dinamice implicit: layout-ul protejat citeste cookies()
@@ -17,7 +17,7 @@ function timeAgo(seconds: number): string {
 }
 
 export default async function AdminDashboard() {
-  const [retailers, unmapped, syncs, stats, topProducts, topSearches, freshness] = await Promise.all([
+  const [retailers, unmapped, syncs, stats, topProducts, topSearches, freshness, blocked] = await Promise.all([
     getRetailerStats(),
     getUnmappedCount(),
     getRecentSyncs(10),
@@ -25,6 +25,7 @@ export default async function AdminDashboard() {
     getTopClickedProducts(30, 10),
     getTopSearches(30, 10),
     getFeedFreshness(),
+    getBlockedRetailers(),
   ])
   const totalProducts = retailers.reduce((s, r) => s + r.products, 0)
   const totalOffers = retailers.reduce((s, r) => s + r.offers, 0)
@@ -33,6 +34,19 @@ export default async function AdminDashboard() {
   return (
     <div className="max-w-5xl">
       <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
+
+      {/* Magazine blocate >48h (fara pauza pusa de tine) — ofertele lor au disparut sau dispar de pe site */}
+      {blocked.length > 0 && (
+        <Link href="/admin/magazine" className="block mb-6 rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-900 hover:border-red-500">
+          <strong>⚠️ {blocked.length} {blocked.length === 1 ? 'magazin nu mai e' : 'magazine nu mai sunt'} actualizat{blocked.length === 1 ? '' : 'e'} de peste 48 de ore:</strong>
+          <ul className="mt-1 list-disc pl-5">
+            {blocked.map((b) => (
+              <li key={b.name}>{b.name} — de {b.age_days} {b.age_days === 1 ? 'zi' : 'zile'}{b.source_reason ? ` (${b.source_reason})` : ''}</li>
+            ))}
+          </ul>
+          <span className="underline">Vezi Magazine & surse →</span>
+        </Link>
+      )}
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
         <div className="bg-white border border-line rounded-xl p-4">

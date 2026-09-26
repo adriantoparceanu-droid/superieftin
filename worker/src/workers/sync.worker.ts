@@ -6,6 +6,7 @@ import { unlink } from 'fs/promises'
 import pool from '../lib/db.js'
 import { ensurePriceHistoryPartitions } from '../lib/partitions.js'
 import { markStaleOffers } from '../lib/stale.js'
+import { updateRetailerStatuses } from '../lib/retailer-status.js'
 import { connection } from '../lib/queue.js'
 import { getAdvertisers, getFeeds, getProductsByPartNo, PsApiError, type PsAdvertiser, type PsFeed } from '../lib/profitshare.js'
 import { downloadFeed, parseFeedFile, mapFeedRow } from '../importers/feed.js'
@@ -81,12 +82,14 @@ async function recordFeedSync(params: {
   source: 'profitshare' | 'upload' | 'scraper' | 'snapshot' | '2performant'
   filename?: string | null
   unmappedCount?: number | null
+  retailerId?: number | null   // magazinul atins (pentru starea din Admin → Magazine & surse)
 }): Promise<void> {
   await pool.query(`
-    INSERT INTO feed_syncs (feed_link, feed_name, ps_updated_at, products_count, status, source, filename, unmapped_count)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    INSERT INTO feed_syncs (feed_link, feed_name, ps_updated_at, products_count, status, source, filename, unmapped_count, retailer_id)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
   `, [params.feedLink, params.feedName, params.psUpdatedAt, params.productsCount,
-      params.status, params.source, params.filename ?? null, params.unmappedCount ?? null])
+      params.status, params.source, params.filename ?? null, params.unmappedCount ?? null,
+      params.retailerId ?? null])
 }
 
 // Verifica afilierea pe baza domeniului si suprascrie linkul/reteaua produsului.
@@ -147,6 +150,7 @@ async function syncOneFeed(
       await recordFeedSync({
         feedLink: feed.link, feedName: feed.name, psUpdatedAt: feedUpdatedAt,
         productsCount: validCount, status: 'rejected', source: 'profitshare',
+        retailerId: retailerByName.values().next().value ?? null,
       })
       return 'rejected'
     }
@@ -182,6 +186,7 @@ async function syncOneFeed(
     await recordFeedSync({
       feedLink: feed.link, feedName: feed.name, psUpdatedAt: feedUpdatedAt,
       productsCount: imported, status: 'success', source: 'profitshare', unmappedCount: unmapped,
+      retailerId: retailerByName.values().next().value ?? null,
     })
 
     log.info({ imported, errors, unmapped }, 'Feed importat')
@@ -252,6 +257,7 @@ export async function runFileImport(filePath: string, retailerSlug?: string, job
     feedLink: `upload:${filename ?? filePath}`, feedName: filename ?? filePath.split('/').pop() ?? null,
     psUpdatedAt: null, productsCount: imported, status: 'success', source: 'upload',
     filename: filename ?? null, unmappedCount: unmapped,
+    retailerId: touchedRetailers.values().next().value ?? null,
   })
 
   const duration = ((Date.now() - startTime) / 1000).toFixed(1)
@@ -315,6 +321,22 @@ export async function runFeedSync(jobId = 'direct') {
   // disparut (altfel ofertele unui feed mort raman afisate la infinit cu pret vechi).
   const stale = await markStaleOffers()
   log.info({ hidden: stale }, 'Oferte vechi marcate fara stoc (global)')
+
+  // Starea fiecarui magazin (Admin → Magazine & surse) + avertizare Telegram la schimbari.
+  // Magazinele acoperite azi de un feed Profitshare activ; cele care aveau feed si nu mai
+  // apar aici au feed-ul dezactivat/sters de retea.
+  try {
+    const profitshareCoveredIds = new Set<number>()
+    for (const feed of activeFeeds) {
+      for (const fa of feed.advertisers) {
+        const adv = advertisersById.get(String(fa.id))
+        if (adv) profitshareCoveredIds.add(await upsertRetailer(adv))
+      }
+    }
+    await updateRetailerStatuses({ profitshareCoveredIds })
+  } catch (err) {
+    log.error({ err }, 'Calcul stare magazine esuat')   // nu opreste snapshot-ul de preturi
+  }
 
   const snapshot = await runPriceSnapshot(jobId)
 
@@ -518,6 +540,7 @@ export async function syncExternalFeeds(resolveRule: RuleLookup): Promise<{ impo
       await recordFeedSync({
         feedLink: feed.url, feedName: feed.label, psUpdatedAt: null,
         productsCount: imported, status: 'success', source: '2performant',
+        retailerId: retailerByDomain.values().next().value ?? null,
       })
       log.info({ feed: feed.label, imported, errors }, 'Feed 2Performant importat')
       totalImported += imported; totalErrors += errors
@@ -587,11 +610,13 @@ export async function runScrape(scraperName: string, jobId = 'direct') {
   const scraper = getScraper(scraperName)
   if (!scraper) throw new Error(`Scraper necunoscut: '${scraperName}'`)
   const result = await ingestScraper(scraper)
+  const { rows: ret } = await pool.query<{ id: number }>('SELECT id FROM retailers WHERE slug = $1', [scraper.name])
 
   // Jurnalizeaza verificarea (apare in "Prospetime feed/scraper" din admin).
   await recordFeedSync({
     feedLink: `scraper:${scraper.name}`, feedName: scraper.name, psUpdatedAt: null,
     productsCount: result.imported, status: 'success', source: 'scraper',
+    retailerId: ret[0]?.id ?? null,
   })
 
   log.info(result, 'Scraping finalizat')

@@ -430,3 +430,68 @@ export async function getEmagSyncStatus(): Promise<EmagSyncStatusRow[]> {
   `)
   return rows
 }
+
+// ---------- Magazine & surse (migratia 018) ----------
+
+export interface RetailerSourceRow {
+  id: number
+  name: string
+  slug: string
+  paused_at: string | null
+  pause_reason: string | null
+  admin_note: string | null
+  source_state: string | null
+  source_reason: string | null
+  source_state_since: string | null
+  source_checked_at: string | null
+  sources: string[] | null          // profitshare | 2performant | scraper | upload
+  external_feeds: number            // feed-uri 2Performant active configurate
+  offers_total: number
+  offers_visible: number
+  last_fresh: string | null
+  last_fresh_age_s: number | null
+  last_sync_status: string | null
+  last_sync_count: number | null
+}
+
+// Un rand per magazin, cu starea calculata zilnic de worker (lib/retailer-status.ts) +
+// cifrele live (oferte vizibile acum, ultima confirmare). Cele cu probleme primele.
+export async function getRetailerSources(): Promise<RetailerSourceRow[]> {
+  const { rows } = await pool.query<RetailerSourceRow>(`
+    SELECT r.id, r.name, r.slug, r.paused_at, r.pause_reason, r.admin_note,
+      r.source_state, r.source_reason, r.source_state_since, r.source_checked_at,
+      (SELECT array_agg(DISTINCT fs.source) FROM feed_syncs fs
+        WHERE fs.retailer_id = r.id AND fs.source <> 'snapshot'
+          AND fs.synced_at > now() - INTERVAL '180 days') AS sources,
+      (SELECT count(*)::int FROM external_feeds ef
+        WHERE ef.is_active AND ef.label ILIKE '%' || split_part(r.slug, '-', 1) || '%') AS external_feeds,
+      (SELECT count(*)::int FROM offers o WHERE o.retailer_id = r.id) AS offers_total,
+      (SELECT count(*)::int FROM offers o WHERE o.retailer_id = r.id
+        AND o.in_stock AND o.last_checked >= now() - INTERVAL '3 days') AS offers_visible,
+      lf.last_fresh,
+      EXTRACT(EPOCH FROM (now() - lf.last_fresh))::int AS last_fresh_age_s,
+      ls.status AS last_sync_status, ls.products_count AS last_sync_count
+    FROM retailers r
+    LEFT JOIN LATERAL (SELECT max(o.last_checked) AS last_fresh FROM offers o WHERE o.retailer_id = r.id) lf ON true
+    LEFT JOIN LATERAL (
+      SELECT status, products_count FROM feed_syncs fs
+      WHERE fs.retailer_id = r.id AND fs.source <> 'snapshot' ORDER BY fs.synced_at DESC LIMIT 1
+    ) ls ON true
+    ORDER BY (r.source_state = 'ok') NULLS FIRST, (r.source_state = 'empty'), offers_total DESC
+  `)
+  return rows
+}
+
+// Magazine cu oferte, blocate de peste 48h (fara pauza pusa de admin) — pentru bandoul din dashboard
+export async function getBlockedRetailers(): Promise<{ name: string; source_state: string | null; source_reason: string | null; age_days: number }[]> {
+  const { rows } = await pool.query(`
+    SELECT r.name, r.source_state, r.source_reason,
+      floor(EXTRACT(EPOCH FROM (now() - max(o.last_checked))) / 86400)::int AS age_days
+    FROM retailers r JOIN offers o ON o.retailer_id = r.id
+    WHERE r.paused_at IS NULL
+    GROUP BY r.id
+    HAVING max(o.last_checked) < now() - INTERVAL '48 hours'
+    ORDER BY age_days DESC
+  `)
+  return rows
+}
