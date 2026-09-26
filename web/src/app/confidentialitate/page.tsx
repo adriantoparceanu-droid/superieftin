@@ -73,6 +73,12 @@ export default function ConfidentialitatePage() {
             <td>Consimțământ (categoria „Publicitate”)</td>
           </tr>
           <tr>
+            <td><strong>Bannere de afiliere Profitshare</strong> (doar pe desktop): pagina vizitată,
+              browserul, rezoluția ecranului, cookie-uri Profitshare</td>
+            <td>Afișarea bannerelor partenerilor</td>
+            <td>Consimțământ (categoria „Publicitate”); fără acord, bannerele nu se încarcă</td>
+          </tr>
+          <tr>
             <td><strong>Alerte de preț pe Telegram</strong>: ID-ul conversației, numele de utilizator și prenumele din Telegram, alertele setate</td>
             <td>Să îți trimitem alertele cerute</td>
             <td>Executarea serviciului cerut de tine</td>
@@ -82,6 +88,11 @@ export default function ConfidentialitatePage() {
       <p>
         Nu cerem cont, nu vindem date și nu trimitem către Google adresa de email, telefonul sau
         alte date de contact.
+      </p>
+      <p>
+        Imaginile produselor și logourile magazinelor se încarcă direct de pe serverele magazinelor
+        și ale Profitshare. Ca la orice imagine de pe internet, browserul tău le transmite adresa IP;
+        aceste imagini nu setează cookie-uri.
       </p>
 
       <h2>Google Analytics și Google Ads fără consimțământ</h2>
@@ -105,7 +116,8 @@ export default function ConfidentialitatePage() {
         <li>Furnizorul de găzduire a serverului, {COMPANY.hosting ?? <Todo>furnizor găzduire + țara serverului</Todo>}.</li>
         <li>Google Ireland Ltd. (Analytics, Ads), doar cu consimțământul tău. Google poate transfera
           date în SUA, în baza Cadrului UE–SUA privind protecția datelor.</li>
-        <li>Rețelele de afiliere Profitshare și 2Performant (codul de click).</li>
+        <li>Rețelele de afiliere Profitshare și 2Performant (codul de click; bannerele Profitshare,
+          doar cu consimțământ).</li>
         <li>Telegram, dacă folosești alertele (mesajele trec prin serverele Telegram).</li>
       </ul>
 

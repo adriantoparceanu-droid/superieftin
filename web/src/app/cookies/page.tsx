@@ -46,6 +46,16 @@ export default function CookiesPage() {
             <td>Google Ads: arată dacă o vizită venită dintr-o reclamă a dus la o comandă</td>
             <td>90 de zile</td>
           </tr>
+          <tr>
+            <td>Cookie-uri Profitshare (ex. <code>PROFITSHARESESSID</code>)</td>
+            <td>Publicitate</td>
+            <td>
+              Bannerele de afiliere de pe prima pagină (doar pe desktop) sunt servite de Profitshare,
+              care își setează propriile cookie-uri. Bannerele se încarcă numai dacă accepți categoria
+              „Publicitate”.
+            </td>
+            <td>stabilită de Profitshare (de regulă, sesiunea)</td>
+          </tr>
         </tbody>
       </table>
 

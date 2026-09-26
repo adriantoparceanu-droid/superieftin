@@ -11,6 +11,7 @@ import { CategoryGrid } from '@/components/CategoryGrid'
 import { CategoryMenu } from '@/components/CategoryMenu'
 import { Banner } from '@/components/Banner'
 import { HeroBanners } from '@/components/HeroBanners'
+import { AdConsentGate } from '@/components/consent/AdConsentGate'
 import { BenefitsBar } from '@/components/BenefitsBar'
 import { RetailerStrip } from '@/components/RetailerStrip'
 
@@ -74,6 +75,8 @@ export default async function HomePage() {
     },
   }
 
+  const hero = <HeroBanners heroProduct={heroProduct} isRealDiscount={isRealDiscount} secondaryCategory={null} />
+
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
@@ -86,24 +89,32 @@ export default async function HomePage() {
         {/* Bannerele se incadreaza intr-un cadru de max 970px (dimensiune standard Profitshare/IAB);
             continutul mai mic se scaleaza la latimea cadrului. Cele doua mici impart cadrul in doua. */}
         <div className="flex flex-col gap-4 min-w-0 w-full max-w-[970px]">
-          {bannerMain ? (
+          {bannerMain?.type === 'html' ? (
+            // Banner HTML de afiliere (scripturi Profitshare → cookie): doar cu acord „Publicitate”
+            // si doar pe desktop; altfel hero-ul auto (cu cautare). Vezi AdConsentGate.
+            <AdConsentGate fallback={hero}>
+              <Banner banner={bannerMain} />
+            </AdConsentGate>
+          ) : bannerMain ? (
             <>
-              {/* Bannerele Profitshare (format desktop 970px) nu se afiseaza pe mobil;
-                  hero-ul auto (cu cautare) ramane vizibil acolo. */}
+              {/* Banner-imagine (format desktop 970px): nu se afiseaza pe mobil */}
               <div className="hidden lg:block">
                 <Banner banner={bannerMain} />
               </div>
-              <div className="lg:hidden">
-                <HeroBanners heroProduct={heroProduct} isRealDiscount={isRealDiscount} secondaryCategory={null} />
-              </div>
+              <div className="lg:hidden">{hero}</div>
             </>
           ) : (
-            <HeroBanners heroProduct={heroProduct} isRealDiscount={isRealDiscount} secondaryCategory={null} />
+            hero
           )}
           {bannerSmalls.length > 0 && (
             <div className="hidden lg:grid lg:grid-cols-2 gap-4">
-              {banners['small_left'] && <Banner banner={banners['small_left']} />}
-              {banners['small_right'] && <Banner banner={banners['small_right']} />}
+              {(['small_left', 'small_right'] as const).map((slot) => {
+                const b = banners[slot]
+                if (!b) return null
+                return b.type === 'html'
+                  ? <AdConsentGate key={slot}><Banner banner={b} /></AdConsentGate>
+                  : <Banner key={slot} banner={b} />
+              })}
             </div>
           )}
         </div>
