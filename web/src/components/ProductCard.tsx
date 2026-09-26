@@ -55,10 +55,12 @@ export function ProductCard({ product }: ProductCardProps) {
 
           <AffiliateLink
             offerId={product.offer_id}
+            productId={product.id}
             productName={product.name}
             merchantName={product.retailer_name}
             price={product.current_price}
             category={product.category}
+            discountPct={product.discount_pct}
             className="block w-full text-center text-sm font-semibold bg-yellow-400 hover:bg-yellow-500 text-gray-900 rounded-md py-2 transition-colors focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
           >
             Vezi la {product.retailer_name}

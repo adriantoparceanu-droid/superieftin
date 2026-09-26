@@ -227,10 +227,12 @@ export default async function ProductPage({ params }: Props) {
                   </div>
                   <AffiliateLink
                     offerId={offer.offer_id}
+                    productId={product.id}
                     productName={product.name}
                     merchantName={offer.retailer_name}
                     price={offer.current_price}
                     category={product.category}
+                    discountPct={offerDiscount.verdict === 'real' ? offerDiscount.discountPct : null}
                     className="w-full sm:w-auto text-center shrink-0 bg-yellow-400 hover:bg-yellow-500 text-gray-900 text-sm font-semibold px-4 py-2 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                   >
                     Cumpără la {offer.retailer_name} →
