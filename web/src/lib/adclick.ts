@@ -5,8 +5,12 @@
 
 export const AD_CLICK_COOKIE = 'se_gclid'
 export const AD_CLICK_MAX_AGE_DAYS = 90
-// Pana la consimtamant, ID-ul din URL-ul de aterizare sta doar in memoria tab-ului
-export const AD_CLICK_PENDING_KEY = 'se_gclid_pending'
+// Cheia sessionStorage folosita de o versiune anterioara (inainte de Poarta 2 GDPR). NU mai
+// scriem nimic in Web Storage inainte de acord; o pastram doar ca s-o stergem din browserele
+// care o mai au.
+export const LEGACY_PENDING_KEY = 'se_gclid_pending'
+// Endpoint-ul care goleste ID-urile Google din ad_clicks la retragerea acordului
+export const WITHDRAW_ENDPOINT = '/api/consent/withdraw'
 
 export interface AdClickIds {
   gclid?: string
@@ -15,8 +19,10 @@ export interface AdClickIds {
   ts: number          // momentul aterizarii (ms)
 }
 
-// Doar caractere sigure — ID-urile Google sunt [A-Za-z0-9_-]; orice altceva e ignorat
-const SAFE = /^[A-Za-z0-9_-]{10,300}$/
+// Doar caractere sigure — ID-urile Google sunt [A-Za-z0-9_-]; orice altceva e ignorat.
+// Exportat: aceeasi validare pe server, in /api/consent/withdraw.
+export const SAFE_AD_ID = /^[A-Za-z0-9_-]{10,300}$/
+const SAFE = SAFE_AD_ID
 
 export function idsFromSearch(search: string): AdClickIds | null {
   const q = new URLSearchParams(search)
