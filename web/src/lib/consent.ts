@@ -12,7 +12,7 @@ export const CONSENT_COOKIE = 'se_consent'
 // Cerem din nou consimtamantul dupa 6 luni (practica recomandata de ghidurile GDPR)
 const MAX_AGE_SECONDS = 180 * 24 * 60 * 60
 // Versiunea politicii: daca schimbam categoriile, cresti numarul → bannerul reapare
-export const CONSENT_VERSION = 1
+export const CONSENT_VERSION = 2   // v2 (26 sep 2026): „Publicitate” include și bannerele Profitshare
 
 // Evenimente de browser folosite intre banner, butonul din footer si tracking
 export const CONSENT_CHANGE_EVENT = 'se:consent-change'

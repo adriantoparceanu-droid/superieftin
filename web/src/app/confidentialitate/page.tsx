@@ -114,6 +114,9 @@ export default function ConfidentialitatePage() {
       <h2>Cui transmitem date</h2>
       <ul>
         <li>Furnizorul de găzduire a serverului, {COMPANY.hosting ?? <Todo>furnizor găzduire + țara serverului</Todo>}.</li>
+        <li>Cloudflare, Inc., prin care trece traficul site-ului (protecție și livrare rapidă): adresa IP,
+          pagina cerută și browserul. Cloudflare poate transfera date în SUA, în baza Cadrului UE–SUA
+          privind protecția datelor.</li>
         <li>Google Ireland Ltd. (Analytics, Ads), doar cu consimțământul tău. Google poate transfera
           date în SUA, în baza Cadrului UE–SUA privind protecția datelor.</li>
         <li>Rețelele de afiliere Profitshare și 2Performant (codul de click; bannerele Profitshare,

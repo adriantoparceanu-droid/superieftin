@@ -53,7 +53,7 @@ export function CookieBanner() {
         <p className="text-sm text-[var(--color-text)]">
           Folosim cookie-uri necesare pentru funcționarea site-ului. Cu acordul tău, folosim și
           cookie-uri de <strong>analiză</strong> (Google Analytics) și de{' '}
-          <strong>publicitate</strong> (Google Ads), ca să știm ce pagini sunt utile și ce
+          <strong>publicitate</strong> (Google Ads și bannerele partenerului Profitshare), ca să știm ce pagini sunt utile și ce
           reclame funcționează. Detalii în{' '}
           <Link href="/cookies" className="underline underline-offset-2">Politica de cookies</Link>.
         </p>
@@ -67,11 +67,11 @@ export function CookieBanner() {
             </label>
             <label className="flex items-start gap-3 text-sm cursor-pointer">
               <input type="checkbox" checked={analytics} onChange={(e) => setAnalytics(e.target.checked)} className="mt-0.5 accent-[var(--color-brand)]" />
-              <span><strong>Analiză</strong> — Google Analytics: ce pagini sunt vizitate, anonim și agregat.</span>
+              <span><strong>Analiză</strong> — Google Analytics: ce pagini sunt vizitate, prin statistici agregate (cu un identificator de vizitator în cookie).</span>
             </label>
             <label className="flex items-start gap-3 text-sm cursor-pointer">
               <input type="checkbox" checked={ads} onChange={(e) => setAds(e.target.checked)} className="mt-0.5 accent-[var(--color-brand)]" />
-              <span><strong>Publicitate</strong> — Google Ads: măsurăm dacă o reclamă a adus o vizită care a dus la o cumpărare.</span>
+              <span><strong>Publicitate</strong> — Google Ads: măsurăm dacă o reclamă a adus o vizită care a dus la o cumpărare. Tot aici: bannerele partenerului Profitshare de pe prima pagină, care își setează propriile cookie-uri.</span>
             </label>
           </fieldset>
         )}
