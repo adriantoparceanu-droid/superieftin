@@ -100,6 +100,25 @@ beacon 204 → rândul din `ad_clicks` golit; endpoint-ul răspunde 400 la input
 (`docker compose --profile tools build migrate` apoi `run --rm migrate`) ÎNAINTE de web/worker —
 `/go` scrie coloana `ad_click_at`, care trebuie să existe. Fără dependențe npm noi.
 
+### Recomandări R2, R4, R5, R6 din re-verificare — rezolvate (2026-09-26, agentul `tracking`)
+
+Din `review/2026-09-26-faza-2-gdpr-reverificare.md`, aprobate de proprietar.
+
+| # | Problema | Reparația | Unde |
+|---|---|---|---|
+| R2 | La expirarea acordului (6 luni) sau la versiune nouă de consimțământ, `se_gclid` se ștergea, dar ID-urile rămâneau în `ad_clicks` | Același beacon ca la retragere (`notifyWithdraw()`) ÎNAINTE de `clearAdClickCookie()`; o singură dată (doar dacă cookie-ul încă există, apoi e șters) | `components/consent/AdClickCapture.tsx` |
+| R4 | Reîncărcarea paginii cu același `?gclid=` rescria cookie-ul cu `ts` nou → fereastra de 90 de zile se putea prelungi | `sameAdClick()`: același gclid/gbraid/wbraid ca în cookie → cookie-ul rămâne neatins; ID diferit = aterizare nouă, `ts` nou. În plus `Max-Age` = durata RĂMASĂ din cele 90 de zile de la `ts` (și când acordul vine după aterizare) | `lib/adclick.ts`, `AdClickCapture.tsx` |
+| R5 | `clientIp()` credea primul element din `x-forwarded-for` / `x-real-ip` (falsificabile de client) | Ordine: `cf-connecting-ip` (Cloudflare îl suprascrie) → ULTIMUL element din `x-forwarded-for` (adăugat de Nginx-ul nostru, nefalsificabil) → cheie comună `necunoscut`; valorile care nu sunt IP valid se ignoră. Limită rămasă: ocolirea Cloudflare (acces direct la origin) permite un `cf-connecting-ip` fals — remediul e firewall pe VPS (443 doar din IP-urile Cloudflare), de decis de proprietar | `lib/rate-limit.ts` |
+| R6 | Corpul era citit integral (`req.text()`) înainte de verificarea lungimii | `Content-Length` > 2000 → **413** fără citire; invalid → 400; lipsă (chunked) → citire cu plafon, oprire cu 413 la depășire (nu 411: nu vrem să pierdem o retragere legitimă dacă un proxy scoate antetul). Restul neschimbat (400/204/405/429) | `app/api/consent/withdraw/route.ts` |
+
+Teste: worker `npm test` 52/52, `tsc` worker + web, `npm run build` web. Local, port 3000:
+Playwright — reîncărcare cu același gclid păstrează `ts` și expirarea, gclid diferit → `ts` nou,
+`Max-Age` ≈ 90 zile; versiune veche de acord și acord expirat → exact un beacon cu ID-ul, cookie
+șters, rândul din `ad_clicks` golit (`gclid NULL`, `has_ad_consent=false`), fără beacon repetat la
+reîncărcare. curl — 204 valid, 405 GET, 400 gol/câmp necunoscut/`Content-Length` invalid, 413 corp
+5 KB (cu `Content-Length` și chunked), 204 chunked mic; rotirea primului element din
+`x-forwarded-for` sau a `x-real-ip` NU mai ocolește limita (429 după 10). Rândurile de test șterse.
+
 ## Ce trebuie să faci tu (proprietarul)
 
 1. **Activează „Data Manager API”** în proiectul Google Cloud care deține OAuth client-ul
