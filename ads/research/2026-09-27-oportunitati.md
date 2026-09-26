@@ -1,3 +1,5 @@
+> **ÎNLOCUIT** de [`2026-09-27-oportunitati-v2.md`](2026-09-27-oportunitati-v2.md) (27.09.2026). Proprietarul a confirmat acordul rețelelor pentru Google Ads către site, deci secțiunile despre „interzis PPC” de mai jos nu mai sunt valabile.
+
 # Oportunități Google Ads Search — primele campanii de test
 
 Data: 27 septembrie 2026 · Autor: market-research · Pentru: proprietar → ads-builder
