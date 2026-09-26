@@ -21,6 +21,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'hourly',
       priority: 1,
     },
+    // Paginile de încredere (Despre, Contact, politici) — cerute de Google pentru site-urile de afiliere
+    ...['despre', 'contact', 'confidentialitate', 'termeni', 'cookies'].map((path) => ({
+      url: `${SITE_URL}/${path}`,
+      changeFrequency: 'monthly' as const,
+      priority: 0.3,
+    })),
   ]
 
   const categoryRoutes: MetadataRoute.Sitemap = categories.map(({ category }) => ({

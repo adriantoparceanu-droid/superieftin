@@ -67,6 +67,8 @@ cd worker && npm test               # teste unitare (node --test via tsx)
 - Citește `web/AGENTS.md` înainte de a scrie cod Next.js — versiunea din proiect are breaking changes față de ce știi; docs în `node_modules/next/dist/docs/`.
 - Comentariile din cod și mesajele de commit sunt în română (stil: `feat(scope): descriere`).
 - Scraper nou: modul în `worker/src/scrapers/` care produce obiecte conform `types.ts`, ingerate prin `ingest.ts`; categoriile scraper-ului se administrează din admin (`scraper-categorii`), care alege dintr-un catalog populat de worker din sitemap-ul sursei (`available_scraper_categories`, refresh la fiecare scrape + jobul BullMQ `catalog-refresh` de la butonul din admin).
+- **Consimțământ cookies**: banner propriu (`components/consent/`) + Consent Mode v2 (`lib/consent.ts`; default `denied` rulat `beforeInteractive` înainte de gtag). Orice tag/cookie nou de marketing se condiționează de `hasAdConsent()`/`hasAnalyticsConsent()` și se adaugă în tabelul din `/cookies` + `/confidentialitate` (textele descriu ce face REAL codul).
+- **Datele firmei** (Contact, politici) stau într-un singur loc: `web/src/lib/company.ts`; valorile `null` apar pe site ca `[DE COMPLETAT: …]`.
 - Cererile către eMAG merg DOAR prin worker, cu headerele din `emag.ts`/`emag-catalog.ts` (alt fingerprint, ex. `Accept-Encoding` cu `br`, declanșează captcha WAF; la 511/429 ne retragem, nu insistăm).
 
 ## Întreținerea acestui fișier
