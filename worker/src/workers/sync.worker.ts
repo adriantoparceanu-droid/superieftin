@@ -7,6 +7,7 @@ import pool from '../lib/db.js'
 import { ensurePriceHistoryPartitions } from '../lib/partitions.js'
 import { markStaleOffers } from '../lib/stale.js'
 import { updateRetailerStatuses } from '../lib/retailer-status.js'
+import { refreshOfferPriceStats } from '../lib/price-stats.js'
 import { connection } from '../lib/queue.js'
 import { getAdvertisers, getFeeds, getProductsByPartNo, PsApiError, type PsAdvertiser, type PsFeed } from '../lib/profitshare.js'
 import { downloadFeed, parseFeedFile, mapFeedRow } from '../importers/feed.js'
@@ -90,6 +91,18 @@ async function recordFeedSync(params: {
   `, [params.feedLink, params.feedName, params.psUpdatedAt, params.productsCount,
       params.status, params.source, params.filename ?? null, params.unmappedCount ?? null,
       params.retailerId ?? null])
+}
+
+// Mediana/ultimul pret precalculate pentru site (offer_price_stats, migratia 019) — dupa orice
+// scriere in price_history. Best-effort: o eroare aici nu trebuie sa pice jobul.
+async function refreshPriceStats(log: pino.Logger): Promise<void> {
+  try {
+    const t = Date.now()
+    const rows = await refreshOfferPriceStats()
+    log.info({ rows, ms: Date.now() - t }, 'Statistici pret recalculate')
+  } catch (err) {
+    log.error({ err }, 'Recalculare statistici pret esuata')
+  }
 }
 
 // Verifica afilierea pe baza domeniului si suprascrie linkul/reteaua produsului.
@@ -261,6 +274,7 @@ export async function runFileImport(filePath: string, retailerSlug?: string, job
   })
 
   const duration = ((Date.now() - startTime) / 1000).toFixed(1)
+  await refreshPriceStats(log)
   log.info({ imported, errors, skipped, unmapped, duration: `${duration}s` }, 'Import din fisier finalizat')
   return { imported, errors, skipped, unmapped, duration }
 }
@@ -411,6 +425,7 @@ export async function runPriceCheck(jobId = 'direct') {
   }
 
   const duration = ((Date.now() - startTime) / 1000).toFixed(1)
+  if (updated > 0) await refreshPriceStats(log)
   log.info({ checked: candidates.rows.length, updated, errors, duration: `${duration}s` }, 'Verificare preturi finalizata')
   return { checked: candidates.rows.length, updated, errors, duration }
 }
@@ -588,6 +603,9 @@ export async function runPriceSnapshot(jobId = 'direct') {
     productsCount: recorded, status: 'success', source: 'snapshot',
   })
 
+  // Snapshot-ul e ultima scriere zilnica in istoric (si finalul feed-sync-ului)
+  await refreshPriceStats(log)
+
   const duration = ((Date.now() - startTime) / 1000).toFixed(1)
   log.info({ recorded, duration: `${duration}s` }, 'Snapshot preturi finalizat')
   return { recorded, duration }
@@ -619,6 +637,7 @@ export async function runScrape(scraperName: string, jobId = 'direct') {
     retailerId: ret[0]?.id ?? null,
   })
 
+  if (result.imported > 0) await refreshPriceStats(log)
   log.info(result, 'Scraping finalizat')
   return result
 }

@@ -83,16 +83,6 @@ function categoryFilter(includeSub: boolean): string {
 export const getTopDiscounts = unstable_cache(
   async (limit = 24): Promise<ProductWithDiscount[]> => {
     const { rows } = await pool.query<ProductWithDiscount>(`
-      WITH median_prices AS (
-        SELECT
-          offer_id,
-          PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY price) AS median_price,
-          COUNT(*) AS data_points
-        FROM price_history
-        WHERE recorded_at >= now() - INTERVAL '30 days'
-        GROUP BY offer_id
-        HAVING COUNT(*) >= 2
-      )
       SELECT
         p.id::text,
         p.name,
@@ -111,7 +101,7 @@ export const getTopDiscounts = unstable_cache(
       FROM products p
       JOIN offers o ON o.product_id = p.id
       JOIN retailers r ON r.id = o.retailer_id
-      JOIN median_prices mp ON mp.offer_id = o.id
+      JOIN (SELECT offer_id, median_30d AS median_price FROM offer_price_stats WHERE points_30d >= 2) mp ON mp.offer_id = o.id
       WHERE o.current_price IS NOT NULL
         AND ${OFFER_AVAILABLE_SQL}
         AND o.current_price < mp.median_price * 0.95
@@ -138,14 +128,7 @@ export interface LandingProduct extends ProductWithDiscount {
 export const getLandingProducts = unstable_cache(
   async (category: string, limit = 48): Promise<LandingProduct[]> => {
     const { rows } = await pool.query<LandingProduct>(`
-      WITH median_prices AS (
-        SELECT offer_id, PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY price) AS median_price
-        FROM price_history
-        WHERE recorded_at >= now() - INTERVAL '30 days'
-        GROUP BY offer_id
-        HAVING COUNT(*) >= 2
-      ),
-      best AS (
+      WITH best AS (
         SELECT DISTINCT ON (p.id)
           p.id::text, p.name, p.slug, p.category, p.brand, p.image_url,
           o.id::text AS offer_id,
@@ -157,7 +140,7 @@ export const getLandingProducts = unstable_cache(
         FROM products p
         JOIN offers o ON o.product_id = p.id
         JOIN retailers r ON r.id = o.retailer_id
-        JOIN median_prices mp ON mp.offer_id = o.id
+        JOIN (SELECT offer_id, median_30d AS median_price FROM offer_price_stats WHERE points_30d >= 2) mp ON mp.offer_id = o.id
         WHERE ${CATEGORY_FILTER_SQL}
           AND o.current_price IS NOT NULL
           AND ${OFFER_AVAILABLE_SQL}
@@ -185,13 +168,6 @@ export const getLandingProducts = unstable_cache(
 export const getCheapestProducts = unstable_cache(
   async (limit = 24): Promise<ProductWithDiscount[]> => {
     const { rows } = await pool.query<ProductWithDiscount>(`
-      WITH latest_history AS (
-        SELECT DISTINCT ON (offer_id)
-          offer_id,
-          price AS median_price
-        FROM price_history
-        ORDER BY offer_id, recorded_at DESC
-      )
       SELECT
         p.id::text,
         p.name,
@@ -210,7 +186,7 @@ export const getCheapestProducts = unstable_cache(
       FROM products p
       JOIN offers o ON o.product_id = p.id
       JOIN retailers r ON r.id = o.retailer_id
-      LEFT JOIN latest_history lh ON lh.offer_id = o.id
+      LEFT JOIN (SELECT offer_id, latest_price AS median_price FROM offer_price_stats) lh ON lh.offer_id = o.id
       WHERE o.current_price IS NOT NULL
         AND ${OFFER_AVAILABLE_SQL}
       ORDER BY o.current_price ASC
@@ -226,14 +202,6 @@ export const getCheapestProducts = unstable_cache(
 export const PAGE_SIZE = 48
 
 const SEARCH_SQL = `
-  WITH median_prices AS (
-    SELECT
-      offer_id,
-      PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY price) AS median_price
-    FROM price_history
-    WHERE recorded_at >= now() - INTERVAL '30 days'
-    GROUP BY offer_id
-  )
   SELECT
     p.id::text,
     p.name,
@@ -256,7 +224,7 @@ const SEARCH_SQL = `
   FROM products p
   JOIN offers o ON o.product_id = p.id
   JOIN retailers r ON r.id = o.retailer_id
-  LEFT JOIN median_prices mp ON mp.offer_id = o.id
+  LEFT JOIN (SELECT offer_id, median_30d AS median_price FROM offer_price_stats) mp ON mp.offer_id = o.id
   WHERE o.current_price IS NOT NULL
     AND ${OFFER_AVAILABLE_SQL}
     AND (
@@ -311,14 +279,6 @@ export const getCategoryProducts = unstable_cache(
         : 'p.name ASC'
 
     const { rows } = await pool.query<ProductWithDiscount>(`
-      WITH median_prices AS (
-        SELECT
-          offer_id,
-          PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY price) AS median_price
-        FROM price_history
-        WHERE recorded_at >= now() - INTERVAL '30 days'
-        GROUP BY offer_id
-      )
       SELECT
         p.id::text,
         p.name,
@@ -341,7 +301,7 @@ export const getCategoryProducts = unstable_cache(
       FROM products p
       JOIN offers o ON o.product_id = p.id
       JOIN retailers r ON r.id = o.retailer_id
-      LEFT JOIN median_prices mp ON mp.offer_id = o.id
+      LEFT JOIN (SELECT offer_id, median_30d AS median_price FROM offer_price_stats) mp ON mp.offer_id = o.id
       WHERE ${categoryFilter(includeSub)}
         AND o.current_price IS NOT NULL
         AND ${OFFER_AVAILABLE_SQL}
@@ -398,14 +358,6 @@ export const getCategoryBrands = unstable_cache(
 export const getRandomCategoryProducts = unstable_cache(
   async (category: string, limit = 24): Promise<ProductWithDiscount[]> => {
     const { rows } = await pool.query<ProductWithDiscount>(`
-      WITH median_prices AS (
-        SELECT
-          offer_id,
-          PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY price) AS median_price
-        FROM price_history
-        WHERE recorded_at >= now() - INTERVAL '30 days'
-        GROUP BY offer_id
-      )
       SELECT
         p.id::text,
         p.name,
@@ -428,7 +380,7 @@ export const getRandomCategoryProducts = unstable_cache(
       FROM products p
       JOIN offers o ON o.product_id = p.id
       JOIN retailers r ON r.id = o.retailer_id
-      LEFT JOIN median_prices mp ON mp.offer_id = o.id
+      LEFT JOIN (SELECT offer_id, median_30d AS median_price FROM offer_price_stats) mp ON mp.offer_id = o.id
       WHERE ${CATEGORY_FILTER_SQL}
         AND o.current_price IS NOT NULL
         AND ${OFFER_AVAILABLE_SQL}
@@ -483,14 +435,6 @@ export const getProductDetail = unstable_cache(
     const product = productRes.rows[0]
 
     const offersRes = await pool.query<OfferRow>(`
-      WITH median_prices AS (
-        SELECT
-          offer_id,
-          PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY price) AS median_price
-        FROM price_history
-        WHERE recorded_at >= now() - INTERVAL '30 days'
-        GROUP BY offer_id
-      )
       SELECT
         o.id::text AS offer_id,
         o.current_price::float AS current_price,
@@ -509,7 +453,7 @@ export const getProductDetail = unstable_cache(
         ${OFFER_AVAILABLE_SQL} AS available
       FROM offers o
       JOIN retailers r ON r.id = o.retailer_id
-      LEFT JOIN median_prices mp ON mp.offer_id = o.id
+      LEFT JOIN (SELECT offer_id, median_30d AS median_price FROM offer_price_stats) mp ON mp.offer_id = o.id
       WHERE o.product_id = $1
       ORDER BY o.current_price ASC NULLS LAST
     `, [product.id])
@@ -718,12 +662,6 @@ export const getTagProducts = unstable_cache(
   async (slug: string, page = 1): Promise<ProductWithDiscount[]> => {
     const offset = (page - 1) * PAGE_SIZE
     const { rows } = await pool.query<ProductWithDiscount>(`
-      WITH median_prices AS (
-        SELECT offer_id, PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY price) AS median_price
-        FROM price_history
-        WHERE recorded_at >= now() - INTERVAL '30 days'
-        GROUP BY offer_id
-      )
       SELECT
         p.id::text, p.name, p.slug, p.category, p.brand, p.image_url,
         o.id::text AS offer_id, o.current_price::float AS current_price,
@@ -740,7 +678,7 @@ export const getTagProducts = unstable_cache(
       JOIN tags t ON t.id = pt.tag_id AND t.slug = $1
       JOIN offers o ON o.product_id = p.id
       JOIN retailers r ON r.id = o.retailer_id
-      LEFT JOIN median_prices mp ON mp.offer_id = o.id
+      LEFT JOIN (SELECT offer_id, median_30d AS median_price FROM offer_price_stats) mp ON mp.offer_id = o.id
       WHERE o.current_price IS NOT NULL AND ${OFFER_AVAILABLE_SQL}
       ORDER BY current_price ASC NULLS LAST
       LIMIT $2 OFFSET $3
