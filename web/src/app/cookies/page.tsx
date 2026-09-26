@@ -81,7 +81,8 @@ export default function CookiesPage() {
           securitate; nu le folosim pentru reclame și nu le trimitem la Google.
         </li>
         <li>
-          <strong>Dacă îți retragi acordul</strong> (din „Setări cookies”): ștergem cookie-ul{' '}
+          <strong>Dacă îți retragi acordul</strong> (din „Setări cookies”), dacă acordul expiră (după
+          6 luni) sau dacă actualizăm politica și îți cerem din nou acordul: ștergem cookie-ul{' '}
           <code>se_gclid</code> de pe dispozitiv și trimitem serverului nostru, o singură dată, doar
           identificatorul (fără alte date), ca să-l ștergem și din clickurile spre magazine deja
           înregistrate. După aceea nu mai trimitem la Google conversii pentru acele clickuri.

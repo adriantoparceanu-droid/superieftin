@@ -143,10 +143,11 @@ export default function ConfidentialitatePage() {
           mereu „refuzat”, atât pe site, cât și în datele trimise la Google.
         </li>
         <li>
-          <strong>Dacă îți retragi acordul</strong> (din „Setări cookies”), ștergem cookie-ul{' '}
+          <strong>Dacă îți retragi acordul</strong> (din „Setări cookies”), dacă acordul expiră (după
+          6 luni) sau dacă actualizăm politica și îți cerem din nou acordul, ștergem cookie-ul{' '}
           <code>se_gclid</code> de pe dispozitiv și trimitem serverului nostru, o singură dată, doar
           identificatorul (fără alte date), ca să-l ștergem din clickurile deja înregistrate. După
-          retragere nu mai trimitem la Google conversii pentru acele clickuri; conversiile trimise
+          aceea nu mai trimitem la Google conversii pentru acele clickuri; conversiile trimise
           înainte, cât aveai acordul, rămân la Google. Pentru această cerere, aplicația folosește adresa
           ta IP doar temporar, în memorie, ca protecție împotriva abuzurilor, și nu o salvează separat.
           Ca la orice cerere către site, adresa IP apare însă în jurnalele tehnice ale serverului și ale
@@ -178,11 +179,13 @@ export default function ConfidentialitatePage() {
 
       <h2>Cât timp păstrăm datele</h2>
       <ul>
-        <li>Alegerea despre cookie-uri: 6 luni, apoi te întrebăm din nou.</li>
+        <li>Alegerea despre cookie-uri: 6 luni, apoi te întrebăm din nou (la fel dacă actualizăm
+          politica). Până la noua alegere, identificatorul clickului pe reclamă se șterge, ca la
+          retragerea acordului.</li>
         <li>Identificatorul clickului pe reclamă (<code>gclid</code> etc.): 90 de zile de la clickul pe
           reclamă — atât în cookie-ul <code>se_gclid</code>, cât și pe serverul nostru, unde îl ștergem
           automat, indiferent dacă a dus la o comandă (codul de click rămâne, fără identificatorul Google).
-          Îl ștergem mai devreme dacă îți retragi acordul.</li>
+          Îl ștergem mai devreme dacă îți retragi acordul sau dacă acordul expiră.</li>
         <li>Datele Google Analytics: 14 luni (setarea din Google Analytics).</li>
         <li>Alertele Telegram: până le ștergi (comanda <code>/sterge</code>) sau ne ceri ștergerea.</li>
         <li>Jurnalele tehnice: cât e necesar pentru securitate, de regulă câteva săptămâni.</li>
