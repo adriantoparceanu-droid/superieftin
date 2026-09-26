@@ -1,16 +1,31 @@
 # ȘABLON — copiază fișierul, redenumește (ex. laptopuri.yaml) și completează.
-# Câmpurile `id` le completează automat ads:apply după crearea în Google Ads.
+# Câmpurile `id` / `budget_id` le completează automat ads:apply după crearea în Google Ads.
+# Fișierele care încep cu „_” sunt ignorate de ads:validate / ads:plan / ads:apply.
+# Verificare: cd worker && npm run ads:validate   (exemple complete: samsung-pliabile.yaml etc.)
 
 campaign:
   name: "SE | Search | Laptopuri"          # prefix SE = superieftin, ușor de filtrat
   id: null
+  budget_id: null
   status: PAUSED                           # rămâne PAUSED; activezi tu
   daily_budget: 30                         # RON, ≤ guardrails
   bidding:
-    strategy: MAXIMIZE_CLICKS
-    max_cpc: 1.50
+    strategy: MAXIMIZE_CLICKS              # sau MANUAL_CPC
+    max_cpc: 1.50                          # la MAXIMIZE_CLICKS = plafonul de CPC
+  # exact_only: true                       # opțional: refuză orice cuvânt care nu e exact
+  conversion_goal:                         # singura conversie a campaniei
+    name: Comision Profitshare
+    conversion_action_id: "7799099014"
+  targeting:
+    countries: [RO]
+    languages: [ro]
+    location_mode: PRESENCE                # doar persoane aflate în România
+    networks: { search: true, search_partners: false, display: false }
   source_research: ads/research/AAAA-LL-ZZ-laptopuri.md   # de unde vine decizia
 
+  # text = broad (toate cuvintele, orice ordine), "text" = phrase, [text] = exact.
+  # Obligatorii (ads:validate): gratis, second hand, folosit, service, reparatie, manual, driver,
+  # olx, piese, cum, ce este, forum + brandurile retailerilor (emag, evomag, itgalaxy, ...).
   negative_keywords:                       # la nivel de campanie
     - gratis
     - second hand
@@ -62,3 +77,6 @@ campaign:
       - Actualizat Zilnic
       - Istoric 90 de Zile
       - Fără Cont Necesar
+    structured_snippets:                   # header valid în română, ex. Servicii / Modele / Tipuri / Mărci
+      - header: Servicii
+        values: [Istoric de preț 90 zile, Mediana pe 30 de zile, Alerte de preț]

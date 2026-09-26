@@ -11,11 +11,14 @@
     "backfill-images:now": "tsx --env-file=../.env src/index.ts --now --image-backfill",
     "scrape-emag:now": "tsx --env-file=../.env src/index.ts --now --scrape-emag",
     "catalog:now": "tsx --env-file=../.env src/index.ts --now --catalog",
-    "test": "tsx --test src/lib/profitshare.test.ts src/lib/password.test.ts src/importers/feed.test.ts src/lib/affiliate/affiliate.test.ts src/lib/twoperformant.test.ts src/scrapers/emag-catalog.test.ts src/scrapers/emag-brand.test.ts src/lib/retailer-status.test.ts src/lib/nameRules.test.ts src/tracking/core.test.ts src/tracking/payloads.test.ts",
+    "test": "tsx --test src/lib/profitshare.test.ts src/lib/password.test.ts src/importers/feed.test.ts src/lib/affiliate/affiliate.test.ts src/lib/twoperformant.test.ts src/scrapers/emag-catalog.test.ts src/scrapers/emag-brand.test.ts src/lib/retailer-status.test.ts src/lib/nameRules.test.ts src/tracking/core.test.ts src/tracking/payloads.test.ts src/ads/campaigns/campaigns.test.ts",
     "admin:create": "tsx --env-file=../.env src/scripts/create-admin.ts",
     "ads:auth": "tsx src/ads/auth.ts",
     "ads:check": "tsx --env-file=../.env src/ads/check.ts",
     "ads:conversion-action": "tsx --env-file=../.env src/ads/conversion-action.ts",
+    "ads:validate": "tsx --env-file=../.env src/ads/campaigns/cli.ts validate",
+    "ads:plan": "tsx --env-file=../.env src/ads/campaigns/cli.ts plan",
+    "ads:apply": "tsx --env-file=../.env src/ads/campaigns/cli.ts apply",
     "tracking:sync": "tsx --env-file=../.env src/tracking/cli.ts",
     "tracking:e2e": "tsx --env-file=../.env src/tracking/e2e-validate.ts",
     "build": "tsc",
@@ -36,6 +39,7 @@
     "@types/pg": "^8.20.0",
     "playwright": "^1.61.1",
     "tsx": "^4.22.4",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "yaml": "^2.9.1"
   }
 }

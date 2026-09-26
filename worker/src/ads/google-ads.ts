@@ -109,11 +109,33 @@ export function search<T = any>(cfg: AdsConfig, query: string) {
   return call<{ results?: T[] }>(cfg, 'POST', `/customers/${cfg.customerId}/googleAds:search`, { query })
 }
 
+// Citire GAQL cu toate paginile (search intoarce max. 10.000 de randuri pe pagina)
+export async function searchAll<T = any>(cfg: AdsConfig, query: string): Promise<T[]> {
+  const out: T[] = []
+  let pageToken: string | undefined
+  do {
+    const r = await call<{ results?: T[]; nextPageToken?: string }>(cfg, 'POST',
+      `/customers/${cfg.customerId}/googleAds:search`, pageToken ? { query, pageToken } : { query })
+    out.push(...(r.results ?? []))
+    pageToken = r.nextPageToken
+  } while (pageToken)
+  return out
+}
+
 // Scriere. In ADS_ENV=test pleaca OBLIGATORIU cu validateOnly (regula 4) — nu se poate ocoli
 // din apelant. In prod, apelantul trebuie sa fi verificat deja --prod + --confirm.
 export function mutate<T = any>(cfg: AdsConfig, resource: string, operations: unknown[], opts: { validateOnly?: boolean } = {}) {
   const validateOnly = cfg.env === 'test' ? true : opts.validateOnly ?? false
   return call<T>(cfg, 'POST', `/customers/${cfg.customerId}/${resource}:mutate`, { operations, validateOnly })
+}
+
+// Scriere „la gramada” (GoogleAdsService.Mutate): mai multe tipuri de resurse intr-o singura
+// cerere, ATOMIC (ori se aplica toate, ori niciuna) si cu ID-uri temporare (negative) ca o
+// campanie noua sa poata fi legata de bugetul/grupurile create in aceeasi cerere.
+// Aceeasi regula 4: in ADS_ENV=test pleaca OBLIGATORIU cu validateOnly.
+export function mutateAll<T = any>(cfg: AdsConfig, mutateOperations: unknown[], opts: { validateOnly?: boolean } = {}) {
+  const validateOnly = cfg.env === 'test' ? true : opts.validateOnly ?? false
+  return call<T>(cfg, 'POST', `/customers/${cfg.customerId}/googleAds:mutate`, { mutateOperations, validateOnly })
 }
 
 // --- Conversii (Faza 2) ------------------------------------------------------------------------
