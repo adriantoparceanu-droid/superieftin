@@ -135,8 +135,10 @@ export async function updateRetailerStatuses(input: StatusInput): Promise<{ chan
         source_state_since = CASE WHEN $4 THEN now() ELSE COALESCE(source_state_since, now()) END
       WHERE id = $1
     `, [f.id, state, reason, changed])
-    // Avertizam doar la probleme noi si la revenirea la OK (nu la pauza pusa chiar de admin)
-    if (changed && state !== 'paused' && state !== 'empty' && f.source_state !== 'paused') {
+    // Avertizam doar la probleme noi si la revenirea la OK dintr-o problema — nu la pauza pusa
+    // chiar de admin si nici la prima calculare a unui magazin sanatos (null → ok)
+    const firstOk = f.source_state == null && state === 'ok'
+    if (changed && !firstOk && state !== 'paused' && state !== 'empty' && f.source_state !== 'paused') {
       changes.push(state === 'ok'
         ? `✅ <b>${esc(f.name)}</b>: a revenit la OK`
         : `⚠️ <b>${esc(f.name)}</b>: ${STATE_LABELS[state]} — ${esc(reason)}`)
