@@ -22,6 +22,7 @@ const NAV: NavEntry[] = [
   { href: '/admin/taguri', label: 'Taguri' },
   { href: '/admin/meniu', label: 'Meniu' },
   { href: '/admin/bannere', label: 'Bannere' },
+  { href: '/admin/ghiduri', label: 'Ghiduri' },
   { href: '/admin/utilizatori', label: 'Utilizatori' },
 ]
 
