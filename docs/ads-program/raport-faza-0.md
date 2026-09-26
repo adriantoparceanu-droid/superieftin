@@ -153,3 +153,27 @@ cookies (`docs/ads-program/prompts/faza-1.md`).
    extins cu parametrii lipsă.
 5. Librăria Google Ads: după testul pe contul de test.
 6. Faza 1: cookies = **C. Banner propriu**.
+
+---
+
+## Actualizare 2026-09-26 — conexiunea Google Ads (punctele 4–5) ✅
+
+- Cont de reclame: **276-008-6909** („Superieftin.ro”, RON, Europe/Bucharest), **fără MCC**.
+- Proiect Google Cloud `superieftin-ads`, nivel de acces API: **Basic** (15.000 operațiuni/zi,
+  include Keyword Planner → research cu volume reale în Faza 3).
+- Aplicația OAuth publicată („In production”); linkurile de politici sunt live pe
+  `/confidentialitate` și `/termeni`.
+- `npm run ads:auth` → refresh token salvat în `.env`.
+- `npm run ads:check` (API **v25**, **fără developer token**):
+  - ✓ conturi accesibile (14, contul nostru inclus)
+  - ✓ citire cont
+  - ✓ scriere `validate_only` (buget de test) — acceptată, **nimic creat** (verificat: 0 campanii;
+    singurul buget existent în cont nu e al nostru, probabil din setup-ul inițial din interfață)
+- Confirmat: modelul nou fără developer token funcționează pentru proiectul nostru.
+
+### Librăria Google Ads (punctul 6) — actualizare
+Clientul REST minimal (`worker/src/ads/google-ads.ts`) funcționează deja cu noul model de acces.
+Recomandare actualizată: **B. REST direct** — zero dependențe, deja testat, fără riscul ca
+librăria comunitară să ceară încă developer token. Decizia rămâne a proprietarului.
+
+**POARTA 0: îndeplinită**, cu excepția alegerii finale a librăriei.
