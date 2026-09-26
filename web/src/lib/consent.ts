@@ -25,17 +25,23 @@ export interface ConsentChoice {
   ts: number           // momentul alegerii (ms)
 }
 
-export function readConsent(): ConsentChoice | null {
-  if (typeof document === 'undefined') return null
-  const raw = document.cookie.split('; ').find((c) => c.startsWith(CONSENT_COOKIE + '='))
-  if (!raw) return null
+// Parseaza valoarea cookie-ului de consimtamant (encodata URI). Folosit si pe server
+// (/go citeste consimtamantul din cererea HTTP), deci fara acces la document.
+export function parseConsentCookie(value: string | undefined | null): ConsentChoice | null {
+  if (!value) return null
   try {
-    const parsed = JSON.parse(decodeURIComponent(raw.slice(CONSENT_COOKIE.length + 1)))
+    const parsed = JSON.parse(decodeURIComponent(value))
     if (parsed?.v !== CONSENT_VERSION) return null
     return { v: parsed.v, analytics: parsed.analytics === true, ads: parsed.ads === true, ts: Number(parsed.ts) || 0 }
   } catch {
     return null
   }
+}
+
+export function readConsent(): ConsentChoice | null {
+  if (typeof document === 'undefined') return null
+  const raw = document.cookie.split('; ').find((c) => c.startsWith(CONSENT_COOKIE + '='))
+  return raw ? parseConsentCookie(raw.slice(CONSENT_COOKIE.length + 1)) : null
 }
 
 export function hasAdConsent(): boolean {
