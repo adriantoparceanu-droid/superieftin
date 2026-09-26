@@ -1,13 +1,37 @@
-import { getUnmappedGroups, getCategoriesTree, getTagsWithCounts, getMappingRules } from '@/lib/admin/queries'
-import { createMappingRuleAction, deleteMappingRuleAction } from '@/lib/admin/actions'
+import Link from 'next/link'
+import {
+  getUnmappedGroups, getCategoriesTree, getTagsWithCounts, getMappingRules,
+  getUnmappedGroupNames, previewNameRule, getNameRules,
+} from '@/lib/admin/queries'
+import { createMappingRuleAction, deleteMappingRuleAction, createNameRuleAction, deleteNameRuleAction } from '@/lib/admin/actions'
+import { termsPattern, topWords } from '@/lib/admin/nameMatch'
 
-export default async function MaparePage() {
-  const [groups, categories, tags, rules] = await Promise.all([
+type Props = { searchParams: Promise<{ grup?: string; terme?: string; actiune?: string; categorie?: string; toti?: string }> }
+
+const NO_CATEGORY = '(fără categorie)'
+
+export default async function MaparePage({ searchParams }: Props) {
+  const sp = await searchParams
+  const [groups, categories, tags, rules, nameRules] = await Promise.all([
     getUnmappedGroups(),
     getCategoriesTree(),
     getTagsWithCounts(),
     getMappingRules(),
+    getNameRules(),
   ])
+
+  // Grupul deschis pentru „mapare dupa denumire”: ?grup=<retailer_id>|<categorie feed>
+  const [grpRetailer, ...grpCatParts] = (sp.grup ?? '').split('|')
+  const grpCat = grpCatParts.join('|')
+  const openGroup = sp.grup ? groups.find((g) => String(g.retailer_id) === grpRetailer && g.feed_category === grpCat) ?? null : null
+  const groupNames = openGroup?.retailer_id ? await getUnmappedGroupNames(openGroup.retailer_id, openGroup.feed_category) : []
+  const words = topWords(groupNames)
+  const terms = (sp.terme ?? '').trim()
+  const pattern = terms ? termsPattern(terms) : null
+  const allRetailers = sp.toti === '1'
+  const preview = pattern && openGroup ? await previewNameRule(allRetailers ? null : openGroup.retailer_id, pattern) : null
+  const groupHref = (g: { retailer_id: number | null; feed_category: string }, extra = '') =>
+    `/admin/mapare?grup=${encodeURIComponent(`${g.retailer_id}|${g.feed_category}`)}${extra}#denumire`
 
   const categoryOptions = categories.map((c) => {
     const parent = c.parent_id ? categories.find((p) => p.id === c.parent_id) : null
@@ -42,7 +66,13 @@ export default async function MaparePage() {
               <p className="text-xs text-muted">
                 {g.retailer_name ?? 'fără retailer'} · {g.product_count.toLocaleString('ro-RO')} produse
               </p>
+              {g.retailer_id && (
+                <Link href={groupHref(g)} className="text-xs text-brand font-semibold hover:underline">
+                  🔍 Vezi ce conține / mapează după denumire
+                </Link>
+              )}
             </div>
+            {g.feed_category !== NO_CATEGORY && (<>
             <select name="category_id" required className="border border-line rounded-lg px-2 py-1.5 text-sm">
               <option value="">— alege categoria —</option>
               {categoryOptions.map((c) => (
@@ -60,8 +90,126 @@ export default async function MaparePage() {
             <button type="submit" className="bg-brand text-white text-sm font-semibold rounded-lg px-4 py-1.5 hover:opacity-90">
               Mapează
             </button>
+            </>)}
           </form>
         ))}
+      </div>
+
+      {openGroup && (
+        <section id="denumire" className="bg-white border-2 border-brand rounded-xl p-5 mb-10">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-semibold">Mapare după denumire: {openGroup.feed_category}</h2>
+              <p className="text-sm text-muted">{openGroup.retailer_name} · {openGroup.product_count.toLocaleString('ro-RO')} produse nemapate</p>
+            </div>
+            <Link href="/admin/mapare" className="text-sm text-muted hover:underline">închide ✕</Link>
+          </div>
+
+          <h3 className="text-sm font-semibold mt-4 mb-2">Cuvintele cele mai frecvente <span className="font-normal text-muted">(click = folosește ca termen)</span></h3>
+          <div className="flex flex-wrap gap-1.5">
+            {words.map((w) => (
+              <Link key={w.word} href={groupHref(openGroup, `&terme=${encodeURIComponent(w.word)}`)}
+                className="text-xs border border-line rounded-full px-2 py-0.5 hover:border-brand">
+                {w.word} <span className="text-muted">{w.count}</span>
+              </Link>
+            ))}
+          </div>
+
+          <details className="mt-3">
+            <summary className="text-sm cursor-pointer text-muted">Exemple de denumiri ({Math.min(groupNames.length, 25)} din {groupNames.length})</summary>
+            <ul className="mt-2 text-xs text-muted list-disc pl-5 space-y-0.5">
+              {groupNames.filter((_, i) => i % Math.max(1, Math.floor(groupNames.length / 25)) === 0).slice(0, 25).map((n) => <li key={n}>{n}</li>)}
+            </ul>
+          </details>
+
+          {/* Pasul 1: previzualizare (GET) — nu salveaza nimic */}
+          <form method="get" action="/admin/mapare#denumire" className="mt-5 flex flex-wrap items-end gap-3 border-t border-line pt-4">
+            <input type="hidden" name="grup" value={`${openGroup.retailer_id}|${openGroup.feed_category}`} />
+            <div className="flex-1 min-w-64">
+              <label className="block text-xs text-muted mb-1">Denumirea conține (cuvinte întregi, separate prin virgulă)</label>
+              <input name="terme" defaultValue={terms} placeholder="ex. calculator, pc, sistem" className="w-full border border-line rounded-lg px-3 py-1.5 text-sm" />
+            </div>
+            <div>
+              <label className="block text-xs text-muted mb-1">Ce facem cu ele</label>
+              <select name="actiune" defaultValue={sp.actiune ?? 'map'} className="border border-line rounded-lg px-2 py-1.5 text-sm">
+                <option value="map">Mapează în categoria…</option>
+                <option value="ignore">Ignoră (nu le importa, nu apar pe site)</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs text-muted mb-1">Categoria site</label>
+              <select name="categorie" defaultValue={sp.categorie ?? ''} className="border border-line rounded-lg px-2 py-1.5 text-sm">
+                <option value="">—</option>
+                {categoryOptions.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
+              </select>
+            </div>
+            <label className="text-xs text-muted flex items-center gap-1 pb-2">
+              <input type="checkbox" name="toti" value="1" defaultChecked={allRetailers} /> pentru toți retailerii
+            </label>
+            <button className="border border-brand text-brand text-sm font-semibold rounded-lg px-4 py-1.5">Previzualizează</button>
+          </form>
+
+          {terms && !pattern && <p className="text-sm text-red-700 mt-3">Scrie cel puțin un termen.</p>}
+          {preview && (
+            <div className="mt-4 rounded-lg bg-surface border border-line p-4">
+              <p className="text-sm">
+                Regula ar prinde <strong>{preview.count.toLocaleString('ro-RO')}</strong> produse nemapate
+                {allRetailers ? ' (toți retailerii)' : ` de la ${openGroup.retailer_name}`}:
+              </p>
+              <ul className="mt-2 text-xs text-muted list-disc pl-5 space-y-0.5">
+                {preview.examples.map((n) => <li key={n}>{n}</li>)}
+              </ul>
+              {preview.count > 0 && (
+                <form action={createNameRuleAction} className="mt-3">
+                  <input type="hidden" name="terme" value={terms} />
+                  <input type="hidden" name="actiune" value={sp.actiune === 'ignore' ? 'ignore' : 'map'} />
+                  <input type="hidden" name="categorie" value={sp.categorie ?? ''} />
+                  <input type="hidden" name="retailer" value={openGroup.retailer_id ?? ''} />
+                  <input type="hidden" name="toti" value={allRetailers ? '1' : ''} />
+                  {sp.actiune !== 'ignore' && !sp.categorie ? (
+                    <p className="text-sm text-amber-700">Alege categoria site-ului, apoi previzualizează din nou.</p>
+                  ) : (
+                    <button className="bg-brand text-white text-sm font-semibold rounded-lg px-4 py-1.5">
+                      {sp.actiune === 'ignore' ? `Salvează: ignoră ${preview.count} produse` : `Salvează și mapează ${preview.count} produse`}
+                    </button>
+                  )}
+                </form>
+              )}
+            </div>
+          )}
+        </section>
+      )}
+
+      <h2 className="text-lg font-semibold mb-3">Reguli după denumire ({nameRules.length})</h2>
+      <div className="bg-white border border-line rounded-xl overflow-hidden mb-10">
+        <table className="w-full text-sm">
+          <thead className="bg-surface text-left text-muted">
+            <tr>
+              <th className="px-4 py-2">Denumirea conține</th>
+              <th className="px-4 py-2">Retailer</th>
+              <th className="px-4 py-2">→ Rezultat</th>
+              <th className="px-4 py-2"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {nameRules.length === 0 && (
+              <tr><td colSpan={4} className="px-4 py-3 text-muted">Nicio regulă. Deschide un grup nemapat → „Vezi ce conține”.</td></tr>
+            )}
+            {nameRules.map((r) => (
+              <tr key={r.id} className="border-t border-line">
+                <td className="px-4 py-2 font-medium">{r.terms}</td>
+                <td className="px-4 py-2">{r.retailer_name ?? <span className="text-muted">toți</span>}</td>
+                <td className="px-4 py-2">{r.action === 'ignore' ? <span className="text-red-700">ignorat</span> : r.category_name}</td>
+                <td className="px-4 py-2 text-right">
+                  <form action={deleteNameRuleAction}>
+                    <input type="hidden" name="id" value={r.id} />
+                    <button type="submit" className="text-red-600 text-xs hover:underline">șterge</button>
+                  </form>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
       <h2 className="text-lg font-semibold mb-3">Reguli existente ({rules.length})</h2>

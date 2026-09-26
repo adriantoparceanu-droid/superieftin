@@ -13,7 +13,7 @@ import { getAdvertisers, getFeeds, getProductsByPartNo, PsApiError, type PsAdver
 import { downloadFeed, parseFeedFile, mapFeedRow } from '../importers/feed.js'
 import { parseTpFeed, mapTpFeedRow } from '../importers/twoperformant-feed.js'
 import { upsertProduct, upsertOfferPrice, upsertRetailerByDomain } from '../lib/upsert.js'
-import { loadFeedRules, type RuleLookup } from '../lib/feedRules.js'
+import { loadFeedRules, IGNORE, type RuleLookup } from '../lib/feedRules.js'
 import { resolver, syncAffiliateAdvertisers, extractDomain } from '../lib/affiliate/index.js'
 import { isBlockedImageHost, blockedImageHostRegex } from '../lib/images.js'
 import type { ImportedProduct } from '../lib/types.js'
@@ -175,7 +175,8 @@ async function syncOneFeed(
       if (!product) continue
       const retailerId = (retailerByName.get(row.advertiserName.toLowerCase())
         ?? retailerByName.values().next().value)!
-      const rule = resolveRule(retailerId, product.feedCategory)
+      const rule = resolveRule(retailerId, product.feedCategory, product.name)
+      if (rule === IGNORE) continue   // regula „ignoră” din Admin → Mapare
       if (!rule) unmapped++
       applyAffiliate(product)
       try {
@@ -245,7 +246,8 @@ export async function runFileImport(filePath: string, retailerSlug?: string, job
       if (skipped === 1) log.warn({ advertiser: row.advertiserName }, 'Advertiser necunoscut — randuri sarite (foloseste --retailer=<slug>)')
       continue
     }
-    const rule = resolveRule(retailerId, product.feedCategory)
+    const rule = resolveRule(retailerId, product.feedCategory, product.name)
+      if (rule === IGNORE) continue   // regula „ignoră” din Admin → Mapare
     if (!rule) unmapped++
     applyAffiliate(product)
     try {
@@ -536,7 +538,8 @@ export async function syncExternalFeeds(resolveRule: RuleLookup): Promise<{ impo
           retailerId = await upsertRetailerByDomain(domain, row.campaignName.trim())
           retailerByDomain.set(domain, retailerId)
         }
-        const rule = resolveRule(retailerId, product.feedCategory)
+        const rule = resolveRule(retailerId, product.feedCategory, product.name)
+      if (rule === IGNORE) continue   // regula „ignoră” din Admin → Mapare
         try {
           await upsertProduct(product, retailerId, rule)
           imported++

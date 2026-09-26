@@ -2,7 +2,7 @@ import pino from 'pino'
 import pool from '../lib/db.js'
 import { ensurePriceHistoryPartitions } from '../lib/partitions.js'
 import { upsertProduct, upsertRetailerByDomain } from '../lib/upsert.js'
-import { loadFeedRules } from '../lib/feedRules.js'
+import { loadFeedRules, IGNORE } from '../lib/feedRules.js'
 import { resolver, syncAffiliateAdvertisers } from '../lib/affiliate/index.js'
 import { EmagScraper } from './emag.js'
 import type { Scraper } from './types.js'
@@ -48,7 +48,8 @@ export async function ingestScraper(scraper: Scraper): Promise<{ imported: numbe
       product.affiliateNetwork = aff.network
       affiliated++
     }
-    const rule = resolveRule(retailerId, product.feedCategory)
+    const rule = resolveRule(retailerId, product.feedCategory, product.name)
+      if (rule === IGNORE) continue   // regula „ignoră” din Admin → Mapare
     try {
       await upsertProduct(product, retailerId, rule)
       imported++

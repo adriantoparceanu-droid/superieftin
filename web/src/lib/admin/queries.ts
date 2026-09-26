@@ -1,4 +1,6 @@
 import pool from '../db'
+import { OFFER_AVAILABLE_SQL } from '../availability'
+import { NAME_NORMALIZED_SQL } from './nameMatch'
 
 // Query-uri pentru paginile admin — fara cache, adminul vede mereu starea reala.
 
@@ -56,13 +58,15 @@ export interface UnmappedGroup {
 }
 
 export async function getUnmappedGroups(): Promise<UnmappedGroup[]> {
+  // Doar produsele care au inca o oferta afisabila: cele din feed-uri moarte sau ignorate
+  // (regula „ignora”) nu mai au rost sa fie mapate. Categoria goala din feed = „(fără categorie)”.
   const { rows } = await pool.query<UnmappedGroup>(`
-    SELECT coalesce(p.feed_category, '(fără categorie)') AS feed_category,
+    SELECT coalesce(nullif(p.feed_category, ''), '(fără categorie)') AS feed_category,
            r.id AS retailer_id, r.name AS retailer_name,
            count(DISTINCT p.id)::int AS product_count
     FROM products p
-    LEFT JOIN offers o ON o.product_id = p.id
-    LEFT JOIN retailers r ON r.id = o.retailer_id
+    JOIN offers o ON o.product_id = p.id AND ${OFFER_AVAILABLE_SQL}
+    JOIN retailers r ON r.id = o.retailer_id
     WHERE p.category_id IS NULL
     GROUP BY 1, 2, 3
     ORDER BY product_count DESC
@@ -492,6 +496,58 @@ export async function getBlockedRetailers(): Promise<{ name: string; source_stat
     GROUP BY r.id
     HAVING max(o.last_checked) < now() - INTERVAL '48 hours'
     ORDER BY age_days DESC
+  `)
+  return rows
+}
+
+// ---------- Mapare dupa denumire (migratia 020) ----------
+
+const GROUP_FILTER_SQL = `
+  p.category_id IS NULL
+  AND coalesce(nullif(p.feed_category, ''), '(fără categorie)') = $2
+  AND EXISTS (SELECT 1 FROM offers o WHERE o.product_id = p.id AND o.retailer_id = $1 AND ${OFFER_AVAILABLE_SQL})`
+
+// Toate denumirile unui grup nemapat (pentru exemple + cuvinte frecvente)
+export async function getUnmappedGroupNames(retailerId: number, feedCategory: string): Promise<string[]> {
+  const { rows } = await pool.query<{ name: string }>(
+    `SELECT p.name FROM products p WHERE ${GROUP_FILTER_SQL} ORDER BY p.name LIMIT 5000`,
+    [retailerId, feedCategory]
+  )
+  return rows.map((r) => r.name)
+}
+
+// Previzualizare: ce produse NEMAPATE (cu oferta afisabila) ar prinde o regula
+export async function previewNameRule(retailerId: number | null, pattern: string): Promise<{ count: number; examples: string[] }> {
+  const { rows } = await pool.query<{ name: string; total: number }>(`
+    SELECT p.name, count(*) OVER ()::int AS total FROM products p
+    WHERE p.category_id IS NULL
+      AND ${NAME_NORMALIZED_SQL} ~ $2
+      AND EXISTS (SELECT 1 FROM offers o WHERE o.product_id = p.id
+                  AND ($1::int IS NULL OR o.retailer_id = $1) AND ${OFFER_AVAILABLE_SQL})
+    ORDER BY p.name LIMIT 15
+  `, [retailerId, pattern])
+  return { count: rows[0]?.total ?? 0, examples: rows.map((r) => r.name) }
+}
+
+export interface NameRuleRow {
+  id: number
+  retailer_name: string | null
+  terms: string
+  action: 'map' | 'ignore'
+  category_name: string | null
+  created_at: string
+}
+
+export async function getNameRules(): Promise<NameRuleRow[]> {
+  const { rows } = await pool.query<NameRuleRow>(`
+    SELECT n.id, r.name AS retailer_name, n.terms, n.action,
+           CASE WHEN pc.name IS NOT NULL THEN pc.name || ' › ' || c.name ELSE c.name END AS category_name,
+           n.created_at
+    FROM name_category_rules n
+    LEFT JOIN retailers r ON r.id = n.retailer_id
+    LEFT JOIN categories c ON c.id = n.category_id
+    LEFT JOIN categories pc ON pc.id = c.parent_id
+    ORDER BY n.priority, n.id
   `)
   return rows
 }

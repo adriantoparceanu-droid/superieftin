@@ -7,6 +7,8 @@ import { join } from 'path'
 import pool from '../db'
 import { verifyPassword, hashPassword } from './password'
 import { createSession, destroySession, requireAdmin } from './session'
+import { termsPattern, NAME_NORMALIZED_SQL } from './nameMatch'
+import { OFFER_AVAILABLE_SQL } from '../availability'
 
 // Slugify identic cu worker/src/lib/slug.ts
 function toSlug(name: string): string {
@@ -596,5 +598,54 @@ export async function saveRetailerNoteAction(formData: FormData) {
   const note = String(formData.get('note') ?? '').trim().slice(0, 1000) || null
   if (!id) return
   await pool.query('UPDATE retailers SET admin_note = $2 WHERE id = $1', [id, note])
+  refresh()
+}
+
+// ---------- Mapare dupa denumire (migratia 020) ----------
+
+// Salveaza regula si o aplica imediat pe produsele NEMAPATE existente (nu atinge produsele
+// care au deja categorie). La import, workerul o aplica automat (worker/src/lib/feedRules.ts).
+//   map    → produsele primesc categoria aleasa
+//   ignore → ofertele lor se ascund acum, iar la urmatoarele importuri nu se mai importa
+export async function createNameRuleAction(formData: FormData) {
+  await requireAdmin()
+  const terms = String(formData.get('terme') ?? '').trim().slice(0, 500)
+  const action = formData.get('actiune') === 'ignore' ? 'ignore' : 'map'
+  const categoryId = action === 'map' ? Number(formData.get('categorie')) || null : null
+  const retailerId = formData.get('toti') === '1' ? null : Number(formData.get('retailer')) || null
+  const pattern = termsPattern(terms)
+  if (!pattern || (action === 'map' && !categoryId)) return
+
+  await pool.query(
+    `INSERT INTO name_category_rules (retailer_id, terms, category_id, action) VALUES ($1, $2, $3, $4)`,
+    [retailerId, terms, categoryId, action]
+  )
+
+  const scope = `EXISTS (SELECT 1 FROM offers o WHERE o.product_id = p.id AND ($1::int IS NULL OR o.retailer_id = $1))`
+  if (action === 'map') {
+    await pool.query(`
+      UPDATE products p SET category_id = c.id, category = c.slug, updated_at = now()
+      FROM categories c
+      WHERE c.id = $3 AND p.category_id IS NULL AND ${NAME_NORMALIZED_SQL} ~ $2 AND ${scope}
+    `, [retailerId, pattern, categoryId])
+  } else {
+    await pool.query(`
+      UPDATE offers o SET in_stock = false
+      FROM products p
+      WHERE p.id = o.product_id AND p.category_id IS NULL AND ${NAME_NORMALIZED_SQL} ~ $2
+        AND ($1::int IS NULL OR o.retailer_id = $1) AND ${OFFER_AVAILABLE_SQL}
+    `, [retailerId, pattern])
+  }
+  revalidateTag('discounts', 'max')
+  revalidateAll()
+}
+
+export async function deleteNameRuleAction(formData: FormData) {
+  await requireAdmin()
+  const id = Number(formData.get('id'))
+  if (!id) return
+  // Stergerea nu readuce automat produsele: cele mapate raman in categorie, cele ignorate
+  // revin la urmatorul import al feed-ului.
+  await pool.query('DELETE FROM name_category_rules WHERE id = $1', [id])
   refresh()
 }
