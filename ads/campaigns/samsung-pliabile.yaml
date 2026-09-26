@@ -1,0 +1,225 @@
+# Direcția 1 din research v2 (decizia proprietarului, 2026-09-27): Samsung pliabile —
+# Galaxy Z Fold7 256GB și Galaxy Z Flip7 FE 256GB, doar la ITGalaxy pe site.
+#
+# De ce o campanie separată: bugetul se controlează pe fiecare direcție; dacă una pierde bani,
+# o pui pe pauză fără să le atingi pe celelalte.
+# De ce CPC manual: contul nu are încă nicio conversie. Strategiile automate (tROAS) au nevoie
+# de ~30 de conversii reale ca să învețe; până atunci plafonăm noi prețul pe click.
+# Câmpurile `id` / `budget_id` le completează ads:apply după crearea în Google Ads.
+#
+# Anunțurile NU conțin procente (se schimbă zilnic). Afirmațiile „sub mediană” / „reducere reală”
+# sunt adevărate cât timp pagina afișează insigna „Reducere reală” — ads:validate verifică asta
+# live înainte de fiecare apply. Dacă reducerea dispare, anunțul trebuie pus pe pauză.
+
+campaign:
+  name: "SE | Search | Samsung pliabile"
+  id: null
+  budget_id: null
+  status: PAUSED                  # rămâne PAUSED; activarea o faci tu în Google Ads
+  daily_budget: 8                 # lei/zi (guardrails: max 50/campanie, 150 total)
+  bidding:
+    strategy: MANUAL_CPC
+    max_cpc: 0.35                 # lei; se aplică pe fiecare grup de anunțuri
+  conversion_goal:                # singura conversie folosită de campanie
+    name: Comision Profitshare
+    conversion_action_id: "7799099014"
+  targeting:
+    countries: [RO]
+    languages: [ro]
+    location_mode: PRESENCE       # doar persoane aflate în România (nu „interesate de”)
+    networks:
+      search: true
+      search_partners: false
+      display: false
+  source_research: ads/research/2026-09-27-oportunitati-v2.md   # secțiunea 3.1
+
+  # Negative: text = broad (blochează orice căutare care conține toate cuvintele),
+  # "text" = phrase, [text] = exact.
+  negative_keywords:
+    # de bază (în fiecare campanie)
+    - gratis
+    - second hand
+    - folosit
+    - service
+    - reparatie
+    - manual
+    - driver
+    - olx
+    - piese
+    - cum
+    - ce este
+    - forum
+    # branduri de retaileri și operatori — doar ca negative
+    - emag
+    - evomag
+    - evo mag
+    - itgalaxy
+    - '"it galaxy"'
+    - vexio
+    - citgrup
+    - cit grup
+    - forit
+    - vegis
+    - altex
+    - flanco
+    - '"media galaxy"'
+    - orange
+    - vodafone
+    - telekom
+    - digi
+    - abonament
+    # intenții care nu cumpără un telefon nou
+    - husa
+    - husă
+    - folie
+    - carcasa
+    - incarcator
+    - încărcător
+    - baterie
+    - display
+    - ecran
+    - sh
+    - refurbished
+    - reconditionat
+    - review
+    - pareri
+    - păreri
+    - specificatii
+    - vs
+    - comparatie
+    - wallpaper
+    - setari
+    - resetare
+    # alte generații / modele pe care nu le avem la reducere
+    - fold 8
+    - fold8
+    - flip 8
+    - flip8
+    - fold 6
+    - flip 6
+    - "[z flip 7]"
+    - "[samsung z flip 7]"
+
+  ad_groups:
+    - name: "Z Fold7 - model și preț"
+      id: null
+      final_url: https://www.superieftin.ro/p/telefon-mobil-galaxy-z-fold7-256gb-12gb-ram-dual-sim-5g-silver-shadow
+      keywords:
+        exact:
+          - samsung z fold 7
+          - samsung galaxy z fold 7
+          - galaxy z fold7
+          - galaxy z fold 7
+          - samsung z fold 7 pret
+          - z fold 7 pret
+          - samsung z fold 7 256gb
+        phrase:
+          - fold 7 pret
+          - z fold 7 256gb
+          - fold 7 reducere
+      negative_keywords:          # pagina e varianta de 256GB
+        - 512gb
+        - 512 gb
+        - 1tb
+      ads:
+        - type: RSA
+          id: null
+          headlines:
+            - Samsung Galaxy Z Fold7 256GB
+            - Galaxy Z Fold7 sub mediană
+            - "Z Fold7: reducere reală"
+            - Sub mediana de 30 de zile
+            - Verificat față de mediană
+            - Istoric de preț pe 90 de zile
+            - Alertă de preț pe Telegram
+            - Nu comparăm cu prețul vechi
+            - Prețuri verificate zilnic
+            - Vezi prețul Z Fold7 de azi
+            - Doar reduceri reale
+            - Comparator de prețuri
+            - Mediana, nu prețul umflat
+            - Z Fold7 256GB la preț redus
+            - superieftin.ro
+          descriptions:
+            - Galaxy Z Fold7 256GB costă azi sub mediana prețurilor din ultimele 30 de zile.
+            - Comparăm prețul de azi cu mediana pe 30 de zile, nu cu prețul vechi al magazinului.
+            - "Vezi istoricul prețului pe 90 de zile: minim, maxim și mediană, înainte să cumperi."
+            - Setează o alertă de preț pe Telegram și află când telefonul se ieftinește.
+          path1: samsung
+          path2: z-fold7
+
+    - name: "Z Flip7 FE - model și preț"
+      id: null
+      final_url: https://www.superieftin.ro/p/telefon-mobil-galaxy-z-flip7-fe-256gb-8gb-ram-dual-sim-5g-white
+      keywords:
+        exact:
+          - z flip 7 fe
+          - galaxy z flip7 fe
+          - samsung z flip 7 fe
+        phrase:
+          - flip 7 fe pret
+      negative_keywords: []
+      ads:
+        - type: RSA
+          id: null
+          headlines:
+            - Samsung Galaxy Z Flip7 FE
+            - Galaxy Z Flip7 FE 256GB
+            - Z Flip7 FE sub mediană
+            - "Z Flip7 FE: reducere reală"
+            - Sub mediana de 30 de zile
+            - Verificat față de mediană
+            - Istoric de preț pe 90 de zile
+            - Alertă de preț pe Telegram
+            - Nu comparăm cu prețul vechi
+            - Prețuri verificate zilnic
+            - Vezi prețul Z Flip7 FE azi
+            - Doar reduceri reale
+            - Comparator de prețuri
+            - Z Flip7 FE la preț redus
+            - superieftin.ro
+          descriptions:
+            - Galaxy Z Flip7 FE 256GB costă azi sub mediana prețurilor din ultimele 30 de zile.
+            - Comparăm prețul de azi cu mediana pe 30 de zile, nu cu prețul vechi al magazinului.
+            - "Vezi istoricul prețului pe 90 de zile: minim, maxim și mediană, înainte să cumperi."
+            - Setează o alertă de preț pe Telegram și află când telefonul se ieftinește.
+          path1: samsung
+          path2: z-flip7-fe
+
+  extensions:
+    sitelinks:
+      - text: Galaxy Z Fold7 256GB
+        url: https://www.superieftin.ro/p/telefon-mobil-galaxy-z-fold7-256gb-12gb-ram-dual-sim-5g-silver-shadow
+        description1: Preț sub mediana de 30 de zile
+        description2: Istoric de preț pe 90 de zile
+      - text: Galaxy Z Flip7 FE 256GB
+        url: https://www.superieftin.ro/p/telefon-mobil-galaxy-z-flip7-fe-256gb-8gb-ram-dual-sim-5g-white
+        description1: Preț sub mediana de 30 de zile
+        description2: Istoric de preț pe 90 de zile
+      - text: Reduceri la telefoane
+        url: https://www.superieftin.ro/reduceri-reale/telefoane-mobile
+        description1: Doar prețuri sub mediană
+        description2: Verificate față de 30 de zile
+      - text: Cum verificăm reducerile
+        url: https://www.superieftin.ro/despre
+        description1: Mediana pe 30 de zile explicată
+        description2: Fără prețuri vechi umflate
+    callouts:
+      - Mediana pe 30 de zile
+      - Istoric preț 90 de zile
+      - Alertă de preț Telegram
+      - Prețuri verificate zilnic
+      - Doar reduceri reale
+      - Fără prețuri umflate
+    structured_snippets:
+      - header: Servicii
+        values:
+          - Istoric de preț 90 zile
+          - Mediana pe 30 de zile
+          - Alerte de preț
+          - Comparator de prețuri
+      - header: Modele
+        values:
+          - Galaxy Z Fold7 256GB
+          - Galaxy Z Fold7 512GB
+          - Galaxy Z Flip7 FE 256GB
