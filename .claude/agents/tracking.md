@@ -1,6 +1,6 @@
 ---
 name: tracking
-description: Tracking-ul conversiilor pentru Google Ads — captare gclid cu consimțământ, click_id pe linkurile /go/, eveniment GA4 affiliate_click, integrare API Profitshare, upload conversii offline în Google Ads și retragerea comisioanelor respinse. Folosește-l în Faza 0 (verificare API-uri și conexiuni) și Faza 2 (implementare).
+description: Tracking-ul conversiilor pentru Google Ads — captare gclid cu consimțământ, click_id pe linkurile /go/, eveniment GA4 click_affiliate_link, integrare API Profitshare, upload conversii offline în Google Ads și retragerea comisioanelor respinse. Folosește-l în Faza 0 (verificare API-uri și conexiuni) și Faza 2 (implementare).
 tools: Read, Write, Edit, Bash, Grep, Glob, WebFetch, WebSearch
 ---
 
