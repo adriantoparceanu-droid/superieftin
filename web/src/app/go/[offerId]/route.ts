@@ -3,9 +3,11 @@ import pool from '@/lib/db'
 import { trackClick } from '@/lib/queries'
 import { generateClickId, detectNetwork, withSubId } from '@/lib/subid'
 import { OFFER_AVAILABLE_SQL } from '@/lib/availability'
+import { CONSENT_COOKIE, parseConsentCookie } from '@/lib/consent'
+import { AD_CLICK_COOKIE, parseAdClickCookie } from '@/lib/adclick'
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ offerId: string }> }
 ) {
   const { offerId } = await params
@@ -48,14 +50,23 @@ export async function GET(
   const network = affiliate_url ? detectNetwork(affiliate_url) : null
   const destination = affiliate_url ? withSubId(affiliate_url, network, clickId) : url
 
+  // ID-ul clickului pe reclama Google (scris la aterizare de AdClickCapture) se leaga de
+  // click_id DOAR daca vizitatorul are acum acordul „Publicitate” (regula 7, GDPR). Verificam
+  // acordul aici, pe server, din cookie-ul de consimtamant — nu ne bazam doar pe faptul ca
+  // browserul ar fi trebuit sa stearga se_gclid la retragere. Fara acord: NICIUN ID Google.
+  const hasAdConsent = parseConsentCookie(req.cookies.get(CONSENT_COOKIE)?.value)?.ads === true
+  const adIds = hasAdConsent ? parseAdClickCookie(req.cookies.get(AD_CLICK_COOKIE)?.value) : null
+
   // Scrierile in DB ruleaza DUPA ce redirectul a plecat — clickul ramane rapid
   after(async () => {
     await trackClick(offerId)
     try {
       await pool.query(
-        `INSERT INTO ad_clicks (click_id, offer_id, product_id, retailer_id, network)
-         VALUES ($1, $2, $3, $4, $5)`,
-        [clickId, id, product_id, retailer_id, network]
+        `INSERT INTO ad_clicks (click_id, offer_id, product_id, retailer_id, network,
+                                gclid, gbraid, wbraid, has_ad_consent)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+        [clickId, id, product_id, retailer_id, network,
+         adIds?.gclid ?? null, adIds?.gbraid ?? null, adIds?.wbraid ?? null, hasAdConsent]
       )
     } catch (err) {
       // Non-critic pentru utilizator, dar pierdem potrivirea comisionului — il logam
