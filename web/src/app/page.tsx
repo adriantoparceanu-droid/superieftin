@@ -181,7 +181,7 @@ export default async function HomePage() {
           <div className="flex flex-col items-center text-center gap-2">
             <span className="text-4xl font-black font-archivo text-brand">3</span>
             <strong className="text-[var(--color-text)]">Validăm reducerea</strong>
-            <p className="text-muted">Reducere reală = preț actual cu cel puțin 5% sub medie.</p>
+            <p className="text-muted">Reducere reală = preț actual cu cel puțin 5% sub mediana de 30 de zile.</p>
           </div>
         </div>
       </section>

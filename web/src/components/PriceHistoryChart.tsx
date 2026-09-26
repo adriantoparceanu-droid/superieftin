@@ -87,7 +87,7 @@ export function PriceHistoryChart({ data, currentPrice, medianPrice }: PriceHist
               y={medianPrice}
               stroke="#718096"
               strokeDasharray="4 2"
-              label={{ value: 'medie 30z', position: 'insideTopRight', fontSize: 10, fill: '#718096' }}
+              label={{ value: 'mediana 30 de zile', position: 'insideTopRight', fontSize: 10, fill: '#718096' }}
             />
           )}
           {currentPrice && (
