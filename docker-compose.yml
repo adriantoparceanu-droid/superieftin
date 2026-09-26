@@ -26,6 +26,8 @@ services:
       - REVALIDATE_SECRET=${REVALIDATE_SECRET}
       - ADMIN_SESSION_SECRET=${ADMIN_SESSION_SECRET}
       - UPLOAD_DIR=/app/uploads
+      # IndexNow (Bing) la publicarea ghidurilor — optional; gol = dezactivat
+      - INDEXNOW_KEY=${INDEXNOW_KEY:-}
     volumes:
       - uploads:/app/uploads
     depends_on:

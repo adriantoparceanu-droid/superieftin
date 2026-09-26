@@ -16,6 +16,7 @@
     "bullmq": "^5.78.0",
     "ioredis": "^5.11.1",
     "lucide-react": "^1.17.0",
+    "markdown-it": "^14.3.2",
     "next": "16.2.9",
     "pg": "^8.21.0",
     "react": "19.2.4",
@@ -24,6 +25,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/markdown-it": "^14.2.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

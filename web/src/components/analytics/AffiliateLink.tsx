@@ -27,7 +27,8 @@ export function AffiliateLink({ offerId, productId, productName, merchantName, p
     <a
       href={`/go/${offerId}`}
       target="_blank"
-      rel="noopener sponsored"
+      // sponsored + nofollow: link platit (afiliere) — cerinta Google pentru linkurile de afiliere
+      rel="noopener sponsored nofollow"
       className={className}
       onClick={() => {
         gaEvent('click_affiliate_link', {
