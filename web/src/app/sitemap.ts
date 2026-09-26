@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next'
 import { getAllProductSlugs, getCategories, getSubcategories } from '@/lib/queries'
+import { getPublishedGuideSlugs } from '@/lib/guides/queries'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.superieftin.ro'
 
@@ -9,9 +10,11 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.superieftin.ro
 export const dynamic = 'force-dynamic'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [slugs, categories] = await Promise.all([
+  const [slugs, categories, guides] = await Promise.all([
     getAllProductSlugs().catch(() => [] as { slug: string; updated_at: string | null }[]),
     getCategories().catch(() => [] as { category: string }[]),
+    // .catch: tabela guides poate lipsi daca web-ul ajunge pe server inaintea migratiei 023
+    getPublishedGuideSlugs().catch(() => [] as { slug: string; updated_at: string }[]),
   ])
 
   const staticRoutes: MetadataRoute.Sitemap = [
@@ -22,10 +25,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 1,
     },
     // Paginile de încredere (Despre, Contact, politici) — cerute de Google pentru site-urile de afiliere
-    ...['despre', 'contact', 'confidentialitate', 'termeni', 'cookies'].map((path) => ({
+    ...['despre', 'contact', 'confidentialitate', 'termeni', 'cookies', 'ghiduri/metodologie'].map((path) => ({
       url: `${SITE_URL}/${path}`,
       changeFrequency: 'monthly' as const,
       priority: 0.3,
+    })),
+  ]
+
+  // Ghidurile publicate (ciornele nu apar), lastmod = ultima actualizare a textului
+  const guideRoutes: MetadataRoute.Sitemap = [
+    { url: `${SITE_URL}/ghiduri`, changeFrequency: 'weekly' as const, priority: 0.6,
+      ...(guides[0] ? { lastModified: new Date(Math.max(...guides.map((g) => new Date(g.updated_at).getTime()))) } : {}) },
+    ...guides.map((g) => ({
+      url: `${SITE_URL}/ghiduri/${g.slug}`,
+      lastModified: new Date(g.updated_at),
+      changeFrequency: 'weekly' as const,
+      priority: 0.7,
     })),
   ]
 
@@ -57,5 +72,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }))
 
-  return [...staticRoutes, ...categoryRoutes, ...landingRoutes, ...productRoutes]
+  return [...staticRoutes, ...guideRoutes, ...categoryRoutes, ...landingRoutes, ...productRoutes]
 }
