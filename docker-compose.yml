@@ -61,6 +61,21 @@ services:
       - TELEGRAM_ADMIN_CHAT_ID=${TELEGRAM_ADMIN_CHAT_ID:-}
       - SITE_URL=${SITE_URL}
       - REVALIDATE_SECRET=${REVALIDATE_SECRET}
+      # Google Ads / tracking:sync (comisioane Profitshare → conversii). Implicit ADS_ENV=test =
+      # doar validate_only (regula 4); trimiterea reala cere si TRACKING_SYNC_AUTO_SEND=1.
+      # Credentiale lipsa → jobul logheaza „Google nesolicitat: …” si nu opreste worker-ul.
+      - ADS_ENV=${ADS_ENV:-test}
+      - GOOGLE_ADS_CLIENT_ID=${GOOGLE_ADS_CLIENT_ID:-}
+      - GOOGLE_ADS_CLIENT_SECRET=${GOOGLE_ADS_CLIENT_SECRET:-}
+      - GOOGLE_ADS_REFRESH_TOKEN=${GOOGLE_ADS_REFRESH_TOKEN:-}
+      # Gol — nu folosim cont Manager (MCC)
+      - GOOGLE_ADS_LOGIN_CUSTOMER_ID=${GOOGLE_ADS_LOGIN_CUSTOMER_ID:-}
+      - GOOGLE_ADS_CUSTOMER_ID_PROD=${GOOGLE_ADS_CUSTOMER_ID_PROD:-}
+      - GOOGLE_ADS_CONVERSION_ACTION_ID=${GOOGLE_ADS_CONVERSION_ACTION_ID:-}
+      # Optional, doar pentru compatibilitate: din 9 sept. 2026 Google nu mai cere developer token
+      - GOOGLE_ADS_DEVELOPER_TOKEN=${GOOGLE_ADS_DEVELOPER_TOKEN:-}
+      - TRACKING_SYNC_AUTO_SEND=${TRACKING_SYNC_AUTO_SEND:-}
+      - TRACKING_SYNC_CRON=${TRACKING_SYNC_CRON:-30 6 * * *}
     volumes:
       - uploads:/app/uploads
     depends_on:
