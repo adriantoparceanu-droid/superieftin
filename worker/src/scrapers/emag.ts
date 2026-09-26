@@ -156,11 +156,22 @@ const KNOWN_BRANDS = [
   'Thomson', 'Tesla', 'Kruger&Matz', 'Allview', 'Nubia',
 ]
 
-function extractBrand(name: string): string | null {
-  for (const brand of KNOWN_BRANDS) {
-    if (name.includes(brand)) return brand
+// Marca = brandul cunoscut care apare PRIMUL in denumire, ca cuvant intreg, indiferent de
+// majuscule. Inainte cautam subsiruri in ordinea listei, deci „Laptop ASUS Vivobook” iesea
+// „Vivo” (subsir din „Vivobook”, iar „ASUS” cu majuscule nu se potrivea cu „Asus”).
+const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+const BRAND_PATTERNS = KNOWN_BRANDS.map((brand) => ({
+  brand,
+  re: new RegExp(`(?<![\\p{L}\\p{N}])${escapeRe(brand)}(?![\\p{L}\\p{N}])`, 'iu'),
+}))
+
+export function extractBrand(name: string): string | null {
+  let best: { brand: string; index: number } | null = null
+  for (const { brand, re } of BRAND_PATTERNS) {
+    const m = re.exec(name)
+    if (m && (!best || m.index < best.index)) best = { brand, index: m.index }
   }
-  return null
+  return best?.brand ?? null
 }
 
 interface ListingProduct {

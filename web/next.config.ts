@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next'
+import { RENAMED_CATEGORIES, CATEGORIES_TO_TAGS } from './src/lib/legacy-map'
 
 const nextConfig: NextConfig = {
   output: 'standalone',
@@ -12,6 +13,18 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_SITE_URL:
       process.env.NEXT_PUBLIC_SITE_URL ||
       (process.env.DOMAIN ? `https://${process.env.DOMAIN}` : 'https://www.superieftin.ro'),
+  },
+  // Slug-uri de categorii redenumite / devenite tag-uri → noua pagina (308 = permanent,
+  // tratat de Google ca 301). URL-urile vechi WooCommerce: route handlers, vezi lib/legacy-urls.ts
+  async redirects() {
+    return [
+      ...Object.entries(RENAMED_CATEGORIES).map(([from, to]) => ({
+        source: `/c/${from}`, destination: `/c/${to}`, permanent: true,
+      })),
+      ...Object.entries(CATEGORIES_TO_TAGS).map(([from, to]) => ({
+        source: `/c/${from}`, destination: `/t/${to}`, permanent: true,
+      })),
+    ]
   },
   images: {
     // Permite imagini de pe CDN-ul eMAG

@@ -2,7 +2,9 @@ import type { Metadata } from 'next'
 import { Archivo_Black, Instrument_Sans } from 'next/font/google'
 import './globals.css'
 import { Header } from '@/components/Header'
+import { Footer } from '@/components/Footer'
 import { GoogleAnalytics } from '@/components/analytics/GoogleAnalytics'
+import { CookieBanner } from '@/components/consent/CookieBanner'
 
 const archivoBlack = Archivo_Black({
   weight: '400',
@@ -30,7 +32,7 @@ export const metadata: Metadata = {
     template: '%s | superieftin.ro',
   },
   description:
-    'Comparăm prețurile și păstrăm istoricul ca să știi când e ofertă adevărată. Monitorizăm eMAG, Altex și alte magazine.',
+    'Comparăm prețurile și păstrăm istoricul ca să știi când e ofertă adevărată. Urmărim oferte de la mai multe magazine online din România.',
   openGraph: {
     type: 'website',
     locale: 'ro_RO',
@@ -49,18 +51,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <main className="max-w-7xl mx-auto px-4 py-6">
           {children}
         </main>
-        <footer className="mt-12 border-t border-line bg-surface">
-          <div className="max-w-7xl mx-auto px-4 py-6 flex flex-col gap-3">
-            <p className="text-xs text-muted">
-              superieftin.ro folosește linkuri de afiliere. Dacă cumperi prin linkurile noastre,
-              primim un comision mic din partea retailerului, fără cost suplimentar pentru tine.
-              Prețurile și reducerile sunt verificate independent.
-            </p>
-            <p className="text-xs text-muted">
-              © {new Date().getFullYear()} superieftin.ro — Comparator de prețuri pentru România
-            </p>
-          </div>
-        </footer>
+        <Footer />
+        <CookieBanner />
       </body>
     </html>
   )

@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { getProductDetail, getPriceHistory, getAllProductSlugs } from '@/lib/queries'
-import { calculateDiscount, formatPrice } from '@/lib/discount'
+import { calculateDiscount, formatPrice, formatPct, formatVerified, medianDeltaText } from '@/lib/discount'
 import { PriceHistoryChart } from '@/components/PriceHistoryChart'
 import { PriceTag } from '@/components/PriceTag'
 import { VerdictBadge } from '@/components/VerdictBadge'
@@ -47,13 +47,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       images: product.image_url ? [{ url: product.image_url, alt: product.name }] : [],
     },
   }
-}
-
-function formatVerified(isoDate: string) {
-  const diffH = Math.floor((Date.now() - new Date(isoDate).getTime()) / 3600000)
-  if (diffH < 1) return 'Verificat azi'
-  if (diffH < 24) return `Verificat acum ${diffH} ${diffH === 1 ? 'oră' : 'ore'}`
-  return 'Verificat azi'
 }
 
 export default async function ProductPage({ params }: Props) {
@@ -148,24 +141,36 @@ export default async function ProductPage({ params }: Props) {
           </div>
 
           {/* Verdict reducere reala */}
+          {/* Pragurile: lib/discount.ts (±5% fata de mediana 30 de zile) */}
           {discountInfo && (
             <div className="rounded-lg border border-line bg-surface p-4">
-              <div className="font-semibold text-base mb-1 text-[var(--color-text)]">
-                {discountInfo.verdict === 'real' || discountInfo.verdict === 'good'
-                  ? <VerdictBadge discountPct={discountInfo.discountPct} />
-                  : null}
-              </div>
-              {(discountInfo.verdict === 'real' || discountInfo.verdict === 'good') && (
-                <p className="text-sm text-muted">
-                  Prețul actual este cu {discountInfo.discountPct}% mai mic decât mediana
-                  ultimelor 30 de zile — aceasta este o reducere reală, verificată statistic.
-                </p>
+              {discountInfo.verdict === 'real' && (
+                <>
+                  <div className="mb-1"><VerdictBadge discountPct={discountInfo.discountPct} /></div>
+                  <p className="font-semibold text-[var(--color-text)]">
+                    Reducere reală: {formatPct(discountInfo.discountPct ?? 0)}% sub mediana de 30 de zile
+                  </p>
+                  <p className="text-sm text-muted mt-1">
+                    Comparăm prețul de azi cu mediana prețurilor din ultimele 30 de zile, nu cu
+                    „prețul vechi” afișat de magazin.
+                  </p>
+                </>
               )}
               {discountInfo.verdict === 'normal' && (
-                <p className="text-sm text-muted">Prețul este în intervalul obișnuit pentru acest produs.</p>
+                <p className="font-semibold text-[var(--color-text)]">
+                  Preț în intervalul obișnuit
+                  <span className="font-normal text-muted"> ({medianDeltaText(discountInfo.discountPct)})</span>
+                </p>
               )}
               {discountInfo.verdict === 'higher' && (
-                <p className="text-sm text-muted">Prețul actual este mai mare ca de obicei — poate merită să aștepți.</p>
+                <>
+                  <p className="font-semibold text-[var(--color-text)]">
+                    Preț cu {formatPct(discountInfo.discountPct ?? 0)}% peste mediana de 30 de zile
+                  </p>
+                  <p className="text-sm text-muted mt-1">
+                    E mai scump decât de obicei — îți recomandăm alerta de preț, ca să afli când scade.
+                  </p>
+                </>
               )}
               {discountInfo.verdict === 'no-data' && (
                 <p className="text-sm text-muted">Istoric insuficient pentru verificare</p>
@@ -191,7 +196,7 @@ export default async function ProductPage({ params }: Props) {
               return (
                 <div
                   key={offer.offer_id}
-                  className="bg-surface rounded-lg border border-line p-4 flex items-center gap-4"
+                  className="bg-surface rounded-lg border border-line p-4 flex flex-wrap items-center gap-x-4 gap-y-3"
                 >
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-[var(--color-text)] capitalize">{offer.retailer_name}</div>
@@ -205,7 +210,7 @@ export default async function ProductPage({ params }: Props) {
                     </div>
                   </div>
                   <div className="text-right shrink-0">
-                    <PriceTag price={offer.current_price} discountPct={offerDiscount.verdict === 'real' || offerDiscount.verdict === 'good' ? offerDiscount.discountPct : null} />
+                    <PriceTag price={offer.current_price} discountPct={offerDiscount.verdict === 'real' ? offerDiscount.discountPct : null} />
                   </div>
                   <AffiliateLink
                     offerId={offer.offer_id}
@@ -213,7 +218,7 @@ export default async function ProductPage({ params }: Props) {
                     merchantName={offer.retailer_name}
                     price={offer.current_price}
                     category={product.category}
-                    className="shrink-0 bg-yellow-400 hover:bg-yellow-500 text-gray-900 text-sm font-semibold px-4 py-2 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+                    className="w-full sm:w-auto text-center shrink-0 bg-yellow-400 hover:bg-yellow-500 text-gray-900 text-sm font-semibold px-4 py-2 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                   >
                     Cumpără la {offer.retailer_name} →
                   </AffiliateLink>
@@ -253,7 +258,7 @@ export default async function ProductPage({ params }: Props) {
                       return acc
                     }, {})
                   )}
-                  belowMedian={discountInfo?.verdict === 'real' || discountInfo?.verdict === 'good'}
+                  belowMedian={discountInfo?.verdict === 'real'}
                 />
               )}
             </div>
@@ -273,7 +278,7 @@ export default async function ProductPage({ params }: Props) {
                   </span>
                   {bestOffer?.median_price && (
                     <span>
-                      Medie 30z: <strong className="text-[var(--color-text)]">{formatPrice(bestOffer.median_price)}</strong>
+                      Mediana 30 de zile: <strong className="text-[var(--color-text)]">{formatPrice(bestOffer.median_price)}</strong>
                     </span>
                   )}
                 </div>

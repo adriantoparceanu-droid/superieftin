@@ -1,5 +1,6 @@
 import { unstable_cache } from 'next/cache'
 import pool from './db'
+import { maskPII } from './pii'
 
 export interface ProductWithDiscount {
   id: string
@@ -111,6 +112,8 @@ export const getTopDiscounts = unstable_cache(
       WHERE o.current_price IS NOT NULL
         AND o.in_stock = true
         AND o.current_price < mp.median_price * 0.95
+        -- doar preturi proaspete (FRESH_HOURS din lib/discount.ts)
+        AND o.last_checked >= now() - INTERVAL '48 hours'
       ORDER BY discount_pct DESC
       LIMIT $1
     `, [limit])
@@ -118,6 +121,61 @@ export const getTopDiscounts = unstable_cache(
   },
   ['top-discounts'],
   { revalidate: 900, tags: ['discounts'] }
+)
+
+export interface LandingProduct extends ProductWithDiscount {
+  last_checked: string | null
+}
+
+// Landing pages pentru reclame (/reduceri-reale/[categorie]): produsele categoriei (inclusiv
+// subcategoriile) ordonate dupa pretul fata de mediana 30 de zile, cea mai buna oferta per
+// produs. Doar oferte in stoc si CU LINK AFILIAT (trafic platit fara link afiliat = cost fara
+// venit). Intoarce si produsele de langa prag: pagina le arata doar cand nu exista reduceri
+// reale (discount_pct e NULL pentru ele). Pragul 0.95 = REAL_DISCOUNT_PCT din lib/discount.ts.
+export const getLandingProducts = unstable_cache(
+  async (category: string, limit = 48): Promise<LandingProduct[]> => {
+    const { rows } = await pool.query<LandingProduct>(`
+      WITH median_prices AS (
+        SELECT offer_id, PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY price) AS median_price
+        FROM price_history
+        WHERE recorded_at >= now() - INTERVAL '30 days'
+        GROUP BY offer_id
+        HAVING COUNT(*) >= 2
+      ),
+      best AS (
+        SELECT DISTINCT ON (p.id)
+          p.id::text, p.name, p.slug, p.category, p.brand, p.image_url,
+          o.id::text AS offer_id,
+          o.current_price::float AS current_price,
+          o.affiliate_url, o.in_stock, o.last_checked,
+          r.name AS retailer_name, r.slug AS retailer_slug,
+          mp.median_price::float AS median_price,
+          o.current_price / mp.median_price AS ratio
+        FROM products p
+        JOIN offers o ON o.product_id = p.id
+        JOIN retailers r ON r.id = o.retailer_id
+        JOIN median_prices mp ON mp.offer_id = o.id
+        WHERE ${CATEGORY_FILTER_SQL}
+          AND o.current_price IS NOT NULL
+          AND o.in_stock = true
+          AND o.affiliate_url IS NOT NULL
+          -- doar preturi proaspete (FRESH_HOURS din lib/discount.ts)
+          AND o.last_checked >= now() - INTERVAL '48 hours'
+        ORDER BY p.id, o.current_price / mp.median_price ASC
+      )
+      SELECT *,
+        CASE WHEN ratio < 0.95
+          THEN ROUND(((1 - ratio) * 100)::numeric, 1)::float
+          ELSE NULL
+        END AS discount_pct
+      FROM best
+      ORDER BY ratio ASC
+      LIMIT $2
+    `, [category, limit])
+    return rows
+  },
+  ['landing-products'],
+  { revalidate: 900, tags: ['discounts', 'products'] }
 )
 
 // Cele mai ieftine produse (fallback cand nu sunt reduceri reale)
@@ -761,7 +819,7 @@ export async function logSearch(term: string, resultsCount: number): Promise<voi
   try {
     await pool.query(
       'INSERT INTO search_queries (term, results_count) VALUES ($1, $2)',
-      [term.slice(0, 200), resultsCount]
+      [maskPII(term).slice(0, 200), resultsCount]
     )
   } catch {
     // Non-critical — tabelul poate sa nu existe inca
