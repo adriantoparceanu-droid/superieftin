@@ -16,7 +16,10 @@ import { execFile } from 'child_process'
 // PKCE + `state` protejeaza schimbul (nimeni altcineva nu poate folosi codul).
 
 const ENV_PATH = resolve(dirname(fileURLToPath(import.meta.url)), '../../../.env')
-const SCOPE = 'https://www.googleapis.com/auth/adwords'
+// adwords = Google Ads API (rapoarte, campanii, retrageri de conversii);
+// datamanager = Data Manager API (upload conversii offline — din iunie 2026 integrarile noi
+// nu mai pot folosi uploadClickConversions din Google Ads API, vezi ads/data-manager.ts)
+const SCOPES = ['https://www.googleapis.com/auth/adwords', 'https://www.googleapis.com/auth/datamanager']
 
 function readEnv(key: string): string {
   const line = readFileSync(ENV_PATH, 'utf8').split('\n').find((l) => l.startsWith(key + '='))
@@ -55,7 +58,7 @@ async function main() {
     client_id: clientId,
     redirect_uri: redirectUri,
     response_type: 'code',
-    scope: SCOPE,
+    scope: SCOPES.join(' '),
     access_type: 'offline',   // cerem refresh token (acces de durata)
     prompt: 'consent',        // forteaza emiterea unui refresh token nou
     code_challenge: challenge,
@@ -99,7 +102,8 @@ async function main() {
   if (!res.ok || !data.refresh_token) {
     throw new Error(`Schimbul codului a eșuat: ${data.error ?? res.status} ${data.error_description ?? ''}`.trim())
   }
-  if (!data.scope?.includes(SCOPE)) throw new Error('Tokenul nu include accesul la Google Ads (scope adwords)')
+  const missing = SCOPES.filter((sc) => !data.scope?.split(' ').includes(sc))
+  if (missing.length) throw new Error(`Tokenul nu include accesul cerut (${missing.join(', ')}) — bifează toate permisiunile la login`)
 
   writeEnv('GOOGLE_ADS_REFRESH_TOKEN', data.refresh_token)
   console.log('✓ GOOGLE_ADS_REFRESH_TOKEN a fost salvat în .env (nu se afișează).')
