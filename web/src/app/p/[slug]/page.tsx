@@ -34,7 +34,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const bestOffer = product.offers[0]
   const price = bestOffer?.current_price
-  const titlePrice = price ? ` — cel mai mic preț: ${formatPrice(price)}` : ''
+  // offers[0] = cea mai ieftina oferta DISPONIBILA acum (query-ul sorteaza dupa pret).
+  // Nu scriem „cel mai mic preț”: poate fi citit ca minim istoric, ceea ce nu e mereu adevarat
+  // (afirmatiile din reclame trebuie sa fie adevarate pe pagina — REGULI.md, regula 9).
+  const titlePrice = price ? ` — preț azi de la ${formatPrice(price)}` : ''
   const title = `${product.name}${titlePrice}`
   const description = `Prețul curent pentru ${product.name} la ${bestOffer?.retailer_name || 'magazine online'}. Grafic de preț și analiză reducere reală față de ultimele 30 de zile.`
 
@@ -253,7 +256,8 @@ export default async function ProductPage({ params }: Props) {
               rel="noopener noreferrer"
               className="flex items-center justify-center gap-2 w-full border border-line rounded-lg py-2.5 text-sm font-semibold text-[var(--color-text)] hover:border-brand hover:text-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
             >
-              🔔 Alertă de preț
+              {/* „pe Telegram” vizibil: reclamele promit „Alertă de preț pe Telegram” */}
+              🔔 Alertă de preț pe Telegram
             </a>
           )}
 
