@@ -28,3 +28,15 @@ păstrat — prelucrare restrânsă) · B3+R3+R7 (migrația 022, `ad_click_at` p
 - R9 după deploy: cu „Analiză” acordat și „Publicitate” refuzat, `dl` din GA4 `collect` fără gclid întreg.
 
 Deploy: `build migrate` → `run --rm migrate` (021 + 022) → web + worker.
+
+---
+
+## Re-verificare B5 (commit `4304d88`) — **PASS**
+
+Cele 4 locuri (`/confidentialitate:107-110, 122-127, 150-154`, `/cookies:78-81`) pomenesc acum jurnalele tehnice ale
+serverului și Cloudflare („de regulă câteva săptămâni”, doar pentru securitate), coerent cu `:40`, `:169-170`, `:188`.
+Nicio altă afirmație absolută rămasă; „Înainte să alegi: nu stocăm nimic pe dispozitiv” e corectă (strict dispozitivul).
+Commit-ul atinge doar text JSX.
+
+**Poarta 2 — partea GDPR: PASS.** Neblocant: se poate adăuga „conform politicii Cloudflare” la durata jurnalelor Cloudflare.
+Recomandările R1–R9 de mai sus rămân deschise.
