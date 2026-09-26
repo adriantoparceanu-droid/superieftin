@@ -67,6 +67,7 @@ cd worker && npm test               # teste unitare (node --test via tsx)
 - Citește `web/AGENTS.md` înainte de a scrie cod Next.js — versiunea din proiect are breaking changes față de ce știi; docs în `node_modules/next/dist/docs/`.
 - Comentariile din cod și mesajele de commit sunt în română (stil: `feat(scope): descriere`).
 - Scraper nou: modul în `worker/src/scrapers/` care produce obiecte conform `types.ts`, ingerate prin `ingest.ts`; categoriile scraper-ului se administrează din admin (`scraper-categorii`), care alege dintr-un catalog populat de worker din sitemap-ul sursei (`available_scraper_categories`, refresh la fiecare scrape + jobul BullMQ `catalog-refresh` de la butonul din admin).
+- **SubID pe clickuri**: `/go/[offerId]` generează un `click_id` per click, îl salvează în `ad_clicks` (migrația 017; supraviețuiește ștergerii ofertei, spre deosebire de `click_events`) și îl lipește pe linkul afiliat — Profitshare `&hash=`, 2Performant `&st=` (`web/src/lib/subid.ts`). Rețeaua se deduce din host-ul linkului, nu din `offers.affiliate_network` (NULL pe multe oferte din feed). Comisioanele Profitshare întorc valoarea în câmpul `hash`; filtrul API `filters[click_hash]` e ignorat de server → potrivirea se face local.
 - Cererile către eMAG merg DOAR prin worker, cu headerele din `emag.ts`/`emag-catalog.ts` (alt fingerprint, ex. `Accept-Encoding` cu `br`, declanșează captcha WAF; la 511/429 ne retragem, nu insistăm).
 
 ## Întreținerea acestui fișier
