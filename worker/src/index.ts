@@ -21,6 +21,9 @@ const PRICE_CHECK_INTERVAL_HOURS = parseFloat(process.env.PRICE_CHECK_INTERVAL_H
 const IMAGE_BACKFILL_CRON = process.env.IMAGE_BACKFILL_CRON || '30 5 * * *'
 // Inainte de feed-sync, ca sa nu se suprapuna (scraping conservator, poate dura zeci de minute).
 const EMAG_SCRAPE_CRON = process.env.EMAG_SCRAPE_CRON || '0 2 * * *'
+// Comisioane Profitshare → Google Ads, dupa feed-sync (04:00) si backfill (05:30). Implicit
+// DOAR validate_only — vezi runTrackingSyncJob in tracking/sync.ts.
+const TRACKING_SYNC_CRON = process.env.TRACKING_SYNC_CRON || '30 6 * * *'
 
 async function scheduleRepeatingJobs() {
   await syncQueue.add(
@@ -50,6 +53,13 @@ async function scheduleRepeatingJobs() {
     { repeat: { pattern: EMAG_SCRAPE_CRON }, jobId: 'emag-scrape-repeat' }
   )
   logger.info({ cron: EMAG_SCRAPE_CRON }, 'Job repeating programat: emag-scrape')
+
+  await syncQueue.add(
+    'tracking-sync',
+    { type: 'tracking-sync' },
+    { repeat: { pattern: TRACKING_SYNC_CRON }, jobId: 'tracking-sync-repeat' }
+  )
+  logger.info({ cron: TRACKING_SYNC_CRON }, 'Job repeating programat: tracking-sync')
 }
 
 async function invalidateCache() {
