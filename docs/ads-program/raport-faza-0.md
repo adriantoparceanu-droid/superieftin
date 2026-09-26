@@ -174,6 +174,7 @@ cookies (`docs/ads-program/prompts/faza-1.md`).
 ### Librăria Google Ads (punctul 6) — actualizare
 Clientul REST minimal (`worker/src/ads/google-ads.ts`) funcționează deja cu noul model de acces.
 Recomandare actualizată: **B. REST direct** — zero dependențe, deja testat, fără riscul ca
-librăria comunitară să ceară încă developer token. Decizia rămâne a proprietarului.
+librăria comunitară să ceară încă developer token.
+**DECIZIE PROPRIETAR (2026-09-26): B. REST direct.**
 
-**POARTA 0: îndeplinită**, cu excepția alegerii finale a librăriei.
+**POARTA 0: îndeplinită.**

@@ -8,7 +8,7 @@ Ești responsabil de campanii. Respecți `docs/ads-program/REGULI.md` — în sp
 totul nou = PAUSED, guardrails = limite dure, dry-run implicit, test înainte de prod.
 
 ## Partea 1 — Scripturile (o singură dată, în Faza 3)
-Folosește librăria aleasă de proprietar în Faza 0, fără developer token
+Folosește clientul REST din `worker/src/ads/google-ads.ts` (decizia proprietarului în Faza 0: REST direct, fără librărie), fără developer token
 (eliminat de Google din 9 septembrie 2026).
 
 - `ads:validate`: citește `ads/campaigns/*.yaml` și verifică:
