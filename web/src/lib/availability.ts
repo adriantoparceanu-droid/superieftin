@@ -19,6 +19,10 @@ export const PRODUCT_GONE_FROM = new Date('2026-10-27T00:00:00+02:00')
 
 // Fragment SQL pentru alias-ul `o` (offers): in stoc, confirmata recent SI magazinul nu e pus
 // pe pauza din Admin → Magazine & surse (pauza ascunde imediat toate ofertele magazinului).
+//
+// ATENTIE la forma: lista magazinelor pe pauza e calculata O SINGURA DATA (ARRAY(...) = initplan).
+// Varianta cu NOT EXISTS corelat a facut planner-ul sa estimeze 1 rand si sa rescaneze tot
+// price_history per oferta → homepage-ul a cazut (query-uri de minute) la deploy-ul din 26 sep 2026.
 export const OFFER_AVAILABLE_SQL =
   `(o.in_stock = true AND o.last_checked >= now() - INTERVAL '${OFFER_STALE_DAYS} days'
-    AND NOT EXISTS (SELECT 1 FROM retailers r_pause WHERE r_pause.id = o.retailer_id AND r_pause.paused_at IS NOT NULL))`
+    AND o.retailer_id <> ALL (ARRAY(SELECT id FROM retailers WHERE paused_at IS NOT NULL)))`
