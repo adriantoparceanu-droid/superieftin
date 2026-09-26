@@ -10,6 +10,7 @@ import { VerdictBadge } from '@/components/VerdictBadge'
 import { Sparkline } from '@/components/Sparkline'
 import { TrackViewItem } from '@/components/analytics/TrackViewItem'
 import { AffiliateLink } from '@/components/analytics/AffiliateLink'
+import { getGuidesForProduct } from '@/lib/guides/queries'
 
 export const revalidate = 3600
 
@@ -58,6 +59,8 @@ export default async function ProductPage({ params }: Props) {
   const history = product ? await getPriceHistory(product.id) : []
 
   if (!product) notFound()
+  // Ghidurile publicate care leaga produsul (legatura interna produs ↔ ghid)
+  const guides = await getGuidesForProduct(product.id)
 
   const bestOffer = product.offers[0]
   const discountInfo = bestOffer
@@ -252,6 +255,20 @@ export default async function ProductPage({ params }: Props) {
             >
               🔔 Alertă de preț
             </a>
+          )}
+
+          {/* Ghiduri despre acest produs — doar cand exista ghiduri publicate */}
+          {guides.length > 0 && (
+            <div className="rounded-lg border border-line bg-surface p-4">
+              <h2 className="font-semibold text-[var(--color-text)] text-sm mb-1">Ghiduri despre acest produs</h2>
+              <ul className="space-y-1 text-sm">
+                {guides.map((g) => (
+                  <li key={g.slug}>
+                    <Link href={`/ghiduri/${g.slug}`} className="text-brand hover:underline">{g.title}</Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
 
           {/* Nota de afiliere */}
