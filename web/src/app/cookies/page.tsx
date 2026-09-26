@@ -41,9 +41,17 @@ export default function CookiesPage() {
             <td>până la 2 ani</td>
           </tr>
           <tr>
-            <td>Identificator click reclamă (<code>gclid</code>, <code>gbraid</code>, <code>wbraid</code>)</td>
+            <td><code>se_gclid</code></td>
             <td>Publicitate</td>
-            <td>Google Ads: arată dacă o vizită venită dintr-o reclamă a dus la o comandă</td>
+            <td>
+              Păstrează identificatorul clickului pe reclama Google cu care ai ajuns pe site
+              (<code>gclid</code>, <code>gbraid</code> sau <code>wbraid</code>). Când mergi spre un magazin,
+              îl asociem codului de click; dacă rezultă o comandă, trimitem la Google Ads identificatorul,
+              ora comenzii și valoarea comisionului nostru, ca să știm ce reclame aduc cumpărături reale.
+              Se setează numai dacă accepți „Publicitate” și se șterge dacă îți retragi acordul. Până alegi,
+              identificatorul stă doar în memoria temporară a filei (<code>sessionStorage</code>), nu e
+              trimis nicăieri și dispare când închizi fila.
+            </td>
             <td>90 de zile</td>
           </tr>
           <tr>

@@ -67,7 +67,9 @@ export default function ConfidentialitatePage() {
           <tr>
             <td>
               <strong>Google Ads</strong>: identificatorul clickului pe reclamă (<code>gclid</code>,{' '}
-              <code>gbraid</code>, <code>wbraid</code>) și, dacă ai cumpărat, valoarea comisionului
+              <code>gbraid</code>, <code>wbraid</code>, păstrat în cookie-ul <code>se_gclid</code> și asociat
+              codului de click spre magazin) și, dacă ai cumpărat, ora comenzii, codul comenzii din rețeaua
+              de afiliere și valoarea comisionului nostru, trimise la Google Ads ca „conversie offline”
             </td>
             <td>Măsurăm dacă reclamele noastre aduc cumpărături reale</td>
             <td>Consimțământ (categoria „Publicitate”)</td>
@@ -127,7 +129,9 @@ export default function ConfidentialitatePage() {
       <h2>Cât timp păstrăm datele</h2>
       <ul>
         <li>Alegerea despre cookie-uri: 6 luni, apoi te întrebăm din nou.</li>
-        <li>Identificatorul clickului pe reclamă (<code>gclid</code> etc.): cel mult 90 de zile.</li>
+        <li>Identificatorul clickului pe reclamă (<code>gclid</code> etc.): cel mult 90 de zile — atât în
+          cookie-ul <code>se_gclid</code>, cât și pe serverul nostru (după 90 de zile de la click îl ștergem
+          automat; codul de click rămâne, fără identificatorul Google).</li>
         <li>Datele Google Analytics: 14 luni (setarea din Google Analytics).</li>
         <li>Alertele Telegram: până le ștergi (comanda <code>/sterge</code>) sau ne ceri ștergerea.</li>
         <li>Jurnalele tehnice: cât e necesar pentru securitate, de regulă câteva săptămâni.</li>
