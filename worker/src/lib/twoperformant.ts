@@ -8,8 +8,10 @@ const BASE = 'https://api.2performant.com'
 // el o cerere blocata ar tine sincronizarea (syncAffiliateAdvertisers) agatata la infinit.
 const TP_TIMEOUT_MS = parseInt(process.env.TWOPERFORMANT_TIMEOUT_MS || '30000')
 
-interface TpAuth { accessToken: string; client: string; uid: string }
+interface TpAuth { accessToken: string; client: string; uid: string; expiresAt: number }
 let auth: TpAuth | null = null
+// Reinnoim sesiunea cu o zi inainte de expirare (tokenul 2Performant tine ~2 saptamani)
+const RENEW_BEFORE_MS = 24 * 3600 * 1000
 
 async function signIn(): Promise<TpAuth> {
   const email = process.env.TWOPERFORMANT_EMAIL
@@ -22,24 +24,41 @@ async function signIn(): Promise<TpAuth> {
     signal: AbortSignal.timeout(TP_TIMEOUT_MS),
   })
   if (!res.ok) throw new Error(`2Performant sign_in esuat: ${res.status}`)
+  const expiry = Number(res.headers.get('expiry'))   // secunde Unix
   const a = {
     accessToken: res.headers.get('access-token') || '',
     client: res.headers.get('client') || '',
     uid: res.headers.get('uid') || '',
+    expiresAt: expiry > 0 ? expiry * 1000 : Date.now() + 7 * 24 * 3600 * 1000,
   }
   if (!a.accessToken) throw new Error('2Performant: nu am primit access-token la sign_in')
   return a
 }
 
-async function tpGet<T>(path: string): Promise<T> {
-  if (!auth) auth = await signIn()
+// Workerul ruleaza luni intregi: sesiunea tinuta in memorie expira (~2 saptamani), iar fara
+// re-login fiecare cerere dadea 401 (sincronizarea advertiserilor a esuat zilnic ~2 luni).
+// Acum: reinnoire inainte de expirare + la un 401 facem login din nou si reincercam o data.
+async function tpGet<T>(path: string, retried = false): Promise<T> {
+  if (!auth || auth.expiresAt - Date.now() < RENEW_BEFORE_MS) auth = await signIn()
   const res = await fetch(BASE + path, {
     headers: { 'access-token': auth.accessToken, 'client': auth.client, 'uid': auth.uid, 'Accept': 'application/json' },
     signal: AbortSignal.timeout(TP_TIMEOUT_MS),
   })
+  if (res.status === 401 && !retried) {
+    auth = null
+    return tpGet<T>(path, true)
+  }
   // Roteste tokenul daca serverul intoarce unul nou (altfel urmatoarea cerere ar da 401)
   const newAt = res.headers.get('access-token')
-  if (newAt) auth = { accessToken: newAt, client: res.headers.get('client') || auth.client, uid: res.headers.get('uid') || auth.uid }
+  if (newAt) {
+    const expiry = Number(res.headers.get('expiry'))
+    auth = {
+      accessToken: newAt,
+      client: res.headers.get('client') || auth.client,
+      uid: res.headers.get('uid') || auth.uid,
+      expiresAt: expiry > 0 ? expiry * 1000 : auth.expiresAt,
+    }
+  }
   if (!res.ok) throw new Error(`2Performant GET ${path} -> ${res.status}`)
   return res.json() as Promise<T>
 }
