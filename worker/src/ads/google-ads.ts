@@ -65,6 +65,20 @@ export async function accessToken(cfg: AdsConfig): Promise<string> {
   return data.access_token
 }
 
+// Extrage codurile de eroare utile dintr-un raspuns de eroare Google (Ads API sau Data Manager).
+// Formate: Ads → details[].errors[].errorCode {cheie: VALOARE}; API-uri Google generice →
+// details[].reason (ErrorInfo) si details[].fieldViolations[] (BadRequest).
+export function errorCodes(data: any): string[] {
+  const codes: string[] = []
+  for (const d of data?.error?.details ?? data?.details ?? []) {
+    for (const e of d?.errors ?? []) codes.push(...Object.entries(e.errorCode ?? {}).map(([k, v]) => `${k}.${v}`))
+    if (d?.reason) codes.push(d.reason)
+    for (const v of d?.fieldViolations ?? []) codes.push(`${v.field ?? '?'}: ${v.reason ?? v.description ?? ''}`.trim())
+  }
+  if (!codes.length && data?.error?.status) codes.push(data.error.status)
+  return codes
+}
+
 async function call<T>(cfg: AdsConfig, method: 'GET' | 'POST', path: string, body?: unknown): Promise<T> {
   const headers: Record<string, string> = {
     Authorization: `Bearer ${await accessToken(cfg)}`,
@@ -79,11 +93,7 @@ async function call<T>(cfg: AdsConfig, method: 'GET' | 'POST', path: string, bod
   try { data = text ? JSON.parse(text) : {} } catch { data = { raw: text.slice(0, 300) } }
   if (!res.ok) {
     // Codurile specifice Google Ads stau in error.details[].errors[].errorCode
-    const codes: string[] = []
-    for (const d of data?.error?.details ?? []) {
-      for (const e of d?.errors ?? []) codes.push(...Object.entries(e.errorCode ?? {}).map(([k, v]) => `${k}.${v}`))
-      if (d?.reason) codes.push(d.reason)
-    }
+    const codes = errorCodes(data)
     const msg = data?.error?.details?.[0]?.errors?.[0]?.message ?? data?.error?.message ?? `HTTP ${res.status}`
     throw new AdsApiError(res.status, codes, msg, data)
   }
@@ -104,4 +114,60 @@ export function search<T = any>(cfg: AdsConfig, query: string) {
 export function mutate<T = any>(cfg: AdsConfig, resource: string, operations: unknown[], opts: { validateOnly?: boolean } = {}) {
   const validateOnly = cfg.env === 'test' ? true : opts.validateOnly ?? false
   return call<T>(cfg, 'POST', `/customers/${cfg.customerId}/${resource}:mutate`, { operations, validateOnly })
+}
+
+// --- Conversii (Faza 2) ------------------------------------------------------------------------
+
+export function conversionActionResource(cfg: AdsConfig, id: string): string {
+  return `customers/${cfg.customerId}/conversionActions/${id}`
+}
+
+export interface RetractionInput {
+  orderId: string                 // = transactionId trimis la upload (order_id Profitshare)
+  adjustmentDateTime: string      // "yyyy-mm-dd HH:mm:ss+HH:mm", dupa momentul conversiei
+}
+
+// Corpul cererii uploadConversionAdjustments pentru retrageri (comision anulat → conversia
+// dispare din raportari si din invatarea licitarii). Identificare prin orderId, deci nu mai
+// avem nevoie de gclid (care se sterge dupa 90 de zile).
+export function buildRetractionBody(cfg: AdsConfig, conversionActionId: string, items: RetractionInput[], validateOnly: boolean) {
+  return {
+    conversionAdjustments: items.map((it) => ({
+      conversionAction: conversionActionResource(cfg, conversionActionId),
+      adjustmentType: 'RETRACTION',
+      orderId: it.orderId,
+      adjustmentDateTime: it.adjustmentDateTime,
+    })),
+    partialFailure: true,          // obligatoriu pentru acest serviciu
+    validateOnly,
+  }
+}
+
+export interface PartialFailureResult {
+  errorsByIndex: Map<number, string>   // index in lista trimisa → cod + mesaj
+  jobId?: string
+}
+
+// Erorile per rand dintr-un raspuns cu partialFailure (cererea e 200, erorile stau in
+// partialFailureError.details[].errors[] cu location.fieldPathElements[0].index).
+export function parsePartialFailure(data: any): PartialFailureResult {
+  const errorsByIndex = new Map<number, string>()
+  for (const d of data?.partialFailureError?.details ?? []) {
+    for (const e of d?.errors ?? []) {
+      const idx = e?.location?.fieldPathElements?.[0]?.index ?? 0
+      const code = Object.entries(e.errorCode ?? {}).map(([k, v]) => `${k}.${v}`).join(',')
+      const prev = errorsByIndex.get(idx)
+      const msg = `${code}: ${e.message ?? ''}`.trim()
+      errorsByIndex.set(idx, prev ? `${prev}; ${msg}` : msg)
+    }
+  }
+  return { errorsByIndex, jobId: data?.jobId }
+}
+
+// Retrageri. In ADS_ENV=test pleaca OBLIGATORIU cu validateOnly (regula 4).
+export async function uploadRetractions(cfg: AdsConfig, conversionActionId: string, items: RetractionInput[], opts: { validateOnly?: boolean } = {}) {
+  const validateOnly = cfg.env === 'test' ? true : opts.validateOnly ?? false
+  const data = await call<any>(cfg, 'POST', `/customers/${cfg.customerId}:uploadConversionAdjustments`,
+    buildRetractionBody(cfg, conversionActionId, items, validateOnly))
+  return { validateOnly, ...parsePartialFailure(data) }
 }

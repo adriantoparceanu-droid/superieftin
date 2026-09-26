@@ -41,10 +41,16 @@ export default function CookiesPage() {
             <td>până la 2 ani</td>
           </tr>
           <tr>
-            <td>Identificator click reclamă (<code>gclid</code>, <code>gbraid</code>, <code>wbraid</code>)</td>
+            <td><code>se_gclid</code></td>
             <td>Publicitate</td>
-            <td>Google Ads: arată dacă o vizită venită dintr-o reclamă a dus la o comandă</td>
-            <td>90 de zile</td>
+            <td>
+              Conține identificatorul clickului pe reclama Google cu care ai ajuns pe site
+              (<code>gclid</code>, <code>gbraid</code> sau <code>wbraid</code>) și momentul în care ai ajuns.
+              Scopul: dacă mergi apoi spre un magazin și cumperi ceva, să putem lega comanda de reclama
+              care ți-a adus vizita, ca să știm ce reclame aduc cumpărături reale. Se scrie numai dacă accepți
+              „Publicitate” și se șterge dacă îți retragi acordul (detalii mai jos).
+            </td>
+            <td>90 de zile de la sosirea pe site</td>
           </tr>
           <tr>
             <td>Cookie-uri Profitshare (ex. <code>PROFITSHARESESSID</code>)</td>
@@ -58,6 +64,35 @@ export default function CookiesPage() {
           </tr>
         </tbody>
       </table>
+
+      <h2>Identificatorul reclamei Google: ce se întâmplă, pas cu pas</h2>
+      <ul>
+        <li>
+          <strong>Înainte să alegi:</strong> nu salvăm nimic pe dispozitivul tău — nici cookie, nici
+          altă formă de stocare a browserului (<code>sessionStorage</code>, <code>localStorage</code>).
+          Identificatorul din adresa paginii rămâne doar în memoria paginii deschise și se pierde dacă
+          reîncarci pagina sau închizi fila. Dacă accepți „Publicitate” între timp, abia atunci scriem
+          cookie-ul <code>se_gclid</code>.
+        </li>
+        <li>
+          <strong>Dacă refuzi:</strong> nu păstrăm identificatorul, în afara jurnalelor tehnice ale
+          serverului și ale Cloudflare, în care adresa completă a paginii (inclusiv identificatorul din
+          ea) poate apărea. Aceste jurnale se păstrează de regulă câteva săptămâni, doar pentru
+          securitate; nu le folosim pentru reclame și nu le trimitem la Google.
+        </li>
+        <li>
+          <strong>Dacă îți retragi acordul</strong> (din „Setări cookies”), dacă acordul expiră (după
+          6 luni) sau dacă actualizăm politica și îți cerem din nou acordul: ștergem cookie-ul{' '}
+          <code>se_gclid</code> de pe dispozitiv și trimitem serverului nostru, o singură dată, doar
+          identificatorul (fără alte date), ca să-l ștergem și din clickurile spre magazine deja
+          înregistrate. După aceea nu mai trimitem la Google conversii pentru acele clickuri.
+          Conversiile trimise înainte, cât aveai acordul, rămân la Google.
+        </li>
+      </ul>
+      <p>
+        Ce se întâmplă pe serverul nostru și ce ajunge la Google este descris în{' '}
+        <Link href="/confidentialitate">Politica de confidențialitate</Link>.
+      </p>
 
       <h2>Cookie-uri ale altor site-uri</h2>
       <p>
