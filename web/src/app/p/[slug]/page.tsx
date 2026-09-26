@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { getProductDetail, getPriceHistory, getAllProductSlugs } from '@/lib/queries'
-import { calculateDiscount, formatPrice, formatPct, medianDeltaText } from '@/lib/discount'
+import { calculateDiscount, formatPrice, formatPct, formatVerified, medianDeltaText } from '@/lib/discount'
 import { PriceHistoryChart } from '@/components/PriceHistoryChart'
 import { PriceTag } from '@/components/PriceTag'
 import { VerdictBadge } from '@/components/VerdictBadge'
@@ -47,13 +47,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       images: product.image_url ? [{ url: product.image_url, alt: product.name }] : [],
     },
   }
-}
-
-function formatVerified(isoDate: string) {
-  const diffH = Math.floor((Date.now() - new Date(isoDate).getTime()) / 3600000)
-  if (diffH < 1) return 'Verificat azi'
-  if (diffH < 24) return `Verificat acum ${diffH} ${diffH === 1 ? 'oră' : 'ore'}`
-  return 'Verificat azi'
 }
 
 export default async function ProductPage({ params }: Props) {
@@ -203,7 +196,7 @@ export default async function ProductPage({ params }: Props) {
               return (
                 <div
                   key={offer.offer_id}
-                  className="bg-surface rounded-lg border border-line p-4 flex items-center gap-4"
+                  className="bg-surface rounded-lg border border-line p-4 flex flex-wrap items-center gap-x-4 gap-y-3"
                 >
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-[var(--color-text)] capitalize">{offer.retailer_name}</div>
@@ -225,7 +218,7 @@ export default async function ProductPage({ params }: Props) {
                     merchantName={offer.retailer_name}
                     price={offer.current_price}
                     category={product.category}
-                    className="shrink-0 bg-yellow-400 hover:bg-yellow-500 text-gray-900 text-sm font-semibold px-4 py-2 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+                    className="w-full sm:w-auto text-center shrink-0 bg-yellow-400 hover:bg-yellow-500 text-gray-900 text-sm font-semibold px-4 py-2 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                   >
                     Cumpără la {offer.retailer_name} →
                   </AffiliateLink>

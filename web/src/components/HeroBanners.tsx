@@ -16,7 +16,7 @@ export function HeroBanners({ heroProduct, isRealDiscount, secondaryCategory }: 
       <div className={`relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand to-brand-dark text-white p-7 sm:p-10 flex flex-col justify-between min-h-72 ${secondaryCategory ? 'lg:col-span-2' : ''}`}>
         <div className="relative z-10 max-w-md">
           <p className="text-xs font-bold uppercase tracking-widest text-white/80 mb-2">
-            {isRealDiscount ? 'Verificat azi' : 'Monitorizat zilnic'}
+            {isRealDiscount ? 'Reduceri verificate' : 'Prețuri monitorizate'}
           </p>
           <h1 className="text-3xl sm:text-4xl font-black font-archivo leading-tight mb-3">
             Reduceri <span className="underline decoration-4 decoration-white/50">REALE</span>,<br />nu trucuri de marketing

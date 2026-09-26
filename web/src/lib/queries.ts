@@ -111,6 +111,8 @@ export const getTopDiscounts = unstable_cache(
       WHERE o.current_price IS NOT NULL
         AND o.in_stock = true
         AND o.current_price < mp.median_price * 0.95
+        -- doar preturi proaspete (FRESH_HOURS din lib/discount.ts)
+        AND o.last_checked >= now() - INTERVAL '48 hours'
       ORDER BY discount_pct DESC
       LIMIT $1
     `, [limit])
@@ -156,6 +158,8 @@ export const getLandingProducts = unstable_cache(
           AND o.current_price IS NOT NULL
           AND o.in_stock = true
           AND o.affiliate_url IS NOT NULL
+          -- doar preturi proaspete (FRESH_HOURS din lib/discount.ts)
+          AND o.last_checked >= now() - INTERVAL '48 hours'
         ORDER BY p.id, o.current_price / mp.median_price ASC
       )
       SELECT *,

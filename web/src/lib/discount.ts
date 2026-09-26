@@ -3,6 +3,10 @@
 // (in SQL: current_price < median_price * 0.95). Nu le schimba doar aici.
 export const REAL_DISCOUNT_PCT = 5   // >= 5% sub mediana → reducere reala
 export const ABOVE_MEDIAN_PCT = 5    // >  5% peste mediana → mai scump ca de obicei
+// O „reducere reala” se afiseaza pe landing pages / homepage doar daca pretul a fost verificat
+// in ultimele 48 de ore (in SQL: last_checked >= now() - interval '48 hours'). Altfel, daca un
+// scraper se opreste cateva zile, am promite reduceri pe preturi care poate nu mai exista.
+export const FRESH_HOURS = 48
 
 export type DiscountVerdict =
   | 'real'       // pret cu minim 5% sub mediana — reducere reala
@@ -48,6 +52,16 @@ export function formatPct(pct: number): string {
 export function medianDeltaText(discountPct: number | null): string {
   if (discountPct == null || discountPct === 0) return 'egal cu mediana'
   return discountPct > 0 ? `${formatPct(discountPct)}% sub mediană` : `${formatPct(discountPct)}% peste mediană`
+}
+
+// „Verificat acum 3 ore” / „Verificat pe 31 august” — data reala, niciodata „azi” fix
+export function formatVerified(checkedAt: string | Date): string {
+  const d = new Date(checkedAt)
+  const diffH = Math.floor((Date.now() - d.getTime()) / 3600000)
+  if (diffH < 1) return 'Verificat acum mai puțin de o oră'
+  if (diffH < 24) return `Verificat acum ${diffH} ${diffH === 1 ? 'oră' : 'ore'}`
+  const day = new Intl.DateTimeFormat('ro-RO', { day: 'numeric', month: 'long', timeZone: 'Europe/Bucharest' }).format(d)
+  return `Verificat pe ${day}`
 }
 
 export function formatPrice(price: number | null): string {

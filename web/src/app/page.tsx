@@ -115,7 +115,7 @@ export default async function HomePage() {
       <section className="mb-10">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold font-archivo text-[var(--color-text)]">
-            {isRealDiscount ? '🔥 Top reduceri reale verificate azi' : '💰 Cele mai mici prețuri acum'}
+            {isRealDiscount ? '🔥 Top reduceri reale' : '💰 Cele mai mici prețuri acum'}
           </h2>
         </div>
         {carouselProducts.length > 0 ? (
