@@ -4,6 +4,7 @@ import { tmpdir } from 'os'
 import { join } from 'path'
 import { unlink } from 'fs/promises'
 import pool from '../lib/db.js'
+import { ensurePriceHistoryPartitions } from '../lib/partitions.js'
 import { connection } from '../lib/queue.js'
 import { getAdvertisers, getFeeds, getProductsByPartNo, PsApiError, type PsAdvertiser, type PsFeed } from '../lib/profitshare.js'
 import { downloadFeed, parseFeedFile, mapFeedRow } from '../importers/feed.js'
@@ -528,26 +529,6 @@ export async function syncExternalFeeds(resolveRule: RuleLookup): Promise<{ impo
 // Creeaza partitiile lunare lipsa pentru price_history (luna curenta + urmatoarele 2).
 // Migratia 002 le creeaza doar la instalare; ruland zilnic, nu ramanem niciodata fara
 // partitia lunii in care urmeaza sa scriem.
-async function ensurePriceHistoryPartitions(): Promise<void> {
-  await pool.query(`
-    DO $$
-    DECLARE start_date DATE; end_date DATE; partition_name TEXT; i INT;
-    BEGIN
-      FOR i IN 0..2 LOOP
-        start_date := date_trunc('month', now() + (i || ' months')::INTERVAL)::DATE;
-        end_date   := (start_date + INTERVAL '1 month')::DATE;
-        partition_name := 'price_history_' || to_char(start_date, 'YYYY_MM');
-        IF NOT EXISTS (
-          SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
-          WHERE c.relname = partition_name AND n.nspname = 'public'
-        ) THEN
-          EXECUTE format('CREATE TABLE %I PARTITION OF price_history FOR VALUES FROM (%L) TO (%L)',
-            partition_name, start_date, end_date);
-        END IF;
-      END LOOP;
-    END $$;
-  `)
-}
 
 // Inregistreaza un punct de istoric pentru FIECARE oferta cu pret, o data pe zi.
 // Independent de feed-uri si de API — acopera si ofertele din feed-uri nesincronizate sau

@@ -71,6 +71,7 @@ async function invalidateCache() {
 
 // Rulare manuala imediata: npm run sync:now [-- --price-check | --file=/cale/feed.xml [--retailer=slug]]
 async function syncNow() {
+  let exitCode = 0
   const { runFeedSync, runPriceCheck, runPriceSnapshot, runFileImport, runImageBackfill, runScrape, runCatalogRefresh } = await import('./workers/sync.worker.js')
   const fileArg = process.argv.find((a) => a.startsWith('--file='))?.split('=')[1]
   if (fileArg) {
@@ -80,6 +81,12 @@ async function syncNow() {
   } else if (process.argv.includes('--scrape-emag')) {
     const result = await runScrape('emag')
     logger.info(result, 'scraping emag finalizat')
+    // 0 produse salvate = scanare esuata (WAF, browser lipsa, eroare DB). Codul de iesire
+    // nenul opreste emag-scrape-sync.sh inainte sa urce date vechi pe productie.
+    if (result.imported === 0) {
+      logger.error(result, 'EROARE: 0 produse eMAG salvate — scanarea a esuat')
+      exitCode = 2
+    }
   } else if (process.argv.includes('--catalog')) {
     const result = await runCatalogRefresh()
     logger.info(result, 'catalog categorii finalizat')
@@ -100,7 +107,7 @@ async function syncNow() {
   await checkAndSendAlerts().catch((err) => logger.error({ err }, 'Eroare verificare alerte'))
   await invalidateCache()
   await pool.end()
-  process.exit(0)
+  process.exit(exitCode)
 }
 
 async function main() {

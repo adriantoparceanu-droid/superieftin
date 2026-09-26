@@ -1,5 +1,6 @@
 import pino from 'pino'
 import pool from '../lib/db.js'
+import { ensurePriceHistoryPartitions } from '../lib/partitions.js'
 import { upsertProduct, upsertRetailerByDomain } from '../lib/upsert.js'
 import { loadFeedRules } from '../lib/feedRules.js'
 import { resolver, syncAffiliateAdvertisers } from '../lib/affiliate/index.js'
@@ -27,6 +28,9 @@ export function getScraper(name: string): Scraper | undefined {
 // fara link de comision (comparator pur).
 export async function ingestScraper(scraper: Scraper): Promise<{ imported: number; errors: number; affiliated: number }> {
   const log = logger.child({ scraper: scraper.name, domain: scraper.domain })
+
+  // Partitia lunii curente trebuie sa existe inainte de primul upsert (vezi lib/partitions.ts)
+  await ensurePriceHistoryPartitions()
 
   const [resolveRule, retailerId] = await Promise.all([
     loadFeedRules(),

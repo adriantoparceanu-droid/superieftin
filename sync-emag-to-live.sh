@@ -46,6 +46,18 @@ if [ "$ROWS" -le 0 ]; then
   exit 1
 fi
 
+# Garda de prospetime: daca ultima scanare locala reusita e mai veche de 24h, NU urcam —
+# altfel retrimitem pe productie preturi vechi ca si cum ar fi noi (s-a intamplat in sep 2026:
+# scanarea salva 0 produse, iar sync-ul reurca zilnic datele din 31 august).
+AGE_H=$(psql "$LOCAL_DB" -tAc "
+  SELECT COALESCE(floor(EXTRACT(EPOCH FROM now() - max(o.last_checked)) / 3600), 99999)::int
+  FROM offers o JOIN retailers r ON r.id = o.retailer_id WHERE r.slug = 'emag'")
+echo "    Ultima oferta eMAG verificata local acum ${AGE_H}h"
+if [ "$AGE_H" -gt 24 ]; then
+  echo "    EROARE: datele eMAG locale sunt mai vechi de 24h — NU sincronizez (scanarea a esuat?)."
+  exit 1
+fi
+
 echo "==> [2/4] Construiesc SQL de upsert (staging + ON CONFLICT)..."
 SQL_FILE="$DUMP_DIR/upsert.sql"
 {
