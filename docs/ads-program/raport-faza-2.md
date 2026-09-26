@@ -75,6 +75,31 @@ Click cu gclid inventat (cu acord) → 2 comisioane fixture → potrivite 2/2 �
   răspundă simplu „OK” (format corect) în loc de „click inexistent”. Criteriul Poarta 2 pentru
   upload devine: **răspuns 200 la validateOnly** (de confirmat de proprietar).
 
+## Poarta 2 GDPR — blocantele B1–B4 rezolvate în cod (2026-09-26, agentul `tracking`)
+
+Verdictul `policy-reviewer` (`review/2026-09-26-faza-2-gdpr.md`) a dat FAIL cu 4 blocante; toate
+sunt reparate pe branch (variantele recomandate, aprobate de proprietar). Textele din `/cookies`
+și `/confidentialitate` le actualizează `site-dev`, apoi `policy-reviewer` re-verifică.
+
+| # | Problema | Reparația | Unde |
+|---|---|---|---|
+| B1 | `sessionStorage` înainte de acord / după refuz | ID-ul doar într-o variabilă JS (memorie), nimic pe dispozitiv până la acord; la refuz nimic nici în memorie; cheia veche `se_gclid_pending` se șterge | `components/consent/AdClickCapture.tsx`, `lib/adclick.ts` |
+| B2 | `adPersonalization: GRANTED` fără acord cerut | `CONSENT_DENIED` în Data Manager; + R5: `ad_personalization` mereu `denied` în Consent Mode (versiunea de acord rămâne 2) | `worker/src/ads/data-manager.ts`, `web/src/lib/consent.ts` |
+| B3 | Retenția „max. 90 zile” neadevărată pe server | Migrația **022** `ad_clicks.ad_click_at` (din `ts`-ul cookie-ului); ștergere la 90 zile de la `COALESCE(ad_click_at, created_at)`, în `finally` (rulează și când Profitshare/Google eșuează); fereastra de upload tot de la `ad_click_at`; + R3 gclid mascat în `last_error`; + R7 notat: modul `plan` face și el ștergerea | `db/migrations/022_ad_click_at.sql`, `go/[offerId]/route.ts`, `worker/src/tracking/` |
+| B4 | Retragerea acordului nu oprea trimiterea | La `ads: true→false`: `sendBeacon` cu ID-ul din `se_gclid` → `POST /api/consent/withdraw` (doar ID-uri valide, rate limit în memorie per IP, 204) → `gclid/gbraid/wbraid=NULL`, `has_ad_consent=false` în `ad_clicks`; workerul le sare (`fara_acord`). Conversiile deja urcate rămân | `app/api/consent/withdraw/route.ts`, `lib/rate-limit.ts` |
+
+Teste: worker `npm test` 52/52 (4 noi: retenție după `ad_click_at`, ștergere independentă de
+eșecul Profitshare, mascare `last_error`, `maskIdsInText`), `tsc` worker + web, `npm run build` web.
+Local (Playwright + curl, port 3000): fără acord nimic în cookie/sessionStorage/localStorage (și pe
+build-ul de producție); acord după navigare în site → cookie scris cu momentul aterizării; refuz →
+aterizare nouă → nimic nici în memorie; `/go` scrie `ad_click_at` = `ts` din cookie; retragere →
+beacon 204 → rândul din `ad_clicks` golit; endpoint-ul răspunde 400 la input invalid, 405 la GET,
+429 peste 10 cereri / 10 min per IP.
+
+**Deploy (doar la „da” explicit):** migrațiile **021 + 022** cer rebuild-ul imaginii `migrate`
+(`docker compose --profile tools build migrate` apoi `run --rm migrate`) ÎNAINTE de web/worker —
+`/go` scrie coloana `ad_click_at`, care trebuie să existe. Fără dependențe npm noi.
+
 ## Ce trebuie să faci tu (proprietarul)
 
 1. **Activează „Data Manager API”** în proiectul Google Cloud care deține OAuth client-ul
@@ -105,22 +130,15 @@ Click cu gclid inventat (cu acord) → 2 comisioane fixture → potrivite 2/2 �
   (logic, dar nedocumentat de Profitshare).
 - **Statusuri necunoscute** (altele decât pending/approved/canceled/paid) → tratate ca `pending` și
   semnalate în log.
-- **Acordul la momentul clickului**: se trimite la Google doar dacă clickul `/go` s-a făcut cu acord.
-  Dacă vizitatorul își retrage acordul după click, dar înainte de sync, conversia tot pleacă
-  (prelucrarea a fost legală la momentul colectării). Variantă mai strictă posibilă — decizia ta /
-  a `policy-reviewer`.
-- **`sessionStorage` înainte de acord**: cerut explicit în specificație; e tot „stocare pe
-  dispozitiv” (ePrivacy art. 5(3)), deși nu pleacă nicăieri și dispare la închiderea filei.
-  Alternativa mai strictă: doar o variabilă în memoria JS (se pierde la reîncărcarea paginii).
-  De verificat de `policy-reviewer`; am descris-o transparent în `/cookies`.
-- **Retenție:** `tracking:sync` șterge gclid/gbraid/wbraid din `ad_clicks` după 90 de zile de la click
-  (altfel textul „cel mult 90 de zile” din `/confidentialitate` n-ar fi adevărat pentru server).
+- ~~Acordul la momentul clickului / `sessionStorage` înainte de acord / retenție~~ — rezolvate prin
+  B4 / B1 / B3 (vezi secțiunea Poarta 2 GDPR de mai sus).
 
 ## Ce a rămas
 
 - Pașii 1–4 de mai sus (tu), apoi reluarea E2E pentru upload.
-- `policy-reviewer` pe partea GDPR (captare, `/go`, `/cookies`, `/confidentialitate`) → **Poarta 2**.
-- Deploy doar la „da” explicit (`/deploy`): migrația 021 cere rebuild `migrate`; pe VPS în `.env`:
+- `site-dev`: textele `/cookies` + `/confidentialitate` după comportamentul nou (B1/B3/B4), apoi
+  re-verificarea `policy-reviewer` → **Poarta 2**.
+- Deploy doar la „da” explicit (`/deploy`): migrațiile 021 + 022 cer rebuild `migrate`; pe VPS în `.env`:
   `GOOGLE_ADS_*` (inclusiv tokenul nou și `GOOGLE_ADS_CONVERSION_ACTION_ID`), `ADS_ENV=test`.
   Worker-ul are fișiere noi (`src/tracking/`, `src/ads/`) — fără dependențe npm noi.
 - 2Performant (evomag, `&st=`): comisioanele lor nu sunt încă citite de `tracking:sync`.
