@@ -21,14 +21,16 @@ Nivelurile de acces:
 Pentru superieftin.ro: **Explorer** ajunge pentru campanii și conversii.
 **Basic** e necesar doar pentru research-ul cu volume reale de căutare.
 
-MCC-ul nu mai e obligatoriu tehnic, dar îl păstrăm: e util să ai contul de reclame
-sub el și să separi accesul.
+**Fără MCC (decizie 2026-09-26):** lucrăm direct pe contul de reclame 276-008-6909.
+Consecință: nu putem crea conturi de test Google (ele există doar sub un cont Manager de test),
+deci „testul” = cereri cu `validate_only` pe contul real (vezi REGULI.md, regula 4).
+De aceea avem nevoie de nivelul **Explorer** de la început (Pasul 7).
 
 ---
 
 ## Pasul 1 — Proiectul Google Cloud (10 min)
 
-1. Intră pe https://console.cloud.google.com cu același cont Google cu care ai MCC-ul.
+1. Intră pe https://console.cloud.google.com cu contul Google care are acces la contul de reclame.
 2. Sus, lângă logo → selectorul de proiecte → **New project**.
    Nume: `superieftin-ads`. Creează.
 3. **Facturare:** Billing → leagă un cont de facturare **plătit**.
@@ -67,31 +69,25 @@ Google Auth Platform → **Clients** → **Create client**:
 ## Pasul 5 — Refresh token (Claude Code face asta)
 
 În Faza 0, Claude Code creează un script care deschide browserul. Te loghezi cu contul
-Google care are acces la MCC și aprobi. Scriptul salvează `GOOGLE_ADS_REFRESH_TOKEN` în `.env`.
+Google care are acces la contul de reclame și aprobi. Scriptul salvează `GOOGLE_ADS_REFRESH_TOKEN` în `.env`.
 
 ## Pasul 6 — Conturile Google Ads
 
-**Contul real de reclame** (dacă nu există deja):
-MCC → Conturi → **+** → Creează cont nou.
+**Contul real de reclame** — ✅ creat: 276-008-6909.
+(Pentru referință, la creare:)
 - Moneda: **RON**, fus orar: **București**.
   Atenție: moneda și fusul orar **nu se mai pot schimba** după creare.
 - Nu adăuga campanii și nici card încă.
 
-**Contul de test** (pentru dezvoltare fără risc):
-Urmează ghidul oficial „Test accounts” din documentația Google Ads API: creezi un cont
-manager de test și un cont client sub el. Conturile de test nu afișează reclame și nu
-cer facturare. Claude Code poate să te ghideze pas cu pas în Faza 0.
+**Contul de test:** nu folosim (fără MCC nu se pot crea). Înlocuit de `validate_only`.
 
-**ID-urile în `.env`** (fără liniuțe, ex. `1234567890`):
+**ID-ul în `.env`** (fără liniuțe) — deja completat:
 ```
-GOOGLE_ADS_LOGIN_CUSTOMER_ID=     # MCC-ul real
-GOOGLE_ADS_CUSTOMER_ID_PROD=      # contul real de reclame
-GOOGLE_ADS_CUSTOMER_ID_TEST=      # contul client de test
+GOOGLE_ADS_CUSTOMER_ID_PROD=2760086909
+GOOGLE_ADS_LOGIN_CUSTOMER_ID=     # gol (fără MCC)
 ```
-Pentru contul de test, login customer ID-ul e managerul de test — Claude Code îl gestionează
-prin `ADS_ENV=test`.
 
-## Pasul 7 — Acces Explorer (2 min, după ce testul pe contul de test funcționează)
+## Pasul 7 — Acces Explorer (2 min, NECESAR de la început — fără conturi de test, nivelul Test nu ajunge)
 
 1. Deschide pagina **Google Ads API Overview** din Cloud Console
    (https://console.cloud.google.com/google/ads-apis/overview), cu proiectul selectat.
@@ -116,7 +112,7 @@ Condiție: pagina de Confidențialitate e publicată pe site.
 | Cerere Explorer/Basic respinsă imediat | Proiect pe Free Trial sau fără facturare activă | Pasul 1, punctul 3 |
 | `AUTHORIZATION_ERROR` pe contul real, după upgrade | Problemă cunoscută la Google, în curs de rezolvare | Temporar: proiect Cloud nou și cerere Explorer din nou |
 | Scripturile nu mai merg după o săptămână | Aplicația OAuth e în modul „Testing” | Pasul 3, punctul 2 |
-| `USER_PERMISSION_DENIED` | Login customer ID greșit | Verifică ID-ul MCC din `.env` |
+| `USER_PERMISSION_DENIED` | Contul Google logat n-are acces la contul de reclame, sau `LOGIN_CUSTOMER_ID` completat greșit | Lasă `GOOGLE_ADS_LOGIN_CUSTOMER_ID` gol; verifică utilizatorii contului de reclame |
 
 ## Securitate
 - `.env` și fișierele JSON de credențiale nu intră niciodată în Git.

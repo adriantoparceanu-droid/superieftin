@@ -17,7 +17,8 @@ Documentează în `docs/ads-program/raport-faza-0.md`:
 4. Statusurile comisioanelor, întârzierea tipică până la aprobare, moneda, câmpul de valoare.
 5. Script de generare a refresh token-ului OAuth (proprietarul se loghează în browser),
    scris în `.env`, niciodată afișat în chat sau loguri.
-6. Test de conexiune Google Ads API pe contul de TEST (listează contul, nimic mai mult).
+6. Test de conexiune Google Ads API pe contul real: citește contul + o scriere `validate_only`
+   (regula 4 — fără MCC, deci fără conturi de test). Nimic mai mult.
    IMPORTANT: din 9 septembrie 2026 developer token-ul nu mai e folosit. Accesul vine din
    proiectul Google Cloud care deține OAuth client-ul. Folosește versiunea cea mai recentă
    a librăriei, fără developer token. Eroarea `CLOUD_PROJECT_NOT_APPROVED_FOR_PRODUCTION`
@@ -69,8 +70,10 @@ Dacă subID-ul NU vine înapoi prin API, propune 2 variante alternative de potri
 6. Idempotent: rulat de două ori, nu trimite dubluri (order_id = profitshare_id).
 
 ### Test
-Pe contul de test: simulează un click cu gclid de test, o conversie Profitshare falsă
-(fixture), rulează sync în mod `plan`, apoi `--confirm`. Arată rezultatul.
+Cu `validate_only` (regula 4): simulează un click cu gclid inventat, o conversie Profitshare
+falsă (fixture), rulează sync în mod `plan`, apoi trimiterea validată. Google va respinge gclid-ul
+(clickul nu există în cont) — confirmă că eroarea e exact aceasta, nu una de autentificare/format.
+Nu încărca niciodată conversii false fără `validate_only`.
 
 ## Nu faci
 - Nu trimiți date personale (email, telefon, IP) la Google.

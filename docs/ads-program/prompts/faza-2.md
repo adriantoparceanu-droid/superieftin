@@ -14,5 +14,5 @@ Folosește agentul `tracking` pentru implementarea completă a Fazei 2 din `WORK
 5. Job-ul `tracking:sync` cu mod plan / `--confirm`, idempotent, cu retrageri
 6. Programarea zilnică a job-ului în infrastructura noastră (propune variante)
 
-Totul pe contul de test. La final: agentul `policy-reviewer` pe partea de GDPR,
+Totul cu `validate_only` (regula 4 — nu avem conturi de test). La final: agentul `policy-reviewer` pe partea de GDPR,
 apoi demonstrația end-to-end. Oprește-te la POARTA 2.

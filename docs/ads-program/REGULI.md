@@ -24,8 +24,12 @@
    orice buget peste ele. Nu modifica fișierul de guardrails fără cerere explicită.
 3. **Dry-run implicit.** Orice script care scrie în Google Ads rulează implicit în mod
    `plan` (arată ce ar schimba). Scrierea reală cere `--confirm`.
-4. **Mediu de test mai întâi.** Variabila `ADS_ENV=test|prod`. Codul nou se rulează întâi
-   pe contul de test. Rularea pe `prod` cere și flag-ul `--prod`.
+4. **Validare înainte de scriere (fără MCC — decizia proprietarului, 2026-09-26).** Nu avem cont
+   Manager, deci nici conturi de test Google. `ADS_ENV=test` = fiecare cerere de scriere către
+   contul real se trimite cu **`validate_only: true`**: Google verifică tot (structură, politici,
+   limite), dar NU aplică nimic. Codul nou rulează întâi așa. Scrierea reală cere `ADS_ENV=prod`
+   + flag-ul `--prod` + `--confirm` (regula 3). Citirile (rapoarte) sunt permise în ambele moduri.
+   Accesul la contul real cere nivelul **Explorer** pe proiectul Google Cloud.
 5. **Secretele stau doar în `.env`.** Niciodată în cod, commit-uri, loguri sau rapoarte.
 6. **Nu șterge și nu rescrie regulile existente din CLAUDE.md.** Adăugările de documentare
    cerute de secțiunea „Întreținerea acestui fișier” (rută nouă, migrație, comandă nouă)
@@ -50,9 +54,8 @@ ADS_ENV=test
 GOOGLE_ADS_CLIENT_ID=
 GOOGLE_ADS_CLIENT_SECRET=
 GOOGLE_ADS_REFRESH_TOKEN=
-GOOGLE_ADS_LOGIN_CUSTOMER_ID=      # ID-ul contului Manager (MCC), fără liniuțe
-GOOGLE_ADS_CUSTOMER_ID_TEST=       # contul de test
-GOOGLE_ADS_CUSTOMER_ID_PROD=       # contul real
+GOOGLE_ADS_LOGIN_CUSTOMER_ID=      # gol — nu folosim MCC (se completează doar dacă apare unul)
+GOOGLE_ADS_CUSTOMER_ID_PROD=2760086909   # contul de reclame, fără liniuțe (nu e secret)
 PROFITSHARE_API_USER=
 PROFITSHARE_API_KEY=
 ADMIN_DASHBOARD_PASSWORD=          # sau integrarea cu auth-ul existent

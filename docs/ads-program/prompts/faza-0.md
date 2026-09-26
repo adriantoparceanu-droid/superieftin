@@ -11,8 +11,9 @@ Folosește agentul `tracking` pentru:
    tracking propriu (subID) — acceptat în link? întors în lista de comisioane?
 3. Statusurile comisioanelor și întârzierea tipică până la aprobare.
 4. Script de generare a refresh token-ului OAuth (eu mă loghez în browser cu contul
-   care are acces la MCC). Salvează doar în `.env`, nu afișa token-ul.
-5. Test de conexiune la Google Ads API pe contul de TEST, fără developer token
+   Google care are acces la contul de reclame). Salvează doar în `.env`, nu afișa token-ul.
+5. Test de conexiune la Google Ads API pe contul real: o citire + o scriere `validate_only`
+   (regula 4), fără developer token
    (vezi `docs/ads-program/GHID-CONECTARE-GOOGLE-ADS.md`).
    Dacă lipsesc variabile, listează-le și spune-mi pas cu pas de unde le iau.
 6. Variantele de librărie pentru Google Ads API, cu pro/contra pentru stack-ul nostru.

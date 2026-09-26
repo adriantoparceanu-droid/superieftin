@@ -7,7 +7,7 @@
 Citește `docs/ads-program/REGULI.md`. Începem Faza 3. Branch: `ads/faza-3-campanii`.
 
 1. Folosește agentul `ads-builder` doar pentru a crea scripturile `ads:validate`,
-   `ads:plan`, `ads:apply` (fără campanii încă). Testează-le pe contul de test cu
+   `ads:plan`, `ads:apply` (fără campanii încă). Testează-le cu `validate_only` (regula 4) pe
    `ads/campaigns/_template.yaml` copiat ca `test-laptopuri.yaml`.
 2. Folosește agentul `market-research` pentru un raport de oportunități pe categoriile:
    Laptopuri, Telefoane mobile, Televizoare, Monitoare.
