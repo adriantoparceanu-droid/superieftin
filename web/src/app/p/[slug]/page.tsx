@@ -41,6 +41,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title,
     description,
     alternates: { canonical: `/p/${slug}` },
+    // Fara nicio oferta disponibila: pagina ramane pentru vizitatori, dar nu se indexeaza
+    // (iar dupa PRODUCT_GONE_DAYS raspunde 410 — src/proxy.ts)
+    ...(product.offers.length === 0 ? { robots: { index: false, follow: true } } : {}),
     openGraph: {
       title,
       description,
@@ -188,9 +191,22 @@ export default async function ProductPage({ params }: Props) {
             <h1 className="text-xl font-black font-archivo text-[var(--color-text)] mt-1 leading-snug">{product.name}</h1>
           </div>
 
-          {/* Oferte per retailer */}
+          {/* Oferte per retailer — doar cele disponibile (lib/availability.ts) */}
           <div className="space-y-3">
             <h2 className="font-semibold text-[var(--color-text)]">Prețuri per magazin</h2>
+            {product.offers.length === 0 && (
+              <div className="rounded-lg border border-line bg-surface p-4">
+                <p className="font-semibold text-[var(--color-text)]">
+                  Momentan indisponibil la magazinele monitorizate
+                </p>
+                <p className="text-sm text-muted mt-1">
+                  {product.last_seen
+                    ? `Ultima dată l-am găsit ${formatVerified(product.last_seen).replace(/^Verificat /, '')}. `
+                    : ''}
+                  Setează o alertă de preț și te anunțăm când reapare.
+                </p>
+              </div>
+            )}
             {product.offers.map((offer) => {
               const offerDiscount = calculateDiscount(offer.current_price, offer.median_price)
               return (
@@ -201,9 +217,6 @@ export default async function ProductPage({ params }: Props) {
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-[var(--color-text)] capitalize">{offer.retailer_name}</div>
                     <div className="flex items-center gap-2 mt-0.5">
-                      {!offer.in_stock && (
-                        <span className="text-xs text-muted">Indisponibil</span>
-                      )}
                       {offer.last_checked && (
                         <span className="text-xs text-muted">{formatVerified(offer.last_checked)}</span>
                       )}
@@ -228,9 +241,9 @@ export default async function ProductPage({ params }: Props) {
           </div>
 
           {/* Buton alerta Telegram */}
-          {process.env.TELEGRAM_BOT_USERNAME && (
+          {process.env.TELEGRAM_BOT_USERNAME && product.alert_offer_id && (
             <a
-              href={`https://t.me/${process.env.TELEGRAM_BOT_USERNAME}?start=offer_${bestOffer?.offer_id}`}
+              href={`https://t.me/${process.env.TELEGRAM_BOT_USERNAME}?start=offer_${product.alert_offer_id}`}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center justify-center gap-2 w-full border border-line rounded-lg py-2.5 text-sm font-semibold text-[var(--color-text)] hover:border-brand hover:text-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"

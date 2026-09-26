@@ -5,6 +5,7 @@ import { join } from 'path'
 import { unlink } from 'fs/promises'
 import pool from '../lib/db.js'
 import { ensurePriceHistoryPartitions } from '../lib/partitions.js'
+import { markStaleOffers } from '../lib/stale.js'
 import { connection } from '../lib/queue.js'
 import { getAdvertisers, getFeeds, getProductsByPartNo, PsApiError, type PsAdvertiser, type PsFeed } from '../lib/profitshare.js'
 import { downloadFeed, parseFeedFile, mapFeedRow } from '../importers/feed.js'
@@ -309,6 +310,12 @@ export async function runFeedSync(jobId = 'direct') {
   // Dupa ce preturile proaspete au fost importate, consemneaza istoricul zilnic pentru toate
   // ofertele cu pret (foloseste pretul curent proaspat — fara snapshot stale, fara resync).
   // Garda de 20h din runPriceSnapshot sare peste ofertele deja consemnate de feed-sync.
+  // Siguranta globala: orice oferta negasita de OFFER_STALE_DAYS in NICIUN feed/scanare trece
+  // pe „fara stoc” — indiferent daca feed-ul retailerului a reusit, a fost respins sau a
+  // disparut (altfel ofertele unui feed mort raman afisate la infinit cu pret vechi).
+  const stale = await markStaleOffers()
+  log.info({ hidden: stale }, 'Oferte vechi marcate fara stoc (global)')
+
   const snapshot = await runPriceSnapshot(jobId)
 
   const duration = ((Date.now() - startTime) / 1000).toFixed(1)

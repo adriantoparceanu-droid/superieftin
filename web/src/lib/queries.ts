@@ -1,6 +1,7 @@
 import { unstable_cache } from 'next/cache'
 import pool from './db'
 import { maskPII } from './pii'
+import { OFFER_AVAILABLE_SQL } from './availability'
 
 export interface ProductWithDiscount {
   id: string
@@ -27,7 +28,9 @@ export interface ProductDetail {
   brand: string | null
   image_url: string | null
   updated_at: string
-  offers: OfferRow[]
+  offers: OfferRow[]              // DOAR ofertele disponibile (lib/availability.ts)
+  alert_offer_id: string | null   // oferta pentru alerta de pret (si cand nu e nimic disponibil)
+  last_seen: string | null        // ultima confirmare a oricarei oferte (pentru „indisponibil”)
 }
 
 export interface OfferRow {
@@ -502,7 +505,8 @@ export const getProductDetail = unstable_cache(
           WHEN mp.median_price IS NOT NULL AND o.current_price < mp.median_price * 0.95
           THEN ROUND(((mp.median_price - o.current_price) / mp.median_price * 100)::numeric, 1)::float
           ELSE NULL
-        END AS discount_pct
+        END AS discount_pct,
+        ${OFFER_AVAILABLE_SQL} AS available
       FROM offers o
       JOIN retailers r ON r.id = o.retailer_id
       LEFT JOIN median_prices mp ON mp.offer_id = o.id
@@ -510,7 +514,17 @@ export const getProductDetail = unstable_cache(
       ORDER BY o.current_price ASC NULLS LAST
     `, [product.id])
 
-    return { ...product, offers: offersRes.rows }
+    // Ofertele negasite recent in feed-uri / scanari NU se afiseaza: linkul lor nu mai duce
+    // nicaieri (decizia 2026-09-26). Le folosim doar pentru alerta si „vazut ultima data”.
+    const all = offersRes.rows as (OfferRow & { available: boolean })[]
+    const offers = all.filter((o) => o.available)
+    const byRecent = [...all].sort((a, b) => (b.last_checked ?? '').localeCompare(a.last_checked ?? ''))
+    return {
+      ...product,
+      offers,
+      alert_offer_id: offers[0]?.offer_id ?? byRecent[0]?.offer_id ?? null,
+      last_seen: byRecent[0]?.last_checked ?? null,
+    }
   },
   ['product-detail'],
   { revalidate: 3600, tags: ['products'] }
@@ -757,7 +771,10 @@ export const getTagProductCount = unstable_cache(
 export const getAllProductSlugs = unstable_cache(
   async (): Promise<Array<{ slug: string; updated_at: string }>> => {
     const { rows } = await pool.query(`
-      SELECT slug, updated_at::text FROM products ORDER BY updated_at DESC
+      SELECT p.slug, p.updated_at::text FROM products p
+      -- doar produsele cu cel putin o oferta disponibila (cele „indisponibile” nu se indexeaza)
+      WHERE EXISTS (SELECT 1 FROM offers o WHERE o.product_id = p.id AND ${OFFER_AVAILABLE_SQL})
+      ORDER BY p.updated_at DESC
     `)
     return rows
   },
