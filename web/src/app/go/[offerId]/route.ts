@@ -57,16 +57,24 @@ export async function GET(
   const hasAdConsent = parseConsentCookie(req.cookies.get(CONSENT_COOKIE)?.value)?.ads === true
   const adIds = hasAdConsent ? parseAdClickCookie(req.cookies.get(AD_CLICK_COOKIE)?.value) : null
 
+  // Momentul clickului pe reclama (ts din cookie, scris la aterizare) → ad_clicks.ad_click_at.
+  // De aici se socotesc cele 90 de zile de retentie si fereastra de upload (migratia 022).
+  // Cookie-ul e controlat de browser, deci: parseAdClickCookie respinge deja ts mai vechi de
+  // 90 de zile / lipsa (0); un ts in viitor e limitat la momentul de acum. Fara ts valid → NULL
+  // (workerul foloseste atunci created_at). Limitarea e aici, nu cu LEAST() in SQL, pentru ca
+  // LEAST ignora NULL si ar transforma „necunoscut” in now().
+  const adClickAt = adIds && adIds.ts > 0 ? new Date(Math.min(adIds.ts, Date.now())) : null
+
   // Scrierile in DB ruleaza DUPA ce redirectul a plecat — clickul ramane rapid
   after(async () => {
     await trackClick(offerId)
     try {
       await pool.query(
         `INSERT INTO ad_clicks (click_id, offer_id, product_id, retailer_id, network,
-                                gclid, gbraid, wbraid, has_ad_consent)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+                                gclid, gbraid, wbraid, has_ad_consent, ad_click_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
         [clickId, id, product_id, retailer_id, network,
-         adIds?.gclid ?? null, adIds?.gbraid ?? null, adIds?.wbraid ?? null, hasAdConsent]
+         adIds?.gclid ?? null, adIds?.gbraid ?? null, adIds?.wbraid ?? null, hasAdConsent, adClickAt]
       )
     } catch (err) {
       // Non-critic pentru utilizator, dar pierdem potrivirea comisionului — il logam

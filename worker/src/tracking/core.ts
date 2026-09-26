@@ -4,6 +4,8 @@
 
 // Google accepta conversii doar pentru clickuri din ultimele 90 de zile (fereastra maxima a
 // actiunii de conversie) — dupa aceea gclid-ul nu mai foloseste la nimic si il stergem.
+// Cele 90 de zile se socotesc de la clickul PE RECLAMA (ad_clicks.ad_click_at, migratia 022),
+// nu de la clickul /go spre magazin — asa socoteste si Google.
 export const CLICK_WINDOW_DAYS = 90
 const DAY = 86400_000
 
@@ -23,7 +25,7 @@ export interface ConversionRow {
   gclid: string | null
   gbraid: string | null
   wbraid: string | null
-  clickTime: Date | null
+  clickTime: Date | null        // COALESCE(ad_click_at, created_at): momentul clickului pe reclama
 }
 
 export type SkipReason =
@@ -97,4 +99,15 @@ export function formatRo(d: Date, style: 'rfc3339' | 'ads'): string {
 export function maskId(r: Pick<ConversionRow, 'gclid' | 'gbraid' | 'wbraid'>): string {
   const [k, v] = r.gclid ? ['gclid', r.gclid] : r.gbraid ? ['gbraid', r.gbraid] : r.wbraid ? ['wbraid', r.wbraid] : ['-', '']
   return v ? `${k}:…${v.slice(-4)}` : '-'
+}
+
+// Acelasi lucru pentru textul erorilor (last_error in DB, erorile din log): mesajele Google pot
+// cita gclid-ul trimis. Inlocuim orice aparitie a ID-urilor randului cu forma mascata, ca in
+// baza de date sa nu ramana ID-uri intregi dupa stergerea de retentie (Poarta 2 — R3).
+export function maskIdsInText(text: string, r: Pick<ConversionRow, 'gclid' | 'gbraid' | 'wbraid'>): string {
+  let out = text
+  for (const v of [r.gclid, r.gbraid, r.wbraid]) {
+    if (v && v.length >= 5) out = out.split(v).join(`…${v.slice(-4)}`)
+  }
+  return out
 }

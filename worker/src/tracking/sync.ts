@@ -2,7 +2,7 @@ import type pg from 'pg'
 import { getCommissions, parseCommission, type PsCommissionRaw, type ParsedCommission } from '../lib/profitshare.js'
 import { configFromEnv, uploadRetractions, AdsApiError, type AdsConfig } from '../ads/google-ads.js'
 import { ingestConversion } from '../ads/data-manager.js'
-import { planSync, formatRo, maskId, CLICK_WINDOW_DAYS, type ConversionRow, type SyncPlan } from './core.js'
+import { planSync, formatRo, maskId, maskIdsInText, CLICK_WINDOW_DAYS, type ConversionRow, type SyncPlan } from './core.js'
 
 // tracking:sync — comisioanele Profitshare → affiliate_conversions → Google Ads.
 //
@@ -12,10 +12,15 @@ import { planSync, formatRo, maskId, CLICK_WINDOW_DAYS, type ConversionRow, type
 //      conversie offline „Comision Profitshare” (valoare = comisionul, RON), prin Data Manager API;
 //      se trimit inca din `pending` (Google invata mai repede) si se retrag daca se anuleaza;
 //   4. comisioanele devenite anulate, deja trimise → RETRACTION (Google Ads API);
-//   5. sterge gclid/gbraid/wbraid din clickurile mai vechi de 90 de zile (politica de confidentialitate).
+//   5. sterge gclid/gbraid/wbraid din clickurile pe reclama mai vechi de 90 de zile (politica de
+//      confidentialitate). Pas INDEPENDENT: ruleaza in `finally`, deci si cand Profitshare sau
+//      Google esueaza — altfel o pana de cateva zile la Profitshare ar tine ID-urile peste 90 zile.
 //
 // Moduri (REGULI.md, regulile 3 si 4):
 //   plan     — implicit; pasii 1, 2, 5 (doar baza noastra) + ce AR trimite. Nimic la Google.
+//              ATENTIE: si in plan pasul 5 STERGE efectiv ID-urile expirate din ad_clicks. E o
+//              stergere (reduce datele pastrate, obligatie de retentie), nu o trimitere — regula
+//              „dry-run” priveste scrierile catre Google Ads, nu curatenia propriei baze.
 //   validate — ca `send`, dar fiecare cerere pleaca cu validate_only: Google verifica, NU aplica.
 //              NU seteaza uploaded_at / retracted_at. Jobul automat ruleaza asa (decizia
 //              proprietarului, 2026-09-26).
@@ -48,7 +53,7 @@ export interface SyncResult {
   uploaded: number                       // trimise efectiv (send)
   validated: number                      // acceptate de Google cu validate_only
   retracted: number
-  errors: { externalId: string; action: 'upload' | 'retract'; error: string }[]
+  errors: { externalId: string; action: 'upload' | 'retract' | 'purge'; error: string }[]
   purgedClickIds: number
   googleSkipped?: string                 // de ce n-am contactat Google (config lipsa)
 }
@@ -93,7 +98,9 @@ async function loadRows(db: Db): Promise<ConversionRow[]> {
   const { rows } = await db.query(`
     SELECT ac.id, ac.external_id, ac.status, ac.commission_amount::float AS amount, ac.order_time,
            ac.uploaded_at, ac.uploaded_value::float AS uploaded_value, ac.retracted_at,
-           ac.click_id, ac.ad_click_id, c.has_ad_consent, c.gclid, c.gbraid, c.wbraid, c.created_at AS click_time
+           ac.click_id, ac.ad_click_id, c.has_ad_consent, c.gclid, c.gbraid, c.wbraid,
+           -- momentul clickului pe reclama (din cookie-ul se_gclid); randurile vechi / fara ID → /go
+           COALESCE(c.ad_click_at, c.created_at) AS click_time
     FROM affiliate_conversions ac
     LEFT JOIN ad_clicks c ON c.id = ac.ad_click_id
     WHERE ac.network = 'profitshare'
@@ -113,9 +120,40 @@ function describeError(err: unknown): string {
   return String((err as Error)?.message ?? err).slice(0, 1000)
 }
 
+// Pasul 5 — retentie: gclid & co. nu se pastreaza mai mult de 90 de zile de la clickul pe reclama
+// (dupa aceea Google oricum nu-i mai accepta). click_id-ul ramane, pentru potrivirea comisioanelor.
+// Exportata separat ca sa poata fi rulata si testata independent de Profitshare / Google.
+export async function purgeExpiredAdIds(db: Db): Promise<number> {
+  const purge = await db.query(`
+    UPDATE ad_clicks SET gclid = NULL, gbraid = NULL, wbraid = NULL
+    WHERE COALESCE(ad_click_at, created_at) < now() - make_interval(days => $1)
+      AND (gclid IS NOT NULL OR gbraid IS NOT NULL OR wbraid IS NOT NULL)
+  `, [CLICK_WINDOW_DAYS])
+  return purge.rowCount ?? 0
+}
+
 export async function runTrackingSync(opts: SyncOptions): Promise<SyncResult> {
-  const { mode, db } = opts
   const log = opts.log ?? ((m: string) => console.log(m))
+  let result: SyncResult | undefined
+  try {
+    result = await syncSteps(opts, log)
+  } finally {
+    // Ruleaza si daca syncSteps a aruncat (Profitshare cazut, DB, config Google). O eroare a
+    // stergerii nu ascunde eroarea initiala — doar o logam.
+    try {
+      const purged = await purgeExpiredAdIds(opts.db)
+      if (result) result.purgedClickIds = purged
+      else log(`tracking:sync — sincronizarea a eșuat, dar ștergerea de retenție a rulat: gclid șterse (>90 zile)=${purged}`)
+    } catch (err) {
+      log(`tracking:sync ✗ ștergerea de retenție (gclid >90 zile) a eșuat: ${describeError(err)}`)
+      if (result) result.errors.push({ externalId: '-', action: 'purge', error: describeError(err) })
+    }
+  }
+  return result!   // definit: daca syncSteps arunca, eroarea se propaga dupa finally
+}
+
+async function syncSteps(opts: SyncOptions, log: (msg: string) => void): Promise<SyncResult> {
+  const { mode, db } = opts
   if (opts.fixture && mode === 'send') throw new Error('Refuz: date de test (fixture) NU se trimit niciodată fără validate_only')
 
   // Configuratia Google o verificam INAINTE de orice, ca modul send sa nu porneasca pe jumatate
@@ -179,7 +217,7 @@ export async function runTrackingSync(opts: SyncOptions): Promise<SyncResult> {
           result.uploaded++
         }
       } catch (err) {
-        const msg = describeError(err)
+        const msg = maskIdsInText(describeError(err), r)   // R3: fara gclid intreg in DB / log
         result.errors.push({ externalId: r.externalId, action: 'upload', error: msg })
         await db.query(`UPDATE affiliate_conversions SET last_error = $2 WHERE id = $1`, [r.id, (validateOnly ? '[validate_only] ' : '') + msg])
       }
@@ -191,7 +229,8 @@ export async function runTrackingSync(opts: SyncOptions): Promise<SyncResult> {
         const res = await retract(cfg, conversionActionId,
           plan.retractions.map((r) => ({ orderId: r.externalId, adjustmentDateTime: now })), { validateOnly })
         for (const [i, r] of plan.retractions.entries()) {
-          const e = res.errorsByIndex.get(i)
+          const raw = res.errorsByIndex.get(i)
+          const e = raw ? maskIdsInText(raw, r) : undefined
           if (e) {
             result.errors.push({ externalId: r.externalId, action: 'retract', error: e })
             await db.query(`UPDATE affiliate_conversions SET last_error = $2 WHERE id = $1`, [r.id, (validateOnly ? '[validate_only] ' : '') + e])
@@ -204,20 +243,12 @@ export async function runTrackingSync(opts: SyncOptions): Promise<SyncResult> {
         }
       } catch (err) {
         const msg = describeError(err)
-        for (const r of plan.retractions) result.errors.push({ externalId: r.externalId, action: 'retract', error: msg })
+        for (const r of plan.retractions) result.errors.push({ externalId: r.externalId, action: 'retract', error: maskIdsInText(msg, r) })
       }
     }
   }
 
-  // 5. Retentie: gclid & co. nu se pastreaza mai mult de 90 de zile de la click (dupa aceea
-  // Google oricum nu-i mai accepta). click_id-ul ramane, pentru potrivirea comisioanelor.
-  const purge = await db.query(`
-    UPDATE ad_clicks SET gclid = NULL, gbraid = NULL, wbraid = NULL
-    WHERE created_at < now() - make_interval(days => $1)
-      AND (gclid IS NOT NULL OR gbraid IS NOT NULL OR wbraid IS NOT NULL)
-  `, [CLICK_WINDOW_DAYS])
-  result.purgedClickIds = purge.rowCount ?? 0
-
+  // 5. Retentia ruleaza in runTrackingSync (finally), independent de pasii de mai sus.
   return result
 }
 

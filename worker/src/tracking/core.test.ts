@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { planSync, formatRo, maskId, type ConversionRow } from './core.js'
+import { planSync, formatRo, maskId, maskIdsInText, type ConversionRow } from './core.js'
 import { runTrackingSync } from './sync.js'
 import type { AdsConfig } from '../ads/google-ads.js'
 import type { PsCommissionRaw } from '../lib/profitshare.js'
@@ -72,7 +72,7 @@ test('maskId — in loguri apar doar ultimele 4 caractere', () => {
 // --- runTrackingSync cap-coada, pe o baza de date falsa in memorie (fara Postgres, fara retea) ---
 
 interface Conv { id: number; external_id: string; click_id: string | null; ad_click_id: number | null; status: string; commission_amount: number; order_time: Date; uploaded_at: Date | null; uploaded_value: number | null; retracted_at: Date | null; last_error: string | null }
-interface Click { id: number; click_id: string; has_ad_consent: boolean; gclid: string | null; gbraid: string | null; wbraid: string | null; created_at: Date }
+interface Click { id: number; click_id: string; has_ad_consent: boolean; gclid: string | null; gbraid: string | null; wbraid: string | null; created_at: Date; ad_click_at?: Date | null }
 
 // Imita strict cele cateva interogari din tracking/sync.ts
 function fakeDb(clicks: Click[]) {
@@ -94,13 +94,22 @@ function fakeDb(clicks: Click[]) {
     if (sql.includes('FROM affiliate_conversions ac')) {
       return { rows: convs.map((c) => {
         const k = clicks.find((x) => x.id === c.ad_click_id)
-        return { id: c.id, external_id: c.external_id, status: c.status, amount: c.commission_amount, order_time: c.order_time, uploaded_at: c.uploaded_at, uploaded_value: c.uploaded_value, retracted_at: c.retracted_at, click_id: c.click_id, ad_click_id: c.ad_click_id, has_ad_consent: k?.has_ad_consent ?? null, gclid: k?.gclid ?? null, gbraid: k?.gbraid ?? null, wbraid: k?.wbraid ?? null, click_time: k?.created_at ?? null }
+        return { id: c.id, external_id: c.external_id, status: c.status, amount: c.commission_amount, order_time: c.order_time, uploaded_at: c.uploaded_at, uploaded_value: c.uploaded_value, retracted_at: c.retracted_at, click_id: c.click_id, ad_click_id: c.ad_click_id, has_ad_consent: k?.has_ad_consent ?? null, gclid: k?.gclid ?? null, gbraid: k?.gbraid ?? null, wbraid: k?.wbraid ?? null, click_time: k ? (k.ad_click_at ?? k.created_at) : null }
       }), rowCount: convs.length }
     }
     if (sql.includes('SET uploaded_at')) { const c = convs.find((x) => x.id === params[0])!; c.uploaded_at = new Date(); c.uploaded_value = c.commission_amount; return { rows: [], rowCount: 1 } }
     if (sql.includes('SET retracted_at')) { convs.find((x) => x.id === params[0])!.retracted_at = new Date(); return { rows: [], rowCount: 1 } }
     if (sql.includes('SET last_error')) { convs.find((x) => x.id === params[0])!.last_error = params[1]; return { rows: [], rowCount: 1 } }
-    if (sql.includes('UPDATE ad_clicks SET gclid = NULL')) return { rows: [], rowCount: 0 }
+    if (sql.includes('UPDATE ad_clicks SET gclid = NULL')) {
+      // Imita: COALESCE(ad_click_at, created_at) < now() - 90 zile, doar randuri cu ID Google
+      assert.match(sql, /COALESCE\(ad_click_at, created_at\)/)
+      const limit = Date.now() - params[0] * 86400_000
+      let n = 0
+      for (const c of clicks) {
+        if ((c.ad_click_at ?? c.created_at).getTime() < limit && (c.gclid || c.gbraid || c.wbraid)) { c.gclid = c.gbraid = c.wbraid = null; n++ }
+      }
+      return { rows: [], rowCount: n }
+    }
     throw new Error('interogare neasteptata in test: ' + sql.slice(0, 80))
   }
   return { db: { query } as any, convs }
@@ -180,4 +189,59 @@ test('runTrackingSync — refuza fixture la trimiterea reala si send fara ADS_EN
   const { db } = fakeDb([])
   await assert.rejects(runTrackingSync({ db, mode: 'send', fixture: [], conversionActionId: '999', deps: { cfg: prodCfg }, log: () => {} }), /fixture/)
   await assert.rejects(runTrackingSync({ db, mode: 'send', conversionActionId: '999', deps: { cfg: { ...prodCfg, env: 'test' } }, log: () => {} }), /ADS_ENV/)
+})
+
+// --- Poarta 2 GDPR: B3 (retentie dupa ad_click_at, stergere independenta) + R3 (mascare) ---
+
+test('maskIdsInText — ID-urile randului nu raman intregi in mesajele de eroare', () => {
+  const r = { gclid: 'Cj0KCQtestgclidWXYZ', gbraid: null, wbraid: null }
+  assert.equal(maskIdsInText('INVALID_GCLID: Cj0KCQtestgclidWXYZ nu exista (Cj0KCQtestgclidWXYZ)', r), 'INVALID_GCLID: …WXYZ nu exista (…WXYZ)')
+  assert.equal(maskIdsInText('fara id', r), 'fara id')
+})
+
+test('runTrackingSync — retentia si fereastra de upload se socotesc de la clickul pe reclama (ad_click_at)', async () => {
+  const days = (n: number) => new Date(Date.now() - n * 86400_000)
+  const clicks: Click[] = [
+    // /go acum 2 zile, dar reclama acum 95 de zile (cookie vechi) → expirat: nu se trimite, se sterge
+    { id: 7, click_id: 'clickcuads01', has_ad_consent: true, gclid: 'Cj0KCQvechi0001', gbraid: null, wbraid: null, created_at: days(2), ad_click_at: days(95) },
+    // reclama acum 10 zile → valid
+    { id: 8, click_id: 'clickcuads02', has_ad_consent: true, gclid: 'Cj0KCQnou00002', gbraid: null, wbraid: null, created_at: days(2), ad_click_at: days(10) },
+    // rand vechi, fara ad_click_at: /go acum 100 de zile → se sterge dupa created_at
+    { id: 9, click_id: 'clickvechi03', has_ad_consent: true, gclid: null, gbraid: 'gbraidvechi003', wbraid: null, created_at: days(100), ad_click_at: null },
+  ]
+  const { db } = fakeDb(clicks)
+  const fixture = [
+    { ...commission('pending'), order_id: 1, hash: 'clickcuads01' },
+    { ...commission('pending'), order_id: 2, hash: 'clickcuads02' },
+  ]
+  const r = await runTrackingSync({ db, mode: 'plan', fixture, conversionActionId: '999', deps: { cfg: prodCfg }, log: () => {} })
+  assert.equal(r.plan.uploads, 1, 'doar clickul pe reclama din ultimele 90 de zile')
+  assert.equal(r.plan.skipped.click_expirat, 1)
+  assert.equal(r.purgedClickIds, 2)
+  assert.equal(clicks[0].gclid, null)
+  assert.equal(clicks[1].gclid, 'Cj0KCQnou00002')
+  assert.equal(clicks[2].gbraid, null)
+})
+
+test('runTrackingSync — stergerea de retentie ruleaza si cand Profitshare esueaza', async () => {
+  const clicks: Click[] = [
+    { id: 7, click_id: 'clickcuads01', has_ad_consent: true, gclid: 'Cj0KCQvechi0001', gbraid: null, wbraid: null, created_at: new Date(Date.now() - 91 * 86400_000) },
+  ]
+  const { db } = fakeDb(clicks)
+  const logs: string[] = []
+  const deps = { cfg: prodCfg, fetchCommissions: (async () => { throw new Error('Profitshare HTTP 503') }) as any }
+  await assert.rejects(runTrackingSync({ db, mode: 'validate', conversionActionId: '999', deps, log: (m) => logs.push(m) }), /Profitshare HTTP 503/)
+  assert.equal(clicks[0].gclid, null, 'ID-ul expirat e sters chiar daca sincronizarea a esuat')
+  assert.ok(logs.some((l) => /ștergerea de retenție a rulat: gclid șterse \(>90 zile\)=1/.test(l)))
+})
+
+test('runTrackingSync — gclid-ul din eroarea Google se salveaza mascat in last_error', async () => {
+  const gclid = 'Cj0KCQtestgclidABCD'
+  const { db, convs } = fakeDb([{ id: 7, click_id: 'clickcuads01', has_ad_consent: true, gclid, gbraid: null, wbraid: null, created_at: recentClick }])
+  const deps = { cfg: prodCfg, ingest: (async () => { throw new Error(`INVALID_ARGUMENT: gclid ${gclid} not found`) }) as any }
+  const r = await runTrackingSync({ db, mode: 'validate', fixture: [commission('pending')], conversionActionId: '999', deps, log: () => {} })
+  assert.equal(r.errors.length, 1)
+  assert.doesNotMatch(convs[0].last_error!, new RegExp(gclid))
+  assert.match(convs[0].last_error!, /…ABCD/)
+  assert.doesNotMatch(r.errors[0].error, new RegExp(gclid))
 })
