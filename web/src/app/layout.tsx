@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     template: '%s | superieftin.ro',
   },
   description:
-    'Comparăm prețurile și păstrăm istoricul ca să știi când e ofertă adevărată. Monitorizăm eMAG, Altex și alte magazine.',
+    'Comparăm prețurile și păstrăm istoricul ca să știi când e ofertă adevărată. Urmărim oferte de la mai multe magazine online din România.',
   openGraph: {
     type: 'website',
     locale: 'ro_RO',

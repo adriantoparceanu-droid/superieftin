@@ -9,6 +9,7 @@ export const metadata: Metadata = {
   alternates: { canonical: '/termeni' },
 }
 
+// Text redactat fara jurist — recomandat sa fie verificat inainte de lansarea reclamelor.
 export default function TermeniPage() {
   return (
     <LegalPage title="Termeni și condiții" updated="26 septembrie 2026">
@@ -65,8 +66,6 @@ export default function TermeniPage() {
         Putem actualiza acești termeni; versiunea curentă e mereu pe această pagină. Se aplică
         legea română.
       </p>
-
-      <p className="text-xs text-muted mt-8">Recomandare: verificare de către un jurist.</p>
     </LegalPage>
   )
 }

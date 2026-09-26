@@ -1,5 +1,6 @@
 import { unstable_cache } from 'next/cache'
 import pool from './db'
+import { maskPII } from './pii'
 
 export interface ProductWithDiscount {
   id: string
@@ -818,7 +819,7 @@ export async function logSearch(term: string, resultsCount: number): Promise<voi
   try {
     await pool.query(
       'INSERT INTO search_queries (term, results_count) VALUES ($1, $2)',
-      [term.slice(0, 200), resultsCount]
+      [maskPII(term).slice(0, 200), resultsCount]
     )
   } catch {
     // Non-critical — tabelul poate sa nu existe inca

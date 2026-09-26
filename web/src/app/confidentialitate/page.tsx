@@ -11,6 +11,7 @@ export const metadata: Metadata = {
 
 // ATENTIE: textul descrie ce face REAL codul. Cand se schimba colectarea de date (tracking nou,
 // formular nou, alt furnizor), actualizeaza pagina + data de mai jos.
+// Text redactat fara jurist — recomandat sa fie verificat inainte de lansarea reclamelor.
 export default function ConfidentialitatePage() {
   const privacyEmail = COMPANY.privacyEmail ?? COMPANY.email
   return (
@@ -126,8 +127,6 @@ export default function ConfidentialitatePage() {
         Supraveghere a Prelucrării Datelor cu Caracter Personal (
         <a href="https://www.dataprotection.ro" rel="noopener" target="_blank">dataprotection.ro</a>).
       </p>
-
-      <p className="text-xs text-muted mt-8">Recomandare: verificare de către un jurist.</p>
     </LegalPage>
   )
 }
