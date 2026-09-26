@@ -51,6 +51,9 @@ campaign:
       ads:
         - type: RSA
           id: null
+          # Spre o pagină de PRODUS (/p/) nu afirma că e redus acum („sub mediană”, „reducere reală”,
+          # „preț redus”, procente): reducerea dispare în câteva zile și anunțul devine fals.
+          # ads:validate refuză asta; exemplul de mai jos e pentru o pagină de listă (/reduceri-reale/…).
           headlines:                       # max 30 caractere fiecare, 8–15 bucăți
             - Reduceri Reale la Laptopuri
             - Verificate față de Mediană

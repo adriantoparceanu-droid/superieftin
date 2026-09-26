@@ -3,8 +3,14 @@
 # „iphone 17 pro max” simplu (201.000 căutări/lună) e lăsat intenționat pe dinafară.
 #
 # Landing: varianta Cosmic Orange 256GB (ITGalaxy pe site). Deep Blue 256GB apare ca sitelink.
-# Risc (research §3.2): iPhone 18 a ieftinit modelul; mediana de 30 de zile poate prinde din
-# urmă prețul spre sfârșitul lui octombrie → reducerea reală dispare → anunțul se pune pe pauză.
+# Modelul are 3 culori (Cosmic Orange, Deep Blue, Silver): căutările cu alte culori decât cea a
+# landing-ului sunt excluse prin negative (blue/albastru, silver/argintiu) — cine caută „deep blue”
+# nu ajunge pe pagina portocalie. Varianta aleasă e cea mai simplă (fără grup separat).
+#
+# Textele NU afirmă că produsul e redus acum (verdictul policy-reviewer B1, 2026-09-27): reducerea
+# reală dispare când mediana de 30 de zile prinde prețul din urmă. Vorbim doar despre metodă și
+# serviciu. ads:validate respinge formulările de reducere „de azi”; garda zilnică (ads-guard) pune
+# grupul pe pauză dacă pagina de destinație nu mai e bună.
 #
 # Negativul „orange” (operatorul) NU e folosit aici: ar bloca și căutările după culoarea
 # Cosmic Orange. În locul lui: expresii specifice operatorului + „abonament”.
@@ -90,10 +96,11 @@ campaign:
     - wallpaper
     - setari
     - resetare
-    # alte modele / capacități pe care nu le promovăm
-    - iphone 18
-    - 18 pro
-    - 18 pro max
+    # alte modele / capacități pe care nu le promovăm. Cele cu cifră separată sunt PHRASE: ca
+    # broad, „18 pro max” ar bloca și „iphone 17 pro max rate 18 luni” (conține 18, pro, max).
+    - '"iphone 18"'
+    - '"18 pro"'
+    - '"18 pro max"'
     - "[iphone 17]"
     - "[iphone 17 pro]"
     - 17 air
@@ -103,6 +110,13 @@ campaign:
     - 2tb
     - icloud
     - blocat
+    # culori care nu corespund landing-ului Cosmic Orange (Deep Blue are doar sitelink)
+    - blue
+    - albastru
+    - albastra
+    - silver
+    - argintiu
+    - argintie
 
   ad_groups:
     - name: "iPhone 17 Pro Max 256GB - preț"
@@ -126,23 +140,23 @@ campaign:
           headlines:
             - iPhone 17 Pro Max 256GB
             - Preț iPhone 17 Pro Max azi
-            - iPhone 17 Pro Max sub mediană
-            - "iPhone 17 Pro Max: preț redus"
-            - Sub mediana de 30 de zile
-            - Verificat față de mediană
+            - Istoric preț iPhone 17 Pro Max
+            - Vezi prețul iPhone 17 Pro Max
+            - Comparăm cu mediana pe 30 zile
+            - Minim, maxim și mediană
             - Istoric de preț pe 90 de zile
             - Alertă de preț pe Telegram
             - Nu comparăm cu prețul vechi
             - Prețuri verificate zilnic
-            - Doar reduceri reale
-            - Comparator de prețuri
-            - Mediana, nu prețul umflat
+            - Află când se ieftinește
+            - Vezi evoluția prețului
+            - iPhone 17 Pro Max portocaliu
             - 256GB Cosmic Orange
             - superieftin.ro
           descriptions:
-            - iPhone 17 Pro Max 256GB costă azi sub mediana prețurilor din ultimele 30 de zile.
+            - Vezi prețul de azi pentru iPhone 17 Pro Max 256GB și istoricul lui, înainte să cumperi.
             - Comparăm prețul de azi cu mediana pe 30 de zile, nu cu prețul vechi al magazinului.
-            - "Vezi istoricul prețului pe 90 de zile: minim, maxim și mediană, înainte să cumperi."
+            - Istoricul prețului pe 90 de zile, cu minim și maxim, plus mediana pe 30 de zile.
             - Setează o alertă de preț pe Telegram și află când telefonul se ieftinește.
           path1: iphone-17
           path2: pro-max-256gb
@@ -151,11 +165,11 @@ campaign:
     sitelinks:
       - text: Cosmic Orange 256GB
         url: https://www.superieftin.ro/p/telefon-mobil-iphone-17-pro-max-256gb-dual-sim-5g-cosmic-orange
-        description1: Preț sub mediana de 30 de zile
+        description1: Prețul de azi față de mediană
         description2: Istoric de preț pe 90 de zile
       - text: Deep Blue 256GB
         url: https://www.superieftin.ro/p/telefon-mobil-iphone-17-pro-max-256gb-dual-sim-5g-deep-blue
-        description1: Preț sub mediana de 30 de zile
+        description1: Prețul de azi față de mediană
         description2: Istoric de preț pe 90 de zile
       - text: Reduceri la telefoane
         url: https://www.superieftin.ro/reduceri-reale/telefoane-mobile
@@ -170,12 +184,11 @@ campaign:
       - Istoric preț 90 de zile
       - Alertă de preț Telegram
       - Prețuri verificate zilnic
-      - Doar reduceri reale
-      - Fără prețuri umflate
+      - Nu folosim prețul vechi
     structured_snippets:
       - header: Servicii
         values:
           - Istoric de preț 90 zile
           - Mediana pe 30 de zile
           - Alerte de preț
-          - Comparator de prețuri
+          - Prețuri verificate zilnic

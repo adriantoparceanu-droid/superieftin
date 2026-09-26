@@ -8,7 +8,7 @@ import path from 'node:path'
 import { stringify } from 'yaml'
 import type { Campaign, CampaignFile, Guardrails } from './schema.js'
 import { contentHash, writeIds, parseNegative, loadAllCampaigns, loadGuardrails } from './schema.js'
-import { validateCampaign, validateAll, negativeBlocks, styleProblems, claimIssues, parsePage, BASE_NEGATIVES, RETAILER_BRANDS, type PageFacts } from './validate.js'
+import { validateCampaign, validateAll, negativeBlocks, styleProblems, claimIssues, parsePage, expiringClaims, BASE_NEGATIVES, RETAILER_BRANDS, type PageFacts } from './validate.js'
 import { checkReview } from './review.js'
 import { buildPlan, planOps } from './plan.js'
 import { emptySnapshot, type AccountSnapshot } from './account.js'
@@ -160,6 +160,39 @@ test('stil: majuscule excesive, „!” în titlu, punctuație repetată, emoji'
   assert.ok(styleProblems('Ce preț!!', 'description').some((p) => /repetată/.test(p)))
   assert.ok(styleProblems('Preț bun 🔥', 'description').some((p) => /emoji/.test(p)))
   assert.ok(styleProblems('Preț ★ mic', 'description').some((p) => /simboluri/.test(p)))
+})
+
+test('afirmații care expiră (B1): reducerea „de azi” e respinsă în orice text', () => {
+  for (const x of ['Galaxy Z Fold7 sub mediană', 'Z Fold7: reducere reală', 'Z Fold7 256GB la preț redus',
+    'Sub mediana de 30 de zile', 'Doar reduceri reale', 'iPhone 17 Pro Max -8%', 'Reducere 16,8 %',
+    'Telefonul s-a ieftinit', 'Mai ieftin azi', 'Cel mai mic preț', 'Prețul a scăzut', 'Economisești 500 de lei',
+    'Ofertă specială', 'Discount la Fold7', 'Preț minim garantat']) {
+    assert.ok(expiringClaims(x).length > 0, `ar trebui respins: ${x}`)
+  }
+  for (const x of ['Comparăm cu mediana pe 30 zile', 'Istoric de preț pe 90 de zile', 'Nu comparăm cu prețul vechi',
+    'Alertă de preț pe Telegram', 'Prețuri verificate zilnic', 'Vezi prețul Z Fold7 de azi', 'Preț iPhone 17 Pro Max azi',
+    'Minim, maxim și mediană', 'Setează o alertă de preț pe Telegram și află când telefonul se ieftinește.',
+    'Samsung Galaxy Z Fold7 256GB', 'superieftin.ro']) {
+    assert.deepEqual(expiringClaims(x), [], `ar trebui permis: ${x}`)
+  }
+  // sitelink spre o pagina de lista (nu /p/): „reduceri” / „sub mediana” permise; procentul nu
+  assert.deepEqual(expiringClaims('Doar prețuri sub mediană', { listingPage: true }), [])
+  assert.deepEqual(expiringClaims('Cum verificăm reducerile', { listingPage: true }), [])
+  assert.ok(expiringClaims('Reduceri de 20%', { listingPage: true }).length > 0)
+  assert.ok(expiringClaims('Telefon la preț redus', { listingPage: true }).length > 0)
+})
+
+test('validarea statică respinge reducerea „de azi” în titluri, sitelinks de produs, callouts, snippets', () => {
+  const c = camp(); c.ad_groups[0].ads[0].headlines[0] = 'Telefon test sub mediană'
+  assert.ok(hasErr(c, /afirmă o reducere de azi/))
+  const c2 = camp(); c2.extensions!.callouts = ['Doar reduceri reale']
+  assert.ok(hasErr(c2, /afirmă o reducere de azi/))
+  const c3 = camp(); c3.extensions!.sitelinks![0] = { text: 'Telefon test', url: URL_P, description1: 'Preț sub mediana de 30 de zile', description2: 'Istoric de preț' }
+  assert.ok(hasErr(c3, /afirmă o reducere de azi/))
+  const c4 = camp(); c4.extensions!.sitelinks![0] = { text: 'Reduceri la telefoane', url: 'https://www.superieftin.ro/reduceri-reale/telefoane-mobile', description1: 'Doar prețuri sub mediană', description2: 'Verificate față de 30 de zile' }
+  assert.deepEqual(errors(c4), [])
+  const c5 = camp(); c5.extensions!.structured_snippets = [{ header: 'Servicii', values: ['Istoric de preț', 'Preț redus azi', 'Alerte de preț'] }]
+  assert.ok(hasErr(c5, /afirmă o reducere de azi/))
 })
 
 const page = (over: Partial<PageFacts> = {}): PageFacts => ({

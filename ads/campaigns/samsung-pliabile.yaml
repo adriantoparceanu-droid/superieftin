@@ -7,9 +7,12 @@
 # de ~30 de conversii reale ca să învețe; până atunci plafonăm noi prețul pe click.
 # Câmpurile `id` / `budget_id` le completează ads:apply după crearea în Google Ads.
 #
-# Anunțurile NU conțin procente (se schimbă zilnic). Afirmațiile „sub mediană” / „reducere reală”
-# sunt adevărate cât timp pagina afișează insigna „Reducere reală” — ads:validate verifică asta
-# live înainte de fiecare apply. Dacă reducerea dispare, anunțul trebuie pus pe pauză.
+# Textele NU afirmă că produsul e redus acum (fără „sub mediană”, „reducere reală”, „preț redus”,
+# procente): insigna „Reducere reală” dispare când mediana pe 30 de zile prinde prețul din urmă
+# (5–14 zile), iar anunțul ar deveni fals (verdictul policy-reviewer B1, 2026-09-27). Vorbim doar
+# despre metodă și serviciu (mediana pe 30 de zile, istoric 90 de zile, alertă de preț).
+# ads:validate respinge automat formulările de reducere „de azi”; garda zilnică (ads-guard) pune
+# grupul pe pauză dacă pagina de destinație nu mai e bună (404, fără stoc, noindex).
 
 campaign:
   name: "SE | Search | Samsung pliabile"
@@ -90,13 +93,14 @@ campaign:
     - wallpaper
     - setari
     - resetare
-    # alte generații / modele pe care nu le avem la reducere
-    - fold 8
+    # alte generații / modele pe care nu le promovăm. Cele cu cifră separată sunt PHRASE:
+    # ca broad, „fold 8” ar bloca orice căutare cu „fold” și „8” (ex. „z fold 7 8 gb ram”).
+    - '"fold 8"'
     - fold8
-    - flip 8
+    - '"flip 8"'
     - flip8
-    - fold 6
-    - flip 6
+    - '"fold 6"'
+    - '"flip 6"'
     - "[z flip 7]"
     - "[samsung z flip 7]"
 
@@ -126,24 +130,24 @@ campaign:
           id: null
           headlines:
             - Samsung Galaxy Z Fold7 256GB
-            - Galaxy Z Fold7 sub mediană
-            - "Z Fold7: reducere reală"
-            - Sub mediana de 30 de zile
-            - Verificat față de mediană
+            - Z Fold7 256GB Silver Shadow
+            - Galaxy Z Fold7 12GB RAM
+            - Istoricul prețului Z Fold7
+            - Comparăm cu mediana pe 30 zile
+            - Minim, maxim și mediană
             - Istoric de preț pe 90 de zile
             - Alertă de preț pe Telegram
             - Nu comparăm cu prețul vechi
             - Prețuri verificate zilnic
             - Vezi prețul Z Fold7 de azi
-            - Doar reduceri reale
-            - Comparator de prețuri
-            - Mediana, nu prețul umflat
-            - Z Fold7 256GB la preț redus
+            - Află când se ieftinește
+            - Vezi evoluția prețului
+            - Preț Galaxy Z Fold7 azi
             - superieftin.ro
           descriptions:
-            - Galaxy Z Fold7 256GB costă azi sub mediana prețurilor din ultimele 30 de zile.
+            - Vezi prețul de azi pentru Galaxy Z Fold7 256GB și istoricul lui, înainte să cumperi.
             - Comparăm prețul de azi cu mediana pe 30 de zile, nu cu prețul vechi al magazinului.
-            - "Vezi istoricul prețului pe 90 de zile: minim, maxim și mediană, înainte să cumperi."
+            - Istoricul prețului pe 90 de zile, cu minim și maxim, plus mediana pe 30 de zile.
             - Setează o alertă de preț pe Telegram și află când telefonul se ieftinește.
           path1: samsung
           path2: z-fold7
@@ -165,23 +169,23 @@ campaign:
           headlines:
             - Samsung Galaxy Z Flip7 FE
             - Galaxy Z Flip7 FE 256GB
-            - Z Flip7 FE sub mediană
-            - "Z Flip7 FE: reducere reală"
-            - Sub mediana de 30 de zile
-            - Verificat față de mediană
+            - Z Flip7 FE 256GB White
+            - Galaxy Z Flip7 FE 8GB RAM
+            - Istoricul prețului Z Flip7 FE
+            - Comparăm cu mediana pe 30 zile
+            - Minim, maxim și mediană
             - Istoric de preț pe 90 de zile
             - Alertă de preț pe Telegram
             - Nu comparăm cu prețul vechi
             - Prețuri verificate zilnic
             - Vezi prețul Z Flip7 FE azi
-            - Doar reduceri reale
-            - Comparator de prețuri
-            - Z Flip7 FE la preț redus
+            - Află când se ieftinește
+            - Vezi evoluția prețului
             - superieftin.ro
           descriptions:
-            - Galaxy Z Flip7 FE 256GB costă azi sub mediana prețurilor din ultimele 30 de zile.
+            - Vezi prețul de azi pentru Galaxy Z Flip7 FE 256GB și istoricul lui, înainte să cumperi.
             - Comparăm prețul de azi cu mediana pe 30 de zile, nu cu prețul vechi al magazinului.
-            - "Vezi istoricul prețului pe 90 de zile: minim, maxim și mediană, înainte să cumperi."
+            - Istoricul prețului pe 90 de zile, cu minim și maxim, plus mediana pe 30 de zile.
             - Setează o alertă de preț pe Telegram și află când telefonul se ieftinește.
           path1: samsung
           path2: z-flip7-fe
@@ -190,11 +194,11 @@ campaign:
     sitelinks:
       - text: Galaxy Z Fold7 256GB
         url: https://www.superieftin.ro/p/telefon-mobil-galaxy-z-fold7-256gb-12gb-ram-dual-sim-5g-silver-shadow
-        description1: Preț sub mediana de 30 de zile
+        description1: Prețul de azi față de mediană
         description2: Istoric de preț pe 90 de zile
       - text: Galaxy Z Flip7 FE 256GB
         url: https://www.superieftin.ro/p/telefon-mobil-galaxy-z-flip7-fe-256gb-8gb-ram-dual-sim-5g-white
-        description1: Preț sub mediana de 30 de zile
+        description1: Prețul de azi față de mediană
         description2: Istoric de preț pe 90 de zile
       - text: Reduceri la telefoane
         url: https://www.superieftin.ro/reduceri-reale/telefoane-mobile
@@ -209,17 +213,13 @@ campaign:
       - Istoric preț 90 de zile
       - Alertă de preț Telegram
       - Prețuri verificate zilnic
-      - Doar reduceri reale
-      - Fără prețuri umflate
+      - Nu folosim prețul vechi
+    # Snippet-ul „Modele” a fost scos: fără Z Fold7 512GB (nu e promovat) rămâneau doar 2 valori,
+    # iar Google cere minim 3.
     structured_snippets:
       - header: Servicii
         values:
           - Istoric de preț 90 zile
           - Mediana pe 30 de zile
           - Alerte de preț
-          - Comparator de prețuri
-      - header: Modele
-        values:
-          - Galaxy Z Fold7 256GB
-          - Galaxy Z Fold7 512GB
-          - Galaxy Z Flip7 FE 256GB
+          - Prețuri verificate zilnic
