@@ -50,9 +50,21 @@ export function parseAdClickCookie(value: string | undefined | null): AdClickIds
 
 // --- Doar in browser (apelate din AdClickCapture) ---------------------------------------
 
+// Acelasi click pe reclama? (R4) Comparam toate cele trei ID-uri: reincarcarea paginii de
+// aterizare (acelasi URL cu ?gclid=...) NU e un click nou si nu are voie sa prelungeasca
+// fereastra de 90 de zile. Un ID diferit = aterizare noua.
+export function sameAdClick(a: AdClickIds | null, b: AdClickIds | null): boolean {
+  if (!a || !b) return false
+  return (a.gclid ?? '') === (b.gclid ?? '') && (a.gbraid ?? '') === (b.gbraid ?? '') && (a.wbraid ?? '') === (b.wbraid ?? '')
+}
+
 export function writeAdClickCookie(ids: AdClickIds): void {
   const secure = location.protocol === 'https:' ? '; Secure' : ''
-  const maxAge = AD_CLICK_MAX_AGE_DAYS * 86400
+  // Durata ramasa din cele 90 de zile socotite de la aterizare (ids.ts), nu 90 de zile de acum:
+  // cookie-ul nu trebuie sa traiasca mai mult decat promite politica („90 de zile de la clickul
+  // pe reclama”), nici daca e rescris mai tarziu (ex. acordul vine dupa aterizare).
+  const remainingMs = ids.ts + AD_CLICK_MAX_AGE_DAYS * 86400_000 - Date.now()
+  const maxAge = Math.max(0, Math.floor(remainingMs / 1000))
   document.cookie = `${AD_CLICK_COOKIE}=${encodeURIComponent(JSON.stringify(ids))}; Max-Age=${maxAge}; Path=/; SameSite=Lax${secure}`
 }
 

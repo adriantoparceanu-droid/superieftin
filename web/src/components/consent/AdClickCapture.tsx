@@ -4,7 +4,7 @@ import { useEffect } from 'react'
 import { readConsent, CONSENT_CHANGE_EVENT } from '@/lib/consent'
 import {
   AD_CLICK_COOKIE, LEGACY_PENDING_KEY, WITHDRAW_ENDPOINT, idsFromSearch, readAdClickCookie,
-  writeAdClickCookie, clearAdClickCookie, type AdClickIds,
+  writeAdClickCookie, clearAdClickCookie, sameAdClick, type AdClickIds,
 } from '@/lib/adclick'
 
 // Capteaza identificatorul clickului pe reclama Google (gclid / gbraid / wbraid) la aterizare,
@@ -20,8 +20,8 @@ import {
 //                               reincarca pagina), se pierde la reincarcare / inchiderea filei.
 //                               Daca acordul vine intre timp, il mutam in cookie;
 //   - refuz explicit          → nu pastram nimic, nici in memorie;
-//   - acord retras            → trimitem ID-ul (beacon) la /api/consent/withdraw, care il sterge
-//                               din clickurile deja inregistrate pe server, apoi stergem cookie-ul.
+//   - acord retras / expirat  → trimitem ID-ul (beacon) la /api/consent/withdraw, care il sterge
+//     (sau versiune noua)       din clickurile deja inregistrate pe server, apoi stergem cookie-ul.
 
 // La nivel de modul (nu in state React): ramane intre navigari si intre re-montari ale
 // componentei, dar nu atinge niciodata stocarea browserului.
@@ -58,7 +58,10 @@ export function AdClickCapture() {
       if (consent?.ads === true) {
         // Acord acum: ID-ul din memorie sau, daca pagina tocmai s-a incarcat cu el, din URL
         const ids = pendingIds ?? idsFromSearch(window.location.search)
-        if (ids) writeAdClickCookie(ids)   // un click nou pe reclama inlocuieste ID-ul vechi
+        // R4: reincarcarea paginii cu ACELASI ID in URL nu e un click nou pe reclama → pastram
+        // cookie-ul existent (cu ts-ul vechi), altfel fereastra de 90 de zile s-ar tot prelungi.
+        // Un ID diferit = click nou → il inlocuieste pe cel vechi, cu ts nou.
+        if (ids && !sameAdClick(ids, readAdClickCookie())) writeAdClickCookie(ids)
         pendingIds = null
         return
       }
@@ -70,9 +73,13 @@ export function AdClickCapture() {
         if (hasAdClickCookie()) { notifyWithdraw(); clearAdClickCookie() }
         return
       }
-      // Fara alegere valida (banner inca deschis, acord expirat sau versiune veche de politica):
-      // cookie-ul nu are temei → il stergem; ID-ul de la aterizare ramane doar in memorie.
-      if (hasAdClickCookie()) clearAdClickCookie()
+      // Fara alegere valida (banner inca deschis, acord expirat dupa 6 luni sau versiune veche de
+      // politica): cookie-ul nu mai are temei → il stergem; ID-ul de la aterizare ramane doar in
+      // memorie. R2: acordul expirat nu mai acopera nici ID-urile deja salvate pe server, deci
+      // anuntam serverul (acelasi beacon ca la retragere) INAINTE de stergere — dupa stergere nu
+      // mai avem ID-ul. Beacon-ul pleaca o singura data: doar daca cookie-ul inca exista, iar
+      // imediat dupa il stergem, deci urmatoarele apeluri sync() nu-l mai gasesc.
+      if (hasAdClickCookie()) { notifyWithdraw(); clearAdClickCookie() }
     }
 
     // Aterizare cu ID in URL: fara alegere inca → doar in memorie (sync decide restul)
