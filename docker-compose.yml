@@ -57,6 +57,8 @@ services:
       - PRICE_CHECK_LIMIT=${PRICE_CHECK_LIMIT:-150}
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
       - TELEGRAM_BOT_USERNAME=${TELEGRAM_BOT_USERNAME}
+      # Avertizari catre proprietar (Admin → Magazine & surse); gol = nu se trimit
+      - TELEGRAM_ADMIN_CHAT_ID=${TELEGRAM_ADMIN_CHAT_ID:-}
       - SITE_URL=${SITE_URL}
       - REVALIDATE_SECRET=${REVALIDATE_SECRET}
     volumes:
