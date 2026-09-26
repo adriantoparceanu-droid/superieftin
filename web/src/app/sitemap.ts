@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next'
-import { getAllProductSlugs, getCategories } from '@/lib/queries'
+import { getAllProductSlugs, getCategories, getSubcategories } from '@/lib/queries'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.superieftin.ro'
 
@@ -36,6 +36,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }))
 
+  // Landing pages pentru reclame (/reduceri-reale/…), pe categoriile-parinte + subcategorii.
+  // Excluse: Sanatate & Naturale (fara reclame — vezi reduceri-reale/[categorie]/page.tsx).
+  const landingSlugs = (await Promise.all(
+    categories
+      .filter(({ category }) => category !== 'sanatate-naturale')
+      .map(async ({ category }) => [category, ...(await getSubcategories(category).catch(() => [])).map((s) => s.slug)])
+  )).flat()
+  const landingRoutes: MetadataRoute.Sitemap = landingSlugs.map((slug) => ({
+    url: `${SITE_URL}/reduceri-reale/${slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'daily' as const,
+    priority: 0.7,
+  }))
+
   const productRoutes: MetadataRoute.Sitemap = slugs.map(({ slug, updated_at }) => ({
     url: `${SITE_URL}/p/${slug}`,
     lastModified: updated_at ? new Date(updated_at) : new Date(),
@@ -43,5 +57,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }))
 
-  return [...staticRoutes, ...categoryRoutes, ...productRoutes]
+  return [...staticRoutes, ...categoryRoutes, ...landingRoutes, ...productRoutes]
 }

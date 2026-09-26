@@ -8,7 +8,7 @@ interface PriceTagProps {
 export function PriceTag({ price, discountPct }: PriceTagProps) {
   return (
     <div className="flex items-baseline gap-2 flex-wrap">
-      <span className="text-xl font-black font-archivo tabular-nums text-[var(--color-text)]">
+      <span className="text-lg sm:text-xl font-black font-archivo tabular-nums text-[var(--color-text)] whitespace-nowrap">
         {formatPrice(price)}
       </span>
       {discountPct != null && discountPct >= REAL_DISCOUNT_PCT && (
