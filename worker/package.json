@@ -13,6 +13,8 @@
     "catalog:now": "tsx --env-file=../.env src/index.ts --now --catalog",
     "test": "tsx --test src/lib/profitshare.test.ts src/lib/password.test.ts src/importers/feed.test.ts src/lib/affiliate/affiliate.test.ts src/lib/twoperformant.test.ts src/scrapers/emag-catalog.test.ts",
     "admin:create": "tsx --env-file=../.env src/scripts/create-admin.ts",
+    "ads:auth": "tsx src/ads/auth.ts",
+    "ads:check": "tsx --env-file=../.env src/ads/check.ts",
     "build": "tsc",
     "start": "node dist/index.js"
   },
