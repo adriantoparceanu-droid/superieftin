@@ -78,6 +78,11 @@ services:
       - GOOGLE_ADS_DEVELOPER_TOKEN=${GOOGLE_ADS_DEVELOPER_TOKEN:-}
       - TRACKING_SYNC_AUTO_SEND=${TRACKING_SYNC_AUTO_SEND:-}
       - TRACKING_SYNC_CRON=${TRACKING_SYNC_CRON:-30 6 * * *}
+      # Garda zilnica a reclamelor (ads-guard): verifica landing-urile grupurilor active si le pune
+      # pe pauza daca nu mai corespund. In ADS_ENV=test pauza e reala DOAR cu ADS_GUARD_REAL_PAUSE=1
+      # (acordul proprietarului; altfel validate_only + alerta Telegram). Nu activeaza nimic.
+      - ADS_GUARD_CRON=${ADS_GUARD_CRON:-0 7 * * *}
+      - ADS_GUARD_REAL_PAUSE=${ADS_GUARD_REAL_PAUSE:-}
     volumes:
       - uploads:/app/uploads
     depends_on:

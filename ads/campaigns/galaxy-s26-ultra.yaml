@@ -1,0 +1,209 @@
+# Direcția 3 din research v2 (decizia proprietarului, 2026-09-27): Samsung Galaxy S26 Ultra.
+# E la limita de rentabilitate (EPC/CPC 1,34), de aceea: DOAR exact match (exact_only) și CPC
+# maxim mai mic (0,33 lei). „samsung galaxy s26 ultra” simplu (CPC până la 0,39) e lăsat afară.
+#
+# Landing: Cobalt Violet 256GB și 1TB (ITGalaxy pe site). Atenție (research §3.3): minimul pe
+# 90 de zile a fost mai mic decât prețul de azi — deci NU scriem „cel mai mic preț”.
+# Textele NU afirmă nici că produsul e redus acum (verdictul policy-reviewer B1, 2026-09-27):
+# „sub mediană” devine fals când mediana de 30 de zile prinde prețul din urmă. Vorbim doar despre
+# metodă și serviciu; ads:validate respinge formulările de reducere „de azi”, iar garda zilnică
+# (ads-guard) pune grupul pe pauză dacă pagina de destinație nu mai e bună.
+# Câmpurile `id` / `budget_id` le completează ads:apply după crearea în Google Ads.
+
+campaign:
+  name: "SE | Search | Galaxy S26 Ultra"
+  id: null
+  budget_id: null
+  status: PAUSED                  # rămâne PAUSED; activarea o faci tu în Google Ads
+  daily_budget: 10                # lei/zi
+  bidding:
+    strategy: MANUAL_CPC
+    max_cpc: 0.33                 # lei — mai jos decât la celelalte, marja e mică
+  exact_only: true                # ads:validate refuză orice cuvânt care nu e exact
+  conversion_goal:
+    name: Comision Profitshare
+    conversion_action_id: "7799099014"
+  targeting:
+    countries: [RO]
+    languages: [ro]
+    location_mode: PRESENCE
+    networks:
+      search: true
+      search_partners: false
+      display: false
+  source_research: ads/research/2026-09-27-oportunitati-v2.md   # secțiunea 3.3
+
+  negative_keywords:
+    # de bază
+    - gratis
+    - second hand
+    - folosit
+    - service
+    - reparatie
+    - manual
+    - driver
+    - olx
+    - piese
+    - cum
+    - ce este
+    - forum
+    # branduri de retaileri și operatori — doar ca negative
+    - emag
+    - evomag
+    - evo mag
+    - itgalaxy
+    - '"it galaxy"'
+    - vexio
+    - citgrup
+    - cit grup
+    - forit
+    - vegis
+    - altex
+    - flanco
+    - '"media galaxy"'
+    - orange
+    - vodafone
+    - telekom
+    - digi
+    - abonament
+    # intenții care nu cumpără un telefon nou
+    - husa
+    - husă
+    - folie
+    - carcasa
+    - incarcator
+    - încărcător
+    - baterie
+    - display
+    - ecran
+    - sh
+    - refurbished
+    - reconditionat
+    - review
+    - pareri
+    - păreri
+    - specificatii
+    - vs
+    - comparatie
+    - wallpaper
+    - setari
+    - resetare
+    # alte modele din serie
+    - s26 plus
+    - s26+
+    - s26 edge
+    - s25
+    - s27
+    - "[samsung s26]"
+    - "[samsung galaxy s26]"
+    - 512gb
+
+  ad_groups:
+    - name: "S26 Ultra 256GB - model și preț"
+      id: null
+      final_url: https://www.superieftin.ro/p/telefon-mobil-galaxy-s26-ultra-256gb-12gb-ram-dual-sim-5g-cobalt-violet
+      keywords:
+        exact:
+          - samsung s26 ultra
+          - samsung s26 ultra pret
+          - s26 ultra pret
+          - samsung galaxy s26 ultra pret
+          - pret samsung s26 ultra
+          - samsung s26 ultra 256gb
+          - s26 ultra 256gb
+          - samsung galaxy s26 ultra 256gb
+      negative_keywords:
+        - 1tb
+      ads:
+        - type: RSA
+          id: null
+          headlines:
+            - Samsung Galaxy S26 Ultra
+            - Galaxy S26 Ultra 256GB
+            - S26 Ultra 256GB Cobalt Violet
+            - Istoricul prețului S26 Ultra
+            - Preț Galaxy S26 Ultra azi
+            - Comparăm cu mediana pe 30 zile
+            - Minim, maxim și mediană
+            - Istoric de preț pe 90 de zile
+            - Alertă de preț pe Telegram
+            - Nu comparăm cu prețul vechi
+            - Prețuri verificate zilnic
+            - Află când se ieftinește
+            - Vezi evoluția prețului
+            - Galaxy S26 Ultra 12GB RAM
+            - superieftin.ro
+          descriptions:
+            - Vezi prețul de azi pentru Galaxy S26 Ultra 256GB și istoricul lui, înainte să cumperi.
+            - Comparăm prețul de azi cu mediana pe 30 de zile, nu cu prețul vechi al magazinului.
+            - Istoricul prețului pe 90 de zile, cu minim și maxim, plus mediana pe 30 de zile.
+            - Setează o alertă de preț pe Telegram și află când telefonul se ieftinește.
+          path1: samsung
+          path2: s26-ultra
+
+    - name: "S26 Ultra 1TB - model și preț"
+      id: null
+      final_url: https://www.superieftin.ro/p/telefon-mobil-galaxy-s26-ultra-1tb-16gb-ram-dual-sim-5g-cobalt-violet
+      keywords:
+        exact:
+          - samsung s26 ultra 1tb
+          - s26 ultra 1tb
+      negative_keywords: []
+      ads:
+        - type: RSA
+          id: null
+          headlines:
+            - Samsung Galaxy S26 Ultra 1TB
+            - Galaxy S26 Ultra 1TB
+            - S26 Ultra 1TB Cobalt Violet
+            - Istoric preț S26 Ultra 1TB
+            - Preț S26 Ultra 1TB azi
+            - Comparăm cu mediana pe 30 zile
+            - Minim, maxim și mediană
+            - Istoric de preț pe 90 de zile
+            - Alertă de preț pe Telegram
+            - Nu comparăm cu prețul vechi
+            - Prețuri verificate zilnic
+            - Află când se ieftinește
+            - Vezi evoluția prețului
+            - Galaxy S26 Ultra 16GB RAM
+            - superieftin.ro
+          descriptions:
+            - Vezi prețul de azi pentru Galaxy S26 Ultra 1TB și istoricul lui, înainte să cumperi.
+            - Comparăm prețul de azi cu mediana pe 30 de zile, nu cu prețul vechi al magazinului.
+            - Istoricul prețului pe 90 de zile, cu minim și maxim, plus mediana pe 30 de zile.
+            - Setează o alertă de preț pe Telegram și află când telefonul se ieftinește.
+          path1: samsung
+          path2: s26-ultra-1tb
+
+  extensions:
+    sitelinks:
+      - text: Galaxy S26 Ultra 256GB
+        url: https://www.superieftin.ro/p/telefon-mobil-galaxy-s26-ultra-256gb-12gb-ram-dual-sim-5g-cobalt-violet
+        description1: Prețul de azi față de mediană
+        description2: Istoric de preț pe 90 de zile
+      - text: Galaxy S26 Ultra 1TB
+        url: https://www.superieftin.ro/p/telefon-mobil-galaxy-s26-ultra-1tb-16gb-ram-dual-sim-5g-cobalt-violet
+        description1: Prețul de azi față de mediană
+        description2: Istoric de preț pe 90 de zile
+      - text: Reduceri la telefoane
+        url: https://www.superieftin.ro/reduceri-reale/telefoane-mobile
+        description1: Doar prețuri sub mediană
+        description2: Verificate față de 30 de zile
+      - text: Cum verificăm reducerile
+        url: https://www.superieftin.ro/despre
+        description1: Mediana pe 30 de zile explicată
+        description2: Fără prețuri vechi umflate
+    callouts:
+      - Mediana pe 30 de zile
+      - Istoric preț 90 de zile
+      - Alertă de preț Telegram
+      - Prețuri verificate zilnic
+      - Nu folosim prețul vechi
+    structured_snippets:
+      - header: Servicii
+        values:
+          - Istoric de preț 90 zile
+          - Mediana pe 30 de zile
+          - Alerte de preț
+          - Prețuri verificate zilnic

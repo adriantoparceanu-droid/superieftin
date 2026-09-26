@@ -1,6 +1,7 @@
 import pino from 'pino'
 import pool from './db.js'
 import { extractDomain } from './affiliate/domain.js'
+import { notifyAdmin as notifyAdminTelegram } from './admin-telegram.js'
 
 // Starea sursei fiecarui magazin, pentru Admin → Magazine & surse (migratia 018).
 // Calculata zilnic la finalul feed-sync-ului. La schimbarea starii trimite o avertizare pe
@@ -83,20 +84,9 @@ export function decideState(f: RetailerFacts, input: StatusInput, advertiserActi
   return { state: 'stale', reason: 'Prețurile nu au mai fost actualizate de peste 48 de ore' }
 }
 
+// Trimiterea propriu-zisa e in admin-telegram.ts (folosita si de garda campaniilor ads-guard)
 async function notifyAdmin(text: string): Promise<void> {
-  const token = process.env.TELEGRAM_BOT_TOKEN
-  const chatId = process.env.TELEGRAM_ADMIN_CHAT_ID
-  if (!token || !chatId) {
-    logger.warn('TELEGRAM_ADMIN_CHAT_ID lipsește — avertizarea despre magazine nu s-a trimis')
-    return
-  }
-  const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML', disable_web_page_preview: true }),
-    signal: AbortSignal.timeout(15000),
-  }).catch((err) => { logger.error({ err }, 'Avertizare Telegram eșuată'); return null })
-  if (res && !res.ok) logger.error({ status: res.status }, 'Avertizare Telegram respinsă')
+  await notifyAdminTelegram(text, 'avertizarea despre magazine')
 }
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
