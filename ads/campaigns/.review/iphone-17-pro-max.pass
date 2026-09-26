@@ -1,0 +1,6 @@
+verdict: PASS
+date: 2026-09-26T23:54:57Z
+sha256: a892475d438a53c91393f532e0c4065770486911623c0bd9437043d37d8a7b6b
+reviewer: policy-reviewer
+file: ads/campaigns/iphone-17-pro-max.yaml
+notes: "Re-verificare dupa B1 (texte care nu expira + ads-guard). Neblocant: deploy feat/ghiduri (373efdd) inainte de activare."
