@@ -22,7 +22,7 @@ Scrii DOAR în `ads/research/`. Nu modifici cod, nu atingi Google Ads.
    accesul Explorer NU include Keyword Planner. Dacă nu e disponibil, spune clar asta și
    marchează estimările drept „aproximative”.
 3. **GA4 prin MCP, doar citire** (din Faza 4): ce categorii au trafic și ce procent din
-   vizitatori ajung la `affiliate_click`.
+   vizitatori ajung la `click_affiliate_link`.
 4. **Google Search Console** (dacă e conectat): pe ce căutări apare deja site-ul organic.
 5. **Web (WebSearch):** sezonalitate, lansări de produse, evenimente (Black Friday,
    back to school, lansări de telefoane), prețuri la concurență. Doar orientativ.

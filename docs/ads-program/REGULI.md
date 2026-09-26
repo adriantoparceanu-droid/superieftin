@@ -4,12 +4,18 @@
 > reclame, tracking, consimțământ sau dashboard-ul de ads.
 
 ## Context business
-- superieftin.ro este un comparator de prețuri cu linkuri de afiliere Profitshare.
-  Nu vindem direct. Venitul = comisioane Profitshare.
+- superieftin.ro este un comparator de prețuri cu linkuri de afiliere Profitshare
+  (majoritatea ofertelor) și 2Performant (evomag). Nu vindem direct.
+  Venitul = comisioane din aceste rețele.
 - Propunerea de valoare: reducere reală = preț actual cu minim 5% sub MEDIANA ultimelor 30 de zile.
 - Google Shopping NU este permis pentru acest model (politica Merchant Center interzice
   linkurile de afiliere în afara programului CSS). Folosim doar campanii Search.
-- Retaileri actuali: ITGalaxy, ForIT, CITGrup, Vexio, Vegis (lista poate crește).
+- Retaileri actuali (lista poate crește; sursa de adevăr e tabela `retailers`):
+  - Profitshare: CITGrup, ITGalaxy, ForIT, Vexio, Vegis, eMAG (scanat local, linkuri
+    afiliate Profitshare — ~86% din oferte; restul nu aduc comision)
+  - 2Performant: evomag
+  - Vegis = categoria Sănătate & Naturale → exclus din reclame (regula 8)
+- Reclamele trimit DOAR spre oferte cu `affiliate_url` (fără link afiliat = cost fără venit).
 
 ## Reguli de siguranță (NU se negociază)
 1. **Nicio campanie nu se activează automat.** Orice campanie, grup de anunțuri sau anunț
@@ -18,10 +24,16 @@
    orice buget peste ele. Nu modifica fișierul de guardrails fără cerere explicită.
 3. **Dry-run implicit.** Orice script care scrie în Google Ads rulează implicit în mod
    `plan` (arată ce ar schimba). Scrierea reală cere `--confirm`.
-4. **Mediu de test mai întâi.** Variabila `ADS_ENV=test|prod`. Codul nou se rulează întâi
-   pe contul de test. Rularea pe `prod` cere și flag-ul `--prod`.
+4. **Validare înainte de scriere (fără MCC — decizia proprietarului, 2026-09-26).** Nu avem cont
+   Manager, deci nici conturi de test Google. `ADS_ENV=test` = fiecare cerere de scriere către
+   contul real se trimite cu **`validate_only: true`**: Google verifică tot (structură, politici,
+   limite), dar NU aplică nimic. Codul nou rulează întâi așa. Scrierea reală cere `ADS_ENV=prod`
+   + flag-ul `--prod` + `--confirm` (regula 3). Citirile (rapoarte) sunt permise în ambele moduri.
+   Accesul la contul real cere nivelul **Explorer** pe proiectul Google Cloud.
 5. **Secretele stau doar în `.env`.** Niciodată în cod, commit-uri, loguri sau rapoarte.
-6. **Nu modifica conținutul existent din CLAUDE.md.**
+6. **Nu șterge și nu rescrie regulile existente din CLAUDE.md.** Adăugările de documentare
+   cerute de secțiunea „Întreținerea acestui fișier” (rută nouă, migrație, comandă nouă)
+   sunt permise și obligatorii, în același commit cu modificarea.
 7. **Consimțământ (GDPR):** `gclid`, `gbraid`, `wbraid` se salvează și se trimit la Google
    DOAR dacă utilizatorul a acordat `ad_storage` și `ad_user_data`. Fără consimțământ,
    clickul se înregistrează anonim (fără ID-uri Google).
@@ -42,9 +54,8 @@ ADS_ENV=test
 GOOGLE_ADS_CLIENT_ID=
 GOOGLE_ADS_CLIENT_SECRET=
 GOOGLE_ADS_REFRESH_TOKEN=
-GOOGLE_ADS_LOGIN_CUSTOMER_ID=      # ID-ul contului Manager (MCC), fără liniuțe
-GOOGLE_ADS_CUSTOMER_ID_TEST=       # contul de test
-GOOGLE_ADS_CUSTOMER_ID_PROD=       # contul real
+GOOGLE_ADS_LOGIN_CUSTOMER_ID=      # gol — nu folosim MCC (se completează doar dacă apare unul)
+GOOGLE_ADS_CUSTOMER_ID_PROD=2760086909   # contul de reclame, fără liniuțe (nu e secret)
 PROFITSHARE_API_USER=
 PROFITSHARE_API_KEY=
 ADMIN_DASHBOARD_PASSWORD=          # sau integrarea cu auth-ul existent
@@ -54,7 +65,7 @@ GA4_PROPERTY_ID=                   # din Faza 4, pentru citire prin MCP
 ## Google Analytics 4 — rolul lui
 - Profitshare = sursa de adevăr pentru bani. Google Ads = sursa pentru cost.
 - GA4 = comportament: DE CE un cuvânt cheie pierde bani (bounce, viteză, pagină slabă).
-- Evenimentul GA4 `affiliate_click` se importă în Google Ads DOAR ca conversie SECUNDARĂ.
+- Evenimentul GA4 `click_affiliate_link` se importă în Google Ads DOAR ca conversie SECUNDARĂ.
   Conversia principală rămâne „Comision Profitshare”. Altfel Google numără dublu.
 - Accesul agenților la GA4 este DOAR citire (MCP oficial, scope `analytics.readonly`).
   Setările GA4 le face proprietarul manual.

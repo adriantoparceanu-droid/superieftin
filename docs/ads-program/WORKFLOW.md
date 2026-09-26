@@ -18,13 +18,12 @@ dar Faza 2 depinde de bannerul de cookies din Faza 1 pentru testul final.
 **Cine:** proprietarul (conturi) + agentul `tracking` (verificare API)
 
 Proprietarul face (ghid pas cu pas: `docs/ads-program/GHID-CONECTARE-GOOGLE-ADS.md`):
-- [x] Cont Google Ads Manager (MCC)
-- [ ] Contul real de reclame, legat sub MCC (fără campanii încă)
+- [x] ~~Cont Google Ads Manager (MCC)~~ — nu mai e necesar (decizie 2026-09-26)
+- [x] Contul de reclame (276-008-6909), fără campanii încă
 - [ ] Proiect Google Cloud cu facturare activă (nu Free Trial)
 - [ ] Google Ads API activat în proiect → acces Test automat
 - [ ] Ecran de consimțământ OAuth publicat „In production” + OAuth client (Desktop app)
 - [ ] Cerere acces Explorer (din Google Ads API Overview, în Cloud Console)
-- [ ] Cont manager de TEST + un cont client de test sub el
 - [ ] Datele API Profitshare în `.env`
 - [ ] GA4: retenția datelor pe 14 luni (Admin → Colectarea datelor → Păstrarea datelor)
 - [ ] Mai târziu, după Faza 1: brand verification → cerere acces Basic
@@ -35,7 +34,7 @@ Claude Code (agent `tracking`) verifică:
 - [ ] API-ul Profitshare întoarce acel parametru în lista de comisioane?
 - [ ] Ce statusuri au comisioanele și după cât timp se aprobă/resping?
 - [ ] Ce date ai despre rata de comision pe magazin/categorie?
-- [ ] Conexiunea la Google Ads API funcționează pe contul de test
+- [ ] Conexiunea la Google Ads API funcționează pe contul real (citire + o scriere `validate_only`)
 
 **POARTA 0:** raport `docs/ads-program/raport-faza-0.md`.
 Dacă Profitshare NU întoarce subID-ul → decidem împreună metoda alternativă de potrivire.
@@ -70,13 +69,16 @@ Dacă Profitshare NU întoarce subID-ul → decidem împreună metoda alternativ
 - [ ] Job zilnic `tracking:sync`: Profitshare → potrivire → upload conversii offline
 - [ ] Ajustare automată pentru comisioanele respinse (retragere)
 - [ ] Acțiune de conversie „Comision Profitshare” în Google Ads
-- [ ] Eveniment GA4 `affiliate_click` (magazin, produs, categorie, preț, % reducere),
+- [ ] Eveniment GA4 `click_affiliate_link` (magazin, produs, categorie, preț, % reducere),
       importat în Google Ads ca conversie SECUNDARĂ (nu folosită la licitare)
-- [ ] În GA4 (manual, după ghidul generat de tracking): `affiliate_click` ca eveniment cheie,
+- [ ] În GA4 (manual, după ghidul generat de tracking): `click_affiliate_link` ca eveniment cheie,
       dimensiuni personalizate, filtru trafic intern, legătură GA4 ↔ Google Ads
-- [ ] Test end-to-end pe contul de test
+- [ ] Test end-to-end cu `validate_only` (fără conturi de test — regula 4)
 
-**POARTA 2:** demonstrație: click → comision → conversie vizibilă în contul de test.
+**POARTA 2:** demonstrație: click → comision (fixture) → potrivire → upload trimis cu
+`validate_only`. Un gclid inventat e respins de Google (clickul nu există în cont) — acea eroare
+specifică dovedește că cererea a ajuns corect. Prima conversie reală apare după activarea
+campaniilor; nu încărcăm conversii false în contul real.
 
 ---
 

@@ -40,7 +40,7 @@ Scrii DOAR verdictele: `ads/campaigns/.review/<nume>.pass` sau `.fail`
 
 ## Checklist conversii
 - [ ] Conversia principală în Google Ads = „Comision Profitshare”
-- [ ] `affiliate_click` e setată ca SECUNDARĂ (nu intră în licitare)
+- [ ] `click_affiliate_link` e setată ca SECUNDARĂ (nu intră în licitare)
 
 ## Checklist siguranță
 - [ ] Toate elementele noi sunt PAUSED în plan

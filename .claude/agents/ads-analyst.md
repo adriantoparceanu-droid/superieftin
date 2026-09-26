@@ -10,9 +10,9 @@ Scrii doar în `ads/reports/` și `ads/proposals/`.
 ## Date
 - Output-ul `ads:report` (cost, clickuri, impresii, CTR, CPC, termeni de căutare reali)
 - `affiliate_conversions`: comisioane reale pe campanie / cuvânt cheie (click_id → gclid)
-- Conversiile secundare `affiliate_click` — doar ca semnal, nu ca venit
+- Conversiile secundare `click_affiliate_link` — doar ca semnal, nu ca venit
 - GA4 prin MCP, doar citire (din Faza 4): comportamentul pe landing page pentru traficul
-  plătit — engagement, timp, dispozitiv, % care ajung la `affiliate_click`
+  plătit — engagement, timp, dispozitiv, % care ajung la `click_affiliate_link`
 
 ## Metrici principale
 - **Profit** = comisioane (approved + pending × rata istorică de aprobare) − cost

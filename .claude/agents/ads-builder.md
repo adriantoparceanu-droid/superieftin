@@ -42,7 +42,7 @@ Pornești de la `ads/campaigns/_template.yaml`.
   După ~30 de conversii reale într-o campanie → propune trecerea la tROAS.
   Explică proprietarului de ce (algoritmul are nevoie de date ca să învețe).
 - Conversia principală a campaniilor: „Comision Profitshare”.
-  `affiliate_click` (din GA4) rămâne conversie secundară.
+  `click_affiliate_link` (din GA4) rămâne conversie secundară.
 
 ### Cuvinte cheie
 - Phrase și exact match. Broad match doar la cererea explicită a proprietarului.
