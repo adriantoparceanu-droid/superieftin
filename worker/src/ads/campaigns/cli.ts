@@ -7,6 +7,9 @@
 //   npm run ads:apply -- --confirm           ADS_ENV=test → trimite cu validate_only (Google verifica, nu creeaza)
 //   npm run ads:apply -- --confirm --prod    ADS_ENV=prod → SCRIERE REALA (totul nou = PAUSED)
 //   optional la plan/apply: --only=<fisier>  (ex. --only=samsung-pliabile)
+//   npm run ads:guard                        garda: verifica landing-urile grupurilor active (nu trimite nimic)
+//   npm run ads:guard -- --confirm           + pauza grupurilor cu probleme (pauseOnly: reala doar in prod
+//                                            sau cu ADS_GUARD_REAL_PAUSE=1, altfel validate_only) + Telegram
 //
 // Poarta policy-reviewer (regula 10): scrierea reala cere ads/campaigns/.review/<fisier>.pass
 // cu hash-ul continutului — vezi review.ts. Hash-ul il afiseaza ads:validate.
@@ -18,6 +21,7 @@ import { validateAll, validateLive, type Issue } from './validate.js'
 import { readAccount } from './account.js'
 import { buildPlan, formatPlan, planOps, summarize, type Plan } from './plan.js'
 import { checkReview } from './review.js'
+import { runAdsGuard } from './guard.js'
 
 const args = process.argv.slice(2)
 const cmd = args[0]
@@ -193,11 +197,16 @@ async function main() {
   if (cmd === 'validate') return cmdValidate()
   if (cmd === 'plan') return cmdPlan()
   if (cmd === 'apply') return cmdApply()
+  if (cmd === 'guard') {
+    const r = await runAdsGuard({ mode: flag('--confirm') ? 'send' : 'check' })
+    console.log(`\nads:guard · cont citit: ${r.accountRead ? 'da' : 'nu'} · ${r.checked} grupuri · ${r.failing} cu probleme · ${r.paused} puse pe pauză · ${r.validatedOnly} doar validate${r.errors.length ? ` · erori: ${r.errors.join('; ')}` : ''}`)
+    return
+  }
   if (cmd === 'hash') {
     for (const f of loadAllCampaigns()) console.log(`${contentHash(f.raw)}  ${f.rel}`)
     return
   }
-  console.log('Folosire: tsx src/ads/campaigns/cli.ts validate|plan|apply|hash')
+  console.log('Folosire: tsx src/ads/campaigns/cli.ts validate|plan|apply|guard|hash')
   process.exit(2)
 }
 

@@ -24,6 +24,10 @@ const EMAG_SCRAPE_CRON = process.env.EMAG_SCRAPE_CRON || '0 2 * * *'
 // Comisioane Profitshare → Google Ads, dupa feed-sync (04:00) si backfill (05:30). Implicit
 // DOAR validate_only — vezi runTrackingSyncJob in tracking/sync.ts.
 const TRACKING_SYNC_CRON = process.env.TRACKING_SYNC_CRON || '30 6 * * *'
+// Garda reclamelor: dupa feed-sync (04:00), snapshot/mediana si price-check — verifica landing-urile
+// grupurilor active si pune pe pauza ce nu mai corespunde. Pauza e reala doar cu ADS_ENV=prod sau
+// ADS_GUARD_REAL_PAUSE=1; altfel doar alerteaza pe Telegram. Vezi ads/campaigns/guard.ts.
+const ADS_GUARD_CRON = process.env.ADS_GUARD_CRON || '0 7 * * *'
 
 async function scheduleRepeatingJobs() {
   await syncQueue.add(
@@ -60,6 +64,13 @@ async function scheduleRepeatingJobs() {
     { repeat: { pattern: TRACKING_SYNC_CRON }, jobId: 'tracking-sync-repeat' }
   )
   logger.info({ cron: TRACKING_SYNC_CRON }, 'Job repeating programat: tracking-sync')
+
+  await syncQueue.add(
+    'ads-guard',
+    { type: 'ads-guard' },
+    { repeat: { pattern: ADS_GUARD_CRON }, jobId: 'ads-guard-repeat' }
+  )
+  logger.info({ cron: ADS_GUARD_CRON }, 'Job repeating programat: ads-guard')
 }
 
 async function invalidateCache() {

@@ -20,8 +20,8 @@ Ce au toate campaniile:
 - conversia campaniei e „Comision Profitshare” (ID 7799099014), printr-un obiectiv personalizat „SE | Comision Profitshare” care conține doar această acțiune. Contul nu are acum niciun obiectiv folosit la licitare, iar acțiunea „indicații de orientare” e marcată principală. Obiectivul personalizat garantează că aceste campanii numără doar comisioanele;
 - URL-urile finale sunt pagini `/p/...` de pe www.superieftin.ro, niciodată `/go/`;
 - negative: cele de bază, brandurile retailerilor și ale operatorilor, intențiile care nu cumpără (husă, service etc.) și cele specifice fiecărui model;
-- anunțuri RSA cu 15 titluri și 4 descrieri, fără procente. Mesajul central: prețul e sub mediana de 30 de zile;
-- extensii: 4 sitelinks (cele 2 produse, reducerile la telefoane, metodologia de pe `/despre`), 6 callouts și structured snippets („Servicii”, plus „Modele” la pliabile).
+- anunțuri RSA cu 15 titluri și 4 descrieri, fără procente și fără afirmația că produsul e redus acum (vezi §6). Mesajul central: metoda — comparăm cu mediana pe 30 de zile, istoric de preț pe 90 de zile, alertă de preț;
+- extensii: 4 sitelinks (cele 2 produse, reducerile la telefoane, metodologia de pe `/despre`), 5 callouts și un structured snippet „Servicii”.
 
 ### De ce CPC manual și nu tROAS
 Contul nu are încă nicio conversie. Strategiile automate (tROAS, maximizarea valorii conversiilor) învață din conversii și au nevoie de ~30 de conversii reale pe campanie ca să liciteze bine. Până atunci, noi fixăm prețul maxim pe click. După ~30 de comisioane într-o campanie, ads-analyst propune trecerea la tROAS.
@@ -104,8 +104,46 @@ Hash-ul ignoră câmpurile `id` / `budget_id`, deci ID-urile scrise după creare
 
 ## 5. Riscuri
 
-- **Reducerile pot dispărea.** Texte ca „sub mediană” sau „preț redus” sunt adevărate doar cât timp pagina afișează „Reducere reală”. iPhone 17 Pro Max poate pierde reducerea spre sfârșitul lui octombrie, iar Fold7 are prețul instabil. `ads:validate` prinde asta, dar trebuie rulat. Recomand să-l rulezi zilnic cât campaniile sunt active, iar în Faza 4 un job care pune automat pe pauză grupul cu reducere dispărută (pauza e permisă, regula 11).
+- **Reducerile pot dispărea** — rezolvat în §6: textele nu mai depind de reducere, iar garda zilnică `ads-guard` oprește grupul când landing-ul nu mai e bun.
 - **Mărci în text** (Samsung, Galaxy, iPhone): apar pe paginile de landing ca produse reale. Titularul mărcii poate restricționa textul (policy-reviewer).
-- **„Comparator de prețuri”** (titlu și snippet) descrie site-ul. Totuși, pe fiecare pagină de produs e azi un singur magazin. De confirmat de policy-reviewer.
-- **Culoarea:** landing-ul S26 Ultra e Cobalt Violet, iar cel iPhone e Cosmic Orange. Cine caută altă culoare poate pleca fără să cumpere.
+- **Culoarea:** landing-ul S26 Ultra e Cobalt Violet, iar cel iPhone e Cosmic Orange (la iPhone, celelalte culori sunt acum negative — §6).
 - **CPC:** un cont nou poate plăti mai mult decât estimarea din Keyword Planner. Plafoanele de 0,33–0,35 lei pot duce la afișări puține la început. Nu le crește fără date.
+
+## 6. Reparații după verdictul policy-reviewer (FAIL, blocant B1) — 27.09.2026
+
+**B1:** afirmațiile de reducere „de azi” („… sub mediană”, „reducere reală”, „preț redus”, „costă azi sub mediana…”, sitelinks „Preț sub mediana de 30 de zile”) devin false în 5–14 zile: mediana pe 30 de zile prinde din urmă prețul redus și insigna „Reducere reală” dispare (~2 oct S26 Ultra 1TB și iPhone Deep Blue, ~5 oct iPhone Cosmic Orange și Z Fold7, ~10–11 oct S26 256GB și Z Flip7 FE). Proprietarul a aprobat ambele remedieri (b + a) și recomandările.
+
+### b) Texte care nu expiră
+- Scoase din toate textele (titluri, descrieri, sitelinks de produs, callouts, snippets): „sub mediană”, „reducere reală”, „preț redus”, „Doar reduceri reale”, „Fără prețuri umflate”, „Mediana, nu prețul umflat”, „Verificat față de mediană”, „Comparator de prețuri”.
+- Titluri noi (comune): „Comparăm cu mediana pe 30 zile” (în locul „Comparator de prețuri”), „Minim, maxim și mediană”, „Află când se ieftinește”, „Vezi evoluția prețului”, „Istoricul prețului <model>”, plus titluri descriptive ale modelului (culoare, RAM — ce scrie în numele produsului de pe landing). Rămân: „Istoric de preț pe 90 de zile”, „Alertă de preț pe Telegram”, „Nu comparăm cu prețul vechi”, „Prețuri verificate zilnic”, „Vezi prețul … de azi”, „Preț … azi”.
+- Descrierea 1: „Vezi prețul de azi pentru <model> și istoricul lui, înainte să cumperi.” Descrierea 3: „Istoricul prețului pe 90 de zile, cu minim și maxim, plus mediana pe 30 de zile.” (pagina arată Min/Max pe istoric și „Mediana 30 de zile”).
+- Sitelinks de produs: descrierea 1 = „Prețul de azi față de mediană”. Sitelink-ul „Reduceri la telefoane” (→ `/reduceri-reale/telefoane-mobile`) păstrează „Doar prețuri sub mediană”: pagina e, prin definiție, lista produselor sub mediană, deci afirmația nu expiră.
+- Callouts: „Doar reduceri reale” și „Fără prețuri umflate” → scoase; adăugat „Nu folosim prețul vechi” (5 callouts). Snippet „Servicii”: „Comparator de prețuri” → „Prețuri verificate zilnic”. Snippet-ul „Modele” de la pliabile a fost scos (fără „Galaxy Z Fold7 512GB” rămâneau 2 valori; Google cere minim 3).
+- **Regulă nouă în `ads:validate`** (`expiringClaims` în `validate.ts`): respinge automat în orice text procentele, „redus/reduse”, „ieftinit”, „ieftin azi/acum”, „mai ieftin / cel mai ieftin / cel mai mic preț / preț minim”, „a scăzut”, „economisești”, „discount / promoție / ofertă specială”, iar spre pagini de produs (`/p/`) și „sub mediană” / „reducere/reduceri”. Excepție îngustă: anunțurile și sitelink-urile spre pagini de listă (nu `/p/`) pot spune „reduceri” / „sub mediană”. Callouts și snippets nu au excepția (apar lângă orice anunț).
+
+### Negative
+- Phrase în loc de broad (ca să nu blocheze „8 gb ram”, „rate 18 luni”): `"fold 8"`, `"flip 8"`, `"fold 6"`, `"flip 6"` (pliabile); `"iphone 18"`, `"18 pro"`, `"18 pro max"` (iPhone — „18 pro max” broad avea aceeași problemă).
+- iPhone: modelul are 3 culori (Cosmic Orange, Deep Blue, Silver — verificat pe site). Am ales varianta mai simplă: negative pentru culorile care nu sunt pe landing — `blue`, `albastru`, `albastra`, `silver`, `argintiu`, `argintie` (negativele nu prind variante apropiate, de aceea formele separate). Deep Blue rămâne sitelink.
+
+### Z Fold7: Silver Shadow vs Blue Shadow (evaluare, NESCHIMBAT)
+Azi, pe site, toate trei variantele de 256GB sunt doar la ITGalaxy, în stoc: Blue Shadow 6.798,99 lei, Silver Shadow 6.833,99 lei, Jetblack 6.844,99 lei. Blue Shadow e cu 35 de lei (0,5%) mai ieftină. Silver Shadow a fost aleasă pentru insigna „Reducere reală” (−16,8%), dar după b) textele nu mai depind de ea, iar insigna dispare oricum pe ~5 oct. Nu am schimbat landing-ul: diferența e mică și nu e un motiv clar. **De decis de tine:** dacă vrei cea mai ieftină variantă de 256GB ca landing, se schimbă `final_url`, sitelink-ul și titlul „Z Fold7 256GB Silver Shadow” (→ nou verdict policy-reviewer).
+
+### a) Garda automată zilnică `ads-guard`
+- Cod: `worker/src/ads/campaigns/guard.ts`; job BullMQ `ads-guard` (cron `ADS_GUARD_CRON`, implicit `0 7 * * *` — după feed-sync 04:00, snapshot/mediană și tracking-sync 06:30); manual: `npm run ads:guard` (doar verifică, nu trimite nimic) sau `npm run ads:guard -- --confirm` (ca jobul).
+- Ia grupurile ACTIVE (grup + anunț ENABLED) din campaniile „SE | …” din cont (o citire GAQL) și grupurile cu `id` din YAML. Fără ID-uri și fără grupuri active → nu face nimic (nicio pagină descărcată). În imaginea Docker de producție YAML-ul nu există, deci acolo contează contul.
+- Pentru fiecare grup verifică landing-ul cu aceleași reguli ca `ads:validate` (funcția comună `landingProblems`): 200 direct, indexabil, ofertă în stoc (o pagină de produs fără ofertă în JSON-LD e respinsă), categorie permisă; plus afirmațiile din texte (dacă vreun text ar vorbi de reducere sau procent → „Reducere reală” trebuie să fie vizibilă; mărcile să apară pe pagină). O pagină care pică se re-verifică o dată după un minut.
+- Grupurile care pică → pauză prin `pauseOnly()` + mesaj Telegram la `TELEGRAM_ADMIN_CHAT_ID` (helperul comun `worker/src/lib/admin-telegram.ts`, folosit și de starea magazinelor). Garda nu activează niciodată nimic (regula 11).
+- **Excepția de la regula 4 (`pauseOnly`, în `google-ads.ts`):** acceptă DOAR operații `update` cu `status: PAUSED` și `updateMask: "status"` pe campanie / grup / anunț din contul nostru. Orice altceva (create, remove, ENABLED, alt câmp, buget, cuvinte cheie, alt cont) → eroare înainte de orice cerere (dovedit în `guard.test.ts`). Pauza e reală doar cu `ADS_ENV=prod` sau cu **`ADS_GUARD_REAL_PAUSE=1`**. **Flag-ul cere acordul tău** și e oprit implicit: atunci pauza pleacă cu `validate_only` (Google confirmă că ar merge), iar garda doar alertează — pauza o pui tu manual.
+- Variabile noi: `ADS_GUARD_CRON`, `ADS_GUARD_REAL_PAUSE` (în `docker-compose.yml`, serviciul worker, și în `.env.example`; tot acolo am adăugat `TELEGRAM_ADMIN_CHAT_ID`, care lipsea din exemplu).
+- Limită: garda nu verifică URL-urile sitelink-urilor (un sitelink cu pagină moartă e respins de Google singur, fără cost).
+
+### Rezultate după reparații (27.09.2026)
+- `npm test`: 88/88 trec (14 teste noi: regula anti-reducere, `pauseOnly`, garda cu landing simulat invalid). `tsc`: fără erori.
+- `ads:validate`: 0 erori, 0 avertismente. Hash-uri review noi:
+  - `galaxy-s26-ultra.yaml`: `93202cb8d1c016049b43b0331352a55169030559dacced82921951900c0a7eb0`
+  - `iphone-17-pro-max.yaml`: `a892475d438a53c91393f532e0c4065770486911623c0bd9437043d37d8a7b6b`
+  - `samsung-pliabile.yaml`: `4f80d20e0f4b771b215ad8dd88b5df4a6b166a76cbb8817c32935bc2342150be`
+- `ads:plan`: 3 campanii noi, 309 creări, 3 modificări, 0 pauze, 0 eliminări (312 operații).
+- `ads:apply --confirm` (ADS_ENV=test): Google a validat toate cele 312 operații cu `validate_only`. Nimic creat.
+- `ads:guard` și `ads:guard -- --confirm` (ADS_ENV=test): cont citit, 0 grupuri active, nimic de verificat, fără erori. Forma operației de pauză verificată la Google cu `validate_only` pe un grup inexistent: răspuns `RESOURCE_NOT_FOUND` (deci structura e acceptată).
+- Urmează: policy-reviewer reverifică cele 3 fișiere cu hash-urile de mai sus.

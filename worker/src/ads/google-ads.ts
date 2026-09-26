@@ -138,6 +138,67 @@ export function mutateAll<T = any>(cfg: AdsConfig, mutateOperations: unknown[], 
   return call<T>(cfg, 'POST', `/customers/${cfg.customerId}/googleAds:mutate`, { mutateOperations, validateOnly })
 }
 
+// --- Pauza de siguranta (garda zilnica ads-guard) ------------------------------------------------
+//
+// EXCEPTIE INGUSTA SI EXPLICITA de la regula 4. Garda (campaigns/guard.ts) pune pe pauza un grup
+// de anunturi al carui landing nu mai e bun (pagina 404, produs indisponibil, reducere disparuta).
+// Pe productie ADS_ENV=test, deci mutate()/mutateAll() ar trimite validate_only si pauza n-ar avea
+// loc. Nu ocolim regula in tacere: pauseOnly() accepta EXCLUSIV operatii `update` care pun
+// status=PAUSED (campanie / grup / anunt), cu updateMask exact „status”. Orice altceva (create,
+// remove, alt camp, alt status, alt cont) → eroare INAINTE de orice cerere.
+//
+// Cand e reala:
+//  - ADS_ENV=prod → da (acolo orice scriere e oricum reala);
+//  - ADS_ENV=test → DOAR daca ADS_GUARD_REAL_PAUSE=1 (implicit oprit; il porneste proprietarul).
+//    Fara flag, pauza pleaca tot cu validate_only (Google confirma ca ar merge), iar garda doar
+//    alerteaza pe Telegram.
+// Regula 11: pauza e permisa automat; activarea NICIODATA (nu exista cod care trimite ENABLED).
+
+const PAUSABLE: Record<string, RegExp> = {
+  campaignOperation: /^customers\/(\d+)\/campaigns\/\d+$/,
+  adGroupOperation: /^customers\/(\d+)\/adGroups\/\d+$/,
+  adGroupAdOperation: /^customers\/(\d+)\/adGroupAds\/\d+~\d+$/,
+}
+
+// Arunca eroare daca vreo operatie nu e o pauza curata. Functie pura (testata in guard.test.ts).
+export function assertPauseOnly(customerId: string, mutateOperations: unknown[]): void {
+  if (!Array.isArray(mutateOperations) || !mutateOperations.length) throw new Error('pauseOnly: nicio operație')
+  mutateOperations.forEach((raw, i) => {
+    const bad = (why: string) => { throw new Error(`pauseOnly: operația #${i} refuzată — ${why}`) }
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) bad('nu e un obiect')
+    const keys = Object.keys(raw as object)
+    if (keys.length !== 1) bad(`trebuie exact un tip de operație, nu ${keys.join(', ') || 'niciunul'}`)
+    const kind = keys[0]
+    const re = PAUSABLE[kind]
+    if (!re) bad(`tipul „${kind}” nu e permis (doar ${Object.keys(PAUSABLE).join(', ')})`)
+    const op = (raw as Record<string, any>)[kind]
+    if (!op || typeof op !== 'object') bad('operație goală')
+    const opKeys = Object.keys(op).sort().join(',')
+    if (opKeys !== 'update,updateMask') bad(`doar { update, updateMask } e permis, nu { ${Object.keys(op).join(', ')} }`)
+    if (op.updateMask !== 'status') bad(`updateMask trebuie să fie exact „status”, nu „${op.updateMask}”`)
+    const u = op.update
+    if (!u || typeof u !== 'object' || Array.isArray(u)) bad('update lipsă')
+    const uKeys = Object.keys(u).sort().join(',')
+    if (uKeys !== 'resourceName,status') bad(`update poate conține doar resourceName și status, nu ${Object.keys(u).join(', ')}`)
+    if (u.status !== 'PAUSED') bad(`status „${u.status}” — pauseOnly trimite DOAR PAUSED (activarea o face proprietarul)`)
+    const m = typeof u.resourceName === 'string' ? u.resourceName.match(re!) : null
+    if (!m) bad(`resourceName invalid pentru ${kind}: ${u.resourceName}`)
+    if (m![1] !== customerId) bad(`resourceName e din alt cont (${m![1]}), nu ${customerId}`)
+  })
+}
+
+// Pauza e reala? (vezi comentariul de mai sus). Functie pura, testata.
+export function guardPauseIsReal(adsEnv: AdsConfig['env'], env: Record<string, string | undefined> = process.env): boolean {
+  return adsEnv === 'prod' || env.ADS_GUARD_REAL_PAUSE?.trim() === '1'
+}
+
+export async function pauseOnly<T = any>(cfg: AdsConfig, mutateOperations: unknown[], env: Record<string, string | undefined> = process.env) {
+  assertPauseOnly(cfg.customerId, mutateOperations)
+  const validateOnly = !guardPauseIsReal(cfg.env, env)
+  const res = await call<T>(cfg, 'POST', `/customers/${cfg.customerId}/googleAds:mutate`, { mutateOperations, validateOnly })
+  return { validateOnly, res }
+}
+
 // --- Conversii (Faza 2) ------------------------------------------------------------------------
 
 export function conversionActionResource(cfg: AdsConfig, id: string): string {
