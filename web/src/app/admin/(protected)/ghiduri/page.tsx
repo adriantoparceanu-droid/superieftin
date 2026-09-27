@@ -39,6 +39,12 @@ export default async function GhiduriAdminPage() {
                   <span className={`text-xs font-semibold rounded-full px-2 py-0.5 ${g.status === 'published' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'}`}>
                     {g.status === 'published' ? 'Publicat' : 'Ciornă'}
                   </span>
+                  {/* Ciornele importate din JSON-urile scrise de AI (generated_by, migratia 024) */}
+                  {g.generated_by && g.status === 'draft' && (
+                    <span className="ml-1 text-xs font-semibold rounded-full px-2 py-0.5 bg-amber-100 text-amber-800 whitespace-nowrap">
+                      generat AI — de verificat
+                    </span>
+                  )}
                 </td>
                 <td className="px-4 py-2 text-right">{g.product_count}</td>
                 <td className="px-4 py-2 text-xs text-muted">{formatGuideDate(g.updated_at)}</td>

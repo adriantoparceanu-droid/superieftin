@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { splitGuideBody, collectRefs, type GuideSegment } from '@/lib/guides/markers'
 import { renderMarkdown } from '@/lib/guides/markdown'
+import { highlightUnverified } from '@/lib/guides/review'
 import { loadLiveProducts, refsKey, type LiveProduct, type LiveOffer } from '@/lib/guides/queries'
 import { getPriceHistory } from '@/lib/queries'
 import { calculateDiscount, formatPrice, formatPct, formatVerified, medianDeltaText, FRESH_HOURS } from '@/lib/discount'
@@ -275,7 +276,7 @@ export async function GuideBody({ body, preview }: { body: string; preview?: boo
     <div>
       {segments.map((seg, i) =>
         seg.kind === 'md'
-          ? <div key={i} className={PROSE_CLASS} dangerouslySetInnerHTML={{ __html: renderMarkdown(seg.text) }} />
+          ? <div key={i} className={PROSE_CLASS} dangerouslySetInnerHTML={{ __html: preview ? highlightUnverified(renderMarkdown(seg.text)) : renderMarkdown(seg.text) }} />
           : <Block key={i} seg={seg} products={products} preview={preview} />
       )}
     </div>

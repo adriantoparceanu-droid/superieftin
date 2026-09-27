@@ -1,6 +1,7 @@
 import pool from '../db'
 import { OFFER_AVAILABLE_SQL } from '../availability'
 import type { FaqItem, GuideAuthor } from '../guides/queries'
+import type { ReviewNotes } from '../guides/review'
 
 // Query-uri pentru /admin/ghiduri — fara cache, adminul vede mereu starea reala.
 
@@ -14,12 +15,13 @@ export interface AdminGuideRow {
   updated_at: string
   category_slug: string | null
   product_count: number
+  generated_by: string | null
 }
 
 export async function listGuidesAdmin(): Promise<AdminGuideRow[]> {
   const { rows } = await pool.query<AdminGuideRow>(`
     SELECT g.id, g.slug, g.title, g.kind, g.status,
-           g.published_at::text AS published_at, g.updated_at::text AS updated_at, g.category_slug,
+           g.published_at::text AS published_at, g.updated_at::text AS updated_at, g.category_slug, g.generated_by,
            (SELECT count(*)::int FROM guide_products gp WHERE gp.guide_id = g.id) AS product_count
     FROM guides g
     ORDER BY g.updated_at DESC
@@ -48,13 +50,17 @@ export interface AdminGuide {
   published_at: string | null
   updated_at: string
   category_slug: string | null
+  // Fisa de verificare a ciornelor scrise de AI (migratia 024) — doar in admin, niciodata public
+  review_notes: ReviewNotes | null
+  generated_by: string | null
   products: LinkedProduct[]
 }
 
 export async function getGuideAdmin(id: number): Promise<AdminGuide | null> {
   const { rows } = await pool.query<Omit<AdminGuide, 'products'>>(`
     SELECT id, slug, title, meta_description, kind, body_md, summary, faq, author_id, reviewer_id, status,
-           published_at::text AS published_at, updated_at::text AS updated_at, category_slug
+           published_at::text AS published_at, updated_at::text AS updated_at, category_slug,
+           review_notes, generated_by
     FROM guides WHERE id = $1
   `, [id])
   if (!rows[0]) return null
