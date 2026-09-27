@@ -18,25 +18,25 @@
 
 campaign:
   name: "SE | Search | iPhone 17 Pro Max"
-  id: null
-  budget_id: null
-  status: PAUSED                  # rămâne PAUSED; activarea o faci tu în Google Ads
-  daily_budget: 8                 # lei/zi
+  id: "24287130450"
+  budget_id: "15899279414"
+  status: PAUSED # rămâne PAUSED; activarea o faci tu în Google Ads
+  daily_budget: 8 # lei/zi
   bidding:
     strategy: MANUAL_CPC
-    max_cpc: 0.35                 # lei
+    max_cpc: 0.35 # lei
   conversion_goal:
     name: Comision Profitshare
     conversion_action_id: "7799099014"
   targeting:
-    countries: [RO]
-    languages: [ro]
+    countries: [ RO ]
+    languages: [ ro ]
     location_mode: PRESENCE
     networks:
       search: true
       search_partners: false
       display: false
-  source_research: ads/research/2026-09-27-oportunitati-v2.md   # secțiunea 3.2
+  source_research: ads/research/2026-09-27-oportunitati-v2.md # secțiunea 3.2
 
   negative_keywords:
     # de bază
@@ -120,7 +120,7 @@ campaign:
 
   ad_groups:
     - name: "iPhone 17 Pro Max 256GB - preț"
-      id: null
+      id: "205710465732"
       final_url: https://www.superieftin.ro/p/telefon-mobil-iphone-17-pro-max-256gb-dual-sim-5g-cosmic-orange
       keywords:
         exact:
@@ -136,7 +136,7 @@ campaign:
       negative_keywords: []
       ads:
         - type: RSA
-          id: null
+          id: "826120491538"
           headlines:
             - iPhone 17 Pro Max 256GB
             - Preț iPhone 17 Pro Max azi
