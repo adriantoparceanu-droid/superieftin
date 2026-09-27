@@ -16,25 +16,26 @@
 
 campaign:
   name: "SE | Search | Samsung pliabile"
-  id: null
-  budget_id: null
-  status: PAUSED                  # rămâne PAUSED; activarea o faci tu în Google Ads
-  daily_budget: 8                 # lei/zi (guardrails: max 50/campanie, 150 total)
+  id: "24287130378"
+  budget_id: "15909455461"
+  status: PAUSED # rămâne PAUSED; activarea o faci tu în Google Ads
+  daily_budget: 8 # lei/zi (guardrails: max 50/campanie, 150 total)
   bidding:
     strategy: MANUAL_CPC
-    max_cpc: 0.35                 # lei; se aplică pe fiecare grup de anunțuri
-  conversion_goal:                # singura conversie folosită de campanie
+    max_cpc: 0.35 # lei; se aplică pe fiecare grup de anunțuri
+  conversion_goal:
+    # singura conversie folosită de campanie
     name: Comision Profitshare
     conversion_action_id: "7799099014"
   targeting:
-    countries: [RO]
-    languages: [ro]
-    location_mode: PRESENCE       # doar persoane aflate în România (nu „interesate de”)
+    countries: [ RO ]
+    languages: [ ro ]
+    location_mode: PRESENCE # doar persoane aflate în România (nu „interesate de”)
     networks:
       search: true
       search_partners: false
       display: false
-  source_research: ads/research/2026-09-27-oportunitati-v2.md   # secțiunea 3.1
+  source_research: ads/research/2026-09-27-oportunitati-v2.md # secțiunea 3.1
 
   # Negative: text = broad (blochează orice căutare care conține toate cuvintele),
   # "text" = phrase, [text] = exact.
@@ -106,7 +107,7 @@ campaign:
 
   ad_groups:
     - name: "Z Fold7 - model și preț"
-      id: null
+      id: "205710466212"
       final_url: https://www.superieftin.ro/p/telefon-mobil-galaxy-z-fold7-256gb-12gb-ram-dual-sim-5g-silver-shadow
       keywords:
         exact:
@@ -121,13 +122,14 @@ campaign:
           - fold 7 pret
           - z fold 7 256gb
           - fold 7 reducere
-      negative_keywords:          # pagina e varianta de 256GB
+      negative_keywords:
+        # pagina e varianta de 256GB
         - 512gb
         - 512 gb
         - 1tb
       ads:
         - type: RSA
-          id: null
+          id: "826203647180"
           headlines:
             - Samsung Galaxy Z Fold7 256GB
             - Z Fold7 256GB Silver Shadow
@@ -153,7 +155,7 @@ campaign:
           path2: z-fold7
 
     - name: "Z Flip7 FE - model și preț"
-      id: null
+      id: "199815930879"
       final_url: https://www.superieftin.ro/p/telefon-mobil-galaxy-z-flip7-fe-256gb-8gb-ram-dual-sim-5g-white
       keywords:
         exact:
@@ -165,7 +167,7 @@ campaign:
       negative_keywords: []
       ads:
         - type: RSA
-          id: null
+          id: "826120491562"
           headlines:
             - Samsung Galaxy Z Flip7 FE
             - Galaxy Z Flip7 FE 256GB

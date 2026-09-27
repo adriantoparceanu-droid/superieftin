@@ -12,26 +12,26 @@
 
 campaign:
   name: "SE | Search | Galaxy S26 Ultra"
-  id: null
-  budget_id: null
-  status: PAUSED                  # rămâne PAUSED; activarea o faci tu în Google Ads
-  daily_budget: 10                # lei/zi
+  id: "24292599116"
+  budget_id: "15909455446"
+  status: PAUSED # rămâne PAUSED; activarea o faci tu în Google Ads
+  daily_budget: 10 # lei/zi
   bidding:
     strategy: MANUAL_CPC
-    max_cpc: 0.33                 # lei — mai jos decât la celelalte, marja e mică
-  exact_only: true                # ads:validate refuză orice cuvânt care nu e exact
+    max_cpc: 0.33 # lei — mai jos decât la celelalte, marja e mică
+  exact_only: true # ads:validate refuză orice cuvânt care nu e exact
   conversion_goal:
     name: Comision Profitshare
     conversion_action_id: "7799099014"
   targeting:
-    countries: [RO]
-    languages: [ro]
+    countries: [ RO ]
+    languages: [ ro ]
     location_mode: PRESENCE
     networks:
       search: true
       search_partners: false
       display: false
-  source_research: ads/research/2026-09-27-oportunitati-v2.md   # secțiunea 3.3
+  source_research: ads/research/2026-09-27-oportunitati-v2.md # secțiunea 3.3
 
   negative_keywords:
     # de bază
@@ -100,7 +100,7 @@ campaign:
 
   ad_groups:
     - name: "S26 Ultra 256GB - model și preț"
-      id: null
+      id: "201167996352"
       final_url: https://www.superieftin.ro/p/telefon-mobil-galaxy-s26-ultra-256gb-12gb-ram-dual-sim-5g-cobalt-violet
       keywords:
         exact:
@@ -116,7 +116,7 @@ campaign:
         - 1tb
       ads:
         - type: RSA
-          id: null
+          id: "826203681284"
           headlines:
             - Samsung Galaxy S26 Ultra
             - Galaxy S26 Ultra 256GB
@@ -142,7 +142,7 @@ campaign:
           path2: s26-ultra
 
     - name: "S26 Ultra 1TB - model și preț"
-      id: null
+      id: "201167996552"
       final_url: https://www.superieftin.ro/p/telefon-mobil-galaxy-s26-ultra-1tb-16gb-ram-dual-sim-5g-cobalt-violet
       keywords:
         exact:
@@ -151,7 +151,7 @@ campaign:
       negative_keywords: []
       ads:
         - type: RSA
-          id: null
+          id: "826120491505"
           headlines:
             - Samsung Galaxy S26 Ultra 1TB
             - Galaxy S26 Ultra 1TB

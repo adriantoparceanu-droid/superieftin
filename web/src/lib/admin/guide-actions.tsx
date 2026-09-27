@@ -10,6 +10,7 @@ import { slugify, RESERVED_GUIDE_SLUGS, findHealthClaims } from '../guides/forma
 import { pingIndexNow } from '../guides/indexnow'
 import { GuideBody } from '@/components/guides/GuideBody'
 import type { FaqItem } from '../guides/queries'
+import { unverifiedFields } from '../guides/review'
 
 export type GuideFormState = { error?: string; message?: string } | null
 
@@ -80,6 +81,15 @@ export async function saveGuideAction(_prev: GuideFormState, formData: FormData)
     const claims = findHealthClaims([title, meta, summary, body, ...faq.flatMap((f) => [f.q, f.a])].join('\n'))
     if (claims.length) {
       return { error: `Textul conține afirmații de sănătate interzise (REGULI.md, regula 8): ${claims.join(', ')}. Reformulează înainte de publicare.` }
+    }
+    // Ciornele scrise de AI marcheaza locurile nesigure cu „[DE VERIFICAT: …]”. Butonul „Publică”
+    // e dezactivat in editor cat timp exista, dar verificam si aici (formularul poate fi trimis ocolind UI-ul).
+    const unverified = unverifiedFields({
+      titlu: title, 'descriere meta': meta, rezumat: summary, corp: body,
+      FAQ: faq.flatMap((f) => [f.q, f.a]).join('\n'),
+    })
+    if (unverified.length) {
+      return { error: `Mai există marcaje [DE VERIFICAT] în: ${unverified.map((u) => `${u.field} (${u.count})`).join(', ')}. Verifică și șterge-le înainte de publicare.` }
     }
   }
 

@@ -4,6 +4,8 @@ import { useActionState, useRef, useState, useTransition, type ReactNode } from 
 import Link from 'next/link'
 import { saveGuideAction, searchGuideProductsAction, previewGuideAction } from '@/lib/admin/guide-actions'
 import { slugify } from '@/lib/guides/format'
+import { unverifiedFields } from '@/lib/guides/review'
+import { GuideReviewPanel } from './GuideReviewPanel'
 import type { AdminGuide, LinkedProduct } from '@/lib/admin/guides'
 import type { FaqItem, GuideAuthor } from '@/lib/guides/queries'
 
@@ -44,6 +46,20 @@ export function GuideEditor({ guide, authors, categories, initial }: Props) {
   const [preview, setPreview] = useState<ReactNode>(null)
   const [previewing, startPreview] = useTransition()
   const bodyRef = useRef<HTMLTextAreaElement>(null)
+
+  // Fisa de verificare (ciorne scrise de AI): casutele sunt doar in browser, nu se salveaza
+  const review = guide?.review_notes ?? null
+  const [checked, setChecked] = useState<boolean[]>(() => (review?.checklist ?? []).map(() => false))
+  const allChecked = checked.every(Boolean)
+  // Calculat la fiecare tastare: butonul „Publică” se deblocheaza imediat ce ultimul marcaj dispare
+  const unverified = unverifiedFields({
+    titlu: title, 'descriere meta': meta, rezumat: summary, corp: body,
+    FAQ: faq.flatMap((f) => [f.q, f.a]).join('\n'),
+  })
+  const publishBlockers = [
+    review && !allChecked && `bifează checklist-ul (${checked.filter(Boolean).length}/${checked.length})`,
+    unverified.length > 0 && `șterge marcajele [DE VERIFICAT] (${unverified.map((u) => u.field).join(', ')})`,
+  ].filter(Boolean) as string[]
 
   const published = guide?.status === 'published'
   const effectiveSlug = slugTouched ? slug : slugify(title)
@@ -113,6 +129,16 @@ export function GuideEditor({ guide, authors, categories, initial }: Props) {
         {state?.error && <p className="text-sm text-red-700">{state.error}</p>}
         {state?.message && <p className="text-sm text-green-700">{state.message}</p>}
       </div>
+
+      {review && (
+        <GuideReviewPanel
+          notes={review}
+          generatedBy={guide?.generated_by ?? null}
+          checked={checked}
+          onToggle={(i) => setChecked((cur) => cur.map((v, j) => (j === i ? !v : v)))}
+          unverified={unverified}
+        />
+      )}
 
       <section className="bg-white border border-line rounded-xl p-4 grid gap-4 sm:grid-cols-2">
         <div className="sm:col-span-2">
@@ -285,7 +311,7 @@ export function GuideEditor({ guide, authors, categories, initial }: Props) {
       <div className="sticky bottom-0 bg-surface/95 backdrop-blur border-t border-line py-3 flex flex-wrap gap-3">
         {published ? (
           <>
-            <button type="submit" name="intent" value="save" disabled={pending} className={`${btn} bg-brand text-white hover:opacity-90`}>
+            <button type="submit" name="intent" value="save" disabled={pending || unverified.length > 0} className={`${btn} bg-brand text-white hover:opacity-90`}>
               Salvează modificările (live)
             </button>
             <button type="submit" name="intent" value="unpublish" disabled={pending} className={`${btn} border border-red-300 text-red-700 bg-white hover:bg-red-50`}>
@@ -297,10 +323,17 @@ export function GuideEditor({ guide, authors, categories, initial }: Props) {
             <button type="submit" name="intent" value="save" disabled={pending} className={`${btn} border border-line bg-white hover:border-brand`}>
               Salvează ciornă
             </button>
-            <button type="submit" name="intent" value="publish" disabled={pending} className={`${btn} bg-brand text-white hover:opacity-90`}>
+            <button
+              type="submit" name="intent" value="publish" disabled={pending || publishBlockers.length > 0}
+              title={publishBlockers.length ? `Înainte de publicare: ${publishBlockers.join('; ')}` : undefined}
+              className={`${btn} bg-brand text-white hover:opacity-90`}
+            >
               Publică
             </button>
           </>
+        )}
+        {publishBlockers.length > 0 && (
+          <span className="text-xs text-amber-800 self-center">Pentru publicare: {publishBlockers.join('; ')}.</span>
         )}
         {pending && <span className="text-sm text-muted self-center">Se salvează…</span>}
       </div>
