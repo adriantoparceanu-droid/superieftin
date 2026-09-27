@@ -350,6 +350,10 @@ test('fișierele reale din ads/campaigns trec validarea statică', () => {
   const errs = validateAll(files, loadGuardrails()).filter((i) => i.level === 'error')
   assert.deepEqual(errs, [])
   for (const f of files) {
+    // Dupa ads:apply, YAML-ul are ID-urile din cont; contul simulat aici e gol, deci planul ar
+    // raporta corect „nu exista in cont”. Verificam doar structura (fara ID-uri) — potrivirea cu
+    // contul real o face `ads:plan`.
+    if (f.campaign.id) continue
     const plan = buildPlan([f], acc(), '111')
     assert.equal(plan.campaigns[0].errors.length, 0)
   }
