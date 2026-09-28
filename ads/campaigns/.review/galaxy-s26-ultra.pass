@@ -1,6 +1,6 @@
 verdict: PASS
-date: 2026-09-26T23:54:57Z
-sha256: 93202cb8d1c016049b43b0331352a55169030559dacced82921951900c0a7eb0
+date: 2026-09-28T16:13:02Z
+sha256: dc2c868efe916d55882a16a05dd02f998640b8e70be760bb1f5a13fcb4ce4c2e
 reviewer: policy-reviewer
 file: ads/campaigns/galaxy-s26-ultra.yaml
-notes: "Re-verificare dupa B1 (texte care nu expira + ads-guard). Neblocant: deploy feat/ghiduri (373efdd) inainte de activare."
+notes: "Re-verificare test CPC 28 sep-2 oct: singura modificare max_cpc 0,33->2,00 (guardrail 3,00). Texte neschimbate; 2 landing-uri /p/ 200, cu stoc, indexabile, verificate acum 12 ore. ads:validate 0 erori. sha256 fisier 3720f02c."

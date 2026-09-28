@@ -24,7 +24,7 @@ campaign:
   daily_budget: 8 # lei/zi
   bidding:
     strategy: MANUAL_CPC
-    max_cpc: 0.35 # lei
+    max_cpc: 1.30 # lei — TEST 28 sep–2 oct 2026: la 0,35 eram sub pragul primei pagini (1,29) → 0 afișări; se revizuiește după test
   conversion_goal:
     name: Comision Profitshare
     conversion_action_id: "7799099014"

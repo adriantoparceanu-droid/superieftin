@@ -1,6 +1,6 @@
 verdict: PASS
-date: 2026-09-26T23:54:57Z
-sha256: 4f80d20e0f4b771b215ad8dd88b5df4a6b166a76cbb8817c32935bc2342150be
+date: 2026-09-28T16:13:02Z
+sha256: 93de063c73c980aa5376bbdac5439a5186910ce13ad8ddf701aec3d6a925c3b2
 reviewer: policy-reviewer
 file: ads/campaigns/samsung-pliabile.yaml
-notes: "Re-verificare dupa B1 (texte care nu expira + ads-guard). Neblocant: deploy feat/ghiduri (373efdd) inainte de activare."
+notes: "Re-verificare test CPC 28 sep-2 oct: singura modificare max_cpc 0,35->1,30 (guardrail 3,00). Texte neschimbate; Fold7/Flip7 FE /p/ 200, cu stoc, indexabile. ads:validate 0 erori. sha256 fisier 46a34703."
