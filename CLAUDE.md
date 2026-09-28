@@ -37,6 +37,9 @@ cd worker && npm run ads:guard      # garda: verifică landing-urile grupurilor 
 #   la 07:00 wrapper-ul ./emag-scrape-sync.sh (scrape + sync). Log: ~/Library/Logs/superieftin-emag.log
 #   Comenzi: launchctl {bootout|bootstrap} gui/$(id -u) <plist>; test acum: launchctl kickstart -k gui/$(id -u)/ro.superieftin.emag-scrape
 
+# Deploy cap-coadă (DOAR la cerere, prin /deploy): verificări + rsync + migrații noi + build + restart + verificare
+./deploy.sh [web|worker]             # --check = doar verificări, nimic pe server; refuză modificări necomise
+
 # Migrații — local: prin worker/src/migrate.ts (citește db/migrations/ de pe disc)
 # Producție: migrațiile sunt BAKED în imagine (COPY db ./db). La deploy cu migrații noi,
 # reconstruiește ÎNTÂI imaginea migrate (nu e în `build web worker`), apoi rulează:
@@ -57,7 +60,7 @@ cd worker && npm run ads:guard      # garda: verifică landing-urile grupurilor 
 - **Scraping-ul se testează întâi local**, nu direct pe VPS.
 - **Domeniul canonic e `https://www.superieftin.ro`** (cu www). `NEXT_PUBLIC_SITE_URL` se setează din `next.config.ts` și se inline-uiește la build (arg de build în compose, nu env de runtime). Sitemap-ul e force-dynamic.
 - **Codul Profitshare funcționează DOAR pe domeniul aprobat (producție)** — nu testa integrarea pe local/staging și nu raporta ca bug lipsa lui pe local.
-- **La deploy cu dependențe noi**: sincronizează și `package.json` + `package-lock.json`, nu doar `src/`. Dockerfile-urile și compose se rsync-uiesc la căi explicite (vezi `/deploy`).
+- **La deploy cu dependențe noi**: `package.json` + `package-lock.json` trebuie commit-uite — `./deploy.sh` le sincronizează (plus Dockerfile-urile și compose, la căi explicite) și detectează singur migrațiile noi (rebuild `migrate` + rulare înaintea codului).
 - **Migrații noi**: fișier nou `db/migrations/NNN_nume.sql` (numărul următor, nu modifica migrații aplicate); pe producție rulează prin serviciul `migrate` din compose.
 
 ## Taxonomie & mapare produse

@@ -1,77 +1,49 @@
 # /deploy — Deploy cod pe VPS
 
-Deployezi codul local pe VPS-ul de producție (13.140.163.156).
+Deployezi codul local pe VPS-ul de producție (13.140.163.156), cap-coadă, cu scriptul
+`./deploy.sh` din rădăcina proiectului. Rulează DOAR când proprietarul cere explicit (`/deploy`).
 
 Proiectul rulează izolat sub user-ul `superieftin`, în `/home/superieftin/app/`
 (stack Docker Compose, proiect `superieftin`, reverse proxy CloudPanel → port 3000).
-Conectarea se face ca `superieftin@13.140.163.156` (cheie SSH, fără parolă; user în grupul `docker`).
 
 **Argument opțional:** `$ARGUMENTS` poate fi `web`, `worker`, sau gol (= ambele).
 
 ## Pași
 
-**Pasul 1 — Determină ținta**
+1. **Rulează scriptul dintr-o singură comandă** (nu-l compune cu alte comenzi prin `&&` / `;` —
+   regula de permisiune se potrivește doar pe comanda simplă):
 
-Dacă `$ARGUMENTS` este `web`, deploiezi doar containerul web (Next.js).
-Dacă `$ARGUMENTS` este `worker`, deploiezi doar containerul worker (scraper + bot Telegram).
-Dacă `$ARGUMENTS` este gol sau `all`, deploiezi ambele.
+   ```bash
+   ./deploy.sh $ARGUMENTS
+   ```
 
-**Pasul 2 — Sincronizează fișierele pe VPS**
+   Scriptul face singur, în ordine, și se oprește la prima eroare:
+   - verificări locale: modificări necomise (refuză), teste worker, TypeScript web/worker,
+     SSH, variabilele cerute de compose care lipsesc din `.env` pe VPS (doar numele);
+   - sincronizare fișiere la căile lor (migrații, compose, Dockerfile-uri, `package*.json`,
+     `web/src`, `web/public`, configurări web, `worker/src`);
+   - migrații noi: le detectează comparând `db/migrations/` cu `schema_migrations` din producție;
+     dacă există, reconstruiește imaginea `migrate` și le rulează ÎNAINTE de codul nou;
+   - `docker compose build` + `up -d` pentru țintă;
+   - verificare: containere `Up`, site → 200, workerul a pornit, erori în loguri.
 
-> ⚠️ Dockerfile-urile și compose se sincronizează la **căi explicite** — NU le pune
-> pe toate într-un rsync către director (ar fi copiate flat și `web/Dockerfile` n-ar
-> ajunge la `/home/superieftin/app/web/Dockerfile`).
+   Folosește un timeout mare (build-ul durează câteva minute): `timeout: 600000`.
 
-```bash
-DEST=superieftin@13.140.163.156:/home/superieftin/app
+2. **Dacă scriptul refuză din cauza modificărilor necomise**: spune-i proprietarului ce fișiere
+   sunt și întreabă dacă faci commit. NU rula `--allow-dirty` fără acordul lui.
 
-# Migrations + compose + Dockerfile-uri (fiecare la calea lui)
-rsync -az db/migrations/ $DEST/db/migrations/
-rsync -az docker-compose.yml superieftin@13.140.163.156:/home/superieftin/app/docker-compose.yml
-rsync -az web/Dockerfile    superieftin@13.140.163.156:/home/superieftin/app/web/Dockerfile
-rsync -az worker/Dockerfile superieftin@13.140.163.156:/home/superieftin/app/worker/Dockerfile
+3. **Dacă ai adăugat variabile noi în `.env` local** care trebuie și pe VPS: adaugă-le înainte de
+   deploy (fă întâi o copie `.env.bak-<data>` pe server; nu afișa valorile).
 
-# Web (include next.config.ts — controlează NEXT_PUBLIC_SITE_URL / domeniul canonic)
-rsync -az web/next.config.ts $DEST/web/next.config.ts
-rsync -az --delete --exclude='.next' web/src/ $DEST/web/src/
+4. **Raportează**: ce s-a deploiat, migrațiile aplicate, statusul containerelor, codul HTTP,
+   orice avertisment din script. Dacă a eșuat, pasul și ultimele linii de eroare.
 
-# Worker
-rsync -az --delete --exclude='dist' worker/src/ $DEST/worker/src/
-```
+Doar verificare, fără nicio modificare pe server: `./deploy.sh --check`.
 
-**Pasul 3 — Build și restart pe VPS**
+## De reținut
 
-SSH la `superieftin@13.140.163.156` și rulează:
-
-```bash
-cd /home/superieftin/app
-docker compose build <tinta>
-docker compose up -d <tinta>
-```
-
-> ⚠️ **Dacă ai migrații noi** în `db/migrations/`: migrațiile sunt **baked în imagine**
-> (`COPY db ./db` în worker/Dockerfile), iar serviciul `migrate` NU e inclus în
-> `docker compose build web worker`. Trebuie reconstruit explicit ÎNAINTE de a rula
-> migrațiile, altfel `migrate` folosește o imagine veche și raportează „succes" fără să
-> aplice migrațiile noi:
->
-> ```bash
-> docker compose --profile tools build migrate
-> docker compose --profile tools run --rm migrate   # ruleaza migratiile
-> ```
->
-> Rulează migrațiile ÎNAINTE de `up -d` (codul nou poate depinde de schema/funcțiile noi).
->
-> **Migrație care schimbă meniul/categoriile FĂRĂ rebuild de cod web**: `revalidateTag` nu
-> invalidează fiabil `unstable_cache`. Recreează containerul web pentru cache proaspăt:
-> `docker compose up -d --force-recreate web`.
-
-**Pasul 4 — Verificare**
-
-- Rulează `docker ps` și confirmă că containerele au status `Up`
-- Testează cu `curl -sk -o /dev/null -w '%{http_code}' https://www.superieftin.ro/` — trebuie să returneze `200`
-- Dacă ai deploiat worker-ul, verifică logurile: `docker logs superieftin-worker-1 --tail 10`
-
-**Pasul 5 — Raportează rezultatul**
-
-Spune utilizatorului ce containere au fost rebuildate, statusul lor și codul HTTP returnat de site.
+- **Migrație care schimbă meniul/categoriile FĂRĂ rebuild de cod web**: `revalidateTag` nu
+  invalidează fiabil `unstable_cache`. Recreează containerul web pentru cache proaspăt:
+  `ssh superieftin@13.140.163.156 'cd /home/superieftin/app && docker compose up -d --force-recreate web'`.
+- Dependențe noi: scriptul sincronizează deja `package.json` + `package-lock.json` (rădăcină,
+  web, worker) — dar trebuie să fie commit-uite.
