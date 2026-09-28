@@ -524,6 +524,20 @@ export async function refreshEmagCatalogAction() {
   refresh()
 }
 
+// „Actualizează acum” din /admin/statistici: pune in coada worker-ului jobul `ga4-sync`
+// (acelasi care ruleaza zilnic la 06:15). Cererea catre Google o face worker-ul, nu containerul
+// web — aici doar anuntam. Datele noi apar dupa ~1 minut, la reincarcarea paginii.
+export async function refreshGa4StatsAction() {
+  await requireAdmin()
+  const { Queue } = await import('bullmq')
+  const queue = new Queue('sync', {
+    connection: { url: process.env.REDIS_URL || 'redis://localhost:6379', maxRetriesPerRequest: null },
+  })
+  await queue.add('ga4-sync', { type: 'ga4-sync' })
+  await queue.close()
+  refresh()
+}
+
 export async function toggleScraperCategoryAction(formData: FormData) {
   await requireAdmin()
   const id = Number(formData.get('id'))

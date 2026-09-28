@@ -7,6 +7,7 @@ type NavEntry = NavItem | { group: string; children: NavItem[] }
 
 const NAV: NavEntry[] = [
   { href: '/admin', label: 'Dashboard' },
+  { href: '/admin/statistici', label: 'Statistici' },
   {
     group: 'Feeduri',
     children: [
