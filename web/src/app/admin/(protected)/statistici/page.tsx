@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import {
   parsePeriod, PERIODS, getGa4SyncState, hasGa4Data, getGa4Overview, getGa4Series, getGa4Breakdown,
-  getProductLabels, getCategoryLabels, getRetailerClicks,
+  getProductLabels, getCategoryLabels, getRetailerClicks, getOrganicKeywords, getAdsSearchTerms,
   type Ga4SyncState, type BreakdownRow, type BreakdownKind, type RetailerClicksRow,
 } from '@/lib/admin/ga4-stats'
 import { refreshGa4StatsAction } from '@/lib/admin/actions'
@@ -76,13 +76,14 @@ function Card({ label, value, delta, note, title }: {
 interface Column<R> { label: string; right?: boolean; render: (r: R) => React.ReactNode }
 
 // Tabel generic in stilul adminului. Randul „restul” (key = null) apare ultimul, estompat.
-function StatTable<R>({ title, columns, rows, isRest, empty, note }: {
+function StatTable<R>({ title, columns, rows, isRest, empty, note, footer }: {
   title: string
   columns: Column<R>[]
   rows: R[]
   isRest?: (r: R) => boolean
   empty: string
   note?: React.ReactNode
+  footer?: React.ReactNode[]   // rand de totaluri, cate o celula pe coloana (doar daca exista randuri)
 }) {
   return (
     <section>
@@ -110,6 +111,15 @@ function StatTable<R>({ title, columns, rows, isRest, empty, note }: {
               <tr><td colSpan={columns.length} className="px-4 py-6 text-center text-muted">{empty}</td></tr>
             )}
           </tbody>
+          {footer && rows.length > 0 && (
+            <tfoot className="bg-surface font-semibold">
+              <tr className="border-t border-line">
+                {footer.map((cell, i) => (
+                  <td key={i} className={`px-4 py-2 ${columns[i]?.right ? 'text-right tabular-nums whitespace-nowrap' : ''}`}>{cell}</td>
+                ))}
+              </tr>
+            </tfoot>
+          )}
         </table>
       </div>
       {note && <p className="text-xs text-muted mt-2">{note}</p>}
@@ -147,6 +157,19 @@ function PathCell({ path }: { path: string }) {
       {path}
     </a>
   )
+}
+
+// „12,5 lei” — costurile din Google Ads, cu 2 zecimale
+const lei = (n: number) => `${n.toLocaleString('ro-RO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} lei`
+
+// Search Console da URL-ul complet (https://www.superieftin.ro/p/...) → pastram doar calea
+function toPath(url: string): string {
+  try {
+    const u = new URL(url)
+    return `${u.pathname}${u.search}`
+  } catch {
+    return url
+  }
 }
 
 const DEVICE_LABEL: Record<string, string> = {
@@ -224,7 +247,7 @@ export default async function StatisticiPage({ searchParams }: Props) {
     )
   }
 
-  const [overview, series, sources, landings, pages, devices, products, categories, retailers] = await Promise.all([
+  const [overview, series, sources, landings, pages, devices, products, categories, retailers, organic, adsTerms] = await Promise.all([
     getGa4Overview(days),
     getGa4Series(days),
     getGa4Breakdown('source', days),
@@ -234,6 +257,8 @@ export default async function StatisticiPage({ searchParams }: Props) {
     getGa4Breakdown('product', days),
     getGa4Breakdown('category', days),
     getRetailerClicks(days),
+    getOrganicKeywords(days),
+    getAdsSearchTerms(days),
   ])
   const [productLabels, categoryLabels] = await Promise.all([
     getProductLabels(products.rows.map((r) => r.key)),
@@ -259,6 +284,9 @@ export default async function StatisticiPage({ searchParams }: Props) {
     : topRetailers
   const retailerDimMissing = warnings.some((w) => w.includes('„retailer”'))
   const unmatchedGa4 = retailers.filter((r) => r.db === null).length
+  // Avertismentele workerului pentru cuvinte cheie (prefixele din ga4-sync)
+  const gscWarnings = warnings.filter((w) => w.startsWith('Search Console'))
+  const adsWarnings = warnings.filter((w) => w.startsWith('Google Ads'))
 
   return (
     <div className="max-w-6xl">
@@ -436,6 +464,70 @@ export default async function StatisticiPage({ searchParams }: Props) {
               },
             },
             { label: 'Clickuri spre magazine', right: true, render: (r) => int(r.affiliate_clicks) },
+          ]}
+        />
+      </div>
+
+      {/* Cuvinte cheie: GA4 nu le da prin API, vin direct din Search Console si Google Ads */}
+      <h2 className="text-xl font-bold mb-1">Cuvinte cheie</h2>
+      <p className="text-sm text-muted mb-4">Ce caută oamenii în Google când ajung la noi — gratuit (organic) și prin reclame.</p>
+      <div className="space-y-8 mb-8">
+        <StatTable
+          title="Organic (Google Search Console)"
+          rows={organic.rows}
+          empty={gscWarnings.length ? `Nu există date — ${gscWarnings[0]}` : 'Nu există căutări organice în perioada aleasă.'}
+          footer={['Total perioadă', int(organic.total_clicks), int(organic.total_impressions), pct(organic.total_clicks, organic.total_impressions), '', '']}
+          note={
+            <>
+              Google ascunde căutările foarte rare, deci totalurile sunt mai mici decât în Search Console. Poziția 1 = primul rezultat.
+              {' '}Search Console are 2–3 zile întârziere
+              {organic.last_day && organic.last_day < overview.end ? <>: ultima zi cu date este {fmtDay(organic.last_day, true)}.</> : '.'}
+            </>
+          }
+          columns={[
+            { label: 'Căutarea', render: (r) => r.query },
+            { label: 'Clickuri', right: true, render: (r) => int(r.clicks) },
+            { label: 'Afișări', right: true, render: (r) => int(r.impressions) },
+            { label: 'CTR', right: true, render: (r) => pct(r.clicks, r.impressions) },
+            {
+              label: 'Poziția medie', right: true,
+              render: (r) => (r.position === null ? '—' : r.position.toLocaleString('ro-RO', { minimumFractionDigits: 1, maximumFractionDigits: 1 })),
+            },
+            { label: 'Pagina principală', render: (r) => <PathCell path={toPath(r.page)} /> },
+          ]}
+        />
+
+        <StatTable
+          title="Reclame (Google Ads)"
+          rows={adsTerms.rows}
+          empty={
+            adsWarnings.length
+              ? `Nu există date — ${adsWarnings[0]}`
+              : 'Încă nu există termeni — apar după primele afișări ale reclamelor (datele de ieri, aduse la 06:15).'
+          }
+          footer={['Total perioadă', '', int(adsTerms.total_clicks), int(adsTerms.total_impressions), lei(adsTerms.total_cost),
+            adsTerms.total_clicks ? lei(adsTerms.total_cost / adsTerms.total_clicks) : '—']}
+          note={adsTerms.rows.length > 0 && '⚠ = termenul apare deja organic în primele 3 poziții: poate plătim pentru un click pe care l-am fi primit oricum.'}
+          columns={[
+            {
+              label: 'Termenul căutat',
+              render: (r) => (
+                <>
+                  {r.search_term}
+                  {r.organic_position !== null && (
+                    <span
+                      className="ml-1 text-amber-600 cursor-help"
+                      title={`apare deja organic pe poziția ~${r.organic_position.toLocaleString('ro-RO')}`}
+                    >⚠</span>
+                  )}
+                </>
+              ),
+            },
+            { label: 'Campania', render: (r) => <span className="text-xs">{r.campaign}</span> },
+            { label: 'Clickuri', right: true, render: (r) => int(r.clicks) },
+            { label: 'Afișări', right: true, render: (r) => int(r.impressions) },
+            { label: 'Cost', right: true, render: (r) => lei(r.cost) },
+            { label: 'CPC mediu', right: true, render: (r) => (r.clicks ? lei(r.cost / r.clicks) : '—') },
           ]}
         />
       </div>

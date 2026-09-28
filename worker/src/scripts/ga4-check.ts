@@ -1,12 +1,14 @@
 import { ga4ConfigFromEnv, runReport, availableDimensions, accessToken, Ga4Error } from '../lib/ga4/client.js'
 import { KINDS, affiliateFilter, dayRange } from '../lib/ga4/transform.js'
+import { listSites, pickSite } from '../lib/ga4/search-console.js'
 
 // Test de conexiune GA4 (doar CITIRE, nu scrie nimic nicaieri).
 // Rulare: cd worker && npm run ga4:check
 //   1. configurarea din .env (GA4_PROPERTY_ID, GA4_SERVICE_ACCOUNT_JSON)
 //   2. token de acces pentru contul de serviciu
 //   3. un raport pe ultimele 7 zile (utilizatori, sesiuni, clickuri spre magazine)
-//   4. dimensiunile personalizate pentru magazin / produs (optionale)
+//   4. dimensiunile personalizate pentru magazin / produs / categorie (optionale)
+//   5. accesul la Search Console (cuvintele cheie organice)
 
 const HINTS: [RegExp, string][] = [
   [/PERMISSION_DENIED|403/, 'Contul de serviciu nu are acces la proprietate: GA4 → Admin → Gestionarea accesului la proprietate → adaugă emailul lui cu rolul Viewer.'],
@@ -42,6 +44,21 @@ async function main() {
       ? `✓ Dimensiunea ${spec.dimension} (${spec.kind})`
       : `! Dimensiunea ${spec.dimension} nu e înregistrată — statisticile pe „${spec.kind}” vor lipsi.\n    GA4 → Admin → Definiții personalizate → Creează dimensiune: domeniu Eveniment, parametru „${spec.dimension.split(':')[1]}”.`)
   }
+
+  // Search Console: nu opreste testul GA4 daca lipseste, doar spune ce e de facut
+  try {
+    const sites = (await listSites(cfg)).map((s) => s.siteUrl)
+    const site = pickSite(sites, process.env.GSC_SITE_URL?.trim() || undefined)
+    console.log(site
+      ? `✓ Search Console: ${site}`
+      : `! Search Console: contul nu are acces la superieftin.ro (vede: ${sites.join(', ') || 'nicio proprietate'}).\n    Search Console → Setări → Utilizatori și permisiuni → Adaugă utilizator: ${cfg.clientEmail}, permisiune „Restricționat”.`)
+  } catch (err) {
+    const msg = String((err as Error)?.message ?? err)
+    console.log(/SERVICE_DISABLED|has not been used|is disabled/.test(msg)
+      ? '! Search Console: activează „Google Search Console API” în proiectul Google Cloud (APIs & Services → Library).'
+      : `! Search Console: ${msg}`)
+  }
+
   console.log('\nConexiunea GA4 funcționează ✓')
 }
 

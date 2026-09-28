@@ -68,3 +68,17 @@ cookie-urile de analiză.
 - Confidențialitate: stocăm doar agregate, fără ID-uri de utilizator; niciun cookie nou →
   `/cookies` și `/confidentialitate` rămân neschimbate.
 - Cheia contului de serviciu stă doar în `.env` (REGULI.md, regula 5) și poate doar să citească GA4.
+
+## Extindere: cuvinte cheie (2026-09-28, migrația 026)
+
+GA4 Data API nu expune datele Search Console (`organicGoogleSearchQuery` e „not a valid dimension”;
+dimensiunile organice dau „(not provided)”), iar dimensiunile Google Ads din GA4 erau goale.
+Aprobat de proprietar: două surse citite direct, în același job `ga4-sync`:
+
+- **Organic**: Search Console Search Analytics API (zi × căutare × pagină), același cont de serviciu
+  (`webmasters.readonly`, utilizator „Restricționat”) → `gsc_daily`, top 500/zi, rescrie ultimele 5 zile
+  (întârziere 2–3 zile), 90 la prima rulare.
+- **Reclame**: Google Ads `search_term_view` (GAQL, doar citire) → `ads_search_terms`, rescrie 7 zile.
+- O sursă care eșuează devine avertisment în `ga4_sync_state.warnings`, fără să anuleze GA4.
+- Admin: secțiunea „Cuvinte cheie” — Organic (clickuri, afișări, CTR, poziție medie ponderată, pagina
+  principală) și Reclame (clickuri, afișări, cost, CPC, ⚠ dacă termenul e deja organic în top 3).

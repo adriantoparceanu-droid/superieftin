@@ -12,9 +12,12 @@ import { readFileSync, existsSync } from 'fs'
 //     - JSON pe un singur rand: {"type":"service_account",...}
 //     - calea spre fisierul cheii: /cale/cheie.json
 //
-// Scope-ul e analytics.readonly: contul NU poate modifica nimic in GA4 (REGULI.md → GA4).
+// Scope-urile sunt analytics.readonly + webmasters.readonly: contul NU poate modifica nimic in
+// GA4 sau Search Console (REGULI.md → GA4).
 
-const SCOPE = 'https://www.googleapis.com/auth/analytics.readonly'
+// Acelasi cont de serviciu citeste si Search Console (cuvintele cheie organice) — tot DOAR citire.
+// Search Console cere in plus: API-ul activat in Cloud + contul adaugat ca utilizator „Restricționat”.
+const SCOPE = 'https://www.googleapis.com/auth/analytics.readonly https://www.googleapis.com/auth/webmasters.readonly'
 const TOKEN_URL = 'https://oauth2.googleapis.com/token'
 const API = 'https://analyticsdata.googleapis.com/v1beta'
 

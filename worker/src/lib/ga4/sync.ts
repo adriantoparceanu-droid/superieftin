@@ -3,8 +3,11 @@ import type { Pool } from 'pg'
 import { ga4ConfigFromEnv, runReport, availableDimensions, type Ga4Config } from './client.js'
 import { KINDS, DAILY_METRICS, affiliateFilter, buildDaily, buildBreakdown, dayRange, type BreakdownRow } from './transform.js'
 import { notifyAdmin, escHtml } from '../admin-telegram.js'
+import { listSites, pickSite, fetchSearchAnalytics, topGscPerDay } from './search-console.js'
+import { fetchAdsSearchTerms, type AdsTermRow } from './ads-terms.js'
 
-// Jobul ga4-sync: trage rapoartele GA4 si le salveaza in ga4_daily / ga4_daily_breakdown.
+// Jobul ga4-sync: trage rapoartele GA4 si le salveaza in ga4_daily / ga4_daily_breakdown, plus
+// cuvintele cheie: organic din Search Console (gsc_daily) si din reclame (ads_search_terms).
 // Ruleaza zilnic (GA4_SYNC_CRON) si la butonul „Actualizează acum” din /admin/statistici.
 //
 // - Fiecare rulare rescrie ultimele 3 zile (GA4 mai corecteaza datele pana la 48 h).
@@ -16,11 +19,15 @@ const logger = pino({ level: 'info' })
 
 const RECENT_DAYS = 3
 const BACKFILL_DAYS = 90
+// Search Console publica datele cu 2–3 zile intarziere; Google Ads mai corecteaza clickurile
+// invalide cateva zile → la aceste surse rescriem o fereastra mai lunga.
+const GSC_RECENT_DAYS = 5
+const ADS_RECENT_DAYS = 7
 const ALERT_AFTER_FAILURES = 3
 // Maximul de randuri pe raport (GA4 permite 250.000). La 90 de zile × pagini ajunge din plin.
 const ROW_LIMIT = 100000
 
-export interface Ga4SyncResult { skipped?: string; start?: string; end?: string; days?: number; breakdownRows?: number; warnings?: string[] }
+export interface Ga4SyncResult { skipped?: string; start?: string; end?: string; days?: number; breakdownRows?: number; gscRows?: number | null; adsRows?: number | null; warnings?: string[] }
 
 export async function runGa4Sync(pool: Pool, opts: { daysBack?: number } = {}): Promise<Ga4SyncResult> {
   let cfg: Ga4Config | null
@@ -106,11 +113,6 @@ export async function runGa4Sync(pool: Pool, opts: { daysBack?: number } = {}): 
         }
         breakdownRows += rows.length
       }
-      await client.query(
-        `INSERT INTO ga4_sync_state (id, last_success_at, consecutive_failures, warnings) VALUES (1, now(), 0, $1)
-         ON CONFLICT (id) DO UPDATE SET last_success_at = now(), consecutive_failures = 0, warnings = EXCLUDED.warnings`,
-        [warnings],
-      )
       await client.query('COMMIT')
     } catch (err) {
       await client.query('ROLLBACK').catch(() => {})
@@ -119,8 +121,19 @@ export async function runGa4Sync(pool: Pool, opts: { daysBack?: number } = {}): 
       client.release()
     }
 
+    // Cuvintele cheie (Search Console + Google Ads). Surse separate: o eroare aici devine
+    // avertisment in admin si NU anuleaza statisticile GA4 salvate mai sus.
+    const gscRows = await syncSearchConsole(pool, cfg, opts.daysBack, warnings)
+    const adsRows = await syncAdsTerms(pool, opts.daysBack, warnings)
+
+    await pool.query(
+      `INSERT INTO ga4_sync_state (id, last_success_at, consecutive_failures, warnings) VALUES (1, now(), 0, $1)
+       ON CONFLICT (id) DO UPDATE SET last_success_at = now(), consecutive_failures = 0, warnings = EXCLUDED.warnings`,
+      [warnings],
+    )
+
     for (const w of warnings) logger.warn(w)
-    return { start, end, days: daily.length, breakdownRows, warnings }
+    return { start, end, days: daily.length, breakdownRows, gscRows, adsRows, warnings }
   } catch (err) {
     await recordFailure(pool, err)
     throw err
@@ -141,5 +154,72 @@ async function recordFailure(pool: Pool, err: unknown) {
   // O singura alerta, la al treilea esec la rand (nu in fiecare zi pana se repara)
   if (failures === ALERT_AFTER_FAILURES) {
     await notifyAdmin(`⚠️ <b>Statistici GA4</b>: sincronizarea a eșuat de ${failures} ori la rând.\n<code>${escHtml(message)}</code>\n\nAdminul arată ultimele date bune.`, 'alerta GA4')
+  }
+}
+
+// Rescrie in DB zilele din [start, end] pentru o sursa: sterge intervalul, insereaza randurile
+// (in loturi de 500 — un singur INSERT cu mii de parametri ar depasi limita Postgres).
+async function replaceDays(pool: Pool, table: 'gsc_daily' | 'ads_search_terms', columns: string[], rows: unknown[][], start: string, end: string) {
+  const client = await pool.connect()
+  try {
+    await client.query('BEGIN')
+    await client.query(`DELETE FROM ${table} WHERE day BETWEEN $1 AND $2`, [start, end])
+    for (let i = 0; i < rows.length; i += 500) {
+      const chunk = rows.slice(i, i + 500)
+      const n = columns.length
+      const tuples = chunk.map((_, j) => `(${columns.map((__, k) => `$${j * n + k + 1}`).join(', ')})`)
+      await client.query(`INSERT INTO ${table} (${columns.join(', ')}) VALUES ${tuples.join(', ')}`, chunk.flat())
+    }
+    await client.query('COMMIT')
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {})
+    throw err
+  } finally {
+    client.release()
+  }
+}
+
+async function isEmpty(pool: Pool, table: 'gsc_daily' | 'ads_search_terms') {
+  const { rows } = await pool.query(`SELECT 1 FROM ${table} LIMIT 1`)
+  return rows.length === 0
+}
+
+// null = sursa n-a fost citita (neconfigurata sau eroare → avertisment)
+async function syncSearchConsole(pool: Pool, cfg: Ga4Config, daysBack: number | undefined, warnings: string[]): Promise<number | null> {
+  try {
+    const sites = (await listSites(cfg)).map((s) => s.siteUrl)
+    const site = pickSite(sites, process.env.GSC_SITE_URL?.trim() || undefined)
+    if (!site) {
+      warnings.push(`Search Console: contul de serviciu nu are acces la superieftin.ro (proprietăți văzute: ${sites.join(', ') || 'niciuna'}) — adaugă-l în Search Console → Setări → Utilizatori și permisiuni, cu „Restricționat”`)
+      return null
+    }
+    const { start, end } = dayRange(daysBack ?? ((await isEmpty(pool, 'gsc_daily')) ? BACKFILL_DAYS : GSC_RECENT_DAYS))
+    const rows = topGscPerDay(await fetchSearchAnalytics(cfg, site, start, end))
+    await replaceDays(pool, 'gsc_daily', ['day', 'query', 'page', 'clicks', 'impressions', 'position'],
+      rows.map((r) => [r.day, r.query, r.page, Math.round(r.clicks), Math.round(r.impressions), Math.round(r.position * 100) / 100]), start, end)
+    return rows.length
+  } catch (err) {
+    const msg = String((err as Error)?.message ?? err)
+    warnings.push(/SERVICE_DISABLED|has not been used|is disabled/.test(msg)
+      ? 'Search Console: activează „Google Search Console API” în proiectul Google Cloud al contului de serviciu'
+      : `Search Console: ${msg.slice(0, 300)}`)
+    return null
+  }
+}
+
+async function syncAdsTerms(pool: Pool, daysBack: number | undefined, warnings: string[]): Promise<number | null> {
+  try {
+    const { start, end } = dayRange(daysBack ?? ((await isEmpty(pool, 'ads_search_terms')) ? BACKFILL_DAYS : ADS_RECENT_DAYS))
+    const rows = await fetchAdsSearchTerms(start, end)
+    if (!rows) {
+      warnings.push('Google Ads neconfigurat în .env — termenii din reclame lipsesc')
+      return null
+    }
+    await replaceDays(pool, 'ads_search_terms', ['day', 'campaign', 'ad_group', 'search_term', 'status', 'impressions', 'clicks', 'cost_micros', 'conversions'],
+      rows.map((r: AdsTermRow) => [r.day, r.campaign, r.ad_group, r.search_term, r.status, r.impressions, r.clicks, r.cost_micros, r.conversions]), start, end)
+    return rows.length
+  } catch (err) {
+    warnings.push(`Google Ads (termeni căutați): ${String((err as Error)?.message ?? err).slice(0, 300)}`)
+    return null
   }
 }

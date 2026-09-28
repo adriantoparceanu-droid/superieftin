@@ -282,3 +282,127 @@ export async function getGa4DashboardSummary(): Promise<Ga4DashboardSummary> {
   `)
   return rows[0]
 }
+
+// ---------- Cuvinte cheie: organic (Search Console) + reclame (Google Ads) ----------
+//
+// Ambele tabele le scrie tot jobul `ga4-sync` (migratia 026). GA4 nu da cautarile prin API,
+// de aceea vin direct din Search Console si din Google Ads (search_term_view).
+
+// Aceeasi normalizare pentru a compara un termen din reclame cu o cautare organica:
+// fara diacritice, litere mici, spatii multiple → unul singur.
+export function normalizeTerm(s: string): string {
+  return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim()
+}
+
+export interface OrganicKeywordRow {
+  query: string
+  clicks: number
+  impressions: number
+  position: number | null  // pozitia medie PONDERATA cu afisarile (1 = primul rezultat)
+  page: string             // pagina cu cele mai multe clickuri (apoi afisari) pentru cautare
+}
+
+export interface OrganicKeywords {
+  rows: OrganicKeywordRow[]
+  total_clicks: number       // pe toata perioada (nu doar top N)
+  total_impressions: number
+  last_day: string | null    // ultima zi cu date (Search Console are 2–3 zile intarziere)
+}
+
+export async function getOrganicKeywords(days: number, limit = 25): Promise<OrganicKeywords> {
+  const range = `day BETWEEN ${YESTERDAY_SQL} - $1::int + 1 AND ${YESTERDAY_SQL}`
+  const [top, totals] = await Promise.all([
+    pool.query<OrganicKeywordRow>(`
+      WITH g AS (
+        -- intai pe (cautare, pagina): avem nevoie de pagina principala a fiecarei cautari
+        SELECT query, page, SUM(clicks) AS c, SUM(impressions) AS i, SUM(position * impressions) AS pw
+        FROM gsc_daily WHERE ${range}
+        GROUP BY query, page
+      ), q AS (
+        -- media simpla a pozitiilor ar trata la fel o zi cu 1 afisare si una cu 500;
+        -- ponderam cu afisarile, ca Search Console
+        SELECT query, SUM(c)::int AS clicks, SUM(i)::int AS impressions,
+               round(SUM(pw) / NULLIF(SUM(i), 0), 1)::float8 AS position
+        FROM g GROUP BY query
+      ), top_page AS (
+        SELECT DISTINCT ON (query) query, page FROM g ORDER BY query, c DESC, i DESC, page
+      )
+      SELECT q.query, q.clicks, q.impressions, q.position, tp.page
+      FROM q JOIN top_page tp USING (query)
+      ORDER BY q.clicks DESC, q.impressions DESC, q.query
+      LIMIT $2
+    `, [days, limit]),
+    pool.query<{ total_clicks: number; total_impressions: number; last_day: string | null }>(`
+      SELECT COALESCE(SUM(clicks), 0)::int AS total_clicks, COALESCE(SUM(impressions), 0)::int AS total_impressions,
+             MAX(day)::text AS last_day
+      FROM gsc_daily WHERE ${range}
+    `, [days]),
+  ])
+  return { rows: top.rows, ...totals.rows[0] }
+}
+
+export interface AdsTermRow {
+  search_term: string
+  campaign: string          // fara prefixul „SE | Search | ”
+  clicks: number
+  impressions: number
+  cost: number              // lei
+  organic_position: number | null  // pozitia organica ponderata, DOAR daca ≤ 3 (altfel null)
+}
+
+export interface AdsTerms {
+  rows: AdsTermRow[]
+  total_clicks: number
+  total_impressions: number
+  total_cost: number
+}
+
+// Sub pozitia asta consideram ca termenul „apare deja organic” — platim pentru un click pe care
+// probabil l-am fi primit oricum.
+const ORGANIC_OVERLAP_MAX_POSITION = 3
+
+export async function getAdsSearchTerms(days: number, limit = 25): Promise<AdsTerms> {
+  const range = `day BETWEEN ${YESTERDAY_SQL} - $1::int + 1 AND ${YESTERDAY_SQL}`
+  const [top, totals, organic] = await Promise.all([
+    pool.query<Omit<AdsTermRow, 'organic_position'>>(`
+      SELECT search_term, campaign, SUM(clicks)::int AS clicks, SUM(impressions)::int AS impressions,
+             (SUM(cost_micros) / 1e6)::float8 AS cost   -- cost_micros = milionimi de leu
+      FROM ads_search_terms WHERE ${range}
+      GROUP BY search_term, campaign
+      ORDER BY cost DESC, clicks DESC, search_term
+      LIMIT $2
+    `, [days, limit]),
+    pool.query<{ total_clicks: number; total_impressions: number; total_cost: number }>(`
+      SELECT COALESCE(SUM(clicks), 0)::int AS total_clicks, COALESCE(SUM(impressions), 0)::int AS total_impressions,
+             (COALESCE(SUM(cost_micros), 0) / 1e6)::float8 AS total_cost
+      FROM ads_search_terms WHERE ${range}
+    `, [days]),
+    // Pozitia organica pe cautare (suma ponderata) — unim in JS, dupa normalizare
+    pool.query<{ query: string; pw: number; i: number }>(`
+      SELECT query, SUM(position * impressions)::float8 AS pw, SUM(impressions)::float8 AS i
+      FROM gsc_daily WHERE ${range}
+      GROUP BY query
+    `, [days]),
+  ])
+
+  // Cautari care difera doar prin diacritice/majuscule/spatii se aduna inainte de medie
+  const byTerm = new Map<string, { pw: number; i: number }>()
+  for (const r of organic.rows) {
+    const k = normalizeTerm(r.query)
+    const cur = byTerm.get(k) ?? { pw: 0, i: 0 }
+    cur.pw += r.pw
+    cur.i += r.i
+    byTerm.set(k, cur)
+  }
+
+  const rows = top.rows.map((r): AdsTermRow => {
+    const o = byTerm.get(normalizeTerm(r.search_term))
+    const pos = o && o.i > 0 ? Math.round((o.pw / o.i) * 10) / 10 : null
+    return {
+      ...r,
+      campaign: r.campaign.replace(/^SE \| Search \| /, ''),
+      organic_position: pos !== null && pos <= ORGANIC_OVERLAP_MAX_POSITION ? pos : null,
+    }
+  })
+  return { rows, ...totals.rows[0] }
+}

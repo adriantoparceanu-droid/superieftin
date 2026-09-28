@@ -31,6 +31,18 @@ GA4 în admin. Contul creat aici poate **doar să citească** GA4, nu poate modi
 5. Tot în Admin → **Detalii proprietate** (Property details): copiază **ID-ul proprietății**,
    un număr de forma `123456789`. Atenție: **nu** e ID-ul de măsurare `G-…`.
 
+## Pasul 3b: acces la Search Console (cuvintele cheie organice)
+
+GA4 nu dă prin API căutările din Google, nici când e legat de Search Console. De aceea
+adminul le citește direct din Search Console, cu același cont de serviciu:
+
+1. Google Cloud, același proiect → **APIs & Services** → **Library** → **Google Search Console API** → **Enable**.
+2. <https://search.google.com/search-console> → proprietatea superieftin.ro → **Setări** →
+   **Utilizatori și permisiuni** → **Adaugă utilizator** → emailul contului de serviciu,
+   permisiunea **Restricționat** (doar citire).
+
+Termenii din reclame (Google Ads) nu cer nimic nou: folosesc conexiunea Google Ads existentă.
+
 ## Pasul 4: pune datele în .env
 
 În terminal, în folderul unde ai descărcat cheia:

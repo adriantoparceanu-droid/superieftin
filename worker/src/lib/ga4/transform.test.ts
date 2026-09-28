@@ -74,3 +74,27 @@ test('dayRange: până ieri inclusiv, în ora României (și după miezul nopți
   assert.deepEqual(dayRange(3, new Date('2026-09-27T21:30:00Z')), { start: '2026-09-25', end: '2026-09-27' })
   assert.deepEqual(dayRange(90, new Date('2026-09-28T10:00:00Z')), { start: '2026-06-30', end: '2026-09-27' })
 })
+
+import { pickSite, topGscPerDay, type GscRow } from './search-console.js'
+import { mapAdsTerm } from './ads-terms.js'
+
+test('pickSite: preferă proprietatea de domeniu, apoi https://www., respectă GSC_SITE_URL', () => {
+  assert.equal(pickSite(['https://www.superieftin.ro/', 'sc-domain:superieftin.ro']), 'sc-domain:superieftin.ro')
+  assert.equal(pickSite(['http://superieftin.ro/', 'https://www.superieftin.ro/']), 'https://www.superieftin.ro/')
+  assert.equal(pickSite(['https://alt-site.ro/']), null)
+  assert.equal(pickSite(['https://www.superieftin.ro/'], 'sc-domain:superieftin.ro'), null, 'GSC_SITE_URL fără acces → null, nu altă proprietate')
+})
+
+test('topGscPerDay: clickurile înaintea afișărilor, separat pe zile', () => {
+  const r = (day: string, query: string, clicks: number, impressions: number): GscRow => ({ day, query, page: '/p/x', clicks, impressions, position: 5 })
+  const top = topGscPerDay([r('2026-09-26', 'a', 0, 900), r('2026-09-26', 'b', 3, 10), r('2026-09-26', 'c', 0, 50), r('2026-09-27', 'd', 1, 1)], 2)
+  assert.deepEqual(top.map((x) => x.query), ['b', 'a', 'd'])
+})
+
+test('mapAdsTerm: rândul GAQL (camelCase, numere ca text) → rândul din tabel', () => {
+  assert.deepEqual(mapAdsTerm({
+    segments: { date: '2026-09-28' }, campaign: { name: 'SE | Search | iPhone 17 Pro Max' }, adGroup: { name: 'iPhone 17 Pro Max 256GB - preț' },
+    searchTermView: { searchTerm: 'iphone 17 pro max pret', status: 'NONE' },
+    metrics: { impressions: '14', clicks: '2', costMicros: '2480000', conversions: 0 },
+  }), { day: '2026-09-28', campaign: 'SE | Search | iPhone 17 Pro Max', ad_group: 'iPhone 17 Pro Max 256GB - preț', search_term: 'iphone 17 pro max pret', status: 'NONE', impressions: 14, clicks: 2, cost_micros: 2480000, conversions: 0 })
+})
