@@ -28,6 +28,9 @@ const TRACKING_SYNC_CRON = process.env.TRACKING_SYNC_CRON || '30 6 * * *'
 // grupurilor active si pune pe pauza ce nu mai corespunde. Pauza e reala doar cu ADS_ENV=prod sau
 // ADS_GUARD_REAL_PAUSE=1; altfel doar alerteaza pe Telegram. Vezi ads/campaigns/guard.ts.
 const ADS_GUARD_CRON = process.env.ADS_GUARD_CRON || '0 7 * * *'
+// Statistici GA4 pentru /admin/statistici — date de ieri, dupa ce GA4 a procesat ziua.
+// Fara GA4_PROPERTY_ID / GA4_SERVICE_ACCOUNT_JSON jobul se opreste linistit. Vezi lib/ga4/sync.ts.
+const GA4_SYNC_CRON = process.env.GA4_SYNC_CRON || '15 6 * * *'
 
 async function scheduleRepeatingJobs() {
   await syncQueue.add(
@@ -71,6 +74,13 @@ async function scheduleRepeatingJobs() {
     { repeat: { pattern: ADS_GUARD_CRON }, jobId: 'ads-guard-repeat' }
   )
   logger.info({ cron: ADS_GUARD_CRON }, 'Job repeating programat: ads-guard')
+
+  await syncQueue.add(
+    'ga4-sync',
+    { type: 'ga4-sync' },
+    { repeat: { pattern: GA4_SYNC_CRON }, jobId: 'ga4-sync-repeat' }
+  )
+  logger.info({ cron: GA4_SYNC_CRON }, 'Job repeating programat: ga4-sync')
 }
 
 async function invalidateCache() {
@@ -108,6 +118,15 @@ async function syncNow() {
       logger.error(result, 'EROARE: 0 produse eMAG salvate — scanarea a esuat')
       exitCode = 2
     }
+  } else if (process.argv.includes('--ga4')) {
+    // npm run ga4:sync:now [-- --days=N]  (implicit: ultimele 3 zile, sau 90 la prima rulare)
+    const { runGa4Sync } = await import('./lib/ga4/sync.js')
+    const days = Number(process.argv.find((a) => a.startsWith('--days='))?.split('=')[1]) || undefined
+    const result = await runGa4Sync(pool, { daysBack: days })
+    logger.info(result, 'ga4-sync finalizat')
+    // statisticile nu schimba ofertele → fara alerte de pret si fara invalidarea cache-ului site-ului
+    await pool.end()
+    process.exit(0)
   } else if (process.argv.includes('--catalog')) {
     const result = await runCatalogRefresh()
     logger.info(result, 'catalog categorii finalizat')

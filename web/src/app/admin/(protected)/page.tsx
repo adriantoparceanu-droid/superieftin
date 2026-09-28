@@ -3,6 +3,7 @@ import {
   getRetailerStats, getUnmappedCount, getRecentSyncs,
   getPlatformStats, getTopClickedProducts, getTopSearches, getFeedFreshness, getBlockedRetailers,
 } from '@/lib/admin/queries'
+import { getGa4DashboardSummary } from '@/lib/admin/ga4-stats'
 
 // Paginile admin sunt dinamice implicit: layout-ul protejat citeste cookies()
 
@@ -17,7 +18,7 @@ function timeAgo(seconds: number): string {
 }
 
 export default async function AdminDashboard() {
-  const [retailers, unmapped, syncs, stats, topProducts, topSearches, freshness, blocked] = await Promise.all([
+  const [retailers, unmapped, syncs, stats, topProducts, topSearches, freshness, blocked, ga4] = await Promise.all([
     getRetailerStats(),
     getUnmappedCount(),
     getRecentSyncs(10),
@@ -26,6 +27,7 @@ export default async function AdminDashboard() {
     getTopSearches(30, 10),
     getFeedFreshness(),
     getBlockedRetailers(),
+    getGa4DashboardSummary(),
   ])
   const totalProducts = retailers.reduce((s, r) => s + r.products, 0)
   const totalOffers = retailers.reduce((s, r) => s + r.offers, 0)
@@ -76,6 +78,17 @@ export default async function AdminDashboard() {
           <p className={`text-2xl font-bold ${unmapped ? 'text-amber-600' : ''}`}>{unmapped.toLocaleString('ro-RO')}</p>
           {unmapped > 0 && <p className="text-xs text-amber-600 mt-1">Mapează-le →</p>}
         </Link>
+        {/* Trafic GA4 pe ultimele 7 zile incheiate — apare doar cand workerul a adus date (ga4-sync) */}
+        {ga4.days_with_data > 0 && (
+          <Link href="/admin/statistici?zile=7" className="bg-white border border-line rounded-xl p-4 hover:border-brand">
+            <p className="text-sm text-muted">Trafic GA4 (7 zile)</p>
+            <p className="text-2xl font-bold">
+              {ga4.users.toLocaleString('ro-RO')}
+              <span className="text-base font-normal text-muted"> utilizatori</span>
+            </p>
+            <p className="text-xs text-muted mt-1">{ga4.affiliate_clicks.toLocaleString('ro-RO')} clickuri spre magazine · <span className="text-brand">Vezi statisticile →</span></p>
+          </Link>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">

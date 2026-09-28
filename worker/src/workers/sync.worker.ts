@@ -21,6 +21,7 @@ import { toSlug } from '../lib/slug.js'
 import { checkAndSendAlerts } from './alerts.worker.js'
 import { runTrackingSyncJob } from '../tracking/sync.js'
 import { runAdsGuardJob } from '../ads/campaigns/guard.js'
+import { runGa4Sync } from '../lib/ga4/sync.js'
 
 const logger = pino({ level: 'info' })
 
@@ -34,6 +35,7 @@ export type SyncJobData =
   | { type: 'catalog-refresh' }
   | { type: 'tracking-sync' }
   | { type: 'ads-guard' }
+  | { type: 'ga4-sync' }
 
 // Sub acest prag (fata de sincronizarea anterioara) un feed e considerat suspect si respins.
 const MIN_FEED_RATIO = 0.5
@@ -675,6 +677,7 @@ export function startSyncWorker() {
         : job.data.type === 'catalog-refresh' ? runCatalogRefresh(job.id)
         : job.data.type === 'tracking-sync' ? runTrackingSyncJob(pool, (m) => logger.info(m))
         : job.data.type === 'ads-guard' ? runAdsGuardJob((m) => logger.info(m))
+        : job.data.type === 'ga4-sync' ? runGa4Sync(pool)
         : job.data.type === 'file-import' ? runFileImport(job.data.filePath, job.data.retailerSlug, job.id, job.data.filename)
             .finally(() => unlink((job.data as { filePath: string }).filePath).catch(() => {}))
         : runFeedSync(job.id),
@@ -691,8 +694,8 @@ export function startSyncWorker() {
 
   worker.on('completed', (job, result) => {
     logger.info({ job: job.id, ...result }, 'Job completat')
-    // Comisioanele si garda reclamelor nu schimba preturi/oferte → fara alerte si fara invalidare cache
-    if (job.data.type === 'tracking-sync' || job.data.type === 'ads-guard') return
+    // Comisioanele, garda reclamelor si statisticile GA4 nu schimba preturi/oferte → fara alerte si fara invalidare cache
+    if (job.data.type === 'tracking-sync' || job.data.type === 'ads-guard' || job.data.type === 'ga4-sync') return
     checkAndSendAlerts().catch((err) => logger.error({ err }, 'Eroare verificare alerte'))
     invalidateSiteCache().catch((err) => logger.warn({ err }, 'Cache invalidation esuat'))
   })
