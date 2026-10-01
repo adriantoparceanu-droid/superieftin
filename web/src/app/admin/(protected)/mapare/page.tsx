@@ -6,19 +6,29 @@ import {
 import { createMappingRuleAction, deleteMappingRuleAction, createNameRuleAction, deleteNameRuleAction } from '@/lib/admin/actions'
 import { termsPattern, topWords } from '@/lib/admin/nameMatch'
 
-type Props = { searchParams: Promise<{ grup?: string; terme?: string; actiune?: string; categorie?: string; toti?: string }> }
+type Props = { searchParams: Promise<{ grup?: string; terme?: string; actiune?: string; categorie?: string; toti?: string; magazin?: string }> }
 
 const NO_CATEGORY = '(fără categorie)'
 
 export default async function MaparePage({ searchParams }: Props) {
   const sp = await searchParams
-  const [groups, categories, tags, rules, nameRules] = await Promise.all([
+  const [allGroups, categories, tags, rules, allNameRules] = await Promise.all([
     getUnmappedGroups(),
     getCategoriesTree(),
     getTagsWithCounts(),
     getMappingRules(),
     getNameRules(),
   ])
+  // ?magazin=<retailer_id> (link din Surse feed → Alege categoriile): arata doar grupurile
+  // nemapate ale magazinului si regulile dupa denumire care il privesc (ale lui + globale).
+  // Fara parametru pagina arata tot, ca inainte.
+  const shopId = Number(sp.magazin) || null
+  const groups = shopId ? allGroups.filter((g) => g.retailer_id === shopId) : allGroups
+  const nameRules = shopId ? allNameRules.filter((r) => r.retailer_id == null || r.retailer_id === shopId) : allNameRules
+  const shopName = shopId
+    ? allNameRules.find((r) => r.retailer_id === shopId)?.retailer_name
+      ?? allGroups.find((g) => g.retailer_id === shopId)?.retailer_name ?? `magazinul #${shopId}`
+    : null
 
   // Grupul deschis pentru „mapare dupa denumire”: ?grup=<retailer_id>|<categorie feed>
   const [grpRetailer, ...grpCatParts] = (sp.grup ?? '').split('|')
@@ -45,6 +55,13 @@ export default async function MaparePage({ searchParams }: Props) {
         Categoriile din feed-uri fără regulă de mapare. Alege categoria site-ului — regula se aplică
         retroactiv pe produsele existente și automat la importurile viitoare.
       </p>
+
+      {shopId && (
+        <div className="bg-surface border border-line rounded-xl p-3 mb-6 text-sm flex items-center justify-between gap-3">
+          <span>Arăți doar <strong>{shopName}</strong> (grupuri nemapate + regulile după denumire ale magazinului și cele globale).</span>
+          <Link href="/admin/mapare" className="text-brand underline whitespace-nowrap">arată toate magazinele</Link>
+        </div>
+      )}
 
       {!groups.length && (
         <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-8 text-sm text-green-800">
@@ -180,7 +197,7 @@ export default async function MaparePage({ searchParams }: Props) {
         </section>
       )}
 
-      <h2 className="text-lg font-semibold mb-3">Reguli după denumire ({nameRules.length})</h2>
+      <h2 id="reguli-denumire" className="text-lg font-semibold mb-3">Reguli după denumire ({nameRules.length})</h2>
       <div className="bg-white border border-line rounded-xl overflow-hidden mb-10">
         <table className="w-full text-sm">
           <thead className="bg-surface text-left text-muted">

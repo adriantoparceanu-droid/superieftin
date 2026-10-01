@@ -1,13 +1,17 @@
 'use server'
 
-import { revalidateTag, refresh } from 'next/cache'
+import { revalidateTag, revalidatePath, refresh } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'
 import pool from '../db'
 import { verifyPassword, hashPassword } from './password'
 import { createSession, destroySession, requireAdmin } from './session'
-import { termsPattern, NAME_NORMALIZED_SQL } from './nameMatch'
+import { termsPattern, firstMatchingRule, NAME_NORMALIZED_SQL, type NameRuleForMatch } from './nameMatch'
+import {
+  scanTpFeed, extractDomain, retailerSlugForDomain, normalizeFeedCategory, suggestSiteCategory,
+  type FeedScanResult, type FeedCategoryInfo, type SiteCategory,
+} from './feed-categories'
 import { OFFER_AVAILABLE_SQL } from '../availability'
 
 // Slugify identic cu worker/src/lib/slug.ts
@@ -61,18 +65,20 @@ export async function logoutAction() {
 
 // ---------- Categorii ----------
 
-export async function createCategoryAction(formData: FormData) {
-  await requireAdmin()
-  const name = String(formData.get('name') ?? '').trim()
-  if (!name) return
-  const parentId = formData.get('parent_id') ? Number(formData.get('parent_id')) : null
-  const icon = String(formData.get('icon') ?? '').trim() || null
+// Creeaza categoria (si itemul ei de meniu, sub itemul parintelui). Folosita de
+// createCategoryAction si de „Creează categorie nouă” din Surse feed → Alege categoriile.
+// Daca slug-ul exista deja (ex. „Car Kit” cand exista „Car kit”), NU cream un duplicat:
+// intoarcem categoria existenta cu created = false, iar meniul ramane neatins.
+async function insertCategoryWithMenu(
+  name: string, parentId: number | null, icon: string | null,
+): Promise<{ id: number; created: boolean }> {
+  const slug = toSlug(name)
   const inserted = await pool.query<{ id: number }>(`
     INSERT INTO categories (name, slug, parent_id, icon, sort_order)
     VALUES ($1, $2, $3, $4, (SELECT coalesce(max(sort_order), 0) + 1 FROM categories))
     ON CONFLICT (slug) DO NOTHING
     RETURNING id
-  `, [name, toSlug(name), parentId, icon])
+  `, [name, slug, parentId, icon])
 
   // Categorie nouă → apare automat și în meniul din header (sub părinte, dacă acesta
   // are deja un item de meniu). Se poate reordona/ascunde ulterior din /admin/meniu.
@@ -88,7 +94,20 @@ export async function createCategoryAction(formData: FormData) {
       SELECT $1, $2, $3, (SELECT coalesce(max(sort_order), 0) + 1 FROM menu_items), true
       WHERE NOT EXISTS (SELECT 1 FROM menu_items WHERE category_id = $2)
     `, [name, categoryId, menuParentId])
+    return { id: categoryId, created: true }
   }
+  // ON CONFLICT DO NOTHING nu intoarce id-ul randului existent → il cautam dupa slug
+  const existing = await pool.query<{ id: number }>('SELECT id FROM categories WHERE slug = $1', [slug])
+  return { id: existing.rows[0].id, created: false }
+}
+
+export async function createCategoryAction(formData: FormData) {
+  await requireAdmin()
+  const name = String(formData.get('name') ?? '').trim()
+  if (!name) return
+  const parentId = formData.get('parent_id') ? Number(formData.get('parent_id')) : null
+  const icon = String(formData.get('icon') ?? '').trim() || null
+  await insertCategoryWithMenu(name, parentId, icon)
   revalidateAll()
 }
 
@@ -393,10 +412,15 @@ export async function addExternalFeedAction(formData: FormData) {
   const network = String(formData.get('network') ?? '').trim() || '2performant'
   const label = String(formData.get('label') ?? '').trim() || null
   if (!/^https?:\/\//i.test(url)) return  // URL valid obligatoriu
+  // „Alege categoriile înainte de primul import” (bifata implicit): feed-ul nou porneste cu
+  // filtrul gol '{}' → workerul il sare pana alegi categoriile, ca importul de noapte sa nu
+  // aduca tot feed-ul (ex. 17.000 de produse, majoritatea huse). Doar 2Performant are filtru.
+  const chooseFirst = formData.get('choose_categories') === 'on' && network === '2performant'
   await pool.query(
-    `INSERT INTO external_feeds (url, network, label) VALUES ($1, $2, $3)
+    `INSERT INTO external_feeds (url, network, label, category_filter) VALUES ($1, $2, $3, $4)
      ON CONFLICT (url) DO UPDATE SET network = EXCLUDED.network, label = EXCLUDED.label, is_active = true`,
-    [url, network, label]
+    // La un URL deja existent filtrul ramane cel salvat (nu-l resetam la re-adaugare)
+    [url, network, label, chooseFirst ? [] : null]
   )
   refresh()
 }
@@ -415,6 +439,290 @@ export async function deleteExternalFeedAction(formData: FormData) {
   if (!id) return
   await pool.query('DELETE FROM external_feeds WHERE id = $1', [id])
   refresh()
+}
+
+// ---------- Surse feed → „Alege categoriile” (external_feeds.category_filter, migratia 028) ----------
+
+function revalidateFeedPages() {
+  revalidatePath('/admin/surse-feed')
+  revalidatePath('/admin/magazine')
+}
+
+// Descarca feed-ul ACUM (streaming, nu tot XML-ul in memorie) si intoarce categoriile lui cu
+// numarul de produse + informatia de mapare. Nu scrie nimic in baza de date.
+export async function scanFeedCategoriesAction(feedId: number): Promise<FeedScanResult | { error: string }> {
+  await requireAdmin()
+  const { rows: feedRows } = await pool.query<{ id: number; url: string; label: string | null; network: string; category_filter: string[] | null }>(
+    'SELECT id, url, label, network, category_filter FROM external_feeds WHERE id = $1', [Number(feedId)]
+  )
+  const feed = feedRows[0]
+  if (!feed) return { error: 'Feed-ul nu mai există.' }
+  if (feed.network !== '2performant') return { error: 'Alegerea categoriilor e disponibilă doar pentru feed-urile 2Performant.' }
+
+  // Retailerii existenti (dupa slug, ca workerul) si regulile „dupa denumire” — tabele mici,
+  // le incarcam o data ca sa putem evalua fiecare produs din feed fara query-uri in bucla.
+  const { rows: retailers } = await pool.query<{ id: number; name: string; slug: string }>('SELECT id, name, slug FROM retailers')
+  const retailerBySlug = new Map(retailers.map((r) => [r.slug, r]))
+  const allNameRules = await loadNameRulesForMatch(null)
+  const nameRules = allNameRules.map((r) => ({ ...r, re: new RegExp(r.pattern) }))
+
+  type Acc = { name: string; count: number; ignored: number; mapped: number }
+  const byCategory = new Map<string, Acc>()
+  const domainCounts = new Map<string, number>()
+  // Denumirile produselor FARA <category> (doar ele — restul se mapeaza pe categorie): pentru
+  // statisticile si previzualizarea regulilor „dupa denumire” din browser. Pastram doar
+  // titlul (nu tot item-ul), cu plafon, ca un feed urias sa nu umple memoria / pagina.
+  const uncategorizedTitles: string[] = []
+  let uncategorizedTotal = 0
+  let total = 0, bytes = 0
+  try {
+    const res = await scanTpFeed(feed.url, (item) => {
+      // Workerul sare oricum produsele fara titlu sau fara magazin recunoscut
+      const domain = extractDomain(item.campaignName)
+      if (!item.title || !domain) return
+      total++
+      domainCounts.set(domain, (domainCounts.get(domain) ?? 0) + 1)
+      const key = normalizeFeedCategory(item.category)
+      const acc = byCategory.get(key) ?? { name: item.category.trim(), count: 0, ignored: 0, mapped: 0 }
+      acc.count++
+      const retailerId = retailerBySlug.get(retailerSlugForDomain(domain))?.id ?? null
+      const byName = nameRules.length ? firstMatchingRule(nameRules, retailerId, item.title)?.action ?? null : null
+      if (byName === 'ignore') acc.ignored++
+      else if (byName === 'map') acc.mapped++
+      if (!key) {
+        uncategorizedTotal++
+        if (uncategorizedTitles.length < UNCATEGORIZED_TITLES_CAP) uncategorizedTitles.push(item.title)
+      }
+      byCategory.set(key, acc)
+    })
+    bytes = res.bytes
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    return { error: /abort|timeout/i.test(msg) ? 'Descărcarea feed-ului a durat prea mult (peste 2 minute). Încearcă din nou.' : `Nu am putut descărca feed-ul: ${msg}` }
+  }
+
+  // Magazinul dominant din feed (de obicei unul singur) — maparea e per magazin
+  const domain = [...domainCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null
+  const retailerRow = domain ? retailerBySlug.get(retailerSlugForDomain(domain)) ?? null : null
+
+  // Categoriile din filtrul salvat care nu mai apar in feed raman in lista (cu 0 produse),
+  // ca o salvare noua sa nu le piarda pe tacute
+  const filter = feed.category_filter
+  const selectedKeys = new Set((filter ?? []).map(normalizeFeedCategory))
+  for (const f of filter ?? []) {
+    const key = normalizeFeedCategory(f)
+    if (!byCategory.has(key)) byCategory.set(key, { name: f.trim(), count: 0, ignored: 0, mapped: 0 })
+  }
+
+  // Regulile feed_category_map: regula magazinului bate regula globala (ca loadFeedRules)
+  const keys = [...byCategory.keys()].filter(Boolean)
+  const { rows: rules } = await pool.query<{ key: string; category_id: number; retailer_id: number | null; label: string }>(`
+    SELECT DISTINCT ON (lower(m.feed_category)) lower(m.feed_category) AS key, m.category_id, m.retailer_id,
+           CASE WHEN p.name IS NOT NULL THEN p.name || ' › ' || c.name ELSE c.name END AS label
+    FROM feed_category_map m
+    JOIN categories c ON c.id = m.category_id
+    LEFT JOIN categories p ON p.id = c.parent_id
+    WHERE lower(m.feed_category) = ANY($1::text[]) AND (m.retailer_id = $2::int OR m.retailer_id IS NULL)
+    ORDER BY lower(m.feed_category), m.retailer_id NULLS LAST
+  `, [keys, retailerRow?.id ?? null])
+  const ruleByKey = new Map(rules.map((r) => [r.key, r]))
+
+  // Categoriile de site in care se pot pune produse (frunzele arborelui), pentru sugestie
+  const { rows: siteCats } = await pool.query<SiteCategory>(`
+    SELECT c.id, c.name, c.parent_id AS "parentId", p.name AS "parentName"
+    FROM categories c LEFT JOIN categories p ON p.id = c.parent_id
+    WHERE NOT EXISTS (SELECT 1 FROM categories ch WHERE ch.parent_id = c.id)
+  `)
+
+  const categories = [...byCategory.entries()].map(([key, acc]): FeedCategoryInfo => {
+    const rule = ruleByKey.get(key)
+    const sugg = rule || !key ? null : suggestSiteCategory(acc.name, siteCats)
+    return {
+      name: acc.name,
+      count: acc.count,
+      selected: filter == null ? true : selectedKeys.has(key),
+      mapping: rule ? { categoryId: rule.category_id, label: rule.label, scope: rule.retailer_id == null ? 'global' : 'retailer' } : null,
+      suggestion: sugg ? { categoryId: sugg.id, label: sugg.parentName ? `${sugg.parentName} › ${sugg.name}` : sugg.name, parentId: sugg.parentId } : null,
+      ignoredByName: acc.ignored,
+      mappedByName: acc.mapped,
+    }
+  }).sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'ro'))
+
+  return {
+    feedId: feed.id,
+    feedLabel: feed.label,
+    total,
+    bytes,
+    domain,
+    retailer: retailerRow ? { id: retailerRow.id, name: retailerRow.name } : null,
+    filterMode: filter == null ? 'all' : filter.length === 0 ? 'none' : 'list',
+    categories,
+    uncategorized: uncategorizedTotal
+      ? { titles: uncategorizedTitles, total: uncategorizedTotal, capped: uncategorizedTotal > uncategorizedTitles.length }
+      : null,
+    // Doar regulile care conteaza pentru magazinul feed-ului (ale lui + globale)
+    nameRules: allNameRules.filter((r) => r.retailerId == null || r.retailerId === (retailerRow?.id ?? -1)),
+  }
+}
+
+// Plafonul de denumiri fara categorie trimise catre pagina (~1,5 MB la 20.000 de titluri)
+const UNCATEGORIZED_TITLES_CAP = 20_000
+
+// Regulile „dupa denumire” in ordinea in care le aplica workerul (priority, id), cu eticheta
+// categoriei. retailerId null = toate; altfel doar ale magazinului + cele globale.
+async function loadNameRulesForMatch(retailerId: number | null): Promise<NameRuleForMatch[]> {
+  const { rows } = await pool.query<{
+    id: number; retailer_id: number | null; terms: string; action: 'map' | 'ignore'
+    category_id: number | null; label: string | null; priority: number
+  }>(`
+    SELECT n.id, n.retailer_id, n.terms, n.action, n.category_id, n.priority,
+           CASE WHEN p.name IS NOT NULL THEN p.name || ' › ' || c.name ELSE c.name END AS label
+    FROM name_category_rules n
+    LEFT JOIN categories c ON c.id = n.category_id
+    LEFT JOIN categories p ON p.id = c.parent_id
+    WHERE $1::int IS NULL OR n.retailer_id IS NULL OR n.retailer_id = $1
+    ORDER BY n.priority, n.id
+  `, [retailerId]).catch(() => ({ rows: [] }))   // migratia 020 inca neaplicata → fara reguli
+  return rows.flatMap((r) => {
+    const pattern = termsPattern(r.terms)
+    return pattern ? [{
+      id: r.id, retailerId: r.retailer_id, action: r.action, categoryId: r.category_id,
+      categoryLabel: r.label, priority: r.priority, pattern,
+    }] : []
+  })
+}
+
+// Regula „denumirea conține X → categorie existentă / ignoră” din randul „(fără categorie în
+// feed)”. Salvarea trece prin createNameRuleAction (aceeasi ca in Admin → Mapare, aplicata
+// imediat pe produsele nemapate) si intoarce regulile recitite in ACELASI apel: statisticile
+// randului se recalculeaza in browser fara a descarca din nou feed-ul. (Un al doilea apel
+// separat ramanea blocat in coada de server actions dupa refresh()-ul din prima.)
+export async function createNameRuleFromFeedAction(input: {
+  terms: string; action: 'map' | 'ignore'; categoryId: number | null; retailerId: number
+}): Promise<{ rules: NameRuleForMatch[] } | { error: string }> {
+  await requireAdmin()
+  const terms = String(input.terms ?? '').trim().slice(0, 500)
+  const action = input.action === 'ignore' ? 'ignore' : 'map'
+  const retailerId = Number(input.retailerId) || null
+  const categoryId = action === 'map' ? Number(input.categoryId) || null : null
+  if (!termsPattern(terms)) return { error: 'Scrie cel puțin un termen.' }
+  if (!retailerId) return { error: 'Magazin nou — maparea devine disponibilă după primul import.' }
+  if (action === 'map' && !categoryId) return { error: 'Alege categoria site-ului.' }
+  const fd = new FormData()
+  fd.set('terme', terms)
+  fd.set('actiune', action)
+  fd.set('categorie', categoryId ? String(categoryId) : '')
+  fd.set('retailer', String(retailerId))
+  await createNameRuleAction(fd)   // include revalidateAll()
+  revalidateFeedPages()
+  return { rules: await loadNameRulesForMatch(retailerId) }
+}
+
+// mode 'all' → NULL (importa tot, inclusiv categoriile care vor aparea pe viitor);
+// mode 'list' → doar categoriile trimise (lista goala = nu importa nimic).
+// Debifarea nu sterge nimic: ofertele categoriilor scoase devin fara stoc dupa 3 zile.
+export async function saveFeedCategoryFilterAction(
+  feedId: number, mode: 'all' | 'list', categories: string[],
+): Promise<{ ok: true } | { error: string }> {
+  await requireAdmin()
+  const id = Number(feedId)
+  if (!id) return { error: 'Feed invalid.' }
+  let value: string[] | null = null
+  if (mode === 'list') {
+    if (!Array.isArray(categories) || categories.length > 2000) return { error: 'Listă de categorii invalidă.' }
+    // Fara dubluri care difera doar prin majuscule/spatii (la import se compara normalizat)
+    const seen = new Map<string, string>()
+    for (const c of categories) {
+      const name = String(c).trim().slice(0, 300)
+      if (!seen.has(normalizeFeedCategory(name))) seen.set(normalizeFeedCategory(name), name)
+    }
+    value = [...seen.values()]
+  }
+  const res = await pool.query(
+    `UPDATE external_feeds SET category_filter = $2 WHERE id = $1 AND network = '2performant'`, [id, value]
+  )
+  if (!res.rowCount) return { error: 'Feed-ul nu mai există.' }
+  revalidateFeedPages()
+  return { ok: true }
+}
+
+// „Creează categorie nouă” pentru o categorie de feed nemapata: creeaza categoria de site
+// (+ itemul de meniu, ca createCategoryAction) si apoi regula de mapare a magazinului prin
+// createMappingRuleAction (aceeasi ca „Mapează”, cu aplicare pe produsele existente).
+export async function createCategoryAndMapFeedAction(input: {
+  feedCategory: string; retailerId: number; name: string; parentId: number | null
+}): Promise<{ categoryId: number; label: string; existed: boolean } | { error: string }> {
+  await requireAdmin()
+  const feedCategory = String(input.feedCategory ?? '').trim()
+  const name = String(input.name ?? '').trim().slice(0, 100)
+  const retailerId = Number(input.retailerId) || null
+  const parentId = input.parentId ? Number(input.parentId) : null
+  if (!feedCategory) return { error: 'Produsele fără categorie în feed se mapează doar după denumire (Admin → Mapare).' }
+  // Fara magazin nu putem face regula; nu cream nici categoria, ca sa nu ramana una goala in meniu
+  if (!retailerId) return { error: 'Magazin nou — maparea devine disponibilă după primul import.' }
+  const invalid = await validateNewCategory(name, parentId)
+  if (invalid) return { error: invalid }
+
+  const { id: categoryId, created } = await insertCategoryWithMenu(name, parentId, null)
+  const fd = new FormData()
+  fd.set('feed_category', feedCategory)
+  fd.set('retailer_id', String(retailerId))
+  fd.set('category_id', String(categoryId))
+  await createMappingRuleAction(fd)   // include revalidateAll() (site + meniu + admin)
+
+  revalidateFeedPages()
+  return { categoryId, label: await categoryLabel(categoryId, name), existed: !created }
+}
+
+// Verificarile comune pentru „Creează categorie nouă” (din categoria de feed sau din regula
+// dupa denumire). Intoarce mesajul de eroare sau null.
+async function validateNewCategory(name: string, parentId: number | null): Promise<string | null> {
+  if (!name || !toSlug(name)) return 'Scrie numele categoriei.'
+  if (parentId) {
+    // Parintele trebuie sa fie o categorie principala (meniul are 2 niveluri)
+    const { rows } = await pool.query('SELECT 1 FROM categories WHERE id = $1 AND parent_id IS NULL', [parentId])
+    if (!rows.length) return 'Părintele ales nu mai există (sau nu e categorie principală).'
+  }
+  return null
+}
+
+// „Părinte › Categorie”, ca in selecturile din admin
+async function categoryLabel(categoryId: number, fallback: string): Promise<string> {
+  const { rows } = await pool.query<{ label: string }>(`
+    SELECT CASE WHEN p.name IS NOT NULL THEN p.name || ' › ' || c.name ELSE c.name END AS label
+    FROM categories c LEFT JOIN categories p ON p.id = c.parent_id WHERE c.id = $1
+  `, [categoryId])
+  return rows[0]?.label ?? fallback
+}
+
+// Regula „denumirea conține X → categorie NOUĂ” din randul „(fără categorie în feed)”:
+// creeaza categoria (+ meniu, ca createCategoryAction), apoi regula prin createNameRuleAction
+// — aceeasi actiune ca in Admin → Mapare, care o aplica imediat pe produsele nemapate.
+export async function createCategoryAndNameRuleAction(input: {
+  terms: string; retailerId: number; name: string; parentId: number | null
+}): Promise<{ categoryId: number; label: string; existed: boolean; rules: NameRuleForMatch[] } | { error: string }> {
+  await requireAdmin()
+  const terms = String(input.terms ?? '').trim().slice(0, 500)
+  const name = String(input.name ?? '').trim().slice(0, 100)
+  const retailerId = Number(input.retailerId) || null
+  const parentId = input.parentId ? Number(input.parentId) : null
+  if (!termsPattern(terms)) return { error: 'Scrie cel puțin un termen.' }
+  if (!retailerId) return { error: 'Magazin nou — maparea devine disponibilă după primul import.' }
+  const invalid = await validateNewCategory(name, parentId)
+  if (invalid) return { error: invalid }
+
+  const { id: categoryId, created } = await insertCategoryWithMenu(name, parentId, null)
+  const fd = new FormData()
+  fd.set('terme', terms)
+  fd.set('actiune', 'map')
+  fd.set('categorie', String(categoryId))
+  fd.set('retailer', String(retailerId))
+  await createNameRuleAction(fd)   // include revalidateAll()
+  revalidateFeedPages()
+  return {
+    categoryId, label: await categoryLabel(categoryId, name), existed: !created,
+    rules: await loadNameRulesForMatch(retailerId),
+  }
 }
 
 // ---------- Bannere homepage ----------

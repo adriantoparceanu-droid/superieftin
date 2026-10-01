@@ -178,11 +178,13 @@ export interface ExternalFeedRow {
   label: string | null
   is_active: boolean
   created_at: Date
+  // migratia 028: NULL = toate categoriile, [] = nimic pana alegi, altfel doar acestea
+  category_filter: string[] | null
 }
 
 export async function getExternalFeeds(): Promise<ExternalFeedRow[]> {
   const { rows } = await pool.query<ExternalFeedRow>(
-    'SELECT id, url, network, label, is_active, created_at FROM external_feeds ORDER BY network, label, id'
+    'SELECT id, url, network, label, is_active, created_at, category_filter FROM external_feeds ORDER BY network, label, id'
   )
   return rows
 }
@@ -531,6 +533,7 @@ export async function previewNameRule(retailerId: number | null, pattern: string
 
 export interface NameRuleRow {
   id: number
+  retailer_id: number | null
   retailer_name: string | null
   terms: string
   action: 'map' | 'ignore'
@@ -540,7 +543,7 @@ export interface NameRuleRow {
 
 export async function getNameRules(): Promise<NameRuleRow[]> {
   const { rows } = await pool.query<NameRuleRow>(`
-    SELECT n.id, r.name AS retailer_name, n.terms, n.action,
+    SELECT n.id, n.retailer_id, r.name AS retailer_name, n.terms, n.action,
            CASE WHEN pc.name IS NOT NULL THEN pc.name || ' › ' || c.name ELSE c.name END AS category_name,
            n.created_at
     FROM name_category_rules n
