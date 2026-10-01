@@ -331,7 +331,7 @@ export default async function StatisticiPage({ searchParams }: Props) {
           label="Clickuri reale (DB)"
           value={int(cur.db_clicks)}
           delta={<Delta cur={cur.db_clicks} prev={prev.db_clicks} hasPrev={prev.db_clicks > 0} />}
-          note={cur.db_clicks > 0 ? <>GA4 vede ~{pct(cur.affiliate_clicks, cur.db_clicks, 0)} din ele</> : 'toate clickurile spre magazine, din baza noastră'}
+          note={cur.db_clicks > 0 ? <>GA4 vede ~{pct(cur.affiliate_clicks, cur.db_clicks, 0)} din ele</> : 'clickurile clienților spre magazine, din baza noastră (fără admin și roboți)'}
         />
         <Card
           label="Rată de click"
@@ -412,7 +412,7 @@ export default async function StatisticiPage({ searchParams }: Props) {
           empty="Niciun click spre magazine în perioada aleasă."
           note={
             <>
-              „Reale” = toate clickurile din baza noastră (fără cele spre oferte șterse între timp).
+              „Reale” = clickurile clienților din baza noastră (fără admin, roboți și cele spre oferte șterse între timp).
               {unmatchedGa4 > 0 && <> {unmatchedGa4} {unmatchedGa4 === 1 ? 'nume din GA4 nu se potrivește' : 'nume din GA4 nu se potrivesc'} cu niciun magazin din baza de date (coloana „reale” = —).</>}
               {retailerDimMissing && <> Coloana GA4 lipsește: dimensiunea „merchant_name” nu e înregistrată în GA4 (Admin → Definiții personalizate).</>}
             </>
@@ -536,7 +536,7 @@ export default async function StatisticiPage({ searchParams }: Props) {
       <footer className="border-t border-line pt-4 text-sm space-y-3">
         <p className="text-muted">
           GA4 numără doar vizitatorii care au acceptat cookie-urile de analiză. Clickurile reale vin din baza noastră de
-          date și sunt complete. Tabelele păstrează doar primele 50 de rânduri pe zi pentru fiecare tip, deci „restul” nu
+          date și sunt complete (toți clienții; fără clickurile din browserul de admin și ale roboților). Tabelele păstrează doar primele 50 de rânduri pe zi pentru fiecare tip, deci „restul” nu
           e tot traficul.
         </p>
         <p>

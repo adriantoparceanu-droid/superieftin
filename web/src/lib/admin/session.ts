@@ -6,8 +6,14 @@ import pool from '../db'
 // Sesiune admin: cookie httpOnly cu token semnat HMAC-SHA256.
 // Token: base64url(userId.expiraLa).semnatura_hex
 
-const COOKIE_NAME = 'admin_session'
+export const ADMIN_SESSION_COOKIE = 'admin_session'
+const COOKIE_NAME = ADMIN_SESSION_COOKIE
 const SESSION_DAYS = 7
+
+// Semn ca browserul e al unui admin: clickurile lui pe /go nu se numara ca clickuri de clienti
+// (lib/internal-traffic.ts). Ramane 1 an si dupa logout — nu da niciun drept de acces.
+export const INTERNAL_COOKIE = 'se_intern'
+export const INTERNAL_COOKIE_MAX_AGE = 365 * 24 * 3600
 
 function secret(): string {
   const s = process.env.ADMIN_SESSION_SECRET
@@ -46,6 +52,13 @@ export async function createSession(userId: number): Promise<void> {
     sameSite: 'lax',
     path: '/',
     maxAge: SESSION_DAYS * 24 * 3600,
+  })
+  cookieStore.set(INTERNAL_COOKIE, '1', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: INTERNAL_COOKIE_MAX_AGE,
   })
 }
 

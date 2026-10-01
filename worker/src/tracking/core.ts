@@ -22,6 +22,7 @@ export interface ConversionRow {
   clickId: string | null
   adClickId: number | null
   hasAdConsent: boolean | null
+  isInternal?: boolean | null   // click intern (admin / robot / test — migratia 027)
   gclid: string | null
   gbraid: string | null
   wbraid: string | null
@@ -31,6 +32,7 @@ export interface ConversionRow {
 export type SkipReason =
   | 'fara_click_id'        // comanda fara subID (link vechi / din afara /go)
   | 'click_negasit'        // hash necunoscut (click sters sau alt site)
+  | 'click_intern'         // comanda din browserul adminului / un test — nu invatam Google din ea
   | 'fara_acord'           // clickul s-a facut fara acordul „Publicitate” → nu trimitem nimic la Google
   | 'fara_id_google'       // cu acord, dar vizitatorul n-a venit dintr-o reclama Google
   | 'valoare_zero'
@@ -46,7 +48,7 @@ export interface SyncPlan {
 }
 
 export function emptySkipped(): Record<SkipReason, number> {
-  return { fara_click_id: 0, click_negasit: 0, fara_acord: 0, fara_id_google: 0, valoare_zero: 0, click_expirat: 0, respins_netrimis: 0 }
+  return { fara_click_id: 0, click_negasit: 0, click_intern: 0, fara_acord: 0, fara_id_google: 0, valoare_zero: 0, click_expirat: 0, respins_netrimis: 0 }
 }
 
 // Decide pentru fiecare comision: trimitere, retragere sau nimic. Idempotent prin constructie:
@@ -66,6 +68,7 @@ export function planSync(rows: ConversionRow[], now = new Date()): SyncPlan {
     }
     if (!r.clickId) { plan.skipped.fara_click_id++; continue }
     if (!r.adClickId) { plan.skipped.click_negasit++; continue }
+    if (r.isInternal) { plan.skipped.click_intern++; continue }
     // Regula 7 (GDPR): fara acord la momentul clickului, NIMIC nu pleaca la Google
     if (!r.hasAdConsent) { plan.skipped.fara_acord++; continue }
     if (!(r.gclid || r.gbraid || r.wbraid)) { plan.skipped.fara_id_google++; continue }
