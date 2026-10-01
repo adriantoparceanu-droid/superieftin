@@ -19,8 +19,6 @@ const FEED_SYNC_CRON = process.env.FEED_SYNC_CRON || '0 4 * * *'
 const PRICE_CHECK_INTERVAL_HOURS = parseFloat(process.env.PRICE_CHECK_INTERVAL_HOURS || '3')
 // Dupa feed-sync (04:00) — completeaza imaginile produselor noi de la CDN-uri blocate (Cloudflare).
 const IMAGE_BACKFILL_CRON = process.env.IMAGE_BACKFILL_CRON || '30 5 * * *'
-// Inainte de feed-sync, ca sa nu se suprapuna (scraping conservator, poate dura zeci de minute).
-const EMAG_SCRAPE_CRON = process.env.EMAG_SCRAPE_CRON || '0 2 * * *'
 // Comisioane Profitshare → Google Ads, dupa feed-sync (04:00) si backfill (05:30). Implicit
 // DOAR validate_only — vezi runTrackingSyncJob in tracking/sync.ts.
 const TRACKING_SYNC_CRON = process.env.TRACKING_SYNC_CRON || '30 6 * * *'
@@ -54,12 +52,15 @@ async function scheduleRepeatingJobs() {
   )
   logger.info({ cron: IMAGE_BACKFILL_CRON }, 'Job repeating programat: image-backfill')
 
-  await syncQueue.add(
-    'emag-scrape',
-    { type: 'scrape', scraperName: 'emag' },
-    { repeat: { pattern: EMAG_SCRAPE_CRON }, jobId: 'emag-scrape-repeat' }
-  )
-  logger.info({ cron: EMAG_SCRAPE_CRON }, 'Job repeating programat: emag-scrape')
+  // Scanarea eMAG NU mai e programata (decizia proprietarului, 2026-10-01): ruleaza DOAR manual,
+  // local (npm run scrape-emag:now / ./emag-scrape-sync.sh). Pe VPS oricum o bloca WAF-ul eMAG.
+  // Programarile repetate raman salvate in Redis si dupa ce scoatem codul — le stergem explicit.
+  for (const r of await syncQueue.getRepeatableJobs()) {
+    if (r.name === 'emag-scrape') {
+      await syncQueue.removeRepeatableByKey(r.key)
+      logger.info({ key: r.key }, 'Programare veche emag-scrape stearsa (scanarea eMAG e doar manuala)')
+    }
+  }
 
   await syncQueue.add(
     'tracking-sync',
