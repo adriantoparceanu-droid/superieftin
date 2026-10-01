@@ -85,7 +85,12 @@ export default async function MagazinePage() {
                   </td>
                   <td className="px-4 py-3 text-xs">
                     {sources.length ? sources.join(', ') : <span className="text-muted">—</span>}
-                    {r.external_feeds > 0 && <div className="text-muted">{r.external_feeds} feed-uri 2P active</div>}
+                    {r.external_feeds > 0 && (
+                      <div className="text-muted">
+                        {r.external_feeds} feed-uri 2P active ·{' '}
+                        <Link href="/admin/surse-feed" className="text-brand underline">alege categoriile</Link>
+                      </div>
+                    )}
                   </td>
                   <td className="px-4 py-3 max-w-72">
                     <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${st.cls}`}>{st.label}</span>
@@ -141,7 +146,7 @@ export default async function MagazinePage() {
         </table>
       </div>
       <p className="text-xs text-muted mt-3">
-        Feed-urile 2Performant se configurează în <Link href="/admin/surse-feed" className="underline">Surse feed</Link>,
+        Feed-urile 2Performant (inclusiv ce categorii din feed se importă) se configurează în <Link href="/admin/surse-feed" className="underline">Surse feed</Link>,
         categoriile scanate eMAG în <Link href="/admin/scraper-categorii" className="underline">Categorii scanate</Link>.
       </p>
     </div>

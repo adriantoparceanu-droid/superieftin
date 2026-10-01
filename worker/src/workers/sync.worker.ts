@@ -14,6 +14,7 @@ import { downloadFeed, parseFeedFile, mapFeedRow } from '../importers/feed.js'
 import { parseTpFeed, mapTpFeedRow } from '../importers/twoperformant-feed.js'
 import { upsertProduct, upsertOfferPrice, upsertRetailerByDomain } from '../lib/upsert.js'
 import { loadFeedRules, IGNORE, type RuleLookup } from '../lib/feedRules.js'
+import { compileCategoryFilter, importsNothing } from '../lib/feed-category-filter.js'
 import { resolver, syncAffiliateAdvertisers, extractDomain } from '../lib/affiliate/index.js'
 import { isBlockedImageHost, blockedImageHostRegex } from '../lib/images.js'
 import type { ImportedProduct } from '../lib/types.js'
@@ -523,15 +524,24 @@ export async function runImageBackfill(jobId = 'direct') {
 // Produsele vin deja afiliate (aff_code din feed); retailerul se deduce din campaign_name.
 export async function syncExternalFeeds(resolveRule: RuleLookup): Promise<{ imported: number; errors: number }> {
   const log = logger.child({ task: 'external-feeds' })
-  const { rows: feeds } = await pool.query<{ url: string; network: string; label: string | null }>(
-    `SELECT url, network, label FROM external_feeds WHERE is_active = true AND network = '2performant'`
+  const { rows: feeds } = await pool.query<{ url: string; network: string; label: string | null; category_filter: string[] | null }>(
+    `SELECT url, network, label, category_filter FROM external_feeds WHERE is_active = true AND network = '2performant'`
   )
   let totalImported = 0, totalErrors = 0
 
   for (const feed of feeds) {
+    // Filtru gol ('{}') = proprietarul n-a ales inca ce categorii vrea (Admin → Surse feed).
+    // Sarim feed-ul complet: fara descarcare si fara rand in feed_syncs, ca magazinul sa nu
+    // apara ca „feed gol / neimportat” si sa nu plece alerte Telegram degeaba.
+    if (importsNothing(feed.category_filter)) {
+      log.info({ feed: feed.label }, 'Feed 2Performant sarit: nicio categorie aleasa in admin')
+      continue
+    }
+    // NULL = toate categoriile (comportamentul vechi); altfel doar categoriile bifate
+    const categoryAllowed = compileCategoryFilter(feed.category_filter)
     const tmpFile = join(tmpdir(), `tp-feed-${Date.now()}.xml`)
     const retailerByDomain = new Map<string, number>()
-    let imported = 0, errors = 0
+    let imported = 0, errors = 0, filteredOut = 0
     try {
       await downloadFeed(feed.url, tmpFile)
       for await (const row of parseTpFeed(tmpFile)) {
@@ -544,8 +554,12 @@ export async function syncExternalFeeds(resolveRule: RuleLookup): Promise<{ impo
           retailerId = await upsertRetailerByDomain(domain, row.campaignName.trim())
           retailerByDomain.set(domain, retailerId)
         }
+        // Filtrul de categorii vine DUPA aflarea retailerului: asa marcarea „fara stoc” de mai
+        // jos ruleaza si pentru magazinul unui feed filtrat (ofertele categoriilor debifate nu
+        // se sterg — devin fara stoc singure dupa STALE_OFFER_DAYS).
+        if (!categoryAllowed(row.category)) { filteredOut++; continue }
         const rule = resolveRule(retailerId, product.feedCategory, product.name)
-      if (rule === IGNORE) continue   // regula „ignoră” din Admin → Mapare
+        if (rule === IGNORE) continue   // regula „ignoră” din Admin → Mapare
         try {
           await upsertProduct(product, retailerId, rule)
           imported++
@@ -566,7 +580,11 @@ export async function syncExternalFeeds(resolveRule: RuleLookup): Promise<{ impo
         productsCount: imported, status: 'success', source: '2performant',
         retailerId: retailerByDomain.values().next().value ?? null,
       })
-      log.info({ feed: feed.label, imported, errors }, 'Feed 2Performant importat')
+      log.info({
+        feed: feed.label, imported, errors,
+        // cate randuri au fost sarite de filtrul de categorii (0 cand feed-ul importa tot)
+        ...(feed.category_filter ? { filteredOut, categoriesAllowed: feed.category_filter.length } : {}),
+      }, 'Feed 2Performant importat')
       totalImported += imported; totalErrors += errors
     } catch (err) {
       totalErrors++

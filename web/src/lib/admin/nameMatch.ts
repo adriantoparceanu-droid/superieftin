@@ -36,3 +36,29 @@ export function topWords(names: string[], limit = 30): { word: string; count: nu
   return [...counts.entries()].map(([word, count]) => ({ word, count }))
     .sort((a, b) => b.count - a.count).slice(0, limit)
 }
+
+// O regula „dupa denumire” gata de potrivit (in admin: scanarea feed-ului + previzualizarea
+// din Surse feed → Alege categoriile). `pattern` = termsPattern(terms), trimis ca text catre
+// browser (RegExp nu trece prin server actions).
+export interface NameRuleForMatch {
+  id: number
+  retailerId: number | null
+  action: 'map' | 'ignore'
+  categoryId: number | null
+  categoryLabel: string | null
+  priority: number
+  pattern: string
+}
+
+// Prima regula potrivita castiga: intai cele ale retailerului, apoi cele globale; in cadrul
+// fiecarui grup in ordinea primita (priority, apoi id). ACEEASI logica ca matchNameRule din
+// worker/src/lib/nameRules.ts — modifica-le impreuna.
+export function firstMatchingRule<T extends { retailerId: number | null; re: RegExp }>(
+  rules: T[], retailerId: number | null, name: string,
+): T | null {
+  const n = normalizeName(name)
+  for (const scope of retailerId == null ? [null] : [retailerId, null]) {
+    for (const r of rules) if (r.retailerId === scope && r.re.test(n)) return r
+  }
+  return null
+}
