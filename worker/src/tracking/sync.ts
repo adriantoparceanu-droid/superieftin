@@ -98,7 +98,7 @@ async function loadRows(db: Db): Promise<ConversionRow[]> {
   const { rows } = await db.query(`
     SELECT ac.id, ac.external_id, ac.status, ac.commission_amount::float AS amount, ac.order_time,
            ac.uploaded_at, ac.uploaded_value::float AS uploaded_value, ac.retracted_at,
-           ac.click_id, ac.ad_click_id, c.has_ad_consent, c.gclid, c.gbraid, c.wbraid,
+           ac.click_id, ac.ad_click_id, c.has_ad_consent, c.is_internal, c.gclid, c.gbraid, c.wbraid,
            -- momentul clickului pe reclama (din cookie-ul se_gclid); randurile vechi / fara ID → /go
            COALESCE(c.ad_click_at, c.created_at) AS click_time
     FROM affiliate_conversions ac
@@ -111,7 +111,7 @@ async function loadRows(db: Db): Promise<ConversionRow[]> {
     id: Number(r.id), externalId: r.external_id, status: r.status, amount: r.amount, orderTime: r.order_time,
     uploadedAt: r.uploaded_at, uploadedValue: r.uploaded_value, retractedAt: r.retracted_at,
     clickId: r.click_id, adClickId: r.ad_click_id == null ? null : Number(r.ad_click_id),
-    hasAdConsent: r.has_ad_consent, gclid: r.gclid, gbraid: r.gbraid, wbraid: r.wbraid, clickTime: r.click_time,
+    hasAdConsent: r.has_ad_consent, isInternal: r.is_internal, gclid: r.gclid, gbraid: r.gbraid, wbraid: r.wbraid, clickTime: r.click_time,
   }))
 }
 

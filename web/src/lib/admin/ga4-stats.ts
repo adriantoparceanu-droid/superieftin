@@ -58,7 +58,7 @@ export interface Ga4Totals {
   sessions: number
   page_views: number
   affiliate_clicks: number // evenimente click_affiliate_link (doar vizitatori cu acord de analiza)
-  db_clicks: number        // clickuri reale din click_events (toti vizitatorii)
+  db_clicks: number        // clickuri reale din click_events (clientii — fara admin/roboti, migratia 027)
 }
 
 export interface Ga4Overview {

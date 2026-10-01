@@ -5,6 +5,8 @@ import { generateClickId, detectNetwork, withSubId } from '@/lib/subid'
 import { OFFER_AVAILABLE_SQL } from '@/lib/availability'
 import { CONSENT_COOKIE, parseConsentCookie } from '@/lib/consent'
 import { AD_CLICK_COOKIE, parseAdClickCookie } from '@/lib/adclick'
+import { hasValidAdminSession, isInternalRequest } from '@/lib/internal-traffic'
+import { INTERNAL_COOKIE, INTERNAL_COOKIE_MAX_AGE } from '@/lib/admin/session'
 
 export async function GET(
   req: NextRequest,
@@ -65,16 +67,21 @@ export async function GET(
   // LEAST ignora NULL si ar transforma „necunoscut” in now().
   const adClickAt = adIds && adIds.ts > 0 ? new Date(Math.min(adIds.ts, Date.now())) : null
 
+  // Click intern (admin, robot, unealta de test — lib/internal-traffic.ts): nu intra in
+  // click_events (statisticile de clickuri = doar clienti), iar in ad_clicks e marcat, ca
+  // tracking:sync sa nu trimita la Google o conversie dintr-o comanda de test (migratia 027).
+  const internal = isInternalRequest(req)
+
   // Scrierile in DB ruleaza DUPA ce redirectul a plecat — clickul ramane rapid
   after(async () => {
-    await trackClick(offerId)
+    if (!internal) await trackClick(offerId)
     try {
       await pool.query(
         `INSERT INTO ad_clicks (click_id, offer_id, product_id, retailer_id, network,
-                                gclid, gbraid, wbraid, has_ad_consent, ad_click_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+                                gclid, gbraid, wbraid, has_ad_consent, ad_click_at, is_internal)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
         [clickId, id, product_id, retailer_id, network,
-         adIds?.gclid ?? null, adIds?.gbraid ?? null, adIds?.wbraid ?? null, hasAdConsent, adClickAt]
+         adIds?.gclid ?? null, adIds?.gbraid ?? null, adIds?.wbraid ?? null, hasAdConsent, adClickAt, internal]
       )
     } catch (err) {
       // Non-critic pentru utilizator, dar pierdem potrivirea comisionului — il logam
@@ -82,10 +89,18 @@ export async function GET(
     }
   })
 
-  return NextResponse.redirect(destination, {
+  const res = NextResponse.redirect(destination, {
     status: 302,
     headers: {
       'Cache-Control': 'no-store',
     },
   })
+  // Admin logat dinainte sa existe cookie-ul de marcaj (se pune la login): il punem acum,
+  // ca browserul sa ramana recunoscut si dupa ce sesiunea expira.
+  if (req.cookies.get(INTERNAL_COOKIE)?.value !== '1' && hasValidAdminSession(req)) {
+    res.cookies.set(INTERNAL_COOKIE, '1', {
+      httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: INTERNAL_COOKIE_MAX_AGE,
+    })
+  }
+  return res
 }

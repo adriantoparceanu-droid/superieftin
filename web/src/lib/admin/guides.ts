@@ -144,7 +144,7 @@ export async function getGuideCandidates(days = 30, limit = 30): Promise<GuideCa
     WITH clicks AS (
       SELECT product_id, count(*)::int AS clicks
       FROM ad_clicks
-      WHERE created_at > now() - make_interval(days => $1) AND product_id IS NOT NULL
+      WHERE created_at > now() - make_interval(days => $1) AND product_id IS NOT NULL AND NOT is_internal
       GROUP BY product_id
     ),
     best AS (

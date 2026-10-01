@@ -28,8 +28,10 @@ test('planSync — trimite doar comisioanele cu click din reclama, cu acord, net
     row({ id: 7, amount: 0 }),
     row({ id: 8, clickTime: daysAgo(91) }),                          // click prea vechi
     row({ id: 9, gclid: null, wbraid: 'wbraidtest' }),               // ✓ iOS
+    row({ id: 10, isInternal: true }),                               // click din admin / test
   ], NOW)
   assert.deepEqual(p.uploads.map((r) => r.id), [1, 2, 9])
+  assert.equal(p.skipped.click_intern, 1)
   assert.equal(p.skipped.fara_acord, 1)
   assert.equal(p.skipped.fara_id_google, 1)
   assert.equal(p.skipped.fara_click_id, 1)
