@@ -37,7 +37,7 @@ remote() { ssh -o BatchMode=yes "$HOST" "cd $APP && $*"; }
 # ── 1. Verificări locale ────────────────────────────────────────────────────────────────
 step "[1/7] Verificări locale (țintă: $SERVICES)"
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
-[ "$BRANCH" = main ] || echo "    ! Ești pe branch-ul „$BRANCH”, nu pe main — deploiez ce e pe disc acum."
+[ "$BRANCH" = main ] || echo "    ! Ești pe branch-ul „${BRANCH}”, nu pe main — deploiez ce e pe disc acum."
 DIRTY=$(git status --porcelain -- web worker db docker-compose.yml package.json package-lock.json | grep -v '^??' || true)
 if [ -n "$DIRTY" ] && [ "$ALLOW_DIRTY" = 0 ]; then
   echo "    ✗ Modificări necomise în fișierele care ajung pe producție:"; echo "$DIRTY" | sed 's/^/      /'
