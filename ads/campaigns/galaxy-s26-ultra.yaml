@@ -21,7 +21,7 @@ campaign:
     max_cpc: 2.00 # lei — TEST 28 sep–2 oct 2026: la 0,33 pragul primei pagini (1,29–2,52) ne ținea la 0 afișări; se revizuiește după test
   exact_only: true # ads:validate refuză orice cuvânt care nu e exact
   conversion_goal:
-    name: Comision Profitshare
+    name: Comision afiliere
     conversion_action_id: "7799099014"
   targeting:
     countries: [ RO ]

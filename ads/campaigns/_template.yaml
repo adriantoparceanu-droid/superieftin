@@ -13,8 +13,8 @@ campaign:
     strategy: MAXIMIZE_CLICKS              # sau MANUAL_CPC
     max_cpc: 1.50                          # la MAXIMIZE_CLICKS = plafonul de CPC
   # exact_only: true                       # opțional: refuză orice cuvânt care nu e exact
-  conversion_goal:                         # singura conversie a campaniei
-    name: Comision Profitshare
+  conversion_goal:                         # singura conversie a campaniei (identificată după ID; numele e doar etichetă)
+    name: Comision afiliere
     conversion_action_id: "7799099014"
   targeting:
     countries: [RO]

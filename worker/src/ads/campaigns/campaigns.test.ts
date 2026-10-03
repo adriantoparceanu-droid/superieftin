@@ -10,7 +10,7 @@ import type { Campaign, CampaignFile, Guardrails } from './schema.js'
 import { contentHash, writeIds, parseNegative, loadAllCampaigns, loadGuardrails } from './schema.js'
 import { validateCampaign, validateAll, negativeBlocks, styleProblems, claimIssues, parsePage, expiringClaims, BASE_NEGATIVES, RETAILER_BRANDS, type PageFacts } from './validate.js'
 import { checkReview } from './review.js'
-import { buildPlan, planOps } from './plan.js'
+import { buildPlan, planOps, findCustomGoal } from './plan.js'
 import { emptySnapshot, type AccountSnapshot } from './account.js'
 
 const G: Guardrails = {
@@ -31,7 +31,7 @@ function camp(over: Partial<Campaign> = {}): Campaign {
   return {
     name: 'SE | Search | Test', id: null, status: 'PAUSED', daily_budget: 8,
     bidding: { strategy: 'MANUAL_CPC', max_cpc: 0.35 },
-    conversion_goal: { name: 'Comision Profitshare', conversion_action_id: '7799099014' },
+    conversion_goal: { name: 'Comision afiliere', conversion_action_id: '7799099014' },
     targeting: { countries: ['RO'], languages: ['ro'], location_mode: 'PRESENCE', networks: { search: true, search_partners: false, display: false } },
     negative_keywords: [...BASE_NEGATIVES, ...RETAILER_BRANDS],
     ad_groups: [{
@@ -269,7 +269,7 @@ test('verdict policy-reviewer: lipsă, hash greșit, vechi, valid', () => {
 // --- Planul -------------------------------------------------------------------------------------
 
 function acc(over: Partial<AccountSnapshot> = {}): AccountSnapshot {
-  return { ...emptySnapshot(), conversionActions: [{ id: '7799099014', name: 'Comision Profitshare', status: 'ENABLED', primaryForGoal: true }], ...over }
+  return { ...emptySnapshot(), conversionActions: [{ id: '7799099014', name: 'Comision afiliere', status: 'ENABLED', primaryForGoal: true }], ...over }
 }
 
 test('plan pentru campanie nouă: campanie, grupuri și anunțuri PAUSED, doar Search, prezență', () => {
@@ -321,7 +321,7 @@ test('plan pe campanie existentă: nimic de schimbat → zero operații; ce lips
     ],
     ads: [{ adGroupId: '20', adId: '30', resourceName: 'customers/111/adGroupAds/20~30', adResourceName: 'customers/111/ads/30', status: 'ENABLED', type: 'RESPONSIVE_SEARCH_AD',
       finalUrls: [URL_P], headlines: [...H], descriptions: [...D], path1: 'telefon', path2: 'test', approval: 'APPROVED' }],
-    customGoals: [{ id: '9', name: 'SE | Comision Profitshare', resourceName: 'customers/111/customConversionGoals/9', actions: ['customers/111/conversionActions/7799099014'], status: 'ENABLED' }],
+    customGoals: [{ id: '9', name: 'SE | Comision afiliere', resourceName: 'customers/111/customConversionGoals/9', actions: ['customers/111/conversionActions/7799099014'], status: 'ENABLED' }],
     goalConfigs: [{ campaignId: '10', level: 'CAMPAIGN', customGoal: 'customers/111/customConversionGoals/9' }],
   })
   const plan = buildPlan([cf(c)], snap, '111')
@@ -357,4 +357,43 @@ test('fișierele reale din ads/campaigns trec validarea statică', () => {
     const plan = buildPlan([f], acc(), '111')
     assert.equal(plan.campaigns[0].errors.length, 0)
   }
+})
+
+// --- Redenumirea „Comision Profitshare” → „Comision afiliere” (aprobata 2026-10-03) -------------
+// Contul pastreaza numele vechi pana il schimba proprietarul manual: planul trebuie sa
+// identifice actiunea si obiectivul dupa ID, fara sa creeze nimic nou.
+
+test('plan în tranziție: cont cu numele vechi (acțiune + obiectiv) → zero operații, doar avertisment', () => {
+  const c = camp({ id: '10' })
+  c.ad_groups = []
+  c.extensions = {}
+  const snap = acc({
+    conversionActions: [{ id: '7799099014', name: 'Comision Profitshare', status: 'ENABLED', primaryForGoal: true }],
+    campaigns: [{ id: '10', name: c.name, status: 'PAUSED', resourceName: 'customers/111/campaigns/10', channelType: 'SEARCH', biddingStrategyType: 'MANUAL_CPC', cpcCeilingMicros: null,
+      network: { googleSearch: true, searchNetwork: false, contentNetwork: false, partnerSearchNetwork: false }, positiveGeoTargetType: 'PRESENCE',
+      budgetResourceName: 'customers/111/campaignBudgets/5', budgetId: '5', budgetMicros: 8_000_000, budgetShared: false }],
+    criteria: [
+      { campaignId: '10', criterionId: '2642', resourceName: 'r/geo', type: 'LOCATION', negative: false, geo: 'geoTargetConstants/2642' },
+      { campaignId: '10', criterionId: '1032', resourceName: 'r/lang', type: 'LANGUAGE', negative: false, lang: 'languageConstants/1032' },
+      ...c.negative_keywords!.map((n, i) => { const k = parseNegative(n); return { campaignId: '10', criterionId: `n${i}`, resourceName: `r/n${i}`, type: 'KEYWORD', negative: true, text: k.text, matchType: k.matchType } }),
+    ],
+    customGoals: [{ id: '9', name: 'SE | Comision Profitshare', resourceName: 'customers/111/customConversionGoals/9', actions: ['customers/111/conversionActions/7799099014'], status: 'ENABLED' }],
+    goalConfigs: [{ campaignId: '10', level: 'CAMPAIGN', customGoal: 'customers/111/customConversionGoals/9' }],
+  })
+  const plan = buildPlan([cf(c)], snap, '111')
+  assert.equal(plan.errors.length, 0)
+  assert.equal(plan.sharedOps.length, 0, 'nu creează un al doilea obiectiv')
+  assert.deepEqual(planOps(plan), [], 'campania rămâne pe obiectivul existent')
+  assert.ok(plan.warnings.some((w) => /numele vechi „Comision Profitshare”/.test(w) && /redenumește-o manual/.test(w)))
+  assert.ok(plan.warnings.some((w) => /SE \| Comision Profitshare/.test(w)))
+})
+
+test('findCustomGoal — nume nou, nume vechi, apoi orice obiectiv care conține DOAR acțiunea (după ID)', () => {
+  const rn = 'customers/111/conversionActions/7799099014'
+  const g = (id: string, name: string, actions = [rn], status = 'ENABLED') => ({ id, name, resourceName: `customers/111/customConversionGoals/${id}`, actions, status })
+  assert.equal(findCustomGoal([g('1', 'SE | Comision Profitshare'), g('2', 'SE | Comision afiliere')], 'Comision afiliere', rn)?.id, '2')
+  assert.equal(findCustomGoal([g('1', 'SE | Comision Profitshare')], 'Comision afiliere', rn)?.id, '1')
+  assert.equal(findCustomGoal([g('3', 'Obiectivul meu')], 'Comision afiliere', rn)?.id, '3')
+  assert.equal(findCustomGoal([g('4', 'Mixt', [rn, 'customers/111/conversionActions/1'])], 'Comision afiliere', rn), undefined)
+  assert.equal(findCustomGoal([g('5', 'SE | Comision afiliere', [rn], 'REMOVED')], 'Comision afiliere', rn), undefined)
 })

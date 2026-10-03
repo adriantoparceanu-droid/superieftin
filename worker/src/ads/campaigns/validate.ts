@@ -184,7 +184,7 @@ export function validateCampaign(cf: CampaignFile, g: Guardrails): Issue[] {
   for (const k of ['search', 'search_partners', 'display'] as const) {
     if (n[k] !== g.targeting.networks[k]) err(`campaign.targeting.networks.${k}`, `trebuie ${g.targeting.networks[k]} (guardrails: doar rețeaua Search)`)
   }
-  if (!c.conversion_goal?.conversion_action_id) err('campaign.conversion_goal', 'lipsește obiectivul de conversie („Comision Profitshare”)')
+  if (!c.conversion_goal?.conversion_action_id) err('campaign.conversion_goal', 'lipsește obiectivul de conversie („Comision afiliere”)')
 
   // Negative la nivel de campanie
   const campNeg = (c.negative_keywords ?? []).map(parseNegative)

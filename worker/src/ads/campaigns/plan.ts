@@ -17,6 +17,7 @@ import type { CampaignFile, Keyword, IdPath, RsaAd } from './schema.js'
 import { positiveKeywords, parseNegative, kwKey, formatKw } from './schema.js'
 import type { AccountSnapshot, AccCampaign, AccAdGroup } from './account.js'
 import { sitelinkKey, calloutKey, snippetKey } from './account.js'
+import { ACTION_NAME, LEGACY_ACTION_NAMES } from '../conversion-names.js'
 
 // Constante Google (verificate in cont pe 2026-09-27 prin GAQL)
 export const GEO: Record<string, string> = { RO: '2642' }          // geoTargetConstants/2642 = Romania
@@ -58,6 +59,17 @@ const lei = (m: number | string) => (Number(m) / 1e6).toFixed(2).replace('.', ',
 
 export function goalName(actionName: string) { return `SE | ${actionName}` }
 
+// Obiectivul personalizat existent pentru o actiune. Cautare toleranta la redenumire: dupa
+// numele curent, apoi dupa numele vechi ale actiunii („SE | Comision Profitshare”), apoi
+// orice obiectiv care contine DOAR aceasta actiune (identificata dupa ID). Altfel, la
+// redenumirea actiunii, planul ar crea un obiectiv nou si ar muta campaniile pe el.
+export function findCustomGoal(goals: AccountSnapshot['customGoals'], actionName: string, actionRn: string) {
+  const live = goals.filter((cg) => cg.status !== 'REMOVED')
+  return live.find((cg) => cg.name === goalName(actionName))
+    ?? live.find((cg) => LEGACY_ACTION_NAMES.some((n) => cg.name === goalName(n)))
+    ?? live.find((cg) => cg.actions.length === 1 && cg.actions[0] === actionRn)
+}
+
 function sameRsa(ad: RsaAd, url: string, acc: { finalUrls: string[]; headlines: string[]; descriptions: string[]; path1: string; path2: string }) {
   const s = (a: string[]) => [...a].sort().join('\n')
   return s(ad.headlines) === s(acc.headlines) && s(ad.descriptions) === s(acc.descriptions)
@@ -82,7 +94,7 @@ export function buildPlan(files: CampaignFile[], acc: AccountSnapshot, customerI
   const tempId = () => String(--tmp)
   const plan: Plan = { campaigns: [], sharedOps: [], errors: [], warnings: [], unmanaged: [] }
 
-  // --- Obiectivul de conversie: „Comision Profitshare” ca singura conversie a campaniilor ------
+  // --- Obiectivul de conversie: „Comision afiliere” ca singura conversie a campaniilor ---------
   // Contul nu are obiective implicite folosite la licitare, deci legam fiecare campanie de un
   // obiectiv personalizat care contine DOAR aceasta actiune (click_affiliate_link ramane secundara).
   const goalRefs = new Map<string, string>()   // conversion_action_id → resourceName obiectiv (real sau temporar)
@@ -93,12 +105,17 @@ export function buildPlan(files: CampaignFile[], acc: AccountSnapshot, customerI
     const action = acc.conversionActions.find((a) => a.id === g.conversion_action_id)
     if (!action) plan.errors.push(`acțiunea de conversie ${g.conversion_action_id} („${g.name}”) nu există în cont`)
     else {
-      if (action.name !== g.name) plan.warnings.push(`acțiunea ${g.conversion_action_id} se numește „${action.name}” în cont, nu „${g.name}”`)
+      // Potrivirea e dupa ID; numele diferit doar avertizeaza (nu blocheaza planul / apply-ul)
+      if (action.name !== g.name) {
+        if (LEGACY_ACTION_NAMES.includes(action.name) && g.name === ACTION_NAME) plan.warnings.push(`acțiunea ${g.conversion_action_id} are încă numele vechi „${action.name}” în cont — redenumește-o manual în „${ACTION_NAME}” (Obiective → Conversii); identificarea e după ID, nimic nu e blocat`)
+        else plan.warnings.push(`acțiunea ${g.conversion_action_id} se numește „${action.name}” în cont, nu „${g.name}”`)
+      }
       if (action.status !== 'ENABLED') plan.errors.push(`acțiunea de conversie „${action.name}” are statusul ${action.status}`)
       if (!action.primaryForGoal) plan.warnings.push(`acțiunea „${action.name}” nu e principală (primary_for_goal=false)`)
     }
-    const existing = acc.customGoals.find((cg) => cg.name === goalName(g.name) && cg.status !== 'REMOVED')
+    const existing = findCustomGoal(acc.customGoals, g.name, actionRn)
     if (existing) {
+      if (existing.name !== goalName(g.name)) plan.warnings.push(`obiectivul personalizat se numește „${existing.name}” în cont (folosit mai departe; opțional îl poți redenumi manual în „${goalName(g.name)}”)`)
       if (!existing.actions.includes(actionRn)) plan.warnings.push(`obiectivul „${existing.name}” există, dar nu conține acțiunea ${g.conversion_action_id} — verifică-l în Google Ads`)
       goalRefs.set(g.conversion_action_id, existing.resourceName)
     } else {

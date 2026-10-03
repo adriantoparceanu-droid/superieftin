@@ -26,7 +26,7 @@ campaign:
     strategy: MANUAL_CPC
     max_cpc: 1.30 # lei — TEST 28 sep–2 oct 2026: la 0,35 eram sub pragul primei pagini (1,29) → 0 afișări; se revizuiește după test
   conversion_goal:
-    name: Comision Profitshare
+    name: Comision afiliere
     conversion_action_id: "7799099014"
   targeting:
     countries: [ RO ]
