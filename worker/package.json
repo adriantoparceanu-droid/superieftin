@@ -13,7 +13,7 @@
     "catalog:now": "tsx --env-file=../.env src/index.ts --now --catalog",
     "ga4:check": "tsx --env-file=../.env src/scripts/ga4-check.ts",
     "ga4:sync:now": "tsx --env-file=../.env src/index.ts --now --ga4",
-    "test": "tsx --test src/lib/profitshare.test.ts src/lib/password.test.ts src/importers/feed.test.ts src/lib/affiliate/affiliate.test.ts src/lib/affiliate/profitshare-deeplink.test.ts src/lib/twoperformant.test.ts src/scrapers/emag-catalog.test.ts src/scrapers/emag-brand.test.ts src/lib/retailer-status.test.ts src/lib/nameRules.test.ts src/lib/feed-category-filter.test.ts src/tracking/core.test.ts src/tracking/payloads.test.ts src/ads/campaigns/campaigns.test.ts src/ads/campaigns/guard.test.ts src/lib/guide-drafts.test.ts src/lib/ga4/transform.test.ts src/lib/ga4/client.test.ts",
+    "test": "tsx --test src/lib/profitshare.test.ts src/lib/password.test.ts src/importers/feed.test.ts src/lib/affiliate/affiliate.test.ts src/lib/affiliate/profitshare-deeplink.test.ts src/lib/twoperformant.test.ts src/scrapers/emag-catalog.test.ts src/scrapers/emag-brand.test.ts src/lib/retailer-status.test.ts src/lib/nameRules.test.ts src/lib/feed-category-filter.test.ts src/tracking/core.test.ts src/tracking/payloads.test.ts src/ads/campaigns/campaigns.test.ts src/ads/campaigns/guard.test.ts src/lib/guide-drafts.test.ts src/lib/ga4/transform.test.ts src/lib/ga4/client.test.ts src/lib/price-alert.test.ts src/lib/alert-token.test.ts src/lib/email/digest.test.ts src/lib/email/email.test.ts src/lib/alert-rearm.test.ts",
     "admin:create": "tsx --env-file=../.env src/scripts/create-admin.ts",
     "ghiduri:import": "tsx --env-file=../.env src/scripts/import-guide-drafts.ts",
     "emag:backfill-affiliate": "tsx --env-file=../.env src/scripts/backfill-emag-affiliate.ts",
@@ -36,11 +36,13 @@
     "csv-parse": "^6.2.1",
     "dotenv": "^16.4.5",
     "ioredis": "^5.6.1",
+    "nodemailer": "^10.0.14",
     "pg": "^8.13.3",
     "pino": "^9.7.0"
   },
   "devDependencies": {
     "@types/node": "^22.19.20",
+    "@types/nodemailer": "^8.0.2",
     "@types/pg": "^8.20.0",
     "playwright": "^1.61.1",
     "tsx": "^4.22.4",

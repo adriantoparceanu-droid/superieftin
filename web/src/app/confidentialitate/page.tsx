@@ -98,6 +98,14 @@ export default function ConfidentialitatePage() {
             <td>Să îți trimitem alertele cerute</td>
             <td>Executarea serviciului cerut de tine</td>
           </tr>
+          <tr>
+            <td><strong>Alerte de preț pe email</strong>: adresa de email, produsele și pragurile alese,
+              momentul cererii (acordul din formular), momentul confirmării din email, momentul ultimului
+              email de alerte și, pentru alertele trimise, prețul și magazinul constatate</td>
+            <td>Să îți trimitem alertele cerute (cel mult un email pe zi, cu toate produsele care au ajuns
+              la prag) și să putem dovedi acordul</td>
+            <td>Consimțământ (bifa din formular, confirmată prin linkul din email)</td>
+          </tr>
         </tbody>
       </table>
       <p>
@@ -191,6 +199,38 @@ export default function ConfidentialitatePage() {
           <a href="https://myadcenter.google.com" rel="noopener" target="_blank">myadcenter.google.com</a>.</li>
       </ul>
 
+      <h2>Alertele de preț pe email</h2>
+      <ul>
+        <li>
+          <strong>Confirmare dublă</strong>: după formular îți trimitem un email de confirmare. Alerta
+          pornește doar după ce apeși butonul din pagina deschisă din acel email. Cererile neconfirmate
+          (adresa și alertele) se șterg automat după 7 zile.
+        </li>
+        <li>
+          <strong>Ce stocăm</strong>: doar adresa de email, alertele (produs, prag) și momentele de mai sus.
+          Nu folosim adresa în alt scop (nu trimitem newslettere sau reclame), nu o vindem și nu o
+          transmitem către Google sau rețelele de afiliere.
+        </li>
+        <li>
+          <strong>Gestionare fără cont</strong>: fiecare email conține un link personal către „Alertele
+          mele” (schimbi pragul, ștergi o alertă) și un link de dezabonare. Dezabonarea șterge complet
+          adresa și toate alertele asociate.
+        </li>
+        <li>
+          <strong>Protecție împotriva abuzurilor</strong>: numărăm cererile din formular per adresă IP
+          (transformată într-un cod criptografic, ținut doar într-o memorie temporară și șters automat
+          după cel mult o oră — la fel ca la clickurile spre magazine) și trimitem cel mult 3 emailuri
+          de confirmare pe zi către aceeași adresă de email.
+        </li>
+        <li>
+          <strong>Trimiterea emailurilor</strong> se face prin{' '}
+          {COMPANY.emailProvider ?? 'furnizorul nostru de servicii de email'}, care acționează ca
+          persoană împuternicită (prelucrează adresa și conținutul emailului doar ca să-l livreze, în baza
+          unui contract de prelucrare a datelor).
+        </li>
+      </ul>
+      <p className="text-xs text-muted">Recomandare: verificare de către un jurist (secțiunea despre alertele pe email).</p>
+
       <h2>Linkurile spre magazine</h2>
       <p>
         Când dai click pe o ofertă, treci prin rețeaua de afiliere (Profitshare sau 2Performant)
@@ -218,7 +258,9 @@ export default function ConfidentialitatePage() {
           date în SUA, în baza Cadrului UE–SUA privind protecția datelor.</li>
         <li>Rețelele de afiliere Profitshare și 2Performant (codul de click; bannerele Profitshare,
           doar cu consimțământ).</li>
-        <li>Telegram, dacă folosești alertele (mesajele trec prin serverele Telegram).</li>
+        <li>Telegram, dacă folosești alertele pe Telegram (mesajele trec prin serverele Telegram).</li>
+        <li>{COMPANY.emailProvider ?? 'Furnizorul nostru de servicii de email'}, dacă folosești alertele
+          pe email (împuternicit: livrează emailurile).</li>
       </ul>
 
       <h2>Cât timp păstrăm datele</h2>
@@ -233,7 +275,13 @@ export default function ConfidentialitatePage() {
         <li>Datele Google Analytics: 14 luni (setarea din Google Analytics).</li>
         <li>Apartenența la listele de reclame personalizate: cel mult 540 de zile (aproximativ 18 luni) de la ultima vizită care
           te-a inclus (setarea listelor din Google Analytics).</li>
-        <li>Alertele Telegram: până le ștergi (comanda <code>/sterge</code>) sau ne ceri ștergerea.</li>
+        <li>Alertele Telegram: până le oprești (comanda <code>/sterge</code>) sau ne ceri ștergerea, dar
+          cel mult 12 luni fără nicio activitate (anunț, re-armare sau schimbare de prag).</li>
+        <li>Alertele pe email: cererile neconfirmate, 7 zile; alertele confirmate rămân active și după
+          un anunț (te anunțăm din nou la următoarea scădere sub prag), până le oprești sau te dezabonezi,
+          dar cel mult 12 luni fără nicio activitate (anunț, re-armare sau schimbare de prag) — apoi le
+          ștergem automat; adresa de email, până te dezabonezi sau până trec 90 de zile fără nicio
+          alertă și fără niciun email de la noi. La dezabonare ștergem imediat adresa și toate alertele.</li>
         <li>Jurnalele tehnice: cât e necesar pentru securitate, de regulă câteva săptămâni.</li>
       </ul>
 

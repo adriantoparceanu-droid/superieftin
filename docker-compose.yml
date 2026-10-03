@@ -38,6 +38,15 @@ services:
       - GO_TOKEN_RATE_PER_MIN=${GO_TOKEN_RATE_PER_MIN:-}
       - GO_TOKEN_RATE_PER_HOUR=${GO_TOKEN_RATE_PER_HOUR:-}
       - GO_RATE_REDIS_TIMEOUT_MS=${GO_RATE_REDIS_TIMEOUT_MS:-}
+      # Alerte pe email: site-ul arata formularul doar cu SMTP_HOST + EMAIL_FROM + ALERT_TOKEN_SECRET
+      # (nu trimite emailuri — o face workerul; parola SMTP nu ajunge in containerul web)
+      - SMTP_HOST=${SMTP_HOST:-}
+      - EMAIL_FROM=${EMAIL_FROM:-}
+      - ALERT_TOKEN_SECRET=${ALERT_TOKEN_SECRET:-}
+      - ALERT_RATE_PER_MIN=${ALERT_RATE_PER_MIN:-}
+      - ALERT_RATE_PER_HOUR=${ALERT_RATE_PER_HOUR:-}
+      # Re-armare: doar pentru textele din „Alertele mele” (logica e in worker)
+      - ALERT_REARM_PCT=${ALERT_REARM_PCT:-}
     volumes:
       - uploads:/app/uploads
     depends_on:
@@ -99,6 +108,22 @@ services:
       - GA4_SERVICE_ACCOUNT_JSON=${GA4_SERVICE_ACCOUNT_JSON:-}
       - GA4_SYNC_CRON=${GA4_SYNC_CRON:-15 6 * * *}
       - GSC_SITE_URL=${GSC_SITE_URL:-}
+      # Alerte pe email (workers/email.worker.ts). Fara SMTP_HOST / EMAIL_FROM / ALERT_TOKEN_SECRET
+      # workerul de email nu porneste (doar un avertisment in log).
+      - SMTP_HOST=${SMTP_HOST:-}
+      - SMTP_PORT=${SMTP_PORT:-}
+      - SMTP_SECURE=${SMTP_SECURE:-}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASS=${SMTP_PASS:-}
+      - EMAIL_FROM=${EMAIL_FROM:-}
+      - EMAIL_REPLY_TO=${EMAIL_REPLY_TO:-}
+      - ALERT_TOKEN_SECRET=${ALERT_TOKEN_SECRET:-}
+      - EMAIL_ALERT_MIN_INTERVAL_HOURS=${EMAIL_ALERT_MIN_INTERVAL_HOURS:-}
+      - EMAIL_DIGEST_CRON=${EMAIL_DIGEST_CRON:-}
+      # Re-armarea alertelor (Telegram + email), plafonul Telegram per alerta, limita de viata
+      - ALERT_REARM_PCT=${ALERT_REARM_PCT:-}
+      - TELEGRAM_ALERT_MIN_INTERVAL_HOURS=${TELEGRAM_ALERT_MIN_INTERVAL_HOURS:-}
+      - ALERT_MAX_IDLE_DAYS=${ALERT_MAX_IDLE_DAYS:-}
     volumes:
       - uploads:/app/uploads
     depends_on:

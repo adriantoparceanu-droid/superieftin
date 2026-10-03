@@ -6,9 +6,11 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 config({ path: resolve(__dirname, '../../.env'), override: true })
 
 import pino from 'pino'
-import { syncQueue, cleanupLegacyScrapeQueue } from './lib/queue.js'
+import { syncQueue, emailQueue, cleanupLegacyScrapeQueue } from './lib/queue.js'
 import { startSyncWorker } from './workers/sync.worker.js'
 import { startBotWorker } from './workers/bot.worker.js'
+import { startEmailWorker } from './workers/email.worker.js'
+import { emailConfig } from './lib/email/config.js'
 import pool from './lib/db.js'
 
 const logger = pino({ level: 'info' })
@@ -29,6 +31,10 @@ const ADS_GUARD_CRON = process.env.ADS_GUARD_CRON || '0 7 * * *'
 // Statistici GA4 pentru /admin/statistici — date de ieri, dupa ce GA4 a procesat ziua.
 // Fara GA4_PROPERTY_ID / GA4_SERVICE_ACCOUNT_JSON jobul se opreste linistit. Vezi lib/ga4/sync.ts.
 const GA4_SYNC_CRON = process.env.GA4_SYNC_CRON || '15 6 * * *'
+// Digestul alertelor pe email: o trecere pe ora trimite alertele amanate de plafonul zilnic (si pe
+// cele declansate de preturi schimbate in afara joburilor de sync). Pe langa asta, digestul se cere
+// si dupa fiecare job care schimba preturi (sync.worker.ts).
+const EMAIL_DIGEST_CRON = process.env.EMAIL_DIGEST_CRON || '5 * * * *'
 
 async function scheduleRepeatingJobs() {
   await syncQueue.add(
@@ -82,6 +88,14 @@ async function scheduleRepeatingJobs() {
     { repeat: { pattern: GA4_SYNC_CRON }, jobId: 'ga4-sync-repeat' }
   )
   logger.info({ cron: GA4_SYNC_CRON }, 'Job repeating programat: ga4-sync')
+
+  if (emailConfig()) {
+    await emailQueue.add('digest', {}, { repeat: { pattern: EMAIL_DIGEST_CRON }, jobId: 'email-digest-repeat', removeOnComplete: 100, removeOnFail: 100 })
+    logger.info({ cron: EMAIL_DIGEST_CRON }, 'Job repeating programat: email digest')
+  } else {
+    // Email dezactivat: stergem o programare ramasa dintr-o rulare anterioara
+    for (const r of await emailQueue.getRepeatableJobs()) await emailQueue.removeRepeatableByKey(r.key)
+  }
 }
 
 async function invalidateCache() {
@@ -146,6 +160,9 @@ async function syncNow() {
   }
   const { checkAndSendAlerts } = await import('./workers/alerts.worker.js')
   await checkAndSendAlerts().catch((err) => logger.error({ err }, 'Eroare verificare alerte'))
+  // Alertele pe email le trimite workerul principal (coada 'email'); aici doar cerem un digest
+  const { requestEmailDigest } = await import('./workers/email.worker.js')
+  await requestEmailDigest().catch((err) => logger.error({ err }, 'Eroare programare digest alerte email'))
   await invalidateCache()
   await pool.end()
   process.exit(exitCode)
@@ -161,6 +178,7 @@ async function main() {
   } else {
     startSyncWorker()
     startBotWorker() // ruleaza in background — loop infinit non-blocking
+    startEmailWorker() // alerte pe email; null (doar avertisment) daca nu e configurat
     await scheduleRepeatingJobs()
   }
 }
