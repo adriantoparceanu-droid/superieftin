@@ -35,6 +35,14 @@ export interface GuideDraft {
   faq: { q: string; a: string }[]
   product_slugs: string[]
   review: DraftReview
+  // Prezent DOAR in fisierele care se publica direct la import (content/ghiduri/publicate/,
+  // decizia proprietarului din 2026-10-04). Lipsa = ciorna, ca inainte.
+  publish: DraftPublish | null
+}
+
+export interface DraftPublish {
+  author_slug: string     // guide_authors.slug — „Scris de”
+  reviewer_slug: string   // guide_authors.slug — „Verificat de”
 }
 
 // Aceleasi tipuri ca in web/src/lib/guides/markers.ts (MARKER_TYPES) — modifica-le impreuna.
@@ -48,6 +56,45 @@ const MAX_COMPARE = 6
 const ANY_MARKER_RE = /\{\{\s*([a-z-]+)\s*:\s*([^{}\n]*?)\s*\}\}/gi
 
 export const UNVERIFIED_MARK = '[DE VERIFICAT'
+
+// Afirmatii de sanatate interzise (REGULI.md regula 8). Copie a HEALTH_CLAIMS / findHealthClaims
+// din web/src/lib/guides/format.ts (worker-ul nu poate importa din web) — modifica-le impreuna.
+const HEALTH_CLAIMS = ['vindeca', 'vindecă', 'trateaza', 'tratează', 'detoxifica', 'detoxifică', 'detoxifiere', 'previne boli', 'combate boli', 'elimina toxinele', 'elimină toxinele']
+
+export function findHealthClaims(text: string): string[] {
+  const low = text.toLowerCase()
+  return [...new Set(HEALTH_CLAIMS.filter((w) => new RegExp(`(^|[^a-zăâîșț])${w}`, 'i').test(low)))]
+}
+
+// Pret scris de mana („1.299 lei”, „2499,99 RON”) — preturile vin DOAR din marcajele live.
+const HANDWRITTEN_PRICE_RE = /\d[\d.,\s]*\s?(lei|ron)\b/i
+
+// Conditiile de publicare — aceleasi ca in saveGuideAction (web/src/lib/admin/guide-actions.tsx):
+// autor + verificator + meta + corp, fara afirmatii de sanatate, fara [DE VERIFICAT]. In plus,
+// pentru ca aici nu mai trece un om prin „Fisa de verificare” din editor: toate afirmatiile din
+// review.facts trebuie sa fie „confirmat” si nu se accepta preturi scrise de mana.
+export function publishErrors(d: Omit<GuideDraft, 'publish'>, pub: DraftPublish): string[] {
+  const errors: string[] = []
+  if (pub.author_slug === pub.reviewer_slug) errors.push('publish: autorul și verificatorul trebuie să fie diferiți')
+  if (!d.meta_description.trim()) errors.push('publish: lipsește descrierea meta')
+  if (!d.body_md.trim()) errors.push('publish: lipsește corpul articolului')
+  const faqText = d.faq.flatMap((f) => [f.q, f.a]).join('\n')
+  const all = [d.title, d.meta_description, d.summary, d.body_md, faqText].join('\n')
+  const claims = findHealthClaims(all)
+  if (claims.length) errors.push(`publish: afirmații de sănătate interzise (regula 8): ${claims.join(', ')}`)
+  const fields: Record<string, string> = { titlu: d.title, meta: d.meta_description, rezumat: d.summary, corp: d.body_md, FAQ: faqText }
+  for (const [k, v] of Object.entries(fields)) {
+    const n = countUnverified(v)
+    if (n) errors.push(`publish: ${n} marcaj(e) [DE VERIFICAT] în ${k}`)
+  }
+  const todo = d.review.facts.filter((f) => f.status !== 'confirmat')
+  if (todo.length) errors.push(`publish: ${todo.length} afirmație(i) din review.facts nu sunt „confirmat”: ${todo.map((f) => `„${f.claim}”`).join('; ')}`)
+  for (const [k, v] of Object.entries({ rezumat: d.summary, corp: d.body_md, FAQ: faqText, meta: d.meta_description })) {
+    const m = v.match(HANDWRITTEN_PRICE_RE)
+    if (m) errors.push(`publish: preț scris de mână în ${k} („${m[0].trim()}”) — folosește marcajele live`)
+  }
+  return errors
+}
 
 export function countUnverified(text: string): number {
   return text.split(UNVERIFIED_MARK).length - 1
@@ -187,16 +234,31 @@ export function validateDraft(raw: unknown): ValidationResult {
     }
   }
 
+  // Publicare directa (optional): { "author_slug": "...", "reviewer_slug": "..." }
+  let publish: DraftPublish | null = null
+  if (raw.publish != null) {
+    const p = raw.publish
+    const a = isObj(p) ? str(p.author_slug) : null
+    const r = isObj(p) ? str(p.reviewer_slug) : null
+    if (!a || !r) errors.push('„publish” trebuie să aibă „author_slug” și „reviewer_slug”')
+    else publish = { author_slug: a, reviewer_slug: r }
+  }
+
   const markers = checkMarkers(body)
   errors.push(...markers.errors.map((e) => `body_md: ${e}`))
   if (/\{\{/.test(summary)) errors.push('summary: rezumatul nu acceptă marcaje live')
 
   if (errors.length) return { draft: null, errors, markerRefs: markers.refs }
+  const base = {
+    slug, title, meta_description: meta, kind: kind as GuideDraft['kind'], category_slug: categorySlug,
+    summary, body_md: body, faq, product_slugs: productSlugs, review,
+  }
+  if (publish) {
+    const pubErrors = publishErrors(base, publish)
+    if (pubErrors.length) return { draft: null, errors: pubErrors, markerRefs: markers.refs }
+  }
   return {
-    draft: {
-      slug, title, meta_description: meta, kind: kind as GuideDraft['kind'], category_slug: categorySlug,
-      summary, body_md: body, faq, product_slugs: productSlugs, review,
-    },
+    draft: { ...base, publish },
     errors: [],
     markerRefs: markers.refs,
   }
