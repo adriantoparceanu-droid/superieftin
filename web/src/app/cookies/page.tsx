@@ -10,12 +10,14 @@ export const metadata: Metadata = {
 }
 
 // Lista reflecta ce seteaza REAL site-ul. La un tag/cookie nou, actualizeaza tabelul.
+// „Reclame personalizate” (3 oct 2026): text de verificat de jurist inainte de deploy; dupa deploy,
+// verifica in DevTools → Application → Cookies ce cookie-uri Google apar cu bifa activa.
 export default function CookiesPage() {
   return (
-    <LegalPage title="Politica de cookies" updated="26 septembrie 2026">
+    <LegalPage title="Politica de cookies" updated="3 octombrie 2026">
       <p>
         Cookie-urile sunt fișiere mici salvate de browser. Folosim doar cookie-urile necesare,
-        iar pe cele de analiză și publicitate numai dacă ești de acord.
+        iar pe cele de analiză, publicitate și reclame personalizate numai dacă ești de acord.
       </p>
 
       <p>
@@ -62,6 +64,18 @@ export default function CookiesPage() {
             </td>
             <td>stabilită de Profitshare (de regulă, sesiunea)</td>
           </tr>
+          <tr>
+            <td>Cookie-uri Google de publicitate, pe domeniile Google (ex. <code>doubleclick.net</code>)</td>
+            <td>Reclame personalizate</td>
+            <td>
+              Google Analytics anunță Google Ads că ai văzut pagini de produs pe superieftin.ro (și dacă ai
+              mers spre un magazin), iar Google te poate include, pentru cel mult 30 de zile, într-o listă de
+              vizitatori cărora le arătăm reclamele noastre, de exemplu când cauți din nou pe Google. Google
+              recunoaște browserul prin cookie-urile proprii. Se întâmplă numai dacă accepți atât „Publicitate”,
+              cât și „Reclame personalizate”.
+            </td>
+            <td>stabilită de Google (lista noastră: max. 30 de zile)</td>
+          </tr>
         </tbody>
       </table>
 
@@ -93,6 +107,26 @@ export default function CookiesPage() {
         Ce se întâmplă pe serverul nostru și ce ajunge la Google este descris în{' '}
         <Link href="/confidentialitate">Politica de confidențialitate</Link>.
       </p>
+
+      <h2>Reclame personalizate (remarketing), pe scurt</h2>
+      <ul>
+        <li>
+          <strong>Ce înseamnă:</strong> dacă ai văzut un produs pe superieftin.ro, îți putem arăta din nou
+          reclama noastră în Google, ca să revii la comparația de prețuri. Nu folosim Google Signals și
+          nu trimitem la Google email, telefon sau adresa IP.
+        </li>
+        <li>
+          <strong>Doar cu acord separat:</strong> bifa „Reclame personalizate” e implicit debifată și
+          funcționează numai împreună cu „Publicitate”. Fără ea, Google Analytics nu te adaugă în listele
+          noastre de reclame.
+        </li>
+        <li>
+          <strong>Retragere:</strong> o debifezi oricând din „Setări cookies”. De atunci nu mai ești adăugat
+          în liste; apartenența deja înregistrată expiră singură după cel mult 30 de zile de la ultima
+          vizită. Google oferă și setări proprii pentru reclame, la{' '}
+          <a href="https://myadcenter.google.com" rel="noopener" target="_blank">myadcenter.google.com</a>.
+        </li>
+      </ul>
 
       <h2>Cookie-uri ale altor site-uri</h2>
       <p>
