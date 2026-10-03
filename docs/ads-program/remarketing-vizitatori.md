@@ -46,8 +46,8 @@ offline) și `/termeni`, secțiunea 7 (scurt, cu trimitere spre cele două polit
 **Pentru jurist:** (1) e suficient ca reclamele personalizate să fie incluse în „Publicitate”, cu o
 mențiune scurtă în primul ecran și detaliile în politici? (2) tratarea acordurilor vechi (fără
 personalizare până la o nouă salvare); (3) formularea despre Google ca operator pentru propriile date
-(linkul „partner-sites”); (4) durata „cel mult 30 de zile de la ultima vizită” — e adevărată doar după
-pasul 3 de mai jos.
+(linkul „partner-sites”); (4) durata „cel mult 540 de zile de la ultima vizită” (maximul GA4, ales de proprietar
+pe 2026-10-03 în locul a 30 de zile) — e proporțională cu scopul?
 
 ## Câți oameni ar intra în listă (estimare prudentă)
 
@@ -87,8 +87,8 @@ pasul 3 de mai jos.
 2. **Google Signals rămâne OPRIT** (Admin → Colectarea datelor). Nu e necesar pentru remarketing pe
    date first-party cu acord, iar politicile spun că nu îl folosim.
 3. **Listele GA4 deja partajate** („All Users”, „Purchasers”): Admin → Audiențe → deschide fiecare →
-   durata de apartenență **30 de zile** (sau arhivează-le). Altfel au 540 de zile, iar politicile
-   promit maximum 30.
+   pot rămâne la 540 de zile: politicile spun „cel mult 540 de zile” (decizia proprietarului,
+   2026-10-03). Nu e nevoie de nicio schimbare; nicio listă nu poate depăși 540 de zile.
 4. **Legătura Google Ads** (Admin → Linkuri de produse → Google Ads): „Publicitate personalizată”
    trebuie să fie **activă** (listele GA4 apar deja în Ads, deci pare activă — verifică).
    Aceasta schimbă recomandarea din `ghid-setari-ga4.md`, pasul 5.
@@ -134,7 +134,8 @@ pasul 3 de mai jos.
 
 - **Durata apartenenței: 30 de zile.** E ciclul tipic de decizie la electronice și depășește
   ferestrele scurte (2–10 zile): cine revine în 30 de zile pornește prin noi o fereastră nouă. Peste
-  30 de zile interesul scade, iar politica promite maximum 30.
+  30 de zile interesul scade. Politicile spun „cel mult 540 de zile” (maximul GA4), deci și listele
+  existente de 540 de zile sunt acoperite; audiența nouă rămâne totuși la 30 de zile.
 - **Excluderea după click: 7 zile.** În primele zile după „Vezi oferta” fereastra e încă deschisă la
   majoritatea magazinelor, deci un click plătit nou ar fi bani dați pe ceva deja al nostru. 7 zile e
   compromisul între 2 (eMAG) și 10 (evoMAG); la ITGalaxy (60) e prudent.
@@ -162,4 +163,4 @@ pasul 3 de mai jos.
   „Publicitate” acceptată și ajustează tabelul din `/cookies` dacă apare ceva nedescris.
 - **Categorie sensibilă**: dacă audiența ar include Sănătate & Naturale, Google o poate respinge și
   încalcă regula 8 — de aceea lista albă de categorii.
-- **Listele GA4 vechi (540 de zile)** încep să se umple după deploy — pasul 3 e obligatoriu.
+- **Listele GA4 vechi (540 de zile)** încep să se umple după deploy — acoperite de politici (max. 540 de zile).

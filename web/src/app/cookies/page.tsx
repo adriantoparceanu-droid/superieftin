@@ -69,11 +69,11 @@ export default function CookiesPage() {
             <td>Publicitate (reclame personalizate)</td>
             <td>
               Google Analytics anunță Google Ads că ai văzut pagini de produs pe superieftin.ro (și dacă ai
-              mers spre un magazin), iar Google te poate include, pentru cel mult 30 de zile, într-o listă de
+              mers spre un magazin), iar Google te poate include, pentru cel mult 540 de zile, într-o listă de
               vizitatori cărora le arătăm reclamele noastre, de exemplu când cauți din nou pe Google. Google
               recunoaște browserul prin cookie-urile proprii. Se întâmplă numai dacă accepți „Publicitate”.
             </td>
-            <td>stabilită de Google (lista noastră: max. 30 de zile)</td>
+            <td>stabilită de Google (listele noastre: max. 540 de zile)</td>
           </tr>
         </tbody>
       </table>
@@ -123,7 +123,7 @@ export default function CookiesPage() {
         </li>
         <li>
           <strong>Retragere:</strong> debifezi „Publicitate” oricând din „Setări cookies”. De atunci nu mai ești adăugat
-          în liste; apartenența deja înregistrată expiră singură după cel mult 30 de zile de la ultima
+          în liste; apartenența deja înregistrată expiră singură după cel mult 540 de zile de la ultima
           vizită. Google oferă și setări proprii pentru reclame, la{' '}
           <a href="https://myadcenter.google.com" rel="noopener" target="_blank">myadcenter.google.com</a>.
         </li>

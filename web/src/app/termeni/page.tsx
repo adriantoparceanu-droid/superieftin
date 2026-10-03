@@ -65,7 +65,7 @@ export default function TermeniPage() {
         Analiza (Google Analytics) și publicitatea (Google Ads) funcționează numai cu acordul tău, dat
         din bannerul de cookies. Categoria „Publicitate” include și reclamele personalizate
         (remarketing): dacă ai văzut un produs pe site, Google îți poate arăta din nou reclamele noastre,
-        timp de cel mult 30 de zile. Îți poți schimba oricând alegerea din „Setări cookies”, în subsolul
+        timp de cel mult 540 de zile (aproximativ 18 luni). Îți poți schimba oricând alegerea din „Setări cookies”, în subsolul
         fiecărei pagini. Detaliile (ce date, cât timp, cui le transmitem) sunt în cele două politici de mai sus.
       </p>
 

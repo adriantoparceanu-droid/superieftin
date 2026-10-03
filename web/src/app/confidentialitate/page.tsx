@@ -90,7 +90,7 @@ export default function ConfidentialitatePage() {
               cookie-urile sale de publicitate
             </td>
             <td>Să îți arătăm din nou reclamele noastre în Google (de exemplu, când cauți din nou un produs),
-              timp de cel mult 30 de zile de la vizită</td>
+              timp de cel mult 540 de zile (aproximativ 18 luni) de la vizită</td>
             <td>Consimțământ (categoria „Publicitate”, acordat începând cu 3 octombrie 2026)</td>
           </tr>
           <tr>
@@ -185,9 +185,9 @@ export default function ConfidentialitatePage() {
           autentificat într-un cont Google), conform propriei politici:{' '}
           <a href="https://policies.google.com/technologies/partner-sites" rel="noopener" target="_blank">
             cum folosește Google datele de pe site-urile partenerilor</a>.</li>
-        <li>Durata: cel mult 30 de zile de la ultima vizită care te-a inclus în listă.</li>
+        <li>Durata: cel mult 540 de zile (aproximativ 18 luni) de la ultima vizită care te-a inclus în listă.</li>
         <li>Retragere: debifezi „Publicitate” din „Setări cookies”. De atunci nu mai ești
-          adăugat; apartenența existentă expiră în cel mult 30 de zile. Poți folosi și setările Google, la{' '}
+          adăugat; apartenența existentă expiră în cel mult 540 de zile. Poți folosi și setările Google, la{' '}
           <a href="https://myadcenter.google.com" rel="noopener" target="_blank">myadcenter.google.com</a>.</li>
       </ul>
 
@@ -231,7 +231,7 @@ export default function ConfidentialitatePage() {
           automat, indiferent dacă a dus la o comandă (codul de click rămâne, fără identificatorul Google).
           Îl ștergem mai devreme dacă îți retragi acordul sau dacă acordul expiră.</li>
         <li>Datele Google Analytics: 14 luni (setarea din Google Analytics).</li>
-        <li>Apartenența la listele de reclame personalizate: cel mult 30 de zile de la ultima vizită care
+        <li>Apartenența la listele de reclame personalizate: cel mult 540 de zile (aproximativ 18 luni) de la ultima vizită care
           te-a inclus (setarea listelor din Google Analytics).</li>
         <li>Alertele Telegram: până le ștergi (comanda <code>/sterge</code>) sau ne ceri ștergerea.</li>
         <li>Jurnalele tehnice: cât e necesar pentru securitate, de regulă câteva săptămâni.</li>
