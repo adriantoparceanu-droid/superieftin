@@ -20,7 +20,7 @@ export interface ConversionEventInput {
   ids: ClickIds
   value: number                 // RON, comisionul nostru (nu valoarea comenzii)
   eventTimestamp: string        // RFC 3339 cu offset, ex. 2026-09-25T12:00:00+03:00
-  transactionId: string         // order_id Profitshare → Google deduplica dupa el
+  transactionId: string         // googleOrderId(): order_id Profitshare / `2p-<id>` 2Performant → Google deduplica dupa el
 }
 
 // Un singur identificator per eveniment (Google cere exact unul): gclid are prioritate —

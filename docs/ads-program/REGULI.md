@@ -63,10 +63,12 @@ GA4_PROPERTY_ID=                   # din Faza 4, pentru citire prin MCP
 ```
 
 ## Google Analytics 4 — rolul lui
-- Profitshare = sursa de adevăr pentru bani. Google Ads = sursa pentru cost.
+- Profitshare și 2Performant = sursa de adevăr pentru bani. Google Ads = sursa pentru cost.
 - GA4 = comportament: DE CE un cuvânt cheie pierde bani (bounce, viteză, pagină slabă).
 - Evenimentul GA4 `click_affiliate_link` se importă în Google Ads DOAR ca conversie SECUNDARĂ.
-  Conversia principală rămâne „Comision Profitshare”. Altfel Google numără dublu.
+  Conversia principală rămâne „Comision afiliere” (fost „Comision Profitshare”, redenumită cu
+  acordul proprietarului pe 2026-10-03 — comisioanele Profitshare + 2Performant; aceeași acțiune,
+  ID 7799099014). Altfel Google numără dublu.
 - Accesul agenților la GA4 este DOAR citire (MCP oficial, scope `analytics.readonly`).
   Setările GA4 le face proprietarul manual.
 
@@ -84,7 +86,7 @@ GA4_PROPERTY_ID=                   # din Faza 4, pentru citire prin MCP
 - `ads:plan` — arată diferențele dintre YAML și contul Google Ads (nu scrie nimic)
 - `ads:apply --confirm` — publică modificările (orice element nou = PAUSED)
 - `ads:report` — trage performanța + comisioanele și scrie în `ads/reports/`
-- `tracking:sync` — sincronizează conversiile Profitshare → Google Ads
+- `tracking:sync` — sincronizează conversiile Profitshare + 2Performant → Google Ads
 
 ## Agenți disponibili
 Vezi `.claude/agents/`. Delegă fiecare task agentului responsabil:

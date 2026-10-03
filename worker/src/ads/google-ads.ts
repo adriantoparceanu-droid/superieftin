@@ -206,7 +206,7 @@ export function conversionActionResource(cfg: AdsConfig, id: string): string {
 }
 
 export interface RetractionInput {
-  orderId: string                 // = transactionId trimis la upload (order_id Profitshare)
+  orderId: string                 // = transactionId trimis la upload (googleOrderId din tracking/core.ts)
   adjustmentDateTime: string      // "yyyy-mm-dd HH:mm:ss+HH:mm", dupa momentul conversiei
 }
 

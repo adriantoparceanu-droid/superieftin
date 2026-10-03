@@ -68,7 +68,7 @@ Dacă Profitshare NU întoarce subID-ul → decidem împreună metoda alternativ
 - [ ] Tabele `ad_clicks` + `affiliate_conversions`
 - [ ] Job zilnic `tracking:sync`: Profitshare → potrivire → upload conversii offline
 - [ ] Ajustare automată pentru comisioanele respinse (retragere)
-- [ ] Acțiune de conversie „Comision Profitshare” în Google Ads
+- [ ] Acțiune de conversie „Comision afiliere” (fost „Comision Profitshare”) în Google Ads
 - [ ] Eveniment GA4 `click_affiliate_link` (magazin, produs, categorie, preț, % reducere),
       importat în Google Ads ca conversie SECUNDARĂ (nu folosită la licitare)
 - [ ] În GA4 (manual, după ghidul generat de tracking): `click_affiliate_link` ca eveniment cheie,

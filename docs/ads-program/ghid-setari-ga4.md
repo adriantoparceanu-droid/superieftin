@@ -91,7 +91,8 @@ Tot aici verifică **Păstrarea datelor** (Data retention) = **14 luni** — aș
 
 ## Pasul 6 — Import în Google Ads ca conversie SECUNDARĂ (important)
 
-Conversia principală e **„Comision Profitshare”** (comisionul real, importat de `tracking:sync`).
+Conversia principală e **„Comision afiliere”** (fost „Comision Profitshare”; comisionul real din
+Profitshare și 2Performant, importat de `tracking:sync`).
 `click_affiliate_link` se importă doar pentru observare, altfel Google numără de două ori și
 optimizează pe clickuri, nu pe bani.
 
@@ -106,13 +107,13 @@ optimizează pe clickuri, nu pe bani.
 3. Salvează.
 
 Verificare: în lista de conversii, coloana „Optimizarea acțiunii” trebuie să arate
-**Principală** doar la „Comision Profitshare” și **Secundară** la `click_affiliate_link`.
+**Principală** doar la „Comision afiliere” și **Secundară** la `click_affiliate_link`.
 
 > Atenție — în cont există deja acțiunea **„Achiziție”** (tip Pagină web, **principală**, categoria
 > Cumpărare) și „Superieftin.ro – GA4 (web) purchase” (ascunsă). Noi nu vindem direct, deci
 > „Achiziție” nu se va declanșa niciodată corect. Recomandare: setează-o **Secundară** (sau elimin-o)
 > înainte de pornirea campaniilor, ca singura conversie principală de tip Cumpărare să fie
-> „Comision Profitshare”.
+> „Comision afiliere”.
 
 ## Checklist final
 
