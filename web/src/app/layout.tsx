@@ -6,6 +6,7 @@ import { Footer } from '@/components/Footer'
 import { GoogleAnalytics } from '@/components/analytics/GoogleAnalytics'
 import { CookieBanner } from '@/components/consent/CookieBanner'
 import { AdClickCapture } from '@/components/consent/AdClickCapture'
+import { organizationLd, websiteLd, ldScript } from '@/lib/seo/jsonld'
 
 const archivoBlack = Archivo_Black({
   weight: '400',
@@ -39,8 +40,9 @@ export const metadata: Metadata = {
     locale: 'ro_RO',
     siteName: 'superieftin.ro',
   },
-  robots: { index: true, follow: true },
-  alternates: { canonical: SITE_URL },
+  // FARA `robots` si `alternates.canonical` aici (raport SEO 2026-10-04, A1): ce e in layout se
+  // mosteneste de orice pagina fara metadata proprie — 404-urile primeau „index, follow” langa
+  // „noindex” si canonical = homepage. Fiecare pagina indexabila isi declara canonical-ul ei.
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -48,6 +50,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="ro" className={`${archivoBlack.variable} ${instrumentSans.variable}`}>
       <GoogleAnalytics />
       <body className="min-h-screen antialiased" style={{ background: 'var(--color-page)', color: 'var(--color-text)' }}>
+        {/* Entitatea site-ului (Organization + WebSite cu cautare), aceeasi pe toate paginile —
+            ghidurile si produsele trimit la ea prin @id (lib/seo/jsonld.ts) */}
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldScript(organizationLd()) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldScript(websiteLd()) }} />
         <Header />
         <main className="max-w-7xl mx-auto px-4 py-6">
           {children}
