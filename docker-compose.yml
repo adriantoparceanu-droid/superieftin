@@ -28,6 +28,16 @@ services:
       - UPLOAD_DIR=/app/uploads
       # IndexNow (Bing) la publicarea ghidurilor — optional; gol = dezactivat
       - INDEXNOW_KEY=${INDEXNOW_KEY:-}
+      # Protectia anti-roboti pe /go/ (docs/ops/nginx-access-log.md, lib/go-token.ts, lib/go-rate-limit.ts).
+      # Toate optionale: gol = valoarea implicita din cod.
+      - GO_TOKEN_SECRET=${GO_TOKEN_SECRET:-}
+      - GO_TOKEN_CHECK=${GO_TOKEN_CHECK:-}
+      - GO_TEST_TOKEN=${GO_TEST_TOKEN:-}
+      - GO_RATE_PER_MIN=${GO_RATE_PER_MIN:-}
+      - GO_RATE_PER_HOUR=${GO_RATE_PER_HOUR:-}
+      - GO_TOKEN_RATE_PER_MIN=${GO_TOKEN_RATE_PER_MIN:-}
+      - GO_TOKEN_RATE_PER_HOUR=${GO_TOKEN_RATE_PER_HOUR:-}
+      - GO_RATE_REDIS_TIMEOUT_MS=${GO_RATE_REDIS_TIMEOUT_MS:-}
     volumes:
       - uploads:/app/uploads
     depends_on:
