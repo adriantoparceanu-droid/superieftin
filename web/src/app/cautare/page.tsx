@@ -19,7 +19,9 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
     description: query
       ? `Rezultate pentru "${query}" — comparare prețuri și reduceri reale.`
       : 'Caută produse și compară prețuri pe superieftin.ro.',
-    robots: { index: false, follow: false },
+    // noindex (rezultatele de cautare nu se indexeaza), dar follow: robotii pot urma linkurile
+    // spre produse. Fara canonical (raport SEO, A9).
+    robots: { index: false, follow: true },
   }
 }
 
@@ -98,6 +100,7 @@ export default async function SearchPage({ searchParams }: Props) {
             {totalPages > 1 && ` · pagina ${currentPage} din ${totalPages}`}
           </p>
 
+          <h2 className="sr-only">Produse</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {products.map(product => (
               <ProductCard key={product.offer_id} product={product} />

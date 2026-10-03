@@ -5,6 +5,11 @@ import { getCategoryProducts, getCategoryProductCount, getCategoryBrands, getCat
 import { ProductCard } from '@/components/ProductCard'
 import { Pagination } from '@/components/Pagination'
 import { CategoryIcon } from '@/components/CategoryIcon'
+import { getCategoryStat } from '@/lib/seo/queries'
+import { listingDescription, listingSeo, parsePageParam } from '@/lib/seo/listing'
+import { isExcludedFromAds } from '@/lib/seo/categories'
+import { withOg } from '@/lib/seo/og'
+import { absUrl, lowerFirst } from '@/lib/seo/site'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,30 +18,61 @@ type Props = {
   searchParams: Promise<{ sort?: string; brand?: string; page?: string; tot?: string }>
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+// Parametrii vederii curente, normalizati la fel in metadata si in pagina
+function parseView(sp: { sort?: string; brand?: string; page?: string; tot?: string }) {
+  const sort: 'discount' | 'price' | 'name' = (sp.sort === 'discount' || sp.sort === 'price' || sp.sort === 'name') ? sp.sort : 'price'
+  return { sort, brand: sp.brand || null, page: parsePageParam(sp.page), includeSub: sp.tot === '1' }
+}
+
+// Titlu/descriere din NUMELE categoriei (nu din slug) + cifre live; canonical propriu pe
+// ?page=N; noindex pe ?brand= si pe categoriile fara produse disponibile (lib/seo/listing.ts).
+export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const { categorie } = await params
-  const label = categorie.replace(/-/g, ' ')
-  const title = `${label.charAt(0).toUpperCase() + label.slice(1)} — prețuri și reduceri reale`
-  const description = `Comparator de prețuri pentru ${label}. Verificăm reducerile față de mediana prețurilor pe 30 de zile.`
+  const view = parseView(await searchParams)
+  const category = await getCategoryBySlug(categorie)
+  if (!category || !category.is_visible) return {}   // pagina raspunde 404 (not-found.tsx)
+
+  const [stat, viewCount] = await Promise.all([
+    getCategoryStat(categorie).catch(() => null),
+    getCategoryProductCount(categorie, view.brand, view.includeSub),
+  ])
+  const seo = listingSeo({
+    basePath: `/c/${categorie}`,
+    page: view.page,
+    totalPages: Math.ceil(viewCount / PAGE_SIZE),
+    hasReorder: view.sort !== 'price' || view.includeSub,
+    brand: view.brand,
+    empty: (stat?.products ?? viewCount) === 0,
+  })
+  if (seo.notFound) return {}
+
+  const title = `${category.name}${view.brand ? ` ${view.brand}` : ''} — prețuri, istoric și reduceri reale${seo.titleSuffix}`
+  const description = listingDescription(category.name, {
+    products: stat?.products ?? viewCount,
+    retailers: stat?.retailers ?? 0,
+    brands: stat?.brands ?? 0,
+    minPrice: stat?.min_price ?? null,
+  })
   return {
     title,
     description,
-    alternates: { canonical: `/c/${categorie}` },
-    openGraph: { title, description },
+    alternates: { canonical: seo.canonical },
+    ...(seo.robots ? { robots: seo.robots } : {}),
+    openGraph: withOg({ title, description, url: absUrl(seo.canonical) }),
   }
 }
 
 export default async function CategoryPage({ params, searchParams }: Props) {
   const { categorie } = await params
-  const { sort = 'price', brand, page: pageStr, tot } = await searchParams
-
-  const sortValue = (sort === 'discount' || sort === 'price' || sort === 'name') ? sort : 'price'
-  const brandValue = brand || null
-  const currentPage = Math.max(1, parseInt(pageStr ?? '1') || 1)
-  const includeSub = tot === '1'
+  const view = parseView(await searchParams)
+  const sortValue = view.sort
+  const brandValue = view.brand
+  const currentPage = view.page
+  const includeSub = view.includeSub
 
   const category = await getCategoryBySlug(categorie)
-  if (!category) notFound()
+  // Categoriile ascunse din admin nu sunt publice (inainte erau accesibile direct, cu 200)
+  if (!category || !category.is_visible) notFound()
 
   // Subcategoriile pentru navigare: pe o pagina parinte -> copiii ei; pe o pagina copil ->
   // "surorile" (ceilalti copii ai aceluiasi parinte), ca sa poti sari lateral intre ele.
@@ -59,6 +95,8 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   const randomProducts = showRandomFallback ? await getRandomCategoryProducts(categorie) : []
 
   const totalPages = Math.ceil(totalCount / PAGE_SIZE)
+  // ?page= peste ultima pagina → 404 adevarat, nu „Niciun produs găsit” cu 200 (soft 404)
+  if (currentPage > 1 && currentPage > totalPages) notFound()
   const label = category.name
   const discountCount = products.filter(p => p.discount_pct != null).length
 
@@ -130,7 +168,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      {products.length > 0 && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
 
       {/* Breadcrumb */}
@@ -164,6 +202,12 @@ export default async function CategoryPage({ params, searchParams }: Props) {
             </>
           )}
         </p>
+        {/* Legatura interna spre landing-ul de reduceri reale (fara Sanatate & Naturale — regula 8) */}
+        {!isExcludedFromAds(category.slug, category.parent_slug) && (
+          <Link href={`/reduceri-reale/${categorie}`} className="inline-block mt-2 text-sm text-brand hover:underline">
+            Vezi doar reducerile reale la {lowerFirst(label)} →
+          </Link>
+        )}
       </div>
 
       {/* Navigare subcategorii: carduri catre copii (pe parinte) sau surori (pe copil) */}
@@ -267,6 +311,8 @@ export default async function CategoryPage({ params, searchParams }: Props) {
       {/* Grid produse */}
       {products.length > 0 ? (
         <>
+          {/* Titlul de sectiune pentru cititoarele de ecran: cardurile au <h3> (ierarhie corecta) */}
+          <h2 className="sr-only">Produse</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {products.map(product => (
               <ProductCard key={product.offer_id} product={product} />
@@ -280,6 +326,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
         </>
       ) : randomProducts.length > 0 ? (
         <div>
+          <h2 className="sr-only">Produse</h2>
           <span className="text-xs font-semibold text-muted uppercase tracking-wide">
             Selecție aleatorie din subcategorii
           </span>
