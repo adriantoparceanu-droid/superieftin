@@ -11,5 +11,5 @@ export const COMPANY = {
   hosting: 'Contabo GmbH, server în Franța (UE)' as string | null,        // furnizorul VPS + tara, ex. 'Hetzner Online GmbH (Germania)'
   // Furnizorul de trimitere a emailurilor de alerta (imputernicit GDPR), ex. 'Sendinblue SAS (Brevo), Franța (UE)'.
   // null = pe /confidentialitate apare categoria generica (nu blocheaza nimic); completeaza-l cand alegi furnizorul.
-  emailProvider: null as string | null,
+  emailProvider: 'Resend, Inc. (SUA), cu trimiterea din regiunea UE (Irlanda)' as string | null,
 }

@@ -10,6 +10,17 @@ Proiectul rulează izolat sub user-ul `superieftin`, în `/home/superieftin/app/
 
 ## Pași
 
+0. **Verifică ÎNTÂI că nu se mai lucrează** — dacă oricare punct pică, NU porni deploy-ul;
+   spune-i proprietarului ce rulează și așteaptă:
+   - niciun agent/subagent pornit în sesiune nu mai rulează (toți au raportat că au terminat);
+   - `git -C /Users/cosmin/dev/Superieftin.ro branch --show-current` → `main`;
+   - `git worktree list` → doar folderul principal (copiile de lucru ale agenților au fost
+     aduse în `main` și șterse); un worktree rămas = muncă neintegrată, întreabă ce faci cu el;
+   - `git status --short` → fără modificări necomise în cod (`web/`, `worker/`, `db/`,
+     compose, `package*.json`); rapoartele noi se comit la pasul 5;
+   - `main` conține tot ce trebuie deploiat (branch-urile terminate sunt unite), iar testele
+     web + worker și TypeScript trec pe `main`.
+
 1. **Rulează scriptul dintr-o singură comandă** (nu-l compune cu alte comenzi prin `&&` / `;` —
    regula de permisiune se potrivește doar pe comanda simplă):
 
