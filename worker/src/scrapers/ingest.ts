@@ -4,6 +4,7 @@ import { ensurePriceHistoryPartitions } from '../lib/partitions.js'
 import { upsertProduct, upsertRetailerByDomain } from '../lib/upsert.js'
 import { loadFeedRules, IGNORE } from '../lib/feedRules.js'
 import { resolver, syncAffiliateAdvertisers } from '../lib/affiliate/index.js'
+import { findLinkConfig, buildDeepLink, type LinkConfigResult } from '../lib/affiliate/profitshare-deeplink.js'
 import { EmagScraper } from './emag.js'
 import type { Scraper } from './types.js'
 
@@ -40,6 +41,14 @@ export async function ingestScraper(scraper: Scraper): Promise<{ imported: numbe
   await syncAffiliateAdvertisers()
   await resolver.refresh()
 
+  // Rezerva Profitshare (deep link lps) pentru produsele pe care rezolverul nu le afiliaza.
+  // Rezolverul citeste statusul salvat dintr-UN singur apel API, iar statusul variaza intre
+  // serverele Profitshare (vezi profitshare-deeplink.ts) → la 1 oct eMAG a iesit „inactiv” si
+  // toate ofertele scanate au primit affiliate_url NULL (si la update, peste linkurile bune).
+  // Configurarea se cauta o singura data, la primul produs neafiliat.
+  let psFallback: LinkConfigResult | undefined
+  let unaffiliated = 0, linkErrors = 0
+
   let imported = 0, errors = 0, affiliated = 0
   for await (const product of scraper.run()) {
     const aff = resolver.resolve(product.url)
@@ -47,6 +56,28 @@ export async function ingestScraper(scraper: Scraper): Promise<{ imported: numbe
       product.affiliateUrl = aff.affiliateUrl
       product.affiliateNetwork = aff.network
       affiliated++
+    } else {
+      if (!psFallback) {
+        psFallback = await findLinkConfig(scraper.domain)
+        if (psFallback.config) {
+          log.warn({ advertiser: psFallback.config.advertiserName, attempts: psFallback.attempts },
+            'Rezolverul nu a afiliat produsul; folosesc linkul Profitshare din API (status instabil intre servere)')
+        } else {
+          log.error({ reason: psFallback.reason, attempts: psFallback.attempts },
+            `NU pot construi linkul Profitshare pentru ${scraper.domain} — ofertele raman FARA afiliere (fara comision)`)
+        }
+      }
+      if (psFallback.config) {
+        try {
+          product.affiliateUrl = buildDeepLink(product.url, psFallback.config, scraper.domain)
+          product.affiliateNetwork = 'profitshare'
+          affiliated++
+        } catch (err) {
+          linkErrors++
+          if (linkErrors <= 5) log.error({ url: product.url, err: (err as Error).message }, 'Link Profitshare imposibil pentru produs')
+        }
+      }
+      if (!product.affiliateUrl) unaffiliated++
     }
     const rule = resolveRule(retailerId, product.feedCategory, product.name)
       if (rule === IGNORE) continue   // regula „ignoră” din Admin → Mapare
@@ -76,6 +107,7 @@ export async function ingestScraper(scraper: Scraper): Promise<{ imported: numbe
     deleted = d.rowCount ?? 0
   }
 
-  log.info({ imported, errors, affiliated, hidden, deleted }, 'Scraper ingerat')
+  if (unaffiliated > 0) log.warn({ unaffiliated }, 'Produse ramase FARA link afiliat (vezi erorile de mai sus)')
+  log.info({ imported, errors, affiliated, unaffiliated, hidden, deleted }, 'Scraper ingerat')
   return { imported, errors, affiliated }
 }
