@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import {
   getRetailerStats, getUnmappedCount, getRecentSyncs,
-  getPlatformStats, getTopClickedProducts, getTopSearches, getFeedFreshness, getBlockedRetailers,
+  getPlatformStats, getTopClickedProducts, getTopSearches, getFeedFreshness, getBlockedRetailers, getAlertStats,
 } from '@/lib/admin/queries'
 import { getGa4DashboardSummary } from '@/lib/admin/ga4-stats'
 
@@ -18,7 +18,7 @@ function timeAgo(seconds: number): string {
 }
 
 export default async function AdminDashboard() {
-  const [retailers, unmapped, syncs, stats, topProducts, topSearches, freshness, blocked, ga4] = await Promise.all([
+  const [retailers, unmapped, syncs, stats, topProducts, topSearches, freshness, blocked, ga4, alerts] = await Promise.all([
     getRetailerStats(),
     getUnmappedCount(),
     getRecentSyncs(10),
@@ -28,6 +28,7 @@ export default async function AdminDashboard() {
     getFeedFreshness(),
     getBlockedRetailers(),
     getGa4DashboardSummary(),
+    getAlertStats(),
   ])
   const totalProducts = retailers.reduce((s, r) => s + r.products, 0)
   const totalOffers = retailers.reduce((s, r) => s + r.offers, 0)
@@ -77,6 +78,14 @@ export default async function AdminDashboard() {
           <p className="text-sm text-muted">Produse nemapate</p>
           <p className={`text-2xl font-bold ${unmapped ? 'text-amber-600' : ''}`}>{unmapped.toLocaleString('ro-RO')}</p>
           {unmapped > 0 && <p className="text-xs text-amber-600 mt-1">Mapează-le →</p>}
+        </Link>
+        {/* Alerte de pret (Telegram + email) — detalii, abonati si stergeri GDPR in Admin → Alerte */}
+        <Link href="/admin/alerte" className="bg-white border border-line rounded-xl p-4 hover:border-brand">
+          <p className="text-sm text-muted">Alerte de preț active</p>
+          <p className="text-2xl font-bold">{(alerts.email.active + alerts.telegram.active).toLocaleString('ro-RO')}</p>
+          <p className="text-xs text-muted mt-1">
+            email {alerts.email.active.toLocaleString('ro-RO')} · Telegram {alerts.telegram.active.toLocaleString('ro-RO')} · {alerts.subscribers_confirmed.toLocaleString('ro-RO')} abonați · <span className="text-brand">Vezi alertele →</span>
+          </p>
         </Link>
         {/* Trafic GA4 pe ultimele 7 zile incheiate — apare doar cand workerul a adus date (ga4-sync) */}
         {ga4.days_with_data > 0 && (

@@ -1,6 +1,7 @@
 import pool from '../db'
 import { OFFER_AVAILABLE_SQL } from '../availability'
 import { NAME_NORMALIZED_SQL } from './nameMatch'
+import { maskEmail, likeContains, type SubscriberStatus } from './alerts-format'
 
 // Query-uri pentru paginile admin — fara cache, adminul vede mereu starea reala.
 
@@ -553,4 +554,232 @@ export async function getNameRules(): Promise<NameRuleRow[]> {
     ORDER BY n.priority, n.id
   `)
   return rows
+}
+
+// ---------- Alerte de pret (Admin → Alerte; tabelele din migratiile 004 + 029) ----------
+//
+// Nu exista un istoric al trimiterilor: fiecare alerta tine doar ULTIMUL anunt (last_notified_at),
+// ULTIMA re-armare (rearmed_at) si numarul total de anunturi (notify_count); abonatul tine doar
+// ULTIMUL email cu alerte (last_digest_at). Cifrele „ultimele 7 / 30 de zile” sunt deci limite
+// inferioare (alerte / abonati cu cel putin un eveniment in fereastra), nu numarul exact.
+// Alertele / abonatii stersi (dezabonare, curatenie GDPR) dispar si din cifre.
+
+export interface AlertChannelStats {
+  active: number          // alerte vii (is_active, confirmate)
+  armed: number           // asteapta scaderea pretului
+  sent: number            // anuntate, asteapta re-armarea
+  stopped: number         // oprite (is_active = false)
+  notified_7d: number     // alerte cu ultimul anunt in ultimele 7 zile
+  notified_30d: number
+  rearmed_7d: number      // alerte cu ultima re-armare in ultimele 7 zile
+  rearmed_30d: number
+  rearmed_ever: number    // alerte re-armate cel putin o data
+  notify_total: number    // suma notify_count (toate anunturile alertelor existente)
+}
+
+export interface AlertStats {
+  subscribers_confirmed: number
+  subscribers_unconfirmed: number
+  email_pending: number           // alerte pe email care asteapta confirmarea (nu ruleaza)
+  email: AlertChannelStats
+  telegram: AlertChannelStats
+  telegram_users_active: number   // utilizatori Telegram distincti cu alerte vii (doar numarul)
+  digests_7d: number              // abonati cu ultimul email de alerte in ultimele 7 zile
+  digests_30d: number
+  digests_ever: number            // abonati care au primit macar un email de alerte
+  products_watched: number        // produse distincte cu alerte vii
+}
+
+export async function getAlertStats(): Promise<AlertStats> {
+  const channel = (cond: string) => `json_build_object(
+    'active',       count(*) FILTER (WHERE ${cond} AND is_active AND confirmed_at IS NOT NULL),
+    'armed',        count(*) FILTER (WHERE ${cond} AND is_active AND confirmed_at IS NOT NULL AND triggered_at IS NULL),
+    'sent',         count(*) FILTER (WHERE ${cond} AND is_active AND confirmed_at IS NOT NULL AND triggered_at IS NOT NULL),
+    'stopped',      count(*) FILTER (WHERE ${cond} AND NOT is_active),
+    'notified_7d',  count(*) FILTER (WHERE ${cond} AND last_notified_at >= now() - interval '7 days'),
+    'notified_30d', count(*) FILTER (WHERE ${cond} AND last_notified_at >= now() - interval '30 days'),
+    'rearmed_7d',   count(*) FILTER (WHERE ${cond} AND rearmed_at >= now() - interval '7 days'),
+    'rearmed_30d',  count(*) FILTER (WHERE ${cond} AND rearmed_at >= now() - interval '30 days'),
+    'rearmed_ever', count(*) FILTER (WHERE ${cond} AND rearmed_at IS NOT NULL),
+    'notify_total', coalesce(sum(notify_count) FILTER (WHERE ${cond}), 0)
+  )`
+  const { rows } = await pool.query<AlertStats>(`
+    WITH a AS (
+      SELECT
+        ${channel('email_subscriber_id IS NOT NULL')} AS email,
+        ${channel('telegram_user_id IS NOT NULL')} AS telegram,
+        count(*) FILTER (WHERE email_subscriber_id IS NOT NULL AND is_active AND confirmed_at IS NULL)::int AS email_pending,
+        count(DISTINCT telegram_user_id) FILTER (WHERE is_active AND confirmed_at IS NOT NULL)::int AS telegram_users_active,
+        count(DISTINCT product_id) FILTER (WHERE is_active AND confirmed_at IS NOT NULL)::int AS products_watched
+      FROM price_alerts
+    ), s AS (
+      SELECT
+        count(*) FILTER (WHERE confirmed_at IS NOT NULL)::int AS subscribers_confirmed,
+        count(*) FILTER (WHERE confirmed_at IS NULL)::int AS subscribers_unconfirmed,
+        count(*) FILTER (WHERE last_digest_at >= now() - interval '7 days')::int AS digests_7d,
+        count(*) FILTER (WHERE last_digest_at >= now() - interval '30 days')::int AS digests_30d,
+        count(*) FILTER (WHERE last_digest_at IS NOT NULL)::int AS digests_ever
+      FROM email_subscribers
+    )
+    SELECT a.*, s.* FROM a, s
+  `)
+  const r = rows[0]
+  // count() din json_build_object vine ca numar, sum() ca string numeric → normalizam
+  const num = (c: AlertChannelStats): AlertChannelStats =>
+    Object.fromEntries(Object.entries(c).map(([k, v]) => [k, Number(v)])) as unknown as AlertChannelStats
+  return { ...r, email: num(r.email), telegram: num(r.telegram) }
+}
+
+export interface WatchedProductRow {
+  product_id: number
+  name: string
+  slug: string
+  image_url: string | null
+  alerts: number
+  email_alerts: number
+  telegram_alerts: number
+  sent_alerts: number          // dintre ele, deja anuntate (asteapta re-armarea)
+  target_avg: number
+  target_min: number
+  target_max: number           // cel mai apropiat prag de pretul curent
+  best_price: number | null    // cel mai mic pret disponibil acum (OFFER_AVAILABLE_SQL)
+  reached: number              // alerte cu pragul >= best_price (pretul de acum le-ar declansa)
+}
+
+// Produsele cu cele mai multe alerte VII (confirmate), cu pretul minim disponibil acum.
+// Agregarea foloseste price_alerts_product_active; pretul se calculeaza doar pentru pagina curenta.
+export async function getTopWatchedProducts(limit = 20, offset = 0): Promise<{ rows: WatchedProductRow[]; total: number }> {
+  const { rows } = await pool.query<WatchedProductRow & { total: number }>(`
+    WITH a AS (
+      SELECT product_id,
+             count(*)::int AS alerts,
+             count(*) FILTER (WHERE email_subscriber_id IS NOT NULL)::int AS email_alerts,
+             count(*) FILTER (WHERE telegram_user_id IS NOT NULL)::int AS telegram_alerts,
+             count(*) FILTER (WHERE triggered_at IS NOT NULL)::int AS sent_alerts,
+             avg(target_price)::float AS target_avg,
+             min(target_price)::float AS target_min,
+             max(target_price)::float AS target_max
+      FROM price_alerts
+      WHERE is_active = true AND confirmed_at IS NOT NULL
+      GROUP BY product_id
+    ), page AS (
+      SELECT a.*, count(*) OVER ()::int AS total FROM a
+      ORDER BY alerts DESC, product_id
+      LIMIT $1 OFFSET $2
+    ), priced AS (
+      SELECT page.*, (
+        SELECT min(o.current_price)::float FROM offers o
+        WHERE o.product_id = page.product_id AND o.current_price IS NOT NULL AND ${OFFER_AVAILABLE_SQL}
+      ) AS best_price
+      FROM page
+    )
+    SELECT priced.*, p.name, p.slug, p.image_url,
+           (SELECT count(*)::int FROM price_alerts pa
+            WHERE pa.product_id = priced.product_id AND pa.is_active = true AND pa.confirmed_at IS NOT NULL
+              AND priced.best_price IS NOT NULL AND pa.target_price >= priced.best_price) AS reached
+    FROM priced JOIN products p ON p.id = priced.product_id
+    ORDER BY priced.alerts DESC, priced.product_id
+  `, [limit, offset])
+  let total = rows[0]?.total ?? 0
+  // Pagina ceruta e dupa ultima (ex. link vechi) → total-ul il aflam separat
+  if (!rows.length && offset > 0) {
+    const c = await pool.query<{ n: number }>(
+      `SELECT count(DISTINCT product_id)::int AS n FROM price_alerts WHERE is_active = true AND confirmed_at IS NOT NULL`,
+    )
+    total = c.rows[0].n
+  }
+  for (const r of rows) delete (r as Partial<typeof r>).total
+  return { rows, total }
+}
+
+export interface SubscriberAlertRow {
+  id: number
+  product_name: string
+  product_slug: string
+  target_price: number
+  is_active: boolean
+  confirmed: boolean
+  triggered_at: Date | null
+  last_notified_at: Date | null
+  notify_count: number
+}
+
+export interface SubscriberRow {
+  id: number
+  email_masked: string        // adresa intreaga NU pleaca spre pagina (vezi revealSubscriberEmailAction)
+  created_at: Date
+  confirmed_at: Date | null
+  last_digest_at: Date | null
+  active_alerts: number
+  pending_alerts: number
+  alerts: SubscriberAlertRow[]
+}
+
+// Abonatii pe email, cei mai noi primii. Cautarea e pe adresa intreaga (potrivire partiala,
+// fara diferenta de majuscule); in rezultat adresa vine DOAR mascat.
+export async function getEmailSubscribers(opts: {
+  search: string | null; status: SubscriberStatus; limit: number; offset: number
+}): Promise<{ rows: SubscriberRow[]; total: number }> {
+  const params: unknown[] = []
+  const where: string[] = []
+  if (opts.search) {
+    params.push(likeContains(opts.search))
+    where.push(`es.email ILIKE $${params.length} ESCAPE '\\'`)
+  }
+  if (opts.status === 'confirmati') where.push('es.confirmed_at IS NOT NULL')
+  if (opts.status === 'neconfirmati') where.push('es.confirmed_at IS NULL')
+  const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : ''
+  params.push(opts.limit, opts.offset)
+
+  const { rows } = await pool.query<{
+    id: number; email: string; created_at: Date; confirmed_at: Date | null; last_digest_at: Date | null; total: number
+  }>(`
+    SELECT es.id, es.email, es.created_at, es.confirmed_at, es.last_digest_at, count(*) OVER ()::int AS total
+    FROM email_subscribers es
+    ${whereSql}
+    ORDER BY es.created_at DESC, es.id DESC
+    LIMIT $${params.length - 1} OFFSET $${params.length}
+  `, params)
+
+  let total = rows[0]?.total ?? 0
+  if (!rows.length && opts.offset > 0) {
+    const c = await pool.query<{ n: number }>(`SELECT count(*)::int AS n FROM email_subscribers es ${whereSql}`, params.slice(0, -2))
+    total = c.rows[0].n
+  }
+
+  // Alertele abonatilor de pe pagina — o singura interogare (index price_alerts_email_subscriber)
+  const ids = rows.map((r) => r.id)
+  const alertsBySub = new Map<number, SubscriberAlertRow[]>()
+  if (ids.length) {
+    const a = await pool.query<SubscriberAlertRow & { subscriber_id: number }>(`
+      SELECT pa.email_subscriber_id AS subscriber_id, pa.id, p.name AS product_name, p.slug AS product_slug,
+             pa.target_price::float AS target_price, pa.is_active, (pa.confirmed_at IS NOT NULL) AS confirmed,
+             pa.triggered_at, pa.last_notified_at, pa.notify_count
+      FROM price_alerts pa JOIN products p ON p.id = pa.product_id
+      WHERE pa.email_subscriber_id = ANY($1::int[])
+      ORDER BY pa.created_at DESC
+    `, [ids])
+    for (const { subscriber_id, ...al } of a.rows) {
+      const list = alertsBySub.get(subscriber_id) ?? []
+      list.push(al)
+      alertsBySub.set(subscriber_id, list)
+    }
+  }
+
+  return {
+    total,
+    rows: rows.map((r) => {
+      const alerts = alertsBySub.get(r.id) ?? []
+      return {
+        id: r.id,
+        email_masked: maskEmail(r.email),
+        created_at: r.created_at,
+        confirmed_at: r.confirmed_at,
+        last_digest_at: r.last_digest_at,
+        active_alerts: alerts.filter((x) => x.is_active && x.confirmed).length,
+        pending_alerts: alerts.filter((x) => x.is_active && !x.confirmed).length,
+        alerts,
+      }
+    }),
+  }
 }
