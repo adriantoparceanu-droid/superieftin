@@ -8,25 +8,24 @@
 // 3. Restul codului intreaba hasAdConsent() / hasAnalyticsConsent() inainte sa salveze
 //    identificatori de reclama (gclid etc.) — vezi docs/ads-program/REGULI.md, regula 7.
 //
-// Categorii: analiza (GA4), publicitate (masurarea reclamelor: gclid, conversii offline, bannere
-// Profitshare) si — separat, din 2026-10-03 — reclame personalizate (remarketing: Google ne poate
-// arata reclamele celor care au vazut un produs pe site). Fiecare are bifa ei, implicit nebifata.
-// Detalii: docs/ads-program/remarketing-vizitatori.md.
+// Categorii: analiza (GA4) si publicitate. „Publicitate” = masurarea reclamelor (gclid, conversii
+// offline, bannere Profitshare) SI, din 2026-10-03, reclame personalizate (remarketing: Google ne
+// poate arata reclamele celor care au vazut un produs pe site). Decizia proprietarului: banner cat
+// mai simplu, fara bifa separata. Detalii: docs/ads-program/remarketing-vizitatori.md.
 
 export const CONSENT_COOKIE = 'se_consent'
 // Cerem din nou consimtamantul dupa 6 luni (practica recomandata de ghidurile GDPR)
 const MAX_AGE_SECONDS = 180 * 24 * 60 * 60
 // Versiunea politicii: daca schimbam categoriile, cresti numarul → bannerul reapare
 export const CONSENT_VERSION = 2   // v2 (26 sep 2026): „Publicitate” include și bannerele Profitshare
-// Versiunea NU creste pentru „Reclame personalizate” (3 oct 2026): adaugam un scop nou, cu bifa
-// proprie, iar cookie-urile v2 existente se citesc cu personalization=false. Cine a ales deja nu e
-// intrebat din nou si nu intra in remarketing pana nu bifeaza singur, din „Setări cookies”.
-// (Daca am creste versiunea, AdClickCapture ar sterge gclid-urile tuturor — vezi acolo.)
-
-// „Accept toate” include si reclamele personalizate? Textul din primul ecran al bannerului le
-// numeste explicit, deci acordul e informat. Decizie de verificat cu juristul: pe false, doar
-// bifa separata din „Personalizez” le activeaza (lista de remarketing ar ramane aproape goala).
-export const ACCEPT_ALL_INCLUDES_PERSONALIZATION = true
+//
+// Acordurile v2 date INAINTE de 3 oct 2026: textul de atunci al „Publicitate” nu pomenea reclamele
+// personalizate, deci acel acord NU acopera remarketingul. Solutia cea mai simpla, fara sa
+// redeschidem bannerul si fara sa stergem gclid-uri (o versiune noua ar face AdClickCapture sa
+// retraga ID-urile tuturor): marcajul `personalization` din cookie. saveConsent() il scrie egal cu
+// `ads` — deci orice acord dat (sau re-salvat din „Setări cookies”) cu textul nou il are; cookie-urile
+// vechi nu au campul → ad_personalization ramane 'denied' pana cand omul isi re-salveaza alegerea
+// sau acordul expira (6 luni) si raspunde din nou la banner.
 
 // Evenimente de browser folosite intre banner, butonul din footer si tracking
 export const CONSENT_CHANGE_EVENT = 'se:consent-change'
@@ -36,11 +35,14 @@ export interface ConsentChoice {
   v: number
   analytics: boolean   // GA4 → analytics_storage
   ads: boolean         // Google Ads → ad_storage + ad_user_data
-  personalization: boolean  // reclame personalizate / remarketing → ad_personalization (cere si ads)
+  // Marcaj: acordul „Publicitate” a fost dat cu textul care include reclamele personalizate
+  // (salvat dupa 3 oct 2026) → ad_personalization. Lipsa campului (cookie vechi) = false.
+  personalization: boolean
   ts: number           // momentul alegerii (ms)
 }
 
-export type ConsentSelection = Pick<ConsentChoice, 'analytics' | 'ads' | 'personalization'>
+// Ce alege vizitatorul in banner (doua categorii)
+export type ConsentSelection = Pick<ConsentChoice, 'analytics' | 'ads'>
 
 // Parseaza valoarea cookie-ului de consimtamant (encodata URI). Folosit si pe server
 // (/go citeste consimtamantul din cererea HTTP), deci fara acces la document.
@@ -52,8 +54,8 @@ export function parseConsentCookie(value: string | undefined | null): ConsentCho
     const ads = parsed.ads === true
     return {
       v: parsed.v, analytics: parsed.analytics === true, ads,
-      // Fara „Publicitate” (ad_storage) remarketingul nu poate functiona → personalizarea cade si ea.
-      // Cookie-urile v2 de dinainte de 3 oct 2026 nu au campul → false.
+      // Marcajul conteaza doar impreuna cu „Publicitate”. Cookie-urile v2 de dinainte de
+      // 3 oct 2026 nu au campul → false (acordul lor nu acoperea reclamele personalizate).
       personalization: ads && parsed.personalization === true,
       ts: Number(parsed.ts) || 0,
     }
@@ -76,17 +78,13 @@ export function hasAnalyticsConsent(): boolean {
   return readConsent()?.analytics === true
 }
 
-export function hasAdPersonalizationConsent(): boolean {
-  return readConsent()?.personalization === true
-}
-
-// Mapare alegere → semnalele Consent Mode v2.
-// ad_personalization e 'granted' DOAR cu bifa separata „Reclame personalizate” (si „Publicitate”):
-// un acord pe care nu l-am cerut nu poate fi dat implicit (GDPR, Poarta 2 — B2/R5). Fara el,
-// GA4 nu pune vizitatorul in listele de remarketing trimise la Google Ads.
+// Mapare alegere salvata → semnalele Consent Mode v2.
+// „Publicitate” acordat cu textul nou → ad_storage, ad_user_data si ad_personalization 'granted';
+// refuzat → toate 'denied'. Acordul vechi (fara marcaj) → ad_personalization 'denied': un acord
+// pentru un scop despre care omul nu a fost informat nu e valabil (GDPR, Poarta 2 — B2/R5).
 // Conversiile offline din worker (Data Manager) raman cu adPersonalization = CONSENT_DENIED:
 // ele servesc masurarii, nu remarketingului, si nu stim per click daca exista acordul.
-export function toGtagConsent(c: ConsentSelection) {
+export function toGtagConsent(c: Pick<ConsentChoice, 'analytics' | 'ads' | 'personalization'>) {
   const ads = c.ads ? 'granted' : 'denied'
   return {
     analytics_storage: c.analytics ? 'granted' : 'denied',
@@ -96,14 +94,9 @@ export function toGtagConsent(c: ConsentSelection) {
   }
 }
 
-// Alegerea din butonul „Accept toate”
-export function acceptAllSelection(): ConsentSelection {
-  return { analytics: true, ads: true, personalization: ACCEPT_ALL_INCLUDES_PERSONALIZATION }
-}
-
 export function saveConsent(choice: ConsentSelection): void {
-  // Personalizarea fara „Publicitate” nu are efect → o salvam ca refuzata, ca sa fie clar in cookie
-  const value: ConsentChoice = { v: CONSENT_VERSION, ...choice, personalization: choice.ads && choice.personalization, ts: Date.now() }
+  // Alegerea se face acum cu textul nou al bannerului → marcajul de personalizare urmeaza „Publicitate”
+  const value: ConsentChoice = { v: CONSENT_VERSION, ...choice, personalization: choice.ads, ts: Date.now() }
   const secure = location.protocol === 'https:' ? '; Secure' : ''
   document.cookie = `${CONSENT_COOKIE}=${encodeURIComponent(JSON.stringify(value))}; Max-Age=${MAX_AGE_SECONDS}; Path=/; SameSite=Lax${secure}`
 

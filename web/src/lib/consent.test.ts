@@ -1,12 +1,11 @@
-// Teste pentru consimtamant: bifa separata „Reclame personalizate” (ad_personalization).
-// Regula: 'granted' DOAR cu acord explicit pentru personalizare SI pentru „Publicitate”;
-// cookie-urile v2 vechi (fara camp) raman cu personalizarea refuzata.
+// Teste pentru consimtamant: „Publicitate” include reclamele personalizate (ad_personalization),
+// dar DOAR pentru acordurile salvate cu textul nou (marcajul `personalization` din cookie);
+// cookie-urile v2 vechi (fara marcaj) raman cu personalizarea refuzata.
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import vm from 'node:vm'
 import {
-  parseConsentCookie, toGtagConsent, acceptAllSelection, CONSENT_DEFAULT_SCRIPT, CONSENT_VERSION,
-  ACCEPT_ALL_INCLUDES_PERSONALIZATION,
+  parseConsentCookie, toGtagConsent, saveConsent, CONSENT_DEFAULT_SCRIPT, CONSENT_VERSION,
 } from './consent'
 
 const enc = (o: unknown) => encodeURIComponent(JSON.stringify(o))
@@ -18,11 +17,11 @@ test('cookie v2 vechi (fără câmpul personalization) → personalizare refuzat
   assert.equal(toGtagConsent(c!).ad_storage, 'granted')
 })
 
-test('personalizarea cere și „Publicitate”', () => {
-  assert.equal(parseConsentCookie(enc({ v: CONSENT_VERSION, analytics: true, ads: false, personalization: true, ts: 1 }))!.personalization, false)
-  assert.equal(toGtagConsent({ analytics: true, ads: false, personalization: true }).ad_personalization, 'denied')
-  assert.equal(toGtagConsent({ analytics: false, ads: true, personalization: true }).ad_personalization, 'granted')
-  assert.equal(toGtagConsent({ analytics: true, ads: true, personalization: false }).ad_personalization, 'denied')
+test('acord nou „Publicitate” → toate trei granted; refuz → toate denied', () => {
+  const g = toGtagConsent(parseConsentCookie(enc({ v: CONSENT_VERSION, analytics: false, ads: true, personalization: true, ts: 1 }))!)
+  assert.deepEqual(g, { analytics_storage: 'denied', ad_storage: 'granted', ad_user_data: 'granted', ad_personalization: 'granted' })
+  const d = toGtagConsent(parseConsentCookie(enc({ v: CONSENT_VERSION, analytics: true, ads: false, personalization: true, ts: 1 }))!)
+  assert.deepEqual(d, { analytics_storage: 'granted', ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied' })
 })
 
 test('valori care nu sunt exact true nu acordă nimic', () => {
@@ -33,8 +32,27 @@ test('valori care nu sunt exact true nu acordă nimic', () => {
   assert.equal(parseConsentCookie('nu-e-json'), null)
 })
 
-test('„Accept toate” urmează comutatorul ACCEPT_ALL_INCLUDES_PERSONALIZATION', () => {
-  assert.deepEqual(acceptAllSelection(), { analytics: true, ads: true, personalization: ACCEPT_ALL_INCLUDES_PERSONALIZATION })
+test('saveConsent: marcajul de personalizare urmează „Publicitate” (acord dat cu textul nou)', () => {
+  const g = globalThis as Record<string, unknown>
+  const calls: unknown[][] = []
+  const doc = { cookie: '' }
+  Object.assign(g, {
+    document: doc, location: { protocol: 'http:' },
+    window: { gtag: (...a: unknown[]) => calls.push(a), dispatchEvent: () => true },
+  })   // CustomEvent exista nativ in Node ≥ 19
+  try {
+    for (const [ads, want] of [[true, 'granted'], [false, 'denied']] as const) {
+      saveConsent({ analytics: false, ads })
+      const saved = parseConsentCookie(doc.cookie.split(';')[0].split('=')[1])!
+      assert.equal(saved.personalization, ads)
+      const upd = calls.pop()![2] as Record<string, string>
+      assert.equal(upd.ad_personalization, want)
+      assert.equal(upd.ad_storage, want)
+      assert.equal(upd.ad_user_data, want)
+    }
+  } finally {
+    for (const k of ['document', 'location', 'window']) delete g[k]
+  }
 })
 
 // Scriptul inline (ruleaza inaintea gtag.js): default totul denied, apoi reaplica alegerea salvata.
