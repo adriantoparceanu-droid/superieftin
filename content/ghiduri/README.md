@@ -3,7 +3,11 @@
 Ghidurile (`/ghiduri/<slug>`) stau în baza de date și se publică din **Admin → Ghiduri**.
 Ciornele sunt scrise de AI (Claude) ca fișiere JSON în `content/ghiduri/drafts/<slug>.json`,
 importate cu `npm run ghiduri:import` și apoi **verificate și publicate de proprietar** din editor.
-Importul nu publică niciodată nimic.
+Un fișier din `drafts/` nu publică niciodată nimic.
+
+**Excepție — `content/ghiduri/publicate/`** (decizia proprietarului din 2026-10-04): fișierele de
+aici au în plus un bloc `publish` și sunt importate **direct ca ghiduri publicate** — vezi
+„Publicare directă” mai jos.
 
 ## Formatul fișierului — `drafts/<slug>.json`
 
@@ -59,6 +63,31 @@ Orice alt `{{…}}` e eroare la import.
 
 Fără afirmații de sănătate (vindecă, tratează, detoxifică…) — publicarea le blochează (REGULI.md, regula 8).
 
+## Publicare directă — `publicate/<slug>.json`
+
+Același format, plus:
+
+```json
+"publish": { "author_slug": "adrian", "reviewer_slug": "echipa-superieftin" }
+```
+
+(`guide_authors.slug`: „Scris de” Adrian, „Verificat de” Echipa Superieftin.ro). Importul refuză
+publicarea (eroare, nu scrie nimic) dacă: autorul = verificatorul, lipsește meta/corpul, există
+afirmații de sănătate (regula 8, aceeași listă ca `findHealthClaims` din web), există
+`[DE VERIFICAT` în titlu/meta/rezumat/corp/FAQ, vreun fapt din `review.facts` nu e `confirmat`,
+sau apare un preț scris de mână („1.299 lei”, „2499 RON”). Produsele fără ofertă disponibilă
+acum sunt doar **avertisment** în plan (pe pagină ar apărea „indisponibil”) — preferă magazine
+cu feed stabil (evomag, ITGalaxy), nu eMAG scanat.
+
+Fișierul e sursa de adevăr: reimportul **actualizează și un ghid publicat** (o editare făcută
+între timp în admin se pierde), dar numai dacă ceva diferă — altfel „NESCHIMBAT” și nu se atinge
+nimic (nici `updated_at`). `published_at` rămâne data primei publicări. După COMMIT, scriptul
+cheamă `POST $SITE_URL/api/revalidate/ghiduri` (cu `REVALIDATE_SECRET`): `revalidatePath` pe
+ghid, `/ghiduri` și `/p/` legate + ping IndexNow — același efect ca „Publică” din admin. Dacă
+apelul eșuează, ghidurile noi apar oricum (ISR), cele vechi se reîmprospătează în ≤ 15 min
+(`/p/` ≤ 1 h); imediat: `docker compose up -d --force-recreate web`. `--no-revalidate` sare
+pasul (folosește-l local: `.env`-ul local are `SITE_URL` de producție).
+
 ## Import
 
 Implicit **plan** (arată ce ar face, nu scrie). Scrierea cere `--confirm`. Dacă un singur fișier
@@ -80,6 +109,11 @@ Producție (scriptul e compilat în imaginea worker; fișierul se trimite pe **s
 deci nu trebuie copiat în container — `-T` e obligatoriu pentru stdin):
 
 ```bash
+# ghidurile de publicat (toate odată, ca listă JSON pe stdin; fără jq: node -e)
+node -e 'const fs=require("fs"),d="content/ghiduri/publicate/";console.log(JSON.stringify(fs.readdirSync(d).filter(f=>f.endsWith(".json")).sort().map(f=>JSON.parse(fs.readFileSync(d+f,"utf8")))))' \
+  | ssh superieftin@13.140.163.156 'cd /home/superieftin/app && docker compose exec -T worker node worker/dist/scripts/import-guide-drafts.js -'
+# planul arată bine → același lucru cu „- --confirm”
+
 # de pe calculatorul local, direct:
 ssh superieftin@13.140.163.156 'cd /home/superieftin/app && docker compose exec -T worker node worker/dist/scripts/import-guide-drafts.js -' < content/ghiduri/drafts/merita-x.json
 # după ce planul arată bine, adaugă --confirm după „-”
