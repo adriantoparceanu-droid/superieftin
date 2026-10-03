@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 export default function ConfidentialitatePage() {
   const privacyEmail = COMPANY.privacyEmail ?? COMPANY.email
   return (
-    <LegalPage title="Politica de confidențialitate" updated="26 septembrie 2026">
+    <LegalPage title="Politica de confidențialitate" updated="3 octombrie 2026">
       <p>
         Această politică explică ce date prelucrează superieftin.ro, în ce scop și ce drepturi ai,
         conform Regulamentului (UE) 2016/679 (GDPR).
@@ -162,6 +162,15 @@ export default function ConfidentialitatePage() {
         și ajungi pe site-ul magazinului. Rețeaua și magazinul pot seta propriile cookie-uri,
         conform politicilor lor; nu controlăm aceste cookie-uri. Din partea rețelei primim doar
         date despre comenzi, fără datele tale personale: ID comandă, valoare comision, status, codul de click.
+      </p>
+      <p>
+        Ca să nu trimitem rețelelor clickuri false generate de programe automate (roboți), înainte de
+        redirecționare browserul tău cere de la site un cod de verificare temporar, valabil câteva
+        minute, care nu conține date despre tine și nu se salvează în cookie-uri. Tot pentru asta
+        numărăm câte cereri de acest fel vin de la aceeași adresă IP: adresa este transformată
+        într-un cod criptografic (nu se păstrează în clar), ținut doar într-o memorie temporară și
+        șters automat după cel mult o oră. Nu o salvăm în baza de date și nu o folosim în alt scop
+        (temei: interes legitim — securitatea site-ului și corectitudinea statisticilor de afiliere).
       </p>
 
       <h2>Cui transmitem date</h2>
