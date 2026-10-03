@@ -38,6 +38,19 @@ Proiectul rulează izolat sub user-ul `superieftin`, în `/home/superieftin/app/
 4. **Raportează**: ce s-a deploiat, migrațiile aplicate, statusul containerelor, codul HTTP,
    orice avertisment din script. Dacă a eșuat, pasul și ultimele linii de eroare.
 
+5. **După un deploy reușit — OBLIGATORIU, de fiecare dată** (cerința proprietarului, 2026-10-03):
+   - comite rapoartele și documentele noi necomise din `ads/research/`, `ads/reports/`,
+     `ads/proposals/` și `docs/` (NU `.claude/scheduled_tasks.lock`, NU `*.code-workspace`,
+     NU `.env*`); mesaj în română;
+   - `git push origin main`, ca GitHub să fie identic cu producția;
+   - raportează commitul deploiat și confirmă `main...origin/main` sincronizat.
+
+## Înainte de deploy
+
+- Proiectul trebuie să fie pe `main` (scriptul deploiază ce e pe disc). Dacă un agent lucrează
+  în paralel în același folder și a schimbat branch-ul, NU rula deploy până nu termină și
+  proiectul revine pe `main` — altfel ajunge pe producție cod neterminat.
+
 Doar verificare, fără nicio modificare pe server: `./deploy.sh --check`.
 
 ## De reținut
