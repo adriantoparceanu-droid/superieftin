@@ -2,7 +2,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
-  alertProductUrl, buildAlertMessage, checkTarget, parseAlertStartParam, parseTypedPrice, siteUrl,
+  alertProductUrl, buildAlertMessage, checkTarget, parseAlertStartParam, parseTypedPrice, pickTriggerOffer, siteUrl,
 } from './price-alert.js'
 
 test('link alerta: /p/ al produsului cu UTM, nu /go/ si nu magazinul', () => {
@@ -20,13 +20,32 @@ test('domeniu: SITE_URL (env-ul workerului in compose), apoi NEXT_PUBLIC_SITE_UR
   assert.equal(siteUrl({}), 'https://www.superieftin.ro')
 })
 
-test('parametru start: cu si fara prag', () => {
-  assert.deepEqual(parseAlertStartParam('offer_123_1610'), { offerId: 123, target: 1610 })
-  assert.deepEqual(parseAlertStartParam('offer_123'), { offerId: 123, target: null })
-  assert.deepEqual(parseAlertStartParam('offer_123_0'), { offerId: 123, target: null })
+test('parametru start: produs (formatul actual) si oferta (linkuri vechi), cu si fara prag', () => {
+  assert.deepEqual(parseAlertStartParam('prod_35087_1610'), { productId: 35087, offerId: null, target: 1610 })
+  assert.deepEqual(parseAlertStartParam('prod_35087'), { productId: 35087, offerId: null, target: null })
+  assert.deepEqual(parseAlertStartParam('offer_123_1610'), { productId: null, offerId: 123, target: 1610 })
+  assert.deepEqual(parseAlertStartParam('offer_123'), { productId: null, offerId: 123, target: null })
+  assert.deepEqual(parseAlertStartParam('offer_123_0'), { productId: null, offerId: 123, target: null })
   assert.equal(parseAlertStartParam('offer_abc'), null)
-  assert.equal(parseAlertStartParam('offer_1_2_3'), null)
+  assert.equal(parseAlertStartParam('prod_1_2_3'), null)
+  assert.equal(parseAlertStartParam('produs_1'), null)
   assert.equal(parseAlertStartParam(null), null)
+})
+
+test('alerta pe produs: pleaca la ORICE magazin disponibil la sau sub prag, cel mai ieftin castiga', () => {
+  const offers = [
+    { offerId: 1, price: 1700, retailerName: 'eMAG', available: true },      // peste prag
+    { offerId: 2, price: 1590, retailerName: 'evomag', available: true },
+    { offerId: 3, price: 1500, retailerName: 'CITGrup', available: false },  // fara stoc → ignorata
+    { offerId: 4, price: 1600, retailerName: 'ForIT', available: true },     // exact pragul → valid
+  ]
+  assert.deepEqual(pickTriggerOffer(offers, 1600), offers[1])
+  assert.deepEqual(pickTriggerOffer(offers.filter(o => o.offerId !== 2), 1600), offers[3])   // „la” prag
+  assert.equal(pickTriggerOffer([offers[0], offers[2]], 1600), null)  // doar peste prag / indisponibila
+  assert.equal(pickTriggerOffer(null, 1600), null)
+  // la pret egal: oferta cu id mai mic (rezultat stabil intre rulari)
+  const tie = [{ offerId: 9, price: 100, retailerName: 'A', available: true }, { offerId: 5, price: 100, retailerName: 'B', available: true }]
+  assert.equal(pickTriggerOffer(tie, 100)?.offerId, 5)
 })
 
 test('prag: trebuie sa fie sub pretul de azi', () => {

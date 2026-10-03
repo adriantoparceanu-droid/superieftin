@@ -1,7 +1,11 @@
 import pool from '../lib/db.js'
 import pino from 'pino'
-import { OFFER_STALE_DAYS } from '../lib/stale.js'
-import { alertProductUrl, buildAlertMessage, siteUrl } from '../lib/price-alert.js'
+import { alertProductUrl, buildAlertMessage, pickTriggerOffer, siteUrl, type AlertOffer } from '../lib/price-alert.js'
+import { ALERT_HAS_TRIGGER_SQL, ALERT_OFFERS_JSON_SQL } from '../lib/alert-sql.js'
+
+// Alertele pe TELEGRAM (cele pe email: workers/email.worker.ts, cu digest si plafon zilnic).
+// Alerta e pe PRODUS: pleaca atunci cand ORICE oferta disponibila a produsului (orice magazin)
+// ajunge la sau sub prag; mesajul spune magazinul si pretul care au declansat-o.
 
 const logger = pino({ level: 'info' })
 const TOKEN = process.env.TELEGRAM_BOT_TOKEN
@@ -21,38 +25,31 @@ async function sendMsg(chatId: number, text: string) {
 export async function checkAndSendAlerts() {
   if (!TOKEN) return
 
+  // Doar oferte pe care vizitatorul le vede pe /p/ (lib/alert-sql.ts: aceeasi regula ca
+  // OFFER_AVAILABLE_SQL din web). Alerta ramane activa pana cand o oferta disponibila ajunge la prag.
   const { rows } = await pool.query(`
     SELECT
       pa.id,
-      pa.target_price,
+      pa.target_price::float AS target_price,
       tu.telegram_chat_id,
       p.name AS product_name,
       p.slug AS product_slug,
-      r.name AS retailer_name,
-      o.current_price
+      ${ALERT_OFFERS_JSON_SQL} AS offers
     FROM price_alerts pa
     JOIN telegram_users tu ON tu.id = pa.telegram_user_id
-    JOIN offers o ON o.id = pa.offer_id
-    JOIN products p ON p.id = o.product_id
-    JOIN retailers r ON r.id = o.retailer_id
+    JOIN products p ON p.id = pa.product_id
     WHERE pa.is_active = true
       AND pa.triggered_at IS NULL
-      AND o.current_price IS NOT NULL
-      AND o.current_price <= pa.target_price
-      -- Doar oferte pe care vizitatorul le vede pe /p/ (aceeasi regula ca OFFER_AVAILABLE_SQL
-      -- din web/src/lib/availability.ts): in stoc, confirmate recent, magazin nepus pe pauza.
-      -- Altfel alerta ar trimite pe o pagina unde pretul anuntat nu exista. Alerta ramane
-      -- activa si pleaca atunci cand oferta revine la pretul dorit.
-      AND o.in_stock = true
-      AND o.last_checked >= now() - make_interval(days => $1)
-      AND r.paused_at IS NULL
-  `, [OFFER_STALE_DAYS])
+      AND ${ALERT_HAS_TRIGGER_SQL}
+  `)
 
   if (!rows.length) return
 
-  logger.info({ count: rows.length }, 'Alerte de trimis')
+  logger.info({ count: rows.length }, 'Alerte Telegram de trimis')
 
   for (const alert of rows) {
+    const best = pickTriggerOffer(alert.offers as AlertOffer[], alert.target_price)
+    if (!best) continue
     try {
       // Numele produsului e escapat (HTML): un „&” sau „<” in nume facea Telegram sa respinga
       // mesajul, iar alerta ramanea netrimisa si se reincerca la nesfarsit.
@@ -60,19 +57,21 @@ export async function checkAndSendAlerts() {
         Number(alert.telegram_chat_id),
         buildAlertMessage({
           productName: alert.product_name,
-          retailerName: alert.retailer_name,
-          currentPrice: parseFloat(alert.current_price),
-          targetPrice: parseFloat(alert.target_price),
+          retailerName: best.retailerName,
+          currentPrice: best.price,
+          targetPrice: alert.target_price,
           url: alertProductUrl(SITE_URL, alert.product_slug, 'telegram'),
         })
       )
 
       await pool.query(
-        `UPDATE price_alerts SET triggered_at = now(), is_active = false WHERE id = $1`,
-        [alert.id]
+        `UPDATE price_alerts
+         SET triggered_at = now(), is_active = false, trigger_offer_id = $2, trigger_price = $3
+         WHERE id = $1`,
+        [alert.id, best.offerId, best.price]
       )
 
-      logger.info({ alertId: alert.id, product: alert.product_name }, 'Alerta trimisa')
+      logger.info({ alertId: alert.id, product: alert.product_name, retailer: best.retailerName }, 'Alerta trimisa')
 
       // Respecta limita Telegram: max 30 mesaje/secunda global, 1/secunda per chat
       await new Promise(r => setTimeout(r, 1100))

@@ -23,14 +23,34 @@ export function alertProductUrl(site: string, slug: string, medium: AlertMedium)
   return `${site.replace(/\/+$/, '')}/p/${encodeURIComponent(slug)}?${qs}`
 }
 
-// Parametrul /start trimis de butonul de pe site: offer_<id> sau offer_<id>_<prag in lei>.
+// Parametrul /start trimis de butonul de pe site:
+//   prod_<id produs>[_<prag in lei>]  — formatul actual (alerta pe produs, orice magazin)
+//   offer_<id oferta>[_<prag>]        — linkuri vechi (pe o oferta); botul le muta pe produsul ofertei
 // Formatul il produce web/src/lib/price-alert.ts (alertStartParam) — modifica-le impreuna.
-export function parseAlertStartParam(param: string | null | undefined): { offerId: number; target: number | null } | null {
-  const m = /^offer_(\d{1,15})(?:_(\d{1,8}))?$/.exec(param ?? '')
+export type AlertStartParam = { productId: number; offerId: null; target: number | null }
+  | { productId: null; offerId: number; target: number | null }
+
+export function parseAlertStartParam(param: string | null | undefined): AlertStartParam | null {
+  const m = /^(prod|offer)_(\d{1,15})(?:_(\d{1,8}))?$/.exec(param ?? '')
   if (!m) return null
-  const offerId = Number(m[1])
-  const target = m[2] != null ? Number(m[2]) : null
-  return { offerId, target: target != null && target >= 1 ? target : null }
+  const id = Number(m[2])
+  const t = m[3] != null ? Number(m[3]) : null
+  const target = t != null && t >= 1 ? t : null
+  return m[1] === 'prod' ? { productId: id, offerId: null, target } : { productId: null, offerId: id, target }
+}
+
+// Alerta e pe PRODUS: pleaca atunci cand ORICE oferta disponibila (orice magazin) ajunge la sau
+// sub prag. Daca sunt mai multe, o alegem pe cea mai ieftina (la egalitate, id-ul mai mic — stabil).
+// Ofertele vin din SQL deja filtrate pe pret <= prag; `available` = aceeasi regula ca pe /p/.
+export interface AlertOffer { offerId: number; price: number; retailerName: string; available: boolean }
+
+export function pickTriggerOffer(offers: AlertOffer[] | null | undefined, target: number): AlertOffer | null {
+  let best: AlertOffer | null = null
+  for (const o of offers ?? []) {
+    if (!o.available || !(o.price > 0) || o.price > target) continue
+    if (!best || o.price < best.price || (o.price === best.price && o.offerId < best.offerId)) best = o
+  }
+  return best
 }
 
 export const MAX_TARGET_PRICE = 100000

@@ -2,14 +2,16 @@ import pool from '../lib/db.js'
 import pino from 'pino'
 import { escHtml } from '../lib/admin-telegram.js'
 import { checkTarget, formatRon, parseAlertStartParam, parseTypedPrice, siteUrl } from '../lib/price-alert.js'
+import { PRODUCT_BEST_PRICE_SQL } from '../lib/alert-sql.js'
 
 const logger = pino({ level: 'info' })
 const TOKEN = process.env.TELEGRAM_BOT_TOKEN
 const BASE = `https://api.telegram.org/bot${TOKEN}`
 const SITE_URL = siteUrl()
 
-// Stare conversatie: chat_id → oferta pentru care asteptam pretul
-const pendingAlerts = new Map<number, { offerId: number; productName: string; currentPrice: number | null }>()
+// Stare conversatie: chat_id → produsul pentru care asteptam pretul. Alerta e pe PRODUS (orice
+// magazin); currentPrice = cel mai mic pret disponibil acum (null = produs indisponibil).
+const pendingAlerts = new Map<number, { productId: number; productName: string; currentPrice: number | null }>()
 
 async function tgPost(method: string, body: object) {
   const res = await fetch(`${BASE}/${method}`, {
@@ -37,18 +39,19 @@ async function getOrCreateUser(chatId: number, username?: string, firstName?: st
   return rows[0].id as number
 }
 
-// O singura alerta activa per utilizator + oferta: un al doilea click pe buton (sau o suma noua
-// trimisa in chat) schimba pragul, nu dubleaza alerta.
-async function saveAlert(userId: number, offerId: number, target: number) {
+// O singura alerta activa per utilizator + produs: un al doilea click pe buton (sau o suma noua
+// trimisa in chat) schimba pragul, nu dubleaza alerta. Pe Telegram alerta e confirmata din start
+// (vizitatorul a pornit singur conversatia), deci confirmed_at = acum.
+async function saveAlert(userId: number, productId: number, target: number) {
   const upd = await pool.query(
     `UPDATE price_alerts SET target_price = $3
-     WHERE telegram_user_id = $1 AND offer_id = $2 AND is_active = true AND triggered_at IS NULL`,
-    [userId, offerId, target]
+     WHERE telegram_user_id = $1 AND product_id = $2 AND is_active = true AND triggered_at IS NULL`,
+    [userId, productId, target]
   )
   if (!upd.rowCount) {
     await pool.query(
-      `INSERT INTO price_alerts (telegram_user_id, offer_id, target_price) VALUES ($1, $2, $3)`,
-      [userId, offerId, target]
+      `INSERT INTO price_alerts (telegram_user_id, product_id, target_price, confirmed_at) VALUES ($1, $2, $3, now())`,
+      [userId, productId, target]
     )
   }
 }
@@ -57,7 +60,8 @@ async function handleStart(chatId: number, param: string | null, username?: stri
   await getOrCreateUser(chatId, username, firstName)
 
   if (param?.startsWith('offer_')) {
-    // Butonul de pe site trimite offer_<id>_<prag>; linkurile vechi doar offer_<id>
+    // Butonul de pe site trimite prod_<id produs>_<prag>; linkurile vechi offer_<id oferta>[_<prag>]
+    // se muta pe produsul ofertei (alerta e pe produs, orice magazin)
     const parsed = parseAlertStartParam(param)
     if (!parsed) {
       await sendMsg(chatId, 'Link invalid. Încearcă din nou de pe site.')
@@ -65,11 +69,10 @@ async function handleStart(chatId: number, param: string | null, username?: stri
     }
 
     const { rows } = await pool.query(
-      `SELECT p.name, o.current_price
-       FROM offers o
-       JOIN products p ON p.id = o.product_id
-       WHERE o.id = $1`,
-      [parsed.offerId]
+      `SELECT p.id, p.name, ${PRODUCT_BEST_PRICE_SQL} AS best_price
+       FROM products p
+       WHERE p.id = COALESCE($1::bigint, (SELECT product_id FROM offers WHERE id = $2::bigint))`,
+      [parsed.productId, parsed.offerId]
     )
 
     if (!rows[0]) {
@@ -78,17 +81,20 @@ async function handleStart(chatId: number, param: string | null, username?: stri
     }
 
     const name = rows[0].name as string
-    const currentPrice = rows[0].current_price != null ? parseFloat(rows[0].current_price) : null
-    pendingAlerts.set(chatId, { offerId: parsed.offerId, productName: name, currentPrice })
-    const priceLine = currentPrice != null ? `Preț actual: <b>${formatRon(currentPrice)} RON</b>\n` : ''
+    const productId = Number(rows[0].id)
+    const currentPrice = rows[0].best_price != null ? Number(rows[0].best_price) : null
+    pendingAlerts.set(chatId, { productId, productName: name, currentPrice })
+    const priceLine = currentPrice != null
+      ? `Cel mai mic preț acum: <b>${formatRon(currentPrice)} RON</b>\n`
+      : 'Momentan indisponibil la magazinele monitorizate.\n'
 
     // Prag propus de site si inca valid (sub pretul de acum) → salvam direct: vizitatorul l-a
     // vazut pe pagina si a apasat butonul, iar /start l-a trimis chiar el. Poate trimite alta suma.
     if (parsed.target != null && checkTarget(parsed.target, currentPrice) === 'ok') {
       const userId = await getOrCreateUser(chatId, username, firstName)
-      await saveAlert(userId, parsed.offerId, parsed.target)
+      await saveAlert(userId, productId, parsed.target)
       await sendMsg(chatId,
-        `✅ <b>Alertă salvată</b>\n\n<b>${escHtml(name)}</b>\n${priceLine}Te anunțăm când prețul ajunge la <b>${formatRon(parsed.target)} RON</b> sau mai puțin.\n\nVrei alt prag? Trimite suma în RON (ex: <code>${Math.floor(parsed.target * 0.95)}</code>).\n/alertele_mele — toate alertele tale · /sterge &lt;id&gt; — oprește o alertă`
+        `✅ <b>Alertă salvată</b>\n\n<b>${escHtml(name)}</b>\n${priceLine}Te anunțăm când prețul, la oricare dintre magazinele monitorizate, ajunge la <b>${formatRon(parsed.target)} RON</b> sau mai puțin.\n\nVrei alt prag? Trimite suma în RON (ex: <code>${Math.floor(parsed.target * 0.95)}</code>).\n/alertele_mele — toate alertele tale · /sterge &lt;id&gt; — oprește o alertă`
       )
       return
     }
@@ -107,10 +113,9 @@ async function handleStart(chatId: number, param: string | null, username?: stri
 async function handleAlerteleMele(chatId: number) {
   const userId = await getOrCreateUser(chatId)
   const { rows } = await pool.query(
-    `SELECT pa.id, p.name, pa.target_price, o.current_price
+    `SELECT pa.id, p.name, pa.target_price, ${PRODUCT_BEST_PRICE_SQL} AS current_price
      FROM price_alerts pa
-     JOIN offers o ON o.id = pa.offer_id
-     JOIN products p ON p.id = o.product_id
+     JOIN products p ON p.id = pa.product_id
      WHERE pa.telegram_user_id = $1 AND pa.is_active = true
      ORDER BY pa.created_at DESC
      LIMIT 10`,
@@ -126,8 +131,8 @@ async function handleAlerteleMele(chatId: number) {
 
   const list = rows.map(r => {
     const target = parseFloat(r.target_price).toLocaleString('ro-RO', { minimumFractionDigits: 2 })
-    const current = parseFloat(r.current_price).toLocaleString('ro-RO', { minimumFractionDigits: 2 })
-    return `<b>${r.id}.</b> ${escHtml(r.name)}\n   Sub: ${target} RON (acum: ${current} RON)`
+    const current = r.current_price != null ? `${formatRon(Number(r.current_price))} RON` : 'indisponibil'
+    return `<b>${r.id}.</b> ${escHtml(r.name)}\n   Prag: ${target} RON (cel mai mic preț acum: ${current})`
   }).join('\n\n')
 
   await sendMsg(chatId,
@@ -174,11 +179,11 @@ async function handlePrice(chatId: number, text: string) {
   }
 
   const userId = await getOrCreateUser(chatId)
-  await saveAlert(userId, pending.offerId, price)
+  await saveAlert(userId, pending.productId, price)
   pendingAlerts.delete(chatId)
 
   await sendMsg(chatId,
-    `✅ <b>Alertă salvată!</b>\n\n${escHtml(pending.productName)}\nTe anunțăm când prețul ajunge la <b>${formatRon(price)} RON</b> sau mai puțin.\n\n/alertele_mele — toate alertele tale`
+    `✅ <b>Alertă salvată!</b>\n\n${escHtml(pending.productName)}\nTe anunțăm când prețul, la oricare dintre magazinele monitorizate, ajunge la <b>${formatRon(price)} RON</b> sau mai puțin.\n\n/alertele_mele — toate alertele tale`
   )
 }
 
