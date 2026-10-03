@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsx --test src/lib/consent.test.ts src/lib/go-token.test.ts src/lib/go-rate-limit.test.ts src/lib/go-whitelist.test.ts src/lib/price-alert.test.ts src/lib/alert-token.test.ts src/lib/email-alerts.test.ts src/lib/admin/alerts-format.test.ts"
+    "test": "tsx --test src/lib/consent.test.ts src/lib/go-token.test.ts src/lib/go-rate-limit.test.ts src/lib/go-whitelist.test.ts src/lib/price-alert.test.ts src/lib/alert-token.test.ts src/lib/email-alerts.test.ts src/lib/admin/alerts-format.test.ts src/lib/seo/seo.test.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
