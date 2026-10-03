@@ -1,16 +1,17 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { planSync, formatRo, maskId, maskIdsInText, type ConversionRow } from './core.js'
+import { planSync, formatRo, maskId, maskIdsInText, googleOrderId, type ConversionRow } from './core.js'
 import { runTrackingSync } from './sync.js'
 import type { AdsConfig } from '../ads/google-ads.js'
 import type { PsCommissionRaw } from '../lib/profitshare.js'
+import type { TpCommissionRaw } from '../lib/twoperformant.js'
 
 const NOW = new Date('2026-09-26T09:00:00Z')
 const daysAgo = (n: number) => new Date(NOW.getTime() - n * 86400_000)
 
 function row(over: Partial<ConversionRow> = {}): ConversionRow {
   return {
-    id: 1, externalId: '1001', status: 'pending', amount: 10, orderTime: daysAgo(2),
+    id: 1, network: 'profitshare', externalId: '1001', status: 'pending', amount: 10, orderTime: daysAgo(2),
     uploadedAt: null, uploadedValue: null, retractedAt: null,
     clickId: 'abc123def456', adClickId: 7, hasAdConsent: true,
     gclid: 'Cj0KCQtestgclid', gbraid: null, wbraid: null, clickTime: daysAgo(3), ...over,
@@ -73,7 +74,7 @@ test('maskId — in loguri apar doar ultimele 4 caractere', () => {
 
 // --- runTrackingSync cap-coada, pe o baza de date falsa in memorie (fara Postgres, fara retea) ---
 
-interface Conv { id: number; external_id: string; click_id: string | null; ad_click_id: number | null; status: string; commission_amount: number; order_time: Date; uploaded_at: Date | null; uploaded_value: number | null; retracted_at: Date | null; last_error: string | null }
+interface Conv { id: number; network: string; external_id: string; click_id: string | null; ad_click_id: number | null; status: string; commission_amount: number; order_time: Date; uploaded_at: Date | null; uploaded_value: number | null; retracted_at: Date | null; last_error: string | null }
 interface Click { id: number; click_id: string; has_ad_consent: boolean; gclid: string | null; gbraid: string | null; wbraid: string | null; created_at: Date; ad_click_at?: Date | null }
 
 // Imita strict cele cateva interogari din tracking/sync.ts
@@ -81,11 +82,11 @@ function fakeDb(clicks: Click[]) {
   const convs: Conv[] = []
   const query = async (sql: string, params: any[] = []) => {
     if (sql.includes('INSERT INTO affiliate_conversions')) {
-      const [externalId, clickId, , status, amount, orderTime] = params
+      const [externalId, clickId, , status, amount, orderTime, , network] = params
       const adClickId = clicks.find((c) => c.click_id === clickId)?.id ?? null
-      const ex = convs.find((c) => c.external_id === externalId)
+      const ex = convs.find((c) => c.network === network && c.external_id === externalId)   // UNIQUE(network, external_id)
       if (!ex) {
-        convs.push({ id: convs.length + 1, external_id: externalId, click_id: clickId, ad_click_id: adClickId, status, commission_amount: amount, order_time: orderTime, uploaded_at: null, uploaded_value: null, retracted_at: null, last_error: null })
+        convs.push({ id: convs.length + 1, network, external_id: externalId, click_id: clickId, ad_click_id: adClickId, status, commission_amount: amount, order_time: orderTime, uploaded_at: null, uploaded_value: null, retracted_at: null, last_error: null })
         return { rows: [{ inserted: true }], rowCount: 1 }
       }
       const changed = ex.status !== status || ex.commission_amount !== amount || ex.click_id !== clickId
@@ -96,7 +97,7 @@ function fakeDb(clicks: Click[]) {
     if (sql.includes('FROM affiliate_conversions ac')) {
       return { rows: convs.map((c) => {
         const k = clicks.find((x) => x.id === c.ad_click_id)
-        return { id: c.id, external_id: c.external_id, status: c.status, amount: c.commission_amount, order_time: c.order_time, uploaded_at: c.uploaded_at, uploaded_value: c.uploaded_value, retracted_at: c.retracted_at, click_id: c.click_id, ad_click_id: c.ad_click_id, has_ad_consent: k?.has_ad_consent ?? null, gclid: k?.gclid ?? null, gbraid: k?.gbraid ?? null, wbraid: k?.wbraid ?? null, click_time: k ? (k.ad_click_at ?? k.created_at) : null }
+        return { id: c.id, network: c.network, external_id: c.external_id, status: c.status, amount: c.commission_amount, order_time: c.order_time, uploaded_at: c.uploaded_at, uploaded_value: c.uploaded_value, retracted_at: c.retracted_at, click_id: c.click_id, ad_click_id: c.ad_click_id, has_ad_consent: k?.has_ad_consent ?? null, gclid: k?.gclid ?? null, gbraid: k?.gbraid ?? null, wbraid: k?.wbraid ?? null, click_time: k ? (k.ad_click_at ?? k.created_at) : null }
       }), rowCount: convs.length }
     }
     if (sql.includes('SET uploaded_at')) { const c = convs.find((x) => x.id === params[0])!; c.uploaded_at = new Date(); c.uploaded_value = c.commission_amount; return { rows: [], rowCount: 1 } }
@@ -246,4 +247,83 @@ test('runTrackingSync — gclid-ul din eroarea Google se salveaza mascat in last
   assert.doesNotMatch(convs[0].last_error!, new RegExp(gclid))
   assert.match(convs[0].last_error!, /…ABCD/)
   assert.doesNotMatch(r.errors[0].error, new RegExp(gclid))
+})
+
+// --- 2Performant + orderId unic intre retele ---------------------------------------------------
+
+test('googleOrderId — Profitshare neschimbat (conversiile deja urcate), 2Performant cu prefix 2p-', () => {
+  assert.equal(googleOrderId('profitshare', '555'), '555')
+  assert.equal(googleOrderId('2performant', '555'), '2p-555')
+  assert.notEqual(googleOrderId('profitshare', '555'), googleOrderId('2performant', '555'))
+  assert.throws(() => googleOrderId('altceva', '1'), /Rețea necunoscută/)
+})
+
+const tpCommission = (status: string, over: Partial<TpCommissionRaw> = {}): TpCommissionRaw => ({
+  id: 555, status, amount: '3.80', currency: 'EUR', amount_in_working_currency: '20.00', working_currency_code: 'RON',
+  created_at: new Date(Date.now() - 86400_000).toISOString(), stats_tags: 'clickcuads2p', program_id: 411, type: 'sale',
+  public_action_data: { created_at: new Date(Date.now() - 86400_000).toISOString(), source_ip: '192.0.2.1' },
+  public_click_data: { source_ip: '192.0.2.1', stats_tags: 'clickcuads2p' },
+  ...over,
+})
+
+test('runTrackingSync — ambele retele: acelasi ID extern nu se amesteca; 2Performant pleaca cu orderId 2p-<id>', async () => {
+  const { db, convs } = fakeDb([
+    { id: 7, click_id: 'clickcuads01', has_ad_consent: true, gclid: 'Cj0KCQtestgclid', gbraid: null, wbraid: null, created_at: recentClick },
+    { id: 8, click_id: 'clickcuads2p', has_ad_consent: true, gclid: 'Cj0KCQtest2pgcl', gbraid: null, wbraid: null, created_at: recentClick },
+  ])
+  const sent: any[] = []
+  const retracted: any[] = []
+  const ps: PsCommissionRaw[] = [commission('pending')]         // order_id 555
+  let tp: TpCommissionRaw[] = [tpCommission('pending')]         // id 555 (alt comision!)
+  const deps = {
+    cfg: prodCfg,
+    fetchCommissions: (async () => ps) as any,
+    fetchTpCommissions: (async () => tp) as any,
+    ingest: (async (_c: any, _a: string, ev: any) => { sent.push(ev); return {} }) as any,
+    retract: (async (_c: any, _a: string, items: any[]) => { retracted.push(...items); return { errorsByIndex: new Map() } }) as any,
+  }
+  const run = () => runTrackingSync({ db, mode: 'send', conversionActionId: '999', deps, log: () => {} })
+
+  const r1 = await run()
+  assert.equal(convs.length, 2, 'doua randuri: (profitshare,555) si (2performant,555)')
+  assert.deepEqual(r1.readByNetwork, { profitshare: 1, '2performant': 1 })
+  assert.equal(r1.matched, 2)
+  assert.equal(r1.uploaded, 2)
+  assert.deepEqual(sent.map((e) => e.transactionId).sort(), ['2p-555', '555'])
+  assert.equal(sent.find((e) => e.transactionId === '2p-555').value, 20, 'valoarea in RON (amount_in_working_currency), nu in EUR')
+
+  const r2 = await run()
+  assert.equal(r2.uploaded, 0, 'idempotent si pentru 2Performant')
+  assert.equal(sent.length, 2)
+
+  tp = [tpCommission('rejected')]
+  const r3 = await run()
+  assert.equal(r3.retracted, 1)
+  assert.deepEqual(retracted.map((x) => x.orderId), ['2p-555'], 'retragerea foloseste acelasi orderId ca uploadul')
+})
+
+test('runTrackingSync — 2Performant cazut nu blocheaza Profitshare (si invers); ambele cazute → eroare', async () => {
+  const mk = () => fakeDb([{ id: 7, click_id: 'clickcuads01', has_ad_consent: true, gclid: 'Cj0KCQtestgclid', gbraid: null, wbraid: null, created_at: recentClick }])
+  const fail = (async () => { throw new Error('HTTP 503') }) as any
+  const ok = (async () => [commission('pending')]) as any
+  const r = await runTrackingSync({ db: mk().db, mode: 'plan', deps: { cfg: prodCfg, fetchCommissions: ok, fetchTpCommissions: fail }, log: () => {} })
+  assert.equal(r.read, 1)
+  assert.equal(r.plan.uploads, 1)
+  assert.deepEqual(r.errors.map((e) => [e.externalId, e.action]), [['2performant', 'fetch']])
+  const r2 = await runTrackingSync({ db: mk().db, mode: 'plan', deps: { cfg: prodCfg, fetchCommissions: fail, fetchTpCommissions: (async () => [tpCommission('pending')]) as any }, log: () => {} })
+  assert.equal(r2.read, 1)
+  assert.deepEqual(r2.errors.map((e) => e.externalId), ['profitshare'])
+  await assert.rejects(runTrackingSync({ db: mk().db, mode: 'plan', deps: { cfg: prodCfg, fetchCommissions: fail, fetchTpCommissions: fail }, log: () => {} }), /HTTP 503/)
+})
+
+test('runTrackingSync — fixture cu ambele retele; IP-ul cumparatorului nu ajunge in raw_payload', async () => {
+  const captured: string[] = []
+  const { db } = fakeDb([])
+  const q = db.query
+  db.query = async (sql: string, params: any[] = []) => { if (sql.includes('INSERT INTO affiliate_conversions')) captured.push(params[6]); return q(sql, params) }
+  const r = await runTrackingSync({ db, mode: 'plan', fixture: { profitshare: [commission('pending')], '2performant': [tpCommission('paid', { stats_tags: '', public_click_data: { source_ip: '192.0.2.1', stats_tags: '' } })] }, log: () => {} })
+  assert.deepEqual(r.readByNetwork, { profitshare: 1, '2performant': 1 })
+  assert.equal(r.plan.skipped.fara_click_id, 1, 'comisionul 2P fara st')
+  assert.equal(r.plan.skipped.click_negasit, 1)
+  for (const p of captured) assert.doesNotMatch(p, /192\.0\.2\.1|source_ip/)
 })

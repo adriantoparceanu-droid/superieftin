@@ -9,9 +9,23 @@
 export const CLICK_WINDOW_DAYS = 90
 const DAY = 86400_000
 
+export type AffiliateNetwork = 'profitshare' | '2performant'
+
+// ID-ul comenzii trimis la Google (transactionId la upload = orderId la retragere). Trebuie sa fie
+// UNIC intre retele (Google deduplica dupa el in cadrul actiunii de conversie):
+//   - Profitshare: order_id-ul GOL, exact ca inainte — conversiile deja urcate au acest ID, iar
+//     o schimbare de format le-ar face sa para comenzi noi (dubluri) si ar rupe retragerile;
+//   - 2Performant: `2p-<id comision>` — prefixul evita coliziunea cu un order_id Profitshare.
+export function googleOrderId(network: AffiliateNetwork | string, externalId: string): string {
+  if (network === 'profitshare') return externalId
+  if (network === '2performant') return `2p-${externalId}`
+  throw new Error(`Rețea necunoscută pentru orderId: „${network}”`)
+}
+
 // Un comision din affiliate_conversions, cu datele clickului potrivit (LEFT JOIN ad_clicks).
 export interface ConversionRow {
   id: number
+  network: AffiliateNetwork
   externalId: string
   status: 'pending' | 'approved' | 'rejected'
   amount: number

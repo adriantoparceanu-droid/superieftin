@@ -1,16 +1,16 @@
 import { readFileSync } from 'fs'
 import pool from '../lib/db.js'
-import { runTrackingSync, summarize, type SyncMode } from './sync.js'
-import type { PsCommissionRaw } from '../lib/profitshare.js'
+import { runTrackingSync, summarize, type SyncMode, type SyncFixture } from './sync.js'
 
 // npm run tracking:sync [-- optiuni]
 //
 //   (fara optiuni)          plan: actualizeaza baza locala si arata ce AR trimite. Nimic la Google.
 //   --confirm               cu ADS_ENV=test → cereri validate_only (Google verifica, nu aplica)
 //   --confirm --prod        trimitere REALA — doar cu ADS_ENV=prod (REGULI.md, regulile 3–4)
-//   --fixture=cale.json     comisioane de test in loc de API-ul Profitshare (lista de randuri
-//                           in formatul API). Ruleaza intr-o tranzactie ANULATA la final (baza
-//                           ramane neatinsa) si e refuzat la trimiterea reala.
+//   --fixture=cale.json     comisioane de test in loc de API-uri: lista de randuri Profitshare
+//                           (formatul API) SAU { "profitshare": [...], "2performant": [...] }.
+//                           Ruleaza intr-o tranzactie ANULATA la final (baza ramane neatinsa)
+//                           si e refuzat la trimiterea reala.
 //   --conversion-action=ID  suprascrie GOOGLE_ADS_CONVERSION_ACTION_ID (doar pentru teste)
 
 const args = process.argv.slice(2)
@@ -31,10 +31,10 @@ async function main() {
   }
 
   const fixturePath = val('--fixture')
-  const fixture = fixturePath ? JSON.parse(readFileSync(fixturePath, 'utf8')) as PsCommissionRaw[] : undefined
+  const fixture = fixturePath ? JSON.parse(readFileSync(fixturePath, 'utf8')) as SyncFixture : undefined
   if (fixture && mode === 'send') throw new Error('Refuz: fixture + trimitere reală')
 
-  console.log(`tracking:sync · mod=${mode} · ADS_ENV=${adsEnv}${fixture ? ` · fixture (${fixture.length} rânduri, tranzacție anulată la final)` : ''}`)
+  console.log(`tracking:sync · mod=${mode} · ADS_ENV=${adsEnv}${fixture ? ` · fixture (${Array.isArray(fixture) ? fixture.length : (fixture.profitshare?.length ?? 0) + (fixture['2performant']?.length ?? 0)} rânduri, tranzacție anulată la final)` : ''}`)
 
   // Cu fixture lucram pe o singura conexiune, intr-o tranzactie pe care o anulam la final
   const client = fixture ? await pool.connect() : null
