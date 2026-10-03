@@ -91,8 +91,10 @@ SQL_FILE="$DUMP_DIR/upsert.sql"
   echo "SELECT p.id, (SELECT id FROM retailers WHERE slug='emag'),"
   echo "       s.url, s.affiliate_url, s.current_price, s.currency, s.in_stock, s.last_checked"
   echo "FROM emag_stg s JOIN products p ON p.slug = s.slug"
+  # affiliate_url: un NULL local NU sterge linkul Profitshare de pe prod (ex. completat cu
+  # backfill-emag-affiliate pe prod, dar inca NULL in DB-ul local) — altfel pierdem comisionul.
   echo "ON CONFLICT (product_id, retailer_id) DO UPDATE SET"
-  echo "  url = EXCLUDED.url, affiliate_url = EXCLUDED.affiliate_url,"
+  echo "  url = EXCLUDED.url, affiliate_url = COALESCE(EXCLUDED.affiliate_url, offers.affiliate_url),"
   echo "  current_price = EXCLUDED.current_price, currency = EXCLUDED.currency,"
   echo "  in_stock = EXCLUDED.in_stock, last_checked = EXCLUDED.last_checked;"
   # Prod oglindeste exact setul local eMAG: sterge ofertele eMAG care nu mai sunt in
