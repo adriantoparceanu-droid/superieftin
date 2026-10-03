@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { validateDraft, checkMarkers, countUnverified } from './guide-drafts.js'
+import { validateDraft, checkMarkers, countUnverified, findHealthClaims } from './guide-drafts.js'
 
 // O ciorna minima valida; testele o strica pe rand
 const base = () => ({
@@ -85,4 +85,62 @@ test('checkMarkers: tipuri necunoscute, numar de produse, acolade rupte', () => 
 test('countUnverified', () => {
   assert.equal(countUnverified('a [DE VERIFICAT: x] b [DE VERIFICAT] c'), 2)
   assert.equal(countUnverified('curat'), 0)
+})
+
+// ---------- Publicare directa (bloc „publish”, content/ghiduri/publicate/) ----------
+
+// Ghid gata de publicare: fara [DE VERIFICAT], toate faptele confirmate
+const publishable = () => ({
+  ...base(),
+  body_md: '## Ecran\n\nText verificat.\n\n{{oferte:galaxy-tab-s10}}\n',
+  publish: { author_slug: 'adrian', reviewer_slug: 'echipa-superieftin' },
+})
+
+test('publish: ghid complet → valid, publish pastrat', () => {
+  const r = validateDraft(publishable())
+  assert.deepEqual(r.errors, [])
+  assert.deepEqual(r.draft!.publish, { author_slug: 'adrian', reviewer_slug: 'echipa-superieftin' })
+})
+
+test('publish: lipsa blocului → ciorna (publish null), [DE VERIFICAT] permis', () => {
+  const r = validateDraft(base())
+  assert.deepEqual(r.errors, [])
+  assert.equal(r.draft!.publish, null)
+})
+
+test('publish: bloc incomplet sau autor = verificator → eroare', () => {
+  const a = validateDraft({ ...publishable(), publish: { author_slug: 'adrian' } })
+  assert.ok(a.errors.some((e) => e.includes('reviewer_slug')))
+  const b = validateDraft({ ...publishable(), publish: { author_slug: 'adrian', reviewer_slug: 'adrian' } })
+  assert.ok(b.errors.some((e) => e.includes('diferiți')))
+})
+
+test('publish: [DE VERIFICAT] oriunde blocheaza publicarea', () => {
+  const r = validateDraft({ ...publishable(), faq: [{ q: 'Are 5G?', a: 'Da [DE VERIFICAT: banda n78]' }] })
+  assert.ok(r.errors.some((e) => e.includes('[DE VERIFICAT] în FAQ')))
+  const t = validateDraft({ ...publishable(), title: 'Merită X? [DE VERIFICAT: an]' })
+  assert.ok(t.errors.some((e) => e.includes('titlu')))
+})
+
+test('publish: fapt „de_verificat” in fisa blocheaza publicarea', () => {
+  const p = publishable()
+  p.review = { ...p.review, facts: [{ claim: 'Baterie 8000 mAh', source_type: 'db', source: 'feed', status: 'de_verificat' }] } as typeof p.review
+  const r = validateDraft(p)
+  assert.ok(r.errors.some((e) => e.includes('Baterie 8000 mAh')))
+})
+
+test('publish: afirmatii de sanatate blocheaza (regula 8)', () => {
+  const r = validateDraft({ ...publishable(), summary: 'Pe scurt: purificatorul tratează alergiile.' })
+  assert.ok(r.errors.some((e) => e.includes('sănătate') && e.includes('tratează')))
+  assert.deepEqual(findHealthClaims('Detoxifiere completă'), ['detoxifiere'])
+  assert.deepEqual(findHealthClaims('Nu retratează nimic'), [])
+})
+
+test('publish: pret scris de mana → eroare; puteri si diagonale → ok', () => {
+  const r = validateDraft({ ...publishable(), body_md: 'Costă 1.299 lei acum.\n\n{{pret:galaxy-tab-s10}}' })
+  assert.ok(r.errors.some((e) => e.includes('preț scris de mână') && e.includes('1.299 lei')))
+  const f = validateDraft({ ...publishable(), faq: [{ q: 'Cât costă?', a: 'Sub 2000 RON.' }] })
+  assert.ok(f.errors.some((e) => e.includes('FAQ')))
+  const ok = validateDraft({ ...publishable(), body_md: 'Un încărcător de 65 W, un televizor de 55 inch, la 2,5 m.\n\n{{pret:galaxy-tab-s10}}' })
+  assert.deepEqual(ok.errors, [])
 })

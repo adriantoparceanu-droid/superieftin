@@ -1,0 +1,103 @@
+{
+  "slug": "incarcator-usb-c-gan-ce-putere",
+  "title": "Încărcător USB-C: ce putere îți trebuie (20 W, 45 W, 65 W) și ce înseamnă GaN",
+  "meta_description": "Câți wați îți trebuie pentru iPhone, Samsung, tabletă sau laptop, ce înseamnă PD, PPS și GaN, de ce contează cablul de 5 A și încărcătoare cu prețuri live.",
+  "kind": "categorie",
+  "category_slug": "incarcatoare-cabluri",
+  "summary": "Pe scurt: pentru un iPhone ajunge un încărcător USB-C PD de 20 W (40 W pentru iPhone 17 Pro), pentru majoritatea telefoanelor Samsung unul de 25 W cu PPS, iar pentru Samsung Ultra unul de 45 W plus un cablu de 5 A. Pentru laptop, alege cel puțin puterea adaptorului original, de obicei 45–65 W. GaN înseamnă un încărcător mai mic la aceeași putere, nu încărcare mai rapidă.",
+  "body_md": "## Câți wați îți trebuie, după dispozitiv?\n\nPuterea unui încărcător se măsoară în wați (W). Un încărcător mai puternic decât are nevoie dispozitivul **nu îl strică**: prin standardul USB Power Delivery, telefonul sau laptopul „negociază” cu încărcătorul și cere doar puterea pe care o poate primi. Invers, un încărcător prea slab funcționează, dar încarcă lent, iar un laptop se poate chiar descărca în timp ce lucrezi pe el.\n\n| Dispozitiv | Putere recomandată | Ce spune producătorul |\n|---|---|---|\n| iPhone 15 și 16 (toate modelele), iPhone 17, 17e, Air | 20 W | Apple: încărcare rapidă cu un adaptor USB-C de 18–20 W sau mai mare |\n| iPhone 17 Pro / Pro Max | 40 W | Apple: până la 50% în aproximativ 20 de minute cu un adaptor de 40 W sau mai mare |\n| Majoritatea telefoanelor Samsung Galaxy A și S | 25 W | „Super Fast Charging”, cu încărcător USB-C PD cu PPS |\n| Samsung Galaxy Ultra (S22–S25 Ultra) | 45 W | „Super Fast Charging 2.0”: încărcător PPS de 45 W și cablu de 5 A |\n| Tablete | 20–45 W | depinde de model; verifică puterea adaptorului original |\n| Laptop ultraportabil cu USB-C | 45–65 W | cel puțin puterea adaptorului original, scrisă pe el |\n| Laptop mai mare cu USB-C | 65–100 W | idem; laptopurile de gaming folosesc de obicei alimentator propriu |\n\nRegula simplă pentru laptopuri: **uită-te pe adaptorul original**. Dacă scrie 65 W, alege un încărcător USB-C de cel puțin 65 W. Laptopul trebuie să accepte încărcarea prin portul USB-C, lucru trecut în manual sau în fișa producătorului.\n\n## Ce înseamnă PD, PPS și Quick Charge?\n\n- **USB Power Delivery (PD)** e standardul comun de încărcare prin USB-C. Îl folosesc iPhone-urile recente, majoritatea telefoanelor Android, tabletele și laptopurile cu USB-C. Dacă un încărcător nu are PD, nu încarcă rapid un iPhone sau un laptop.\n- **PPS (Programmable Power Supply)** e o parte a standardului PD care ajustează tensiunea în pași foarte mici. Telefoanele Samsung îl cer pentru „Super Fast Charging”. Fără PPS, un Samsung se încarcă tot, dar mai lent.\n- **Quick Charge (QC)** e protocolul mai vechi al Qualcomm, folosit mai ales pe porturile USB-A. E util pentru telefoane mai vechi, dar pentru dispozitivele noi contează PD.\n\nPe scurt: pentru un iPhone sau un laptop caută **PD**, pentru un Samsung caută **PD cu PPS**.\n\n## De ce contează cablul?\n\nCablul limitează puterea, indiferent cât de puternic e încărcătorul:\n\n| Cablu USB-C la USB-C | Putere maximă | Pentru ce |\n|---|---|---|\n| cablu obișnuit, 3 A | 60 W | telefoane, tablete, laptopuri mici |\n| cablu de 5 A (cu cip „e-marker”) | 100 W | Samsung la 45 W, laptopuri de 65–100 W |\n| cablu de 240 W (USB PD 3.1) | 240 W | laptopuri puternice care acceptă USB PD 3.1 |\n\nAsociația USB-IF a extins standardul PD de la 100 W la **până la 240 W**, iar cablurile capabile de mai mult de 3 A au un cip care îi „spune” încărcătorului ce suportă. Un exemplu concret: încărcătorul Samsung de 45 W de mai jos se vinde fără cablu, iar ca să obții cei 45 W ai nevoie de un cablu de 5 A, nu de unul obișnuit.\n\n## Ce înseamnă GaN?\n\nGaN vine de la **nitrură de galiu**, un material semiconductor folosit în locul siliciului în interiorul încărcătorului. Pierde mai puțină energie sub formă de căldură, așa că un încărcător GaN poate fi **mai mic la aceeași putere**. Diferența se simte mai ales de la 45–65 W în sus, unde un încărcător clasic e voluminos.\n\nGaN nu înseamnă automat încărcare mai rapidă: viteza o dau puterea, protocolul (PD/PPS) și cablul. GaN te ajută să cari un încărcător mai mic, de exemplu unul singur de 65 W pentru laptop și telefon, în locul a două.\n\n## Ce încărcătoare urmărim, pe trepte de putere\n\nAm ales câte un încărcător pentru fiecare treaptă, de la mărci cunoscute, toate disponibile la un magazin pe care îl urmărim zilnic din iunie 2026. Nu e un clasament: sunt exemple ca să vezi cât costă acum fiecare treaptă. Toate modelele sunt în categoria [Încărcătoare & cabluri](/c/incarcatoare-cabluri).\n\n### 20 W: pentru iPhone\n\nAdaptorul original Apple USB-C de 20 W. Ajunge pentru încărcarea rapidă a iPhone-urilor fără „Pro” în nume.\n\n{{oferte:incarcator-priza-eu-original-mhje3zm-a-usb-c-de-20w-alb}}\n\n### 25 W: pentru majoritatea telefoanelor Samsung\n\nÎncărcătorul Samsung de 25 W cu PPS, pentru „Super Fast Charging”.\n\n{{oferte:incarcator-retea-ep-ta800nwegeu-super-fast-charging-type-c-la-type-c-25w-white}}\n\n### 30 W GaN: mic, pentru telefon și tabletă\n\nUGREEN Nexode 30 W, cu PD și GaN. O treaptă peste 20–25 W, util și pentru tablete.\n\n{{oferte:incarcator-retea-nexode-30w-usb-c-pd-gan-fast-charger-alb}}\n\n### 45 W: pentru Samsung Ultra\n\nÎncărcătorul Samsung de 45 W („Super Fast Charging 2.0”), vândut fără cablu. Pentru 45 W ai nevoie și de un cablu USB-C de 5 A, ca acesta:\n\n{{oferte:incarcator-retea-ep-t4511nbegeu-super-fast-charger-45w-port-usb-type-c-fara-cablu-negru}}\n\n{{oferte:cablu-de-date-usb-c-usb-c-5a-1-8m-white}}\n\n### 65 W GaN: un singur încărcător pentru laptop și telefon\n\nHama Mini GaN 65 W, cu două porturi USB-C și unul USB-A. Atenție: cei 65 W se împart între porturi când încarci mai multe dispozitive deodată, iar împărțirea exactă e trecută de producător în fișa produsului.\n\n{{oferte:incarcator-retea-mini-gan-65w-pd-qc-2x-usb-c-1x-usb-a-alb}}\n\n### 100 W GaN: pentru laptopuri mai mari\n\nAnker Prime 100 W, cu GaN, PD și PPS, două porturi USB-C și unul USB-A. Pentru laptopuri de până la 100 W ai nevoie și de un cablu de 5 A.\n\n{{oferte:incarcator-retea-prime-gan-pps-100w-2x-usb-c-1x-usb-a-gri}}\n\nPrețurile celor 6 încărcătoare, una lângă alta:\n\n{{comparatie:incarcator-priza-eu-original-mhje3zm-a-usb-c-de-20w-alb,incarcator-retea-ep-ta800nwegeu-super-fast-charging-type-c-la-type-c-25w-white,incarcator-retea-nexode-30w-usb-c-pd-gan-fast-charger-alb,incarcator-retea-ep-t4511nbegeu-super-fast-charger-45w-port-usb-type-c-fara-cablu-negru,incarcator-retea-mini-gan-65w-pd-qc-2x-usb-c-1x-usb-a-alb,incarcator-retea-prime-gan-pps-100w-2x-usb-c-1x-usb-a-gri}}\n\n## Cum verifici dacă prețul e bun?\n\nAccesoriile au prețuri mici, dar și ele variază: unele încărcătoare din lista de mai sus au avut, din iunie până acum, mai multe prețuri diferite la același magazin. Pe superieftin.ro comparăm prețul de azi cu **mediana ultimelor 30 de zile**, iar un preț e marcat „reducere reală” doar dacă e cu cel puțin 5% sub ea. Încărcătoarele și cablurile care trec acum de acest prag sunt pe pagina [reducerilor reale la încărcătoare și cabluri](/reduceri-reale/incarcatoare-cabluri).\n\nGraficul încărcătorului Samsung de 45 W, ca exemplu:\n\n{{istoric-pret:incarcator-retea-ep-t4511nbegeu-super-fast-charger-45w-port-usb-type-c-fara-cablu-negru}}\n\nDacă îți cumperi încărcătorul pentru un telefon nou, vezi și ghidurile despre [Galaxy S26 Ultra](/ghiduri/samsung-galaxy-s26-ultra-256gb-ghid) și [iPhone 17 Pro Max](/ghiduri/iphone-17-pro-max-256gb-dupa-iphone-18).\n\n## Cum am făcut acest ghid\n\nPuterile recomandate vin de la producători (Apple, Samsung) și din specificația USB Power Delivery publicată de USB-IF. Puterea, porturile și GaN ale fiecărui încărcător vin din numele produsului dat de magazin. Nu am testat încărcătoarele. Prețurile, verdictele și graficul vin din istoricul nostru și se actualizează automat. Disponibilitatea a fost verificată pe 4 octombrie 2026. Detalii: [metodologia](/ghiduri/metodologie).",
+  "faq": [
+    {
+      "q": "Pot folosi un încărcător de 65 W pentru telefon?",
+      "a": "Da. Prin USB Power Delivery, telefonul cere doar puterea pe care o acceptă, așa că un încărcător mai puternic nu îl strică. Același încărcător poate alimenta și laptopul."
+    },
+    {
+      "q": "De ce telefonul meu Samsung nu arată „Super Fast Charging 2.0”?",
+      "a": "Pentru 45 W, telefonul trebuie să suporte această putere, încărcătorul trebuie să aibă PD cu PPS la 45 W, iar cablul trebuie să fie USB-C la USB-C de 5 A. Dacă lipsește una dintre ele, încărcarea merge mai încet."
+    },
+    {
+      "q": "Încărcătoarele GaN încarcă mai repede?",
+      "a": "Nu neapărat. Viteza depinde de putere, de protocol (PD, PPS) și de cablu. Avantajul GaN e că încărcătorul e mai mic și se încălzește mai puțin la aceeași putere."
+    },
+    {
+      "q": "Ce cablu îmi trebuie pentru un laptop de 100 W?",
+      "a": "Un cablu USB-C la USB-C de 5 A, care suportă până la 100 W. Cablurile obișnuite de 3 A se opresc la 60 W."
+    },
+    {
+      "q": "Un încărcător cu mai multe porturi dă puterea maximă pe fiecare port?",
+      "a": "De obicei nu. Puterea totală se împarte între porturi când încarci mai multe dispozitive deodată. Producătorul trece în fișa produsului cât dă fiecare port în fiecare combinație."
+    }
+  ],
+  "product_slugs": [
+    "incarcator-priza-eu-original-mhje3zm-a-usb-c-de-20w-alb",
+    "incarcator-retea-ep-ta800nwegeu-super-fast-charging-type-c-la-type-c-25w-white",
+    "incarcator-retea-nexode-30w-usb-c-pd-gan-fast-charger-alb",
+    "incarcator-retea-ep-t4511nbegeu-super-fast-charger-45w-port-usb-type-c-fara-cablu-negru",
+    "cablu-de-date-usb-c-usb-c-5a-1-8m-white",
+    "incarcator-retea-mini-gan-65w-pd-qc-2x-usb-c-1x-usb-a-alb",
+    "incarcator-retea-prime-gan-pps-100w-2x-usb-c-1x-usb-a-gri"
+  ],
+  "review": {
+    "facts": [
+      {
+        "claim": "Apple: iPhone 15 și mai noi, încărcare rapidă cu adaptor USB-C de 18 W+; iPhone 17e/Air 20 W+ (50% în ~30 min); iPhone 17 Pro 40 W+ (50% în ~20 min)",
+        "source_type": "web",
+        "source": "https://support.apple.com/en-us/102574",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Samsung Super Fast Charging 2.0 (45 W): telefon compatibil, încărcător PPS 9 V/5 A, cablu USB-C la USB-C de 5 A",
+        "source_type": "web",
+        "source": "https://service.anker.com/article-description/Why-does-my-Samsung-phone-not-appear-Super-fast-charging-2-0",
+        "status": "confirmat",
+        "note": "S22 Ultra–S25 Ultra: 45 W (S26 Ultra: 60 W, vezi ghidul S26 Ultra). Samsung 25 W „Super Fast Charging” folosește tot PD cu PPS."
+      },
+      {
+        "claim": "USB PD: până la 100 W (20 V) înainte de PD 3.1; PD 3.1 permite 140/180/240 W (28/36/48 V); cabluri de 5 A pentru 100 W",
+        "source_type": "web",
+        "source": "https://www.usb.org/usb-charger-pd",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Cablu USB-C fără e-marker: max. 3 A (60 W); 5 A (100 W) cere e-marker",
+        "source_type": "web",
+        "source": "https://iogear.com/product/G2LU3CCM01E",
+        "status": "confirmat",
+        "note": "Regula vine din specificația USB Type-C (USB-IF)."
+      },
+      {
+        "claim": "GaN (nitrură de galiu): pierderi mai mici sub formă de căldură → încărcătoare mai mici la aceeași putere",
+        "source_type": "web",
+        "source": "https://www.anker.com/blogs/chargers/gan-charger",
+        "status": "confirmat",
+        "note": "În text nu dăm procente de eficiență."
+      },
+      {
+        "claim": "Puterea, porturile și tehnologia produselor (Apple MHJE3ZM/A 20 W, Samsung EP-TA800 25 W, UGREEN Nexode 30 W GaN PD, Samsung EP-T4511 45 W fără cablu, Samsung cablu 5 A 1,8 m, Hama Mini GaN 65 W 2C+1A, Anker Prime GaN PPS 100 W 2C+1A)",
+        "source_type": "db",
+        "source": "feed ITGalaxy / baza noastră (numele produselor 21345, 21344, 19815, 19740, 21212, 20489, 20016)",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Toate cele 7 produse au ofertă disponibilă la ITGalaxy (verificată pe 03.10.2026), istoric din 13.06.2026; mai multe au avut prețuri diferite în acest interval (ex. 19740: 11 prețuri distincte)",
+        "source_type": "db",
+        "source": "baza de producție, SELECT 04.10.2026",
+        "status": "confirmat"
+      }
+    ],
+    "checklist": [
+      "Tabelul de puteri corespunde surselor Apple / Samsung / USB-IF din fișă",
+      "Fără prețuri scrise de mână (doar marcaje)",
+      "Produse doar de la ITGalaxy, cu istoric din iunie",
+      "Linkuri interne: /c/incarcatoare-cabluri, /reduceri-reale/incarcatoare-cabluri, ghidurile de telefoane, metodologia"
+    ],
+    "warnings": [
+      "Ghid nou, publicat automat prin import pe 04.10.2026 (decizia proprietarului): autor Adrian, verificator Echipa Superieftin.ro.",
+      "Puterile pe port ale încărcătoarelor multi-port nu sunt în feed — textul trimite la fișa producătorului, fără cifre."
+    ]
+  },
+  "publish": {
+    "author_slug": "adrian",
+    "reviewer_slug": "echipa-superieftin"
+  }
+}
