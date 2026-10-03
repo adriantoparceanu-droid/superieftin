@@ -10,14 +10,14 @@ export const metadata: Metadata = {
 }
 
 // Lista reflecta ce seteaza REAL site-ul. La un tag/cookie nou, actualizeaza tabelul.
-// „Reclame personalizate” (3 oct 2026): text de verificat de jurist inainte de deploy; dupa deploy,
+// Reclamele personalizate, parte din „Publicitate” (3 oct 2026): text de verificat de jurist inainte de deploy; dupa deploy,
 // verifica in DevTools → Application → Cookies ce cookie-uri Google apar cu bifa activa.
 export default function CookiesPage() {
   return (
     <LegalPage title="Politica de cookies" updated="3 octombrie 2026">
       <p>
         Cookie-urile sunt fișiere mici salvate de browser. Folosim doar cookie-urile necesare,
-        iar pe cele de analiză, publicitate și reclame personalizate numai dacă ești de acord.
+        iar pe cele de analiză și publicitate (inclusiv reclame personalizate) numai dacă ești de acord.
       </p>
 
       <p>
@@ -66,13 +66,12 @@ export default function CookiesPage() {
           </tr>
           <tr>
             <td>Cookie-uri Google de publicitate, pe domeniile Google (ex. <code>doubleclick.net</code>)</td>
-            <td>Reclame personalizate</td>
+            <td>Publicitate (reclame personalizate)</td>
             <td>
               Google Analytics anunță Google Ads că ai văzut pagini de produs pe superieftin.ro (și dacă ai
               mers spre un magazin), iar Google te poate include, pentru cel mult 30 de zile, într-o listă de
               vizitatori cărora le arătăm reclamele noastre, de exemplu când cauți din nou pe Google. Google
-              recunoaște browserul prin cookie-urile proprii. Se întâmplă numai dacă accepți atât „Publicitate”,
-              cât și „Reclame personalizate”.
+              recunoaște browserul prin cookie-urile proprii. Se întâmplă numai dacă accepți „Publicitate”.
             </td>
             <td>stabilită de Google (lista noastră: max. 30 de zile)</td>
           </tr>
@@ -116,12 +115,14 @@ export default function CookiesPage() {
           nu trimitem la Google email, telefon sau adresa IP.
         </li>
         <li>
-          <strong>Doar cu acord separat:</strong> bifa „Reclame personalizate” e implicit debifată și
-          funcționează numai împreună cu „Publicitate”. Fără ea, Google Analytics nu te adaugă în listele
-          noastre de reclame.
+          <strong>Doar cu acord:</strong> reclamele personalizate fac parte din categoria „Publicitate”
+          (implicit refuzată). Dacă refuzi „Publicitate”, Google Analytics nu te adaugă în listele noastre
+          de reclame. Acordurile „Publicitate” date înainte de 3 octombrie 2026, când textul nu pomenea reclamele
+          personalizate, nu le includ: pentru ele semnalul rămâne „refuzat” până îți salvezi din nou alegerea
+          din „Setări cookies” sau până îți cerem din nou acordul.
         </li>
         <li>
-          <strong>Retragere:</strong> o debifezi oricând din „Setări cookies”. De atunci nu mai ești adăugat
+          <strong>Retragere:</strong> debifezi „Publicitate” oricând din „Setări cookies”. De atunci nu mai ești adăugat
           în liste; apartenența deja înregistrată expiră singură după cel mult 30 de zile de la ultima
           vizită. Google oferă și setări proprii pentru reclame, la{' '}
           <a href="https://myadcenter.google.com" rel="noopener" target="_blank">myadcenter.google.com</a>.

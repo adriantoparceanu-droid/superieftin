@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 // ATENTIE: textul descrie ce face REAL codul. Cand se schimba colectarea de date (tracking nou,
 // formular nou, alt furnizor), actualizeaza pagina + data de mai jos.
 // Text redactat fara jurist — recomandat sa fie verificat inainte de lansarea reclamelor.
-// Sectiunile despre „Reclame personalizate” (3 oct 2026) sunt NOI — de verificat de jurist inainte de deploy.
+// Sectiunile despre reclamele personalizate (parte din „Publicitate”, 3 oct 2026) sunt NOI — de verificat de jurist inainte de deploy.
 export default function ConfidentialitatePage() {
   const privacyEmail = COMPANY.privacyEmail ?? COMPANY.email
   return (
@@ -91,7 +91,7 @@ export default function ConfidentialitatePage() {
             </td>
             <td>Să îți arătăm din nou reclamele noastre în Google (de exemplu, când cauți din nou un produs),
               timp de cel mult 30 de zile de la vizită</td>
-            <td>Consimțământ separat (categoria „Reclame personalizate”, împreună cu „Publicitate”)</td>
+            <td>Consimțământ (categoria „Publicitate”, acordat începând cu 3 octombrie 2026)</td>
           </tr>
           <tr>
             <td><strong>Alerte de preț pe Telegram</strong>: ID-ul conversației, numele de utilizator și prenumele din Telegram, alertele setate</td>
@@ -151,8 +151,8 @@ export default function ConfidentialitatePage() {
         <li>
           <strong>Identificatorul clickului nu e folosit pentru reclame personalizate.</strong> În conversiile
           offline descrise mai sus, semnalul <code>ad_personalization</code> este mereu „refuzat”.
-          Reclamele personalizate (remarketing) funcționează separat, prin Google Analytics, și doar
-          dacă ai bifat „Reclame personalizate” — vezi secțiunea de mai jos.
+          Reclamele personalizate (remarketing) funcționează separat, prin Google Analytics, cu acordul
+          „Publicitate” — vezi secțiunea de mai jos.
         </li>
         <li>
           <strong>Dacă îți retragi acordul</strong> (din „Setări cookies”), dacă acordul expiră (după
@@ -170,12 +170,14 @@ export default function ConfidentialitatePage() {
 
       <h2>Reclame personalizate (remarketing)</h2>
       <p>
-        Dacă bifezi „Reclame personalizate” (împreună cu „Publicitate”), site-ul trimite către Google
+        Dacă accepți „Publicitate”, site-ul trimite către Google
         semnalul <code>ad_personalization</code> = „acordat”. Google Analytics poate atunci include browserul
         tău într-o listă de vizitatori, de exemplu „a văzut un produs, dar nu a mers spre magazin în
         ultimele 7 zile”, pe care o folosim în Google Ads ca să îți arătăm reclamele noastre când cauți din
         nou pe Google (eventual cu o licitare mai mare pentru tine). Nu vedem cine este în listă:
-        Google ne arată doar numere agregate.
+        Google ne arată doar numere agregate. Acordurile „Publicitate” date înainte de 3 octombrie 2026, când textul nu pomenea reclamele
+        personalizate, nu le includ: pentru ele semnalul rămâne „refuzat” până îți salvezi din nou alegerea
+        din „Setări cookies” sau până îți cerem din nou acordul.
       </p>
       <ul>
         <li>Nu folosim Google Signals și nu trimitem la Google email, telefon sau adresa IP. Google poate
@@ -184,7 +186,7 @@ export default function ConfidentialitatePage() {
           <a href="https://policies.google.com/technologies/partner-sites" rel="noopener" target="_blank">
             cum folosește Google datele de pe site-urile partenerilor</a>.</li>
         <li>Durata: cel mult 30 de zile de la ultima vizită care te-a inclus în listă.</li>
-        <li>Retragere: debifezi „Reclame personalizate” din „Setări cookies”. De atunci nu mai ești
+        <li>Retragere: debifezi „Publicitate” din „Setări cookies”. De atunci nu mai ești
           adăugat; apartenența existentă expiră în cel mult 30 de zile. Poți folosi și setările Google, la{' '}
           <a href="https://myadcenter.google.com" rel="noopener" target="_blank">myadcenter.google.com</a>.</li>
       </ul>

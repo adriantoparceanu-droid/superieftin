@@ -10,9 +10,10 @@ export const metadata: Metadata = {
 }
 
 // Text redactat fara jurist — recomandat sa fie verificat inainte de lansarea reclamelor.
+// Sectiunea 7 completata pe 3 oct 2026 (reclame personalizate) — de verificat de jurist inainte de deploy.
 export default function TermeniPage() {
   return (
-    <LegalPage title="Termeni și condiții" updated="26 septembrie 2026">
+    <LegalPage title="Termeni și condiții" updated="3 octombrie 2026">
       <h2>1. Despre serviciu</h2>
       <p>
         superieftin.ro, operat de {COMPANY.name ?? <Todo>denumire firmă</Todo>} (CUI{' '}
@@ -59,6 +60,13 @@ export default function TermeniPage() {
       <p>
         Vezi <Link href="/confidentialitate">Politica de confidențialitate</Link> și{' '}
         <Link href="/cookies">Politica de cookies</Link>.
+      </p>
+      <p>
+        Analiza (Google Analytics) și publicitatea (Google Ads) funcționează numai cu acordul tău, dat
+        din bannerul de cookies. Categoria „Publicitate” include și reclamele personalizate
+        (remarketing): dacă ai văzut un produs pe site, Google îți poate arăta din nou reclamele noastre,
+        timp de cel mult 30 de zile. Îți poți schimba oricând alegerea din „Setări cookies”, în subsolul
+        fiecărei pagini. Detaliile (ce date, cât timp, cui le transmitem) sunt în cele două politici de mai sus.
       </p>
 
       <h2>8. Modificări și legea aplicabilă</h2>
