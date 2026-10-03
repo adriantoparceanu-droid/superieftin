@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 // Text redactat fara jurist — recomandat sa fie verificat inainte de lansarea reclamelor.
 export default function TermeniPage() {
   return (
-    <LegalPage title="Termeni și condiții" updated="26 septembrie 2026">
+    <LegalPage title="Termeni și condiții" updated="3 octombrie 2026">
       <h2>1. Despre serviciu</h2>
       <p>
         superieftin.ro, operat de {COMPANY.name ?? <Todo>denumire firmă</Todo>} (CUI{' '}
@@ -38,8 +38,13 @@ export default function TermeniPage() {
 
       <h2>4. Alerte de preț</h2>
       <p>
-        Alertele pe Telegram sunt gratuite și oferite „ca atare”. Nu garantăm livrarea fiecărei
-        alerte în timp util. Le poți opri oricând cu comanda <code>/sterge</code>.
+        Alertele de preț (pe Telegram sau pe email) sunt gratuite și oferite „ca atare”. O alertă
+        pornește când prețul unui produs, la oricare dintre magazinele monitorizate, ajunge la pragul
+        ales sau sub el, și se oprește după ce te-am anunțat. Nu garantăm livrarea fiecărei alerte în
+        timp util și nici că prețul va scădea; prețul se poate schimba până ajungi pe site-ul
+        magazinului. Pe email primești cel mult un mesaj pe zi, cu toate produsele care au ajuns la
+        prag. Alertele pe Telegram le oprești cu comanda <code>/sterge</code>; pe cele pe email, din
+        linkul „Alertele mele” sau „Dezabonare” din fiecare email.
       </p>
 
       <h2>5. Proprietate intelectuală</h2>

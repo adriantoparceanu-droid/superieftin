@@ -13,6 +13,8 @@ import { AffiliateLink } from '@/components/analytics/AffiliateLink'
 import { getGuidesForProduct } from '@/lib/guides/queries'
 import { suggestAlertTarget, telegramAlertUrl } from '@/lib/price-alert'
 import { PriceAlertButton, MobileActionBar } from '@/components/PriceAlert'
+import { EmailAlertForm } from '@/components/EmailAlertForm'
+import { emailAlertsEnabled } from '@/lib/email-alerts'
 
 export const revalidate = 3600
 
@@ -79,9 +81,10 @@ export default async function ProductPage({ params }: Props) {
   // produs indisponibil nu propunem nimic (nu avem un pret de azi): botul il intreaba.
   const botUsername = process.env.TELEGRAM_BOT_USERNAME
   const alertTarget = bestOffer ? suggestAlertTarget(bestOffer.current_price, bestOffer.median_price) : null
-  const alertHref = botUsername && product.alert_offer_id
-    ? telegramAlertUrl(botUsername, product.alert_offer_id, alertTarget)
-    : null
+  // Alerta e pe PRODUS: pleaca la orice magazin (decizia 2026-10-03), deci merge si fara oferte
+  const alertHref = botUsername ? telegramAlertUrl(botUsername, product.id, alertTarget) : null
+  // Alerte pe email (double opt-in) — doar daca SMTP + secretul linkurilor sunt configurate
+  const emailEnabled = emailAlertsEnabled()
   const alertProps = alertHref
     ? { href: alertHref, productId: product.id, category: product.category, price: bestOffer?.current_price ?? null, target: alertTarget }
     : null
@@ -227,7 +230,7 @@ export default async function ProductPage({ params }: Props) {
           {/* Actiunile principale: „Vezi oferta” (cea mai ieftina oferta disponibila) + alerta de
               pret. Pe mobil acelasi lucru sta si in bara fixa de jos (MobileActionBar), care se
               ascunde cand blocul acesta e pe ecran. */}
-          {(affiliateProps || alertProps) && (
+          {(affiliateProps || alertProps || emailEnabled) && (
             <div id="actiuni-produs" className="rounded-lg border border-line bg-surface p-4 space-y-3">
               {bestOffer && (
                 <div>
@@ -253,25 +256,35 @@ export default async function ProductPage({ params }: Props) {
                   </PriceAlertButton>
                 )}
               </div>
-              {/* Rândul de beneficiu: descrie EXACT ce face alerta (o oferta, pragul ales, o
+              {/* Rândul de beneficiu: descrie EXACT ce face alerta (orice magazin, pragul ales, o
                   singura data) — fara sa promita ca pretul va scadea (REGULI.md, regula 9).
                   „pe Telegram” trebuie sa ramana vizibil: reclamele promit „Alertă de preț pe Telegram”. */}
-              {alertProps && (
+              {(alertProps || emailEnabled) && (
                 <p className="text-xs text-muted">
                   {bestOffer && alertTarget != null ? (
                     <>
-                      Gratuit, pe Telegram: îți scriem când prețul la{' '}
-                      {bestOffer.retailer_name} ajunge la{' '}
+                      Gratuit, {alertProps && emailEnabled ? 'pe Telegram sau pe email' : alertProps ? 'pe Telegram' : 'pe email'}:
+                      îți scriem când prețul, la oricare dintre magazinele monitorizate, ajunge la{' '}
                       <strong className="text-[var(--color-text)]">{formatPrice(alertTarget)}</strong> sau mai puțin.
-                      Poți alege alt prag în conversație. Fără cont, fără email.
+                      Poți alege alt prag. Fără cont.
                     </>
                   ) : (
                     <>
-                      Gratuit, pe Telegram: alegi prețul dorit și îți scriem când produsul e disponibil
-                      la acel preț sau mai puțin. Fără cont, fără email.
+                      Gratuit, {alertProps && emailEnabled ? 'pe Telegram sau pe email' : alertProps ? 'pe Telegram' : 'pe email'}:
+                      alegi prețul dorit și îți scriem când produsul e disponibil la acel preț sau mai puțin,
+                      la oricare dintre magazinele monitorizate. Fără cont.
                     </>
                   )}
                 </p>
+              )}
+              {emailEnabled && (
+                <EmailAlertForm
+                  productId={product.id}
+                  offerId={bestOffer?.offer_id ?? product.alert_offer_id}
+                  defaultTarget={alertTarget}
+                  category={product.category}
+                  price={bestOffer?.current_price ?? null}
+                />
               )}
             </div>
           )}

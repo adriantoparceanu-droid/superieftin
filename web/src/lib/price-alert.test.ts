@@ -35,14 +35,14 @@ test('prag: fara pret sau pret prea mic → nimic', () => {
 })
 
 test('parametru start: format acceptat de Telegram (<=64, [A-Za-z0-9_-])', () => {
-  assert.equal(alertStartParam('123', 1610), 'offer_123_1610')
-  assert.equal(alertStartParam(123, null), 'offer_123')
-  assert.equal(alertStartParam('123', 1610.7), 'offer_123_1610')
+  assert.equal(alertStartParam('123', 1610), 'prod_123_1610')
+  assert.equal(alertStartParam(123, null), 'prod_123')
+  assert.equal(alertStartParam('123', 1610.7), 'prod_123_1610')
   const p = alertStartParam('9007199254740991', 99999999)
   assert.ok(p.length <= 64 && /^[A-Za-z0-9_-]+$/.test(p))
   assert.throws(() => alertStartParam('12a', 5))
 })
 
 test('link Telegram', () => {
-  assert.equal(telegramAlertUrl('superieftin_bot', '42', 1900), 'https://t.me/superieftin_bot?start=offer_42_1900')
+  assert.equal(telegramAlertUrl('superieftin_bot', '42', 1900), 'https://t.me/superieftin_bot?start=prod_42_1900')
 })

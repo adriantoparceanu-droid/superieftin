@@ -9,4 +9,7 @@ export const COMPANY = {
   email: 'contact@superieftin.ro' as string | null,          // email de contact, ex. 'contact@superieftin.ro'
   privacyEmail: 'contact@superieftin.ro' as string | null,   // email pentru cereri GDPR (poate fi acelasi)
   hosting: 'Contabo GmbH, server în Franța (UE)' as string | null,        // furnizorul VPS + tara, ex. 'Hetzner Online GmbH (Germania)'
+  // Furnizorul de trimitere a emailurilor de alerta (imputernicit GDPR), ex. 'Sendinblue SAS (Brevo), Franța (UE)'.
+  // null = pe /confidentialitate apare categoria generica (nu blocheaza nimic); completeaza-l cand alegi furnizorul.
+  emailProvider: null as string | null,
 }

@@ -5,7 +5,7 @@
 // pretul scade, da un click nou pe „Vezi oferta” si porneste o fereastra noua de comision.
 //
 // Formatul parametrului de start Telegram e citit de bot (worker/src/lib/price-alert.ts,
-// parseAlertStartParam) — modifica-le impreuna.
+// parseAlertStartParam) — modifica-le impreuna. Alerta e pe PRODUS: pleaca la orice magazin.
 
 import { REAL_DISCOUNT_PCT } from './discount'
 
@@ -26,14 +26,15 @@ export function suggestAlertTarget(currentPrice: number | null, medianPrice: num
   return target >= 1 ? target : null
 }
 
-// Parametrul /start al botului: offer_<id> sau offer_<id>_<prag in lei, intreg>.
-// Telegram accepta doar [A-Za-z0-9_-], maxim 64 de caractere.
-export function alertStartParam(offerId: string | number, target: number | null): string {
-  const id = String(offerId)
-  if (!/^\d+$/.test(id)) throw new Error(`offerId invalid: ${id}`)
-  return target != null && target >= 1 ? `offer_${id}_${Math.floor(target)}` : `offer_${id}`
+// Parametrul /start al botului: prod_<id produs> sau prod_<id produs>_<prag in lei, intreg>.
+// Alerta e pe PRODUS (orice magazin). Telegram accepta doar [A-Za-z0-9_-], maxim 64 de caractere.
+// Botul accepta in continuare si linkurile vechi offer_<id oferta>[_<prag>].
+export function alertStartParam(productId: string | number, target: number | null): string {
+  const id = String(productId)
+  if (!/^\d+$/.test(id)) throw new Error(`productId invalid: ${id}`)
+  return target != null && target >= 1 ? `prod_${id}_${Math.floor(target)}` : `prod_${id}`
 }
 
-export function telegramAlertUrl(botUsername: string, offerId: string | number, target: number | null): string {
-  return `https://t.me/${encodeURIComponent(botUsername)}?start=${alertStartParam(offerId, target)}`
+export function telegramAlertUrl(botUsername: string, productId: string | number, target: number | null): string {
+  return `https://t.me/${encodeURIComponent(botUsername)}?start=${alertStartParam(productId, target)}`
 }
