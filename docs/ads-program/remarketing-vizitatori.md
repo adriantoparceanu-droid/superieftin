@@ -17,24 +17,37 @@ Până acum `ad_personalization` era **mereu `denied`**. Cu el refuzat, Google n
 listele de remarketing. Dovada din cont: listele GA4 partajate („All Users of Superieftin.ro – GA4”,
 „Purchasers…”) există în Google Ads, dar au **0 membri**.
 
-Schimbarea de pe branch:
+Schimbarea de pe branch (decizia proprietarului, 2026-10-03: banner cât mai simplu, **fără bifă separată**):
 
 | | Înainte | După |
 |---|---|---|
-| Bife în banner | Necesare · Analiză · Publicitate | + **Reclame personalizate** (separată, implicit nebifată, activă doar cu „Publicitate”) |
-| `ad_personalization` | mereu `denied` | `granted` DOAR cu „Publicitate” + „Reclame personalizate” |
-| „Accept toate” | analiză + publicitate | + reclame personalizate (numite explicit în primul ecran) — **decizie de confirmat cu juristul**; comutator `ACCEPT_ALL_INCLUDES_PERSONALIZATION` în `web/src/lib/consent.ts` |
-| Acorduri date înainte | — | rămân valabile; personalizarea e considerată **refuzată** până o bifează omul din „Setări cookies” (nu redeschidem bannerul și nu ștergem gclid-urile — `CONSENT_VERSION` rămâne 2) |
+| Bife în banner | Necesare · Analiză · Publicitate | neschimbat; „Publicitate” include acum și reclamele personalizate |
+| Primul ecran | — | o singură mențiune scurtă: „publicitatea include și reclame personalizate (remarketing)” |
+| `ad_personalization` | mereu `denied` | = „Publicitate”: acordat ⇒ `ad_storage`, `ad_user_data`, `ad_personalization` toate `granted`; refuzat ⇒ toate `denied` |
+| „Accept toate” / „Refuz toate” | | tot / nimic; butoanele rămân identice ca stil și mărime |
+| Acorduri date înainte (v2, text vechi) | — | rămân valabile pentru măsurare, dar **fără** personalizare (vezi mai jos) |
 | Conversii offline (Data Manager) | `adPersonalization` DENIED | neschimbat (sunt pentru măsurare, nu remarketing) |
 
-Texte noi în `/cookies` (rând în tabel + secțiunea „Reclame personalizate (remarketing), pe scurt”) și în
-`/confidentialitate` (rând în tabel, secțiune nouă, durata în „Cât timp păstrăm datele”). Afirmația
-veche „Nu folosim datele pentru reclame personalizate” a fost restrânsă la conversiile offline.
+**Cei care au acceptat deja „Publicitate” cu textul vechi.** Textul de atunci nu pomenea reclamele
+personalizate, deci acordul lor nu acoperă acest scop. Soluția (cea mai simplă):
+- cookie-ul `se_consent` primește un marcaj `personalization`, scris automat egal cu „Publicitate” la
+  orice salvare de acum înainte (deci îl au doar acordurile date cu textul nou);
+- cookie-urile vechi nu au marcajul → `ad_personalization` rămâne `denied`;
+- `CONSENT_VERSION` rămâne 2: bannerul **nu** reapare și gclid-urile **nu** se șterg (o versiune nouă ar
+  fi făcut `AdClickCapture` să retragă ID-urile tuturor);
+- omul intră în remarketing când își salvează din nou alegerea din „Setări cookies” (vede textul nou) sau
+  când acordul expiră (6 luni) și răspunde din nou la banner.
 
-**Pentru jurist:** (1) e acceptabil ca „Accept toate” să includă reclamele personalizate, dat fiind
-textul din primul ecran? (2) formularea despre Google ca operator pentru propriile date (linkul
-„partner-sites”); (3) durata „cel mult 30 de zile de la ultima vizită” — e adevărată doar după pasul 3
-de mai jos.
+Detaliile sunt în pagini, nu în banner: `/cookies` (rând în tabel + secțiunea „Reclame personalizate
+(remarketing), pe scurt”), `/confidentialitate` (rând în tabel, secțiune nouă, durata în „Cât timp păstrăm
+datele”; afirmația veche „Nu folosim datele pentru reclame personalizate” e restrânsă la conversiile
+offline) și `/termeni`, secțiunea 7 (scurt, cu trimitere spre cele două politici).
+
+**Pentru jurist:** (1) e suficient ca reclamele personalizate să fie incluse în „Publicitate”, cu o
+mențiune scurtă în primul ecran și detaliile în politici? (2) tratarea acordurilor vechi (fără
+personalizare până la o nouă salvare); (3) formularea despre Google ca operator pentru propriile date
+(linkul „partner-sites”); (4) durata „cel mult 30 de zile de la ultima vizită” — e adevărată doar după
+pasul 3 de mai jos.
 
 ## Câți oameni ar intra în listă (estimare prudentă)
 
@@ -44,9 +57,9 @@ de mai jos.
   roboții din 30 sep – 2 oct, deci raportul nu spune nimic despre oameni. După protecția anti-roboți
   (3 oct, după-amiază): 1 click cu acord din ~22 clickuri externe — eșantion prea mic.
 - Realist: din vizitatorii umani, **20–40% apasă „Accept toate”** la un banner cu „Refuz” la fel de vizibil.
-  Dacă „Accept toate” include personalizarea, lista ar strânge ~**40–100 de membri activi / 30 zile**
+  Cu personalizarea inclusă în „Publicitate”, lista ar strânge ~**40–100 de membri activi / 30 zile**
   (după ce Google pierde o parte: Safari, blocare de reclame, browsere fără cookie-uri Google).
-  Dacă personalizarea se dă DOAR din bifa separată, de obicei 1–5% o aleg → practic **0–5 membri**.
+  (acordurile vechi nu contează, dar sunt puține: site-ul are acord de o săptămână).
 - Pragul Google (din dec. 2025, toate rețelele): **minim 100 de utilizatori activi în 30 de zile**. Sub
   prag lista se poate atașa, dar nu influențează nimic. Concluzie: totul e pregătit, dar efectul apare
   abia când traficul crește (ordinul a 1.000+ vizitatori umani pe /p/ pe lună).
@@ -144,9 +157,9 @@ de mai jos.
 ## Riscuri
 
 - **Listă prea mică** (cel mai probabil): nimic nu se întâmplă; costul e zero.
-- **Juridic**: „Accept toate” care include personalizarea; textele noi nevăzute de jurist.
+- **Juridic**: personalizarea inclusă în „Publicitate” fără bifă proprie; textele noi nevăzute de jurist.
 - **Cookie-uri Google**: după deploy verifică în DevTools (Application → Cookies) ce setează Google cu
-  bifa activă și ajustează tabelul din `/cookies` dacă apare ceva nedescris.
+  „Publicitate” acceptată și ajustează tabelul din `/cookies` dacă apare ceva nedescris.
 - **Categorie sensibilă**: dacă audiența ar include Sănătate & Naturale, Google o poate respinge și
   încalcă regula 8 — de aceea lista albă de categorii.
 - **Listele GA4 vechi (540 de zile)** încep să se umple după deploy — pasul 3 e obligatoriu.

@@ -85,7 +85,7 @@ Tot aici verifică **Păstrarea datelor** (Data retention) = **14 luni** — aș
 1. Admin → **Linkuri de produse** (Product links) → **Linkuri Google Ads** → **Asociați** (Link).
 2. Alege contul **276-008-6909** → Înainte.
 3. „Publicitate personalizată”: necesară pentru listele de remarketing din GA4 — **activ-o (sau las-o activă, dacă e deja) abia după
-   deploy-ul bifei „Reclame personalizate”** din banner (vezi `remarketing-vizitatori.md`; până atunci
+   deploy-ul în care „Publicitate” include reclamele personalizate** (vezi `remarketing-vizitatori.md`; până atunci
    listele rămân goale oricum, pentru că `ad_personalization` e refuzat). **Activează** „Etichetare automată”
    (auto-tagging: adaugă `gclid` la clickurile din reclame — fără el nu există potrivire cu comisioanele).
 4. Trimite.
