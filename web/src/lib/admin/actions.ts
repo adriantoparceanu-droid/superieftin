@@ -971,3 +971,43 @@ export async function deleteNameRuleAction(formData: FormData) {
   await pool.query('DELETE FROM name_category_rules WHERE id = $1', [id])
   refresh()
 }
+
+// ---------- Alerte de pret (Admin → Alerte) ----------
+//
+// Protectie: requireAdmin() (sesiunea admin) + verificarea Origin/Host pe care Next o face la
+// orice server action (CSRF). Logurile NU contin adresa de email — doar ID-uri si numere.
+
+// Adresa intreaga a unui abonat, ceruta la click pe „arată” (pagina primeste doar varianta mascata)
+export async function revealSubscriberEmailAction(id: number): Promise<string | null> {
+  await requireAdmin()
+  if (!Number.isInteger(id) || id <= 0) return null
+  const { rows } = await pool.query<{ email: string }>('SELECT email FROM email_subscribers WHERE id = $1', [id])
+  return rows[0]?.email ?? null
+}
+
+// Stergerea completa a unui abonat (cerere GDPR): abonatul + toate alertele lui (ON DELETE CASCADE).
+// Joburile de email deja in coada pentru el se sar singure (nu mai gasesc alerta / abonatul).
+export async function deleteEmailSubscriberAction(formData: FormData) {
+  const admin = await requireAdmin()
+  const id = Number(formData.get('id'))
+  if (!Number.isInteger(id) || id <= 0) return
+  const { rows } = await pool.query<{ deleted: number; alerts: number }>(`
+    WITH n AS (SELECT count(*)::int AS c FROM price_alerts WHERE email_subscriber_id = $1),
+         del AS (DELETE FROM email_subscribers WHERE id = $1 RETURNING id)
+    SELECT (SELECT count(*)::int FROM del) AS deleted, (SELECT c FROM n) AS alerts
+  `, [id])
+  if (rows[0]?.deleted) {
+    console.info(`[admin/alerte] abonat email #${id} sters de admin #${admin.id} (${rows[0].alerts} alerte sterse)`)
+  }
+  refresh()
+}
+
+// Stergerea unei singure alerte pe email (abonatul ramane)
+export async function deleteEmailAlertAction(formData: FormData) {
+  const admin = await requireAdmin()
+  const id = Number(formData.get('id'))
+  if (!Number.isInteger(id) || id <= 0) return
+  const r = await pool.query('DELETE FROM price_alerts WHERE id = $1 AND email_subscriber_id IS NOT NULL', [id])
+  if (r.rowCount) console.info(`[admin/alerte] alerta email #${id} stearsa de admin #${admin.id}`)
+  refresh()
+}
