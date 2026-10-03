@@ -5,6 +5,7 @@ import { getCategoryProducts, getCategoryProductCount, getCategoryBrands, getCat
 import { ProductCard } from '@/components/ProductCard'
 import { Pagination } from '@/components/Pagination'
 import { CategoryIcon } from '@/components/CategoryIcon'
+import { CategoryContent } from '@/components/CategoryContent'
 
 export const dynamic = 'force-dynamic'
 
@@ -299,6 +300,12 @@ export default async function CategoryPage({ params, searchParams }: Props) {
             </a>
           )}
         </div>
+      )}
+
+      {/* Text + întrebări frecvente (pachetul SEO B, migrația 030) — doar pe pagina 1 fără filtre,
+          ca variantele ?page / ?brand / ?sort / ?tot să nu repete același text */}
+      {currentPage === 1 && !brandValue && sortValue === 'price' && !includeSub && (
+        <CategoryContent slug={categorie} name={label} />
       )}
     </>
   )
