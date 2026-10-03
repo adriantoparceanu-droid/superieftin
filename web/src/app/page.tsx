@@ -14,18 +14,28 @@ import { HeroBanners } from '@/components/HeroBanners'
 import { AdConsentGate } from '@/components/consent/AdConsentGate'
 import { BenefitsBar } from '@/components/BenefitsBar'
 import { RetailerStrip } from '@/components/RetailerStrip'
+import { getSiteFacts } from '@/lib/seo/site-facts'
+import { withOg } from '@/lib/seo/og'
+import { SITE_URL, roCount } from '@/lib/seo/site'
 
 export const dynamic = 'force-dynamic'
 
-export const metadata: Metadata = {
-  title: 'Reduceri reale pe piața din România',
-  description:
-    'Comparăm prețurile față de mediana ultimelor 30 de zile — nu față de prețul vechi afișat de magazine. Fără trucuri, doar date reale.',
-  alternates: { canonical: '/' },
-  openGraph: {
-    title: 'SuperIeftin.ro — Reduceri reale pe piața din România',
-    description: 'Comparăm prețurile față de mediana ultimelor 30 de zile.',
-  },
+// Titlul cu brand + ce face site-ul (template-ul „%s | superieftin.ro” nu se aplica pe radacina,
+// deci titlul era fara brand). Descrierea are cifre live (lib/seo/site-facts.ts, cache 1 h).
+const HOME_TITLE = 'superieftin.ro — comparator de prețuri cu istoric și reduceri reale'
+
+export async function generateMetadata(): Promise<Metadata> {
+  const facts = await getSiteFacts().catch(() => null)
+  const tracked = facts && facts.products > 0
+    ? `Urmărim zilnic ${roCount(facts.products, 'produse', 'produs')} de la ${roCount(facts.retailers, 'magazine online', 'magazin online')} din România. `
+    : 'Urmărim zilnic prețurile magazinelor online din România. '
+  const description = `${tracked}Comparăm prețul de azi cu mediana ultimelor 30 de zile — nu cu prețul vechi afișat de magazin.`
+  return {
+    title: { absolute: HOME_TITLE },
+    description,
+    alternates: { canonical: '/' },
+    openGraph: withOg({ title: HOME_TITLE, description, url: `${SITE_URL}/` }),
+  }
 }
 
 const FEATURED_SECTIONS = 3
@@ -62,25 +72,13 @@ export default async function HomePage() {
   const carouselProducts = isRealDiscount ? discounts : cheapest
   const totalProducts = categories.reduce((sum, c) => sum + c.count, 0)
 
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'WebSite',
-    name: 'superieftin.ro',
-    url: 'https://www.superieftin.ro',
-    description: 'Comparator de prețuri cu istoric — reduceri reale pe piața din România',
-    potentialAction: {
-      '@type': 'SearchAction',
-      target: 'https://www.superieftin.ro/cautare?q={search_term_string}',
-      'query-input': 'required name=search_term_string',
-    },
-  }
+  // JSON-LD WebSite (+ SearchAction) si Organization sunt acum in layout, pe toate paginile
+  // (lib/seo/jsonld.ts), cu @id comun.
 
   const hero = <HeroBanners heroProduct={heroProduct} isRealDiscount={isRealDiscount} secondaryCategory={null} />
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-
       {/* Rand principal stil Porto: meniu vertical (stanga) + coloana de bannere (dreapta):
           un banner mare sus + doua mici sub el, toate administrabile din /admin/bannere.
           Slotul mare cade pe hero-ul generat automat cat timp nu exista banner activ. */}
@@ -128,6 +126,13 @@ export default async function HomePage() {
           <h2 className="text-lg font-bold font-archivo text-[var(--color-text)]">
             {isRealDiscount ? '🔥 Top reduceri reale' : '💰 Cele mai mici prețuri acum'}
           </h2>
+          {/* Legatura interna spre hubul /reduceri-reale (raport SEO, A8) */}
+          <Link
+            href="/reduceri-reale"
+            className="text-sm text-brand hover:text-brand-dark font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 rounded"
+          >
+            Reduceri reale pe categorii →
+          </Link>
         </div>
         {carouselProducts.length > 0 ? (
           <ProductCarousel products={carouselProducts} />

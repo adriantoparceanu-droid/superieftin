@@ -1,4 +1,6 @@
 import { COMPANY } from '../company'
+import { ORGANIZATION_ID } from '../seo/site'
+import { productLd as productLdBase } from '../seo/jsonld'
 import type { Guide, GuideAuthor, LiveProduct } from './queries'
 
 // Date structurate (schema.org) pentru pagina de ghid.
@@ -20,10 +22,12 @@ function personOrOrg(a: GuideAuthor) {
   }
 }
 
-// Editorul (publisher) = site-ul, operat de firma din company.ts (singura sursa pentru datele firmei)
+// Editorul (publisher) = site-ul, operat de firma din company.ts (singura sursa pentru datele firmei).
+// Acelasi @id ca Organization-ul din layout (lib/seo/jsonld.ts) → o singura entitate pe tot site-ul.
 export function publisherLd() {
   return {
     '@type': 'Organization',
+    '@id': ORGANIZATION_ID,
     name: 'superieftin.ro',
     url: SITE_URL,
     ...(COMPANY.name ? { legalName: COMPANY.name } : {}),
@@ -82,27 +86,18 @@ export function faqLd(guide: Guide) {
   }
 }
 
-// Product + offers, identic ca structura cu /p/[slug] (doar ofertele disponibile acum).
+// Product + AggregateOffer, acelasi constructor ca /p/[slug] (lib/seo/jsonld.ts): doar ofertele
+// disponibile acum, Offer.url = pagina produsului (nu /go/ — blocat in robots.txt, redirect afiliat).
 // Produsele fara nicio oferta disponibila nu se marcheaza (Google cere offers pe Product).
 export function productLd(p: LiveProduct) {
-  if (!p.offers.length) return null
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'Product',
+  return productLdBase({
+    id: p.id,
     name: p.name,
-    image: p.image_url ?? undefined,
-    url: `${SITE_URL}/p/${p.slug}`,
-    brand: p.brand ? { '@type': 'Brand', name: p.brand } : undefined,
-    category: p.category,
-    offers: p.offers.map((o) => ({
-      '@type': 'Offer',
-      price: o.current_price,
-      priceCurrency: 'RON',
-      availability: 'https://schema.org/InStock',
-      seller: { '@type': 'Organization', name: o.retailer_name },
-      url: `${SITE_URL}/go/${o.offer_id}`,
-    })),
-  }
+    slug: p.slug,
+    image: p.image_url,
+    brand: p.brand,
+    offers: p.offers.map((o) => ({ price: o.current_price, retailer: o.retailer_name })),
+  })
 }
 
 // JSON in <script>: „<” scapat, ca un titlu cu „</script>” sa nu poata inchide tagul

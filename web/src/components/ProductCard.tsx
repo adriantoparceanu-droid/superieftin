@@ -41,9 +41,10 @@ export function ProductCard({ product }: ProductCardProps) {
         <VerdictBadge discountPct={product.discount_pct} />
 
         <SelectItemLink href={`/p/${product.slug}`} item={gaItem} className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 rounded">
-          <h2 className="text-sm font-medium text-[var(--color-text)] line-clamp-2 leading-snug hover:text-brand transition-colors mt-1 mb-1">
+          {/* h3: cardul sta sub un titlu de sectiune (h2); cu h2 aici, homepage-ul avea 23 de h2 */}
+          <h3 className="text-sm font-medium text-[var(--color-text)] line-clamp-2 leading-snug hover:text-brand transition-colors mt-1 mb-1">
             {product.name}
-          </h2>
+          </h3>
         </SelectItemLink>
 
         {product.brand && (

@@ -28,6 +28,12 @@ export interface ProductDetail {
   brand: string | null
   image_url: string | null
   updated_at: string
+  part_no: string | null          // codul producatorului / EAN din feed (JSON-LD: mpn sau gtin)
+  category_id: number | null
+  category_name: string | null    // numele categoriei (breadcrumb JSON-LD)
+  parent_slug: string | null      // parintele categoriei, daca exista
+  parent_name: string | null
+  tags: string[]                  // slug-urile tag-urilor (refurbished, second-hand → itemCondition)
   offers: OfferRow[]              // DOAR ofertele disponibile (lib/availability.ts)
   alert_offer_id: string | null   // oferta pentru alerta de pret (si cand nu e nimic disponibil)
   last_seen: string | null        // ultima confirmare a oricarei oferte (pentru „indisponibil”)
@@ -426,9 +432,14 @@ export const getSubcategories = unstable_cache(
 export const getProductDetail = unstable_cache(
   async (slug: string): Promise<ProductDetail | null> => {
     const productRes = await pool.query(`
-      SELECT id::text, name, slug, category, brand, image_url, updated_at::text
-      FROM products
-      WHERE slug = $1
+      SELECT p.id::text, p.name, p.slug, p.category, p.brand, p.image_url, p.updated_at::text,
+             p.part_no, p.category_id, c.name AS category_name, pc.slug AS parent_slug, pc.name AS parent_name,
+             COALESCE((SELECT array_agg(t.slug ORDER BY t.slug) FROM product_tags pt JOIN tags t ON t.id = pt.tag_id
+                       WHERE pt.product_id = p.id), '{}') AS tags
+      FROM products p
+      LEFT JOIN categories c ON c.id = p.category_id
+      LEFT JOIN categories pc ON pc.id = c.parent_id
+      WHERE p.slug = $1
     `, [slug])
 
     if (productRes.rows.length === 0) return null
@@ -470,7 +481,7 @@ export const getProductDetail = unstable_cache(
       last_seen: byRecent[0]?.last_checked ?? null,
     }
   },
-  ['product-detail'],
+  ['product-detail-v2'],
   { revalidate: 3600, tags: ['products'] }
 )
 
@@ -521,19 +532,21 @@ export interface CategoryRecord {
   parent_id: number | null
   parent_name: string | null
   parent_slug: string | null
+  is_visible: boolean        // false = ascunsa din admin → /c/<slug> raspunde 404
 }
 
 // Categoria dupa slug, cu parintele ei (pentru titlu + breadcrumbs)
 export const getCategoryBySlug = unstable_cache(
   async (slug: string): Promise<CategoryRecord | null> => {
     const { rows } = await pool.query<CategoryRecord>(`
-      SELECT c.id, c.name, c.slug, c.parent_id, pc.name AS parent_name, pc.slug AS parent_slug
+      SELECT c.id, c.name, c.slug, c.parent_id, pc.name AS parent_name, pc.slug AS parent_slug,
+             (c.is_visible AND COALESCE(pc.is_visible, true)) AS is_visible
       FROM categories c LEFT JOIN categories pc ON pc.id = c.parent_id
       WHERE c.slug = $1
     `, [slug])
     return rows[0] ?? null
   },
-  ['category-by-slug'],
+  ['category-by-slug-v2'],
   { revalidate: 3600, tags: ['categories'] }
 )
 
@@ -705,18 +718,43 @@ export const getTagProductCount = unstable_cache(
   { revalidate: 3600, tags: ['products'] }
 )
 
-// Toate produsele pentru sitemap
+// Toate produsele pentru sitemap (si generateStaticParams pe /p/).
+// `lastmod` = momentul ULTIMEI SCHIMBARI DE PRET (nu products.updated_at, care se atinge la fiecare
+// sync si facea ca 97% din sitemap sa fie „modificat azi” — Google ignora un lastmod care minte).
+// Per oferta disponibila: prima inregistrare din ultimul sir de preturi egale cu pretul curent,
+// cautata doar in ultimele 90 de zile (partitiile vechi nu se citesc; cheia (offer_id, recorded_at)
+// face fiecare cautare un index scan scurt). Daca pretul NU s-a schimbat in 90 de zile, data reala
+// e mai veche si n-o stim → null (fara <lastmod>; altfel data ar „aluneca” zilnic odata cu
+// fereastra), cu exceptia ofertelor noi (create in fereastra) → prima lor inregistrare.
+// Ordinea dupa id e stabila, ca impartirea sitemap-ului pe fisiere sa nu se miste.
 export const getAllProductSlugs = unstable_cache(
-  async (): Promise<Array<{ slug: string; updated_at: string }>> => {
+  async (): Promise<Array<{ slug: string; lastmod: string | null }>> => {
     const { rows } = await pool.query(`
-      SELECT p.slug, p.updated_at::text FROM products p
+      SELECT p.slug, max(lc.changed_at) AS lastmod
+      FROM products p
+      JOIN offers o ON o.product_id = p.id AND ${OFFER_AVAILABLE_SQL}
+      LEFT JOIN LATERAL (
+        SELECT max(ph2.recorded_at) AS last_diff
+        FROM price_history ph2
+        WHERE ph2.offer_id = o.id
+          AND ph2.recorded_at >= now() - INTERVAL '90 days'
+          AND ph2.price IS DISTINCT FROM o.current_price
+      ) d ON true
+      LEFT JOIN LATERAL (
+        SELECT min(ph.recorded_at) AS changed_at
+        FROM price_history ph
+        WHERE ph.offer_id = o.id
+          AND ph.recorded_at >= now() - INTERVAL '90 days'
+          AND ph.recorded_at > COALESCE(d.last_diff, '-infinity'::timestamptz)
+          AND (d.last_diff IS NOT NULL OR o.created_at >= now() - INTERVAL '90 days')
+      ) lc ON true
       -- doar produsele cu cel putin o oferta disponibila (cele „indisponibile” nu se indexeaza)
-      WHERE EXISTS (SELECT 1 FROM offers o WHERE o.product_id = p.id AND ${OFFER_AVAILABLE_SQL})
-      ORDER BY p.updated_at DESC
+      GROUP BY p.id, p.slug
+      ORDER BY p.id
     `)
-    return rows
+    return rows.map((r) => ({ slug: r.slug as string, lastmod: r.lastmod ? new Date(r.lastmod).toISOString() : null }))
   },
-  ['all-slugs'],
+  ['all-slugs-v2'],
   { revalidate: 86400, tags: ['products'] }
 )
 

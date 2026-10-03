@@ -2,8 +2,11 @@ import Link from 'next/link'
 import { CookieSettingsButton } from '@/components/consent/CookieSettingsButton'
 
 // Paginile de incredere — Google le cere vizibile pe orice pagina a unui site de afiliere
+// + legaturi interne spre hubul de reduceri reale si metodologie (raport SEO 2026-10-04, A8)
 const FOOTER_LINKS: [string, string][] = [
+  ['/reduceri-reale', 'Reduceri reale'],
   ['/ghiduri', 'Ghiduri'],
+  ['/ghiduri/metodologie', 'Metodologie'],
   ['/despre', 'Despre noi'],
   ['/contact', 'Contact'],
   ['/confidentialitate', 'Confidențialitate'],

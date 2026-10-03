@@ -4,6 +4,9 @@ import Link from 'next/link'
 import { getCategoryBySlug, getLandingProducts } from '@/lib/queries'
 import { ProductCard } from '@/components/ProductCard'
 import { REAL_DISCOUNT_PCT } from '@/lib/discount'
+import { breadcrumbLd, itemListLd, ldScript } from '@/lib/seo/jsonld'
+import { withOg } from '@/lib/seo/og'
+import { absUrl } from '@/lib/seo/site'
 
 // Landing page pentru reclamele Search: doar reduceri reale (≥5% sub mediana 30 de zile),
 // sortate dupa procent. Tot ce promite anuntul trebuie sa fie adevarat aici (REGULI.md, regula 9).
@@ -38,7 +41,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title,
     description,
     alternates: { canonical: `/reduceri-reale/${categorie}` },
-    openGraph: { title, description },
+    openGraph: withOg({ title, description, url: absUrl(`/reduceri-reale/${categorie}`) }),
   }
 }
 
@@ -64,8 +67,20 @@ export default async function LandingPage({ params }: Props) {
   const lastMs = Math.max(0, ...shown.map((p) => (p.last_checked ? new Date(p.last_checked).getTime() : 0)))
   const lastChecked = formatCheckedAt(lastMs ? new Date(lastMs).toISOString() : null)
 
+  // Date structurate (raport SEO, A8): lista produselor afisate + breadcrumb. Textul vizibil al
+  // landing-ului (folosit de reclame) ramane neschimbat.
+  const pageTitle = `Reduceri reale la ${lowerFirst(category.name)}`
+  const listLd = itemListLd(pageTitle, shown.map((p) => ({ name: p.name, path: `/p/${p.slug}` })))
+  const crumbsLd = breadcrumbLd([
+    { name: 'Acasă', path: '/' },
+    { name: category.name, path: `/c/${category.slug}` },
+    { name: pageTitle, path: `/reduceri-reale/${category.slug}` },
+  ])
+
   return (
     <>
+      {shown.length > 0 && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldScript(listLd) }} />}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldScript(crumbsLd) }} />
       <nav aria-label="Breadcrumb" className="text-xs text-muted mb-3">
         <Link href="/" className="hover:underline">Acasă</Link>
         {' / '}
@@ -93,6 +108,7 @@ export default async function LandingPage({ params }: Props) {
           <p className="text-sm text-muted mb-3">
             {deals.length === 1 ? '1 reducere reală' : `${deals.length} reduceri reale`}, ordonate după procent
           </p>
+          <h2 className="sr-only">Produse</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {deals.map((product) => (
               <ProductCard key={product.offer_id} product={product} />
@@ -126,6 +142,15 @@ export default async function LandingPage({ params }: Props) {
       <p className="mt-8 text-sm">
         <Link href={`/c/${category.slug}`} className="text-brand underline underline-offset-2">
           Vezi toate produsele din {lowerFirst(category.name)}
+        </Link>
+      </p>
+      {/* Legaturi suplimentare (raport SEO, A8): linkul „Cum verificăm” de sus ramane spre /despre */}
+      <p className="mt-2 text-sm flex flex-wrap gap-x-5 gap-y-1">
+        <Link href="/ghiduri/metodologie" className="text-brand underline underline-offset-2">
+          Metodologia completă
+        </Link>
+        <Link href="/reduceri-reale" className="text-brand underline underline-offset-2">
+          Reduceri reale în alte categorii
         </Link>
       </p>
     </>
