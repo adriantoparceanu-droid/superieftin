@@ -3,6 +3,7 @@ import pino from 'pino'
 import { escHtml } from '../lib/admin-telegram.js'
 import { checkTarget, formatRon, parseAlertStartParam, parseTypedPrice, siteUrl } from '../lib/price-alert.js'
 import { PRODUCT_BEST_PRICE_SQL } from '../lib/alert-sql.js'
+import { alertRearmPct, rearmThreshold } from '../lib/alert-rearm.js'
 
 const logger = pino({ level: 'info' })
 const TOKEN = process.env.TELEGRAM_BOT_TOKEN
@@ -41,11 +42,12 @@ async function getOrCreateUser(chatId: number, username?: string, firstName?: st
 
 // O singura alerta activa per utilizator + produs: un al doilea click pe buton (sau o suma noua
 // trimisa in chat) schimba pragul, nu dubleaza alerta. Pe Telegram alerta e confirmata din start
-// (vizitatorul a pornit singur conversatia), deci confirmed_at = acum.
+// (vizitatorul a pornit singur conversatia), deci confirmed_at = acum. Un prag nou = alerta ARMATA
+// din nou (pragul e oricum sub pretul de acum).
 async function saveAlert(userId: number, productId: number, target: number) {
   const upd = await pool.query(
-    `UPDATE price_alerts SET target_price = $3
-     WHERE telegram_user_id = $1 AND product_id = $2 AND is_active = true AND triggered_at IS NULL`,
+    `UPDATE price_alerts SET target_price = $3, triggered_at = NULL, updated_at = now()
+     WHERE telegram_user_id = $1 AND product_id = $2 AND is_active = true`,
     [userId, productId, target]
   )
   if (!upd.rowCount) {
@@ -94,7 +96,7 @@ async function handleStart(chatId: number, param: string | null, username?: stri
       const userId = await getOrCreateUser(chatId, username, firstName)
       await saveAlert(userId, productId, parsed.target)
       await sendMsg(chatId,
-        `✅ <b>Alertă salvată</b>\n\n<b>${escHtml(name)}</b>\n${priceLine}Te anunțăm când prețul, la oricare dintre magazinele monitorizate, ajunge la <b>${formatRon(parsed.target)} RON</b> sau mai puțin.\n\nVrei alt prag? Trimite suma în RON (ex: <code>${Math.floor(parsed.target * 0.95)}</code>).\n/alertele_mele — toate alertele tale · /sterge &lt;id&gt; — oprește o alertă`
+        `✅ <b>Alertă salvată</b>\n\n<b>${escHtml(name)}</b>\n${priceLine}Te anunțăm când prețul, la oricare dintre magazinele monitorizate, ajunge la <b>${formatRon(parsed.target)} RON</b> sau mai puțin — și din nou la fiecare scădere nouă sub prag (cel mult un mesaj pe zi).\n\nVrei alt prag? Trimite suma în RON (ex: <code>${Math.floor(parsed.target * 0.95)}</code>).\n/alertele_mele — toate alertele tale · /sterge &lt;id&gt; — oprește o alertă`
       )
       return
     }
@@ -113,7 +115,8 @@ async function handleStart(chatId: number, param: string | null, username?: stri
 async function handleAlerteleMele(chatId: number) {
   const userId = await getOrCreateUser(chatId)
   const { rows } = await pool.query(
-    `SELECT pa.id, p.name, pa.target_price, ${PRODUCT_BEST_PRICE_SQL} AS current_price
+    `SELECT pa.id, p.name, pa.target_price, ${PRODUCT_BEST_PRICE_SQL} AS current_price,
+            pa.triggered_at IS NULL AS armed, pa.trigger_price::float AS trigger_price
      FROM price_alerts pa
      JOIN products p ON p.id = pa.product_id
      WHERE pa.telegram_user_id = $1 AND pa.is_active = true
@@ -132,11 +135,16 @@ async function handleAlerteleMele(chatId: number) {
   const list = rows.map(r => {
     const target = parseFloat(r.target_price).toLocaleString('ro-RO', { minimumFractionDigits: 2 })
     const current = r.current_price != null ? `${formatRon(Number(r.current_price))} RON` : 'indisponibil'
-    return `<b>${r.id}.</b> ${escHtml(r.name)}\n   Prag: ${target} RON (cel mai mic preț acum: ${current})`
+    // Starea (re-armare, lib/alert-rearm.ts): activa = asteapta scaderea; trimisa = asteapta ca
+    // pretul sa urce peste prag + marja, apoi te anuntam la urmatoarea scadere
+    const state = r.armed
+      ? '🟢 activă — te anunțăm când ajunge la prag'
+      : `🔔 trimisă${r.trigger_price != null ? ` (la ${formatRon(Number(r.trigger_price))} RON)` : ''} — te anunțăm din nou după ce prețul urcă peste ${formatRon(rearmThreshold(Number(r.target_price), alertRearmPct()))} RON și scade iar la prag`
+    return `<b>${r.id}.</b> ${escHtml(r.name)}\n   Prag: ${target} RON (cel mai mic preț acum: ${current})\n   ${state}`
   }).join('\n\n')
 
   await sendMsg(chatId,
-    `📋 <b>Alertele tale active:</b>\n\n${list}\n\n/sterge &lt;id&gt; — pentru a șterge o alertă`
+    `📋 <b>Alertele tale:</b>\n\n${list}\n\n/sterge &lt;id&gt; — oprește (șterge) o alertă`
   )
 }
 
@@ -151,7 +159,7 @@ async function handleSterge(chatId: number, alertId: number) {
   if (!rowCount) {
     await sendMsg(chatId, '❌ Alerta nu a fost găsită sau a fost deja ștearsă.')
   } else {
-    await sendMsg(chatId, '✅ Alertă ștearsă.')
+    await sendMsg(chatId, '✅ Alertă oprită. Nu te mai anunțăm pentru acest produs.')
   }
 }
 

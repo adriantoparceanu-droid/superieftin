@@ -21,13 +21,16 @@ import { planDigest, type DigestCandidate } from '../lib/email/digest.js'
 import { signAlertToken } from '../lib/alert-token.js'
 import { pickTriggerOffer, type AlertOffer } from '../lib/price-alert.js'
 import { ALERT_HAS_TRIGGER_SQL, ALERT_OFFERS_JSON_SQL } from '../lib/alert-sql.js'
+import { alertRearmPct, bestAvailablePrice, decideAlert, rearmThreshold } from '../lib/alert-rearm.js'
+import { deleteIdleAlerts, markNotified, rearmAlerts } from '../lib/alert-lifecycle.js'
 
 const logger = pino({ level: 'info' })
 
 // Abonarile neconfirmate se sterg dupa atatea zile (promis in /confidentialitate)
 export const UNCONFIRMED_TTL_DAYS = 7
-// Alertele deja trimise raman vizibile in „Alertele mele” atatea zile, apoi se sterg;
-// abonatul fara nicio alerta (si fara email in perioada asta) se sterge si el.
+// Alertele OPRITE (legacy: inainte de re-armare, alerta se oprea dupa primul anunt) se sterg dupa
+// atatea zile de la anunt; abonatul fara nicio alerta (si fara email in perioada asta) se sterge si
+// el. Alertele vii (armate / trimise, asteapta re-armarea) au limita lor: deleteIdleAlerts (12 luni).
 export const SENT_ALERT_TTL_DAYS = 90
 
 export type EmailJobData = { alertId: number } | { subscriberId: number } | Record<string, never>
@@ -68,7 +71,8 @@ export async function sendManageLinkEmail(cfg: EmailConfig, mailer: Pick<Transpo
 }
 
 // Curatenie GDPR: abonari neconfirmate (7 zile), alerte trimise vechi, abonati ramasi fara alerte
-export async function cleanupEmailAlerts(): Promise<{ unconfirmedAlerts: number; unconfirmedSubscribers: number; oldAlerts: number; emptySubscribers: number }> {
+export async function cleanupEmailAlerts(): Promise<{ unconfirmedAlerts: number; unconfirmedSubscribers: number; oldAlerts: number; idleAlerts: number; emptySubscribers: number }> {
+  const idleAlerts = await deleteIdleAlerts()
   const a = await pool.query(
     `DELETE FROM price_alerts
      WHERE email_subscriber_id IS NOT NULL AND confirmed_at IS NULL
@@ -94,11 +98,30 @@ export async function cleanupEmailAlerts(): Promise<{ unconfirmedAlerts: number;
        AND NOT EXISTS (SELECT 1 FROM price_alerts pa WHERE pa.email_subscriber_id = es.id)`,
     [SENT_ALERT_TTL_DAYS],
   )
-  return { unconfirmedAlerts: a.rowCount ?? 0, unconfirmedSubscribers: s.rowCount ?? 0, oldAlerts: o.rowCount ?? 0, emptySubscribers: e.rowCount ?? 0 }
+  return { unconfirmedAlerts: a.rowCount ?? 0, unconfirmedSubscribers: s.rowCount ?? 0, oldAlerts: o.rowCount ?? 0, idleAlerts, emptySubscribers: e.rowCount ?? 0 }
 }
 
-// Alertele confirmate, active, pentru care exista ACUM o oferta disponibila la sau sub prag
-export async function loadDigestCandidates(): Promise<DigestCandidate[]> {
+// Re-armare (lib/alert-rearm.ts): alertele pe email TRIMISE al caror cel mai mic pret disponibil a
+// urcat peste prag + ALERT_REARM_PCT redevin ARMATE. Fara oferta disponibila raman in asteptare.
+export async function rearmEmailAlerts(nowMs = Date.now()): Promise<number> {
+  const { rows } = await pool.query(`
+    SELECT pa.id, pa.target_price::float AS target_price, ${ALERT_OFFERS_JSON_SQL} AS offers
+    FROM price_alerts pa
+    WHERE pa.email_subscriber_id IS NOT NULL AND pa.is_active = true
+      AND pa.confirmed_at IS NOT NULL AND pa.triggered_at IS NOT NULL
+  `)
+  const rearmPct = alertRearmPct()
+  const ids = rows
+    .filter((r) => decideAlert(
+      { armed: false, target: r.target_price, bestPrice: bestAvailablePrice(r.offers as AlertOffer[]), lastNotifiedAt: null },
+      { rearmPct, minIntervalHours: null, nowMs },
+    ) === 'rearm')
+    .map((r) => r.id as number)
+  return rearmAlerts(ids)
+}
+
+// Alertele confirmate, ARMATE, pentru care exista ACUM o oferta disponibila la sau sub prag
+export async function loadDigestCandidates(nowMs = Date.now()): Promise<DigestCandidate[]> {
   const { rows } = await pool.query(`
     SELECT pa.id AS alert_id, pa.target_price::float AS target_price,
            es.id AS subscriber_id, es.email, to_json(es.last_digest_at) #>> '{}' AS last_digest_at,
@@ -110,9 +133,13 @@ export async function loadDigestCandidates(): Promise<DigestCandidate[]> {
     WHERE pa.is_active = true AND pa.triggered_at IS NULL AND pa.confirmed_at IS NOT NULL
       AND ${ALERT_HAS_TRIGGER_SQL}
   `)
+  const rearmPct = alertRearmPct()
   const out: DigestCandidate[] = []
   for (const r of rows) {
-    const best = pickTriggerOffer(r.offers as AlertOffer[], r.target_price)
+    const offers = r.offers as AlertOffer[]
+    // Pe email plafonul e per abonat (digest.ts), nu per alerta
+    const d = decideAlert({ armed: true, target: r.target_price, bestPrice: bestAvailablePrice(offers), lastNotifiedAt: null }, { rearmPct, minIntervalHours: null, nowMs })
+    const best = d === 'notify' ? pickTriggerOffer(offers, r.target_price) : null
     if (!best) continue
     out.push({
       alertId: r.alert_id, subscriberId: r.subscriber_id, email: r.email, lastDigestAt: r.last_digest_at,
@@ -131,8 +158,12 @@ export async function runEmailDigest(
   const cleanup = await cleanupEmailAlerts()
   if (Object.values(cleanup).some((n) => n > 0)) logger.info(cleanup, 'Alerte email: curatenie')
 
-  const candidates = await loadDigestCandidates()
+  const rearmed = await rearmEmailAlerts(nowMs)
+  if (rearmed) logger.info({ rearmed }, 'Alerte email: re-armate')
+
+  const candidates = await loadDigestCandidates(nowMs)
   const plan = planDigest(candidates, nowMs, cfg.minIntervalHours)
+  const rearmPct = alertRearmPct()
   let emails = 0, alerts = 0, failed = 0
 
   for (const batch of plan.batches) {
@@ -151,7 +182,7 @@ export async function runEmailDigest(
       await sendEmail(mailer, cfg, batch.email, renderDigestEmail({
         items: batch.items.map((i) => ({
           productName: i.productName, productSlug: i.productSlug, retailerName: i.retailerName,
-          price: i.price, targetPrice: i.targetPrice,
+          price: i.price, targetPrice: i.targetPrice, rearmPrice: rearmThreshold(i.targetPrice, rearmPct),
         })),
         links: linksFor(cfg, batch.subscriberId),
       }))
@@ -163,21 +194,17 @@ export async function runEmailDigest(
       continue
     }
 
-    // Alerta se opreste dupa trimitere (ca pe Telegram); retinem ce a declansat-o
+    // Alerta trece in TRIMISA (asteapta re-armarea); retinem ce a declansat-o
     const byId = new Map(candidates.filter((c) => c.subscriberId === batch.subscriberId).map((c) => [c.alertId, c]))
     for (const id of batch.alertIds) {
       const c = byId.get(id)
-      await pool.query(
-        `UPDATE price_alerts SET is_active = false, triggered_at = now(), trigger_offer_id = $2, trigger_price = $3
-         WHERE id = $1 AND is_active = true`,
-        [id, c?.offerId ?? null, c?.price ?? null],
-      )
+      await markNotified(id, c?.offerId ?? null, c?.price ?? null)
     }
     emails++
     alerts += batch.alertIds.length
   }
 
-  const result = { candidates: candidates.length, emails, alerts, deferred: plan.deferred.length, failed }
+  const result = { candidates: candidates.length, emails, alerts, deferred: plan.deferred.length, failed, rearmed }
   if (candidates.length) logger.info(result, 'Alerte email: digest')
   return result
 }

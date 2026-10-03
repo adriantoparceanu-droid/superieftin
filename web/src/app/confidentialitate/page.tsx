@@ -238,11 +238,13 @@ export default function ConfidentialitatePage() {
           automat, indiferent dacă a dus la o comandă (codul de click rămâne, fără identificatorul Google).
           Îl ștergem mai devreme dacă îți retragi acordul sau dacă acordul expiră.</li>
         <li>Datele Google Analytics: 14 luni (setarea din Google Analytics).</li>
-        <li>Alertele Telegram: până le ștergi (comanda <code>/sterge</code>) sau ne ceri ștergerea.</li>
-        <li>Alertele pe email: cererile neconfirmate, 7 zile; alertele active, până le ștergi sau te
-          dezabonezi; alertele deja trimise, 90 de zile (le vezi în „Alertele mele”); adresa de email,
-          până te dezabonezi sau până trec 90 de zile fără nicio alertă și fără niciun email de la noi.
-          La dezabonare ștergem imediat adresa și toate alertele.</li>
+        <li>Alertele Telegram: până le oprești (comanda <code>/sterge</code>) sau ne ceri ștergerea, dar
+          cel mult 12 luni fără nicio activitate (anunț, re-armare sau schimbare de prag).</li>
+        <li>Alertele pe email: cererile neconfirmate, 7 zile; alertele confirmate rămân active și după
+          un anunț (te anunțăm din nou la următoarea scădere sub prag), până le oprești sau te dezabonezi,
+          dar cel mult 12 luni fără nicio activitate (anunț, re-armare sau schimbare de prag) — apoi le
+          ștergem automat; adresa de email, până te dezabonezi sau până trec 90 de zile fără nicio
+          alertă și fără niciun email de la noi. La dezabonare ștergem imediat adresa și toate alertele.</li>
         <li>Jurnalele tehnice: cât e necesar pentru securitate, de regulă câteva săptămâni.</li>
       </ul>
 

@@ -384,8 +384,7 @@ export async function runPriceCheck(jobId = 'direct') {
     WHERE p.part_no IS NOT NULL AND (
       EXISTS (
         SELECT 1 FROM price_alerts pa
-        WHERE pa.product_id = p.id AND pa.is_active = true AND pa.triggered_at IS NULL
-          AND pa.confirmed_at IS NOT NULL
+        WHERE pa.product_id = p.id AND pa.is_active = true AND pa.confirmed_at IS NOT NULL
       )
       OR EXISTS (
         SELECT 1 FROM click_events ce JOIN offers o2 ON o2.id = ce.offer_id

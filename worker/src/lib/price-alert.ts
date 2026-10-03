@@ -75,13 +75,16 @@ export function formatRon(n: number): string {
   return n.toLocaleString('ro-RO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
-// Mesajul alertei. Spune doar ce s-a intamplat (pretul de la magazinul X a ajuns la Y, sub
-// pragul ales) — fara „reducere”, procente sau promisiuni (REGULI.md, regula 9).
+// Mesajul alertei (Telegram). Spune doar ce s-a intamplat (pretul de la magazinul X a ajuns la Y,
+// la sau sub pragul ales) — fara „reducere”, procente sau promisiuni (REGULI.md, regula 9).
+// Alerta ramane activa (re-armare, lib/alert-rearm.ts): spunem cand anuntam din nou si cum se opreste.
 export function buildAlertMessage(a: {
+  alertId: number
   productName: string
   retailerName: string
   currentPrice: number
   targetPrice: number
+  rearmPrice: number   // pragul + marja de re-armare
   url: string
 }): string {
   return [
@@ -93,6 +96,7 @@ export function buildAlertMessage(a: {
     'Prețurile se pot schimba oricând — verifică oferta pe pagină înainte să cumperi.',
     `👉 <a href="${escHtml(a.url)}">Vezi produsul și ofertele de azi</a>`,
     '',
-    'Alerta s-a oprit după acest mesaj. O poți seta din nou de pe pagina produsului.',
+    `Alerta rămâne activă: te anunțăm din nou la următoarea scădere la sau sub prag, după ce prețul urcă peste ${formatRon(a.rearmPrice)} RON.`,
+    `Oprește alerta: /sterge ${a.alertId} · Toate alertele: /alertele_mele`,
   ].join('\n')
 }

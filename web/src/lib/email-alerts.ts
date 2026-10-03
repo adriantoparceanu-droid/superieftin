@@ -65,6 +65,17 @@ export function emailAlertRateLimits(env: Env = process.env) {
   }
 }
 
+// Re-armarea alertelor (logica in worker/src/lib/alert-rearm.ts — modifica-le impreuna): dupa anunt,
+// alerta asteapta ca cel mai mic pret sa urce peste prag + ALERT_REARM_PCT (implicit 3%), apoi
+// anunta din nou la urmatoarea scadere. Aici doar pentru textele din „Alertele mele”.
+export function alertRearmPct(env: Env = process.env): number {
+  const n = parseFloat(env.ALERT_REARM_PCT ?? '')
+  return Number.isFinite(n) && n >= 0 ? n : 3
+}
+export function rearmThreshold(target: number, rearmPct: number): number {
+  return Math.round(target * (1 + rearmPct / 100) * 100) / 100
+}
+
 // Mesajul (identic) pe care il vede vizitatorul dupa trimiterea formularului
 export const SUBSCRIBE_OK_MESSAGE =
   'Ți-am trimis un email de confirmare. Alerta pornește după ce apeși linkul din email (valabil 3 zile). Dacă nu-l găsești, verifică și dosarul Spam.'

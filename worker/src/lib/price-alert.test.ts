@@ -69,6 +69,8 @@ test('suma tastata', () => {
 
 test('mesaj: HTML escapat, link /p/, fara promisiuni de reducere', () => {
   const msg = buildAlertMessage({
+    alertId: 17,
+    rearmPrice: 1658.3,
     productName: 'Cablu <USB> & incarcator',
     retailerName: 'eMAG',
     currentPrice: 1599.99,
@@ -80,4 +82,8 @@ test('mesaj: HTML escapat, link /p/, fara promisiuni de reducere', () => {
   assert.match(msg, /1\.599,99 RON/)
   assert.doesNotMatch(msg, /\/go\//)
   assert.doesNotMatch(msg, /reducere|%|garant/i)
+  // re-armare: alerta ramane activa, cu pragul de re-armare si comanda de oprire
+  assert.match(msg, /rămâne activă/)
+  assert.match(msg, /1\.658,30 RON/)
+  assert.match(msg, /\/sterge 17/)
 })

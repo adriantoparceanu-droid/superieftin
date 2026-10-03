@@ -135,7 +135,8 @@ export interface SubscriberAlert {
   productName: string
   productSlug: string
   targetPrice: number
-  active: boolean
+  armed: boolean                 // true = asteapta scaderea; false = trimisa, asteapta re-armarea
+  notifyCount: number
   triggeredAt: string | null
   triggerPrice: number | null
   triggerRetailer: string | null
@@ -150,7 +151,8 @@ export async function getSubscriber(subscriberId: number): Promise<{ id: number;
 export async function listSubscriberAlerts(subscriberId: number): Promise<SubscriberAlert[]> {
   const { rows } = await pool.query(
     `SELECT pa.id, p.name AS "productName", p.slug AS "productSlug", pa.target_price::float AS "targetPrice",
-            pa.is_active AS active, pa.triggered_at::text AS "triggeredAt", pa.trigger_price::float AS "triggerPrice",
+            pa.triggered_at IS NULL AS armed, pa.notify_count AS "notifyCount",
+            to_json(pa.triggered_at) #>> '{}' AS "triggeredAt", pa.trigger_price::float AS "triggerPrice",
             r.name AS "triggerRetailer",
             (SELECT MIN(o.current_price)::float FROM offers o
              WHERE o.product_id = p.id AND o.current_price IS NOT NULL AND ${OFFER_AVAILABLE_SQL}) AS "bestPrice"
@@ -158,8 +160,8 @@ export async function listSubscriberAlerts(subscriberId: number): Promise<Subscr
      JOIN products p ON p.id = pa.product_id
      LEFT JOIN offers tro ON tro.id = pa.trigger_offer_id
      LEFT JOIN retailers r ON r.id = tro.retailer_id
-     WHERE pa.email_subscriber_id = $1 AND pa.confirmed_at IS NOT NULL
-     ORDER BY pa.is_active DESC, pa.created_at DESC
+     WHERE pa.email_subscriber_id = $1 AND pa.confirmed_at IS NOT NULL AND pa.is_active = true
+     ORDER BY pa.created_at DESC
      LIMIT 200`,
     [subscriberId],
   )
@@ -168,7 +170,8 @@ export async function listSubscriberAlerts(subscriberId: number): Promise<Subscr
 
 export async function updateAlertTarget(subscriberId: number, alertId: number, target: number): Promise<boolean> {
   const r = await pool.query(
-    `UPDATE price_alerts SET target_price = $3
+    // Un prag nou = alerta ARMATA din nou (pragul e validat sub pretul de acum)
+    `UPDATE price_alerts SET target_price = $3, triggered_at = NULL, updated_at = now()
      WHERE id = $2 AND email_subscriber_id = $1 AND is_active = true AND confirmed_at IS NOT NULL`,
     [subscriberId, alertId, target],
   )

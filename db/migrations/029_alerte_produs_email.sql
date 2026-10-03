@@ -8,6 +8,10 @@
 -- 2. Abonatii pe email (email_subscribers): doar adresa + momentele de acord/confirmare + ultimul
 --    email de alerte trimis (plafonul zilnic). Alerta pe email porneste doar dupa confirmare
 --    (price_alerts.confirmed_at). La dezabonare se sterge abonatul → alertele lui (CASCADE).
+-- 3. Re-armare (aprobata 2026-10-03): dupa anunt alerta NU se opreste. triggered_at = momentul
+--    anuntului curent (NULL = armata, asteapta scaderea; NOT NULL = trimisa, asteapta ca pretul sa
+--    urce peste prag + ALERT_REARM_PCT). is_active = false doar pentru alertele oprite (de
+--    utilizator sau, inainte de aceasta migratie, dupa primul anunt). Vezi worker/src/lib/alert-rearm.ts.
 
 -- ---------- 1. Alerte pe produs ----------
 
@@ -73,3 +77,18 @@ CREATE INDEX IF NOT EXISTS price_alerts_email_subscriber ON price_alerts (email_
 CREATE UNIQUE INDEX IF NOT EXISTS price_alerts_email_produs_activ
   ON price_alerts (email_subscriber_id, product_id)
   WHERE email_subscriber_id IS NOT NULL AND is_active = true AND confirmed_at IS NOT NULL;
+
+-- ---------- 3. Re-armare ----------
+
+-- Ultimul anunt (plafonul per alerta pe Telegram) — ramane si dupa re-armare, spre deosebire de triggered_at
+ALTER TABLE price_alerts ADD COLUMN IF NOT EXISTS last_notified_at TIMESTAMPTZ;
+-- Ultima re-armare (pretul a urcat inapoi peste prag + marja)
+ALTER TABLE price_alerts ADD COLUMN IF NOT EXISTS rearmed_at TIMESTAMPTZ;
+-- Ultima schimbare de prag (conteaza ca activitate pentru limita de viata a alertei)
+ALTER TABLE price_alerts ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ;
+-- Cate anunturi a trimis alerta (informativ, „Alertele mele”)
+ALTER TABLE price_alerts ADD COLUMN IF NOT EXISTS notify_count INTEGER NOT NULL DEFAULT 0;
+
+-- Alertele trimise inainte de re-armare: au anuntat o data (raman oprite, ca pana acum)
+UPDATE price_alerts SET last_notified_at = triggered_at, notify_count = 1
+WHERE triggered_at IS NOT NULL AND last_notified_at IS NULL;

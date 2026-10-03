@@ -97,7 +97,7 @@ export function renderConfirmEmail(o: {
 <p style="margin:0 0 4px;font-weight:bold;">${esc(o.productName)}</p>
 <p style="margin:0 0 20px;">Te anunțăm pe email când prețul, la oricare dintre magazinele monitorizate, ajunge la <strong>${formatRon(o.targetPrice)} RON</strong> sau mai puțin.</p>
 <p style="margin:0 0 20px;">${button(o.confirmUrl, 'Confirmă alerta')}</p>
-<p style="margin:0;font-size:13px;color:${C.muted};">Linkul e valabil 3 zile. Alerta pornește doar după confirmare. Primești cel mult un email de alerte pe zi, cu toate produsele care au ajuns la prag.</p>`
+<p style="margin:0;font-size:13px;color:${C.muted};">Linkul e valabil 3 zile. Alerta pornește doar după confirmare. Primești cel mult un email de alerte pe zi, cu toate produsele care au ajuns la prag. După anunț, alerta rămâne activă: te anunțăm din nou la fiecare scădere nouă sub prag, până o oprești.</p>`
   return {
     subject,
     html: layout({ title: subject, preheader: 'Apasă butonul ca să pornești alerta de preț.', body, footer: footerHtml(o.links, why) }),
@@ -130,6 +130,7 @@ export interface DigestItem {
   retailerName: string
   price: number
   targetPrice: number
+  rearmPrice: number      // pragul + marja de re-armare (lib/alert-rearm.ts)
 }
 
 export function renderDigestEmail(o: { items: DigestItem[]; links: EmailLinks }): RenderedEmail {
@@ -144,20 +145,20 @@ export function renderDigestEmail(o: { items: DigestItem[]; links: EmailLinks })
     return `<tr><td style="${FONT}padding:14px 0;border-top:1px solid ${C.line};font-size:15px;line-height:1.45;color:${C.text};">
 <a href="${esc(url)}" style="color:${C.text};font-weight:bold;text-decoration:none;">${esc(it.productName)}</a><br>
 Preț constatat: <strong>${formatRon(it.price)} RON</strong> la ${esc(it.retailerName)}<br>
-<span style="color:${C.muted};font-size:13px;">Pragul tău: ${formatRon(it.targetPrice)} RON</span><br>
+<span style="color:${C.muted};font-size:13px;">Pragul tău: ${formatRon(it.targetPrice)} RON. Te anunțăm din nou după ce prețul urcă peste ${formatRon(it.rearmPrice)} RON și scade iar la prag. <a href="${esc(o.links.manageUrl)}" style="color:${C.muted};">Oprește alerta</a></span><br>
 <span style="display:inline-block;margin-top:10px;">${button(url, 'Vezi produsul și ofertele', 'yellow')}</span>
 </td></tr>`
   }).join('\n')
   const body = `<p style="margin:0 0 12px;">${n === 1 ? 'Am constatat un preț la sau sub pragul ales de tine:' : `Am constatat prețuri la sau sub pragul ales de tine pentru ${n} produse:`}</p>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${rows}</table>
-<p style="margin:16px 0 0;font-size:13px;color:${C.muted};">Prețurile se pot schimba oricând — verifică oferta pe pagină înainte să cumperi. ${n === 1 ? 'Alerta s-a oprit' : 'Aceste alerte s-au oprit'} după acest email; ${n === 1 ? 'o poți' : 'le poți'} seta din nou de pe pagina produsului.</p>`
+<p style="margin:16px 0 0;font-size:13px;color:${C.muted};">Prețurile se pot schimba oricând — verifică oferta pe pagină înainte să cumperi. ${n === 1 ? 'Alerta rămâne activă' : 'Alertele rămân active'}: te anunțăm din nou la următoarea scădere la sau sub prag (cel mult un email pe zi). ${n === 1 ? 'O poți opri' : 'Le poți opri'} oricând din <a href="${esc(o.links.manageUrl)}" style="color:${C.muted};">Alertele mele</a>.</p>`
   const textItems = o.items.map((it) =>
-    `- ${it.productName}\n  Preț constatat: ${formatRon(it.price)} RON la ${it.retailerName} (pragul tău: ${formatRon(it.targetPrice)} RON)\n  ${alertProductUrl(o.links.siteUrl, it.productSlug, 'email')}`,
+    `- ${it.productName}\n  Preț constatat: ${formatRon(it.price)} RON la ${it.retailerName} (pragul tău: ${formatRon(it.targetPrice)} RON; te anunțăm din nou după ce prețul urcă peste ${formatRon(it.rearmPrice)} RON și scade iar la prag)\n  ${alertProductUrl(o.links.siteUrl, it.productSlug, 'email')}`,
   ).join('\n\n')
   return {
     subject,
     html: layout({ title: subject, preheader: n === 1 ? `${formatRon(o.items[0].price)} RON la ${o.items[0].retailerName}` : `${n} produse au ajuns la pragul tău`, body, footer: footerHtml(o.links, why) }),
-    text: `Am constatat prețuri la sau sub pragul ales de tine:\n\n${textItems}\n\nPrețurile se pot schimba oricând — verifică oferta pe pagină înainte să cumperi. Alertele de mai sus s-au oprit după acest email.\n\n${footerText(o.links, why)}\n`,
+    text: `Am constatat prețuri la sau sub pragul ales de tine:\n\n${textItems}\n\nPrețurile se pot schimba oricând — verifică oferta pe pagină înainte să cumperi. Alertele rămân active: te anunțăm din nou la următoarea scădere la sau sub prag (cel mult un email pe zi). Le oprești din Alertele mele: ${o.links.manageUrl}\n\n${footerText(o.links, why)}\n`,
     unsubscribeUrl: o.links.unsubscribePostUrl,
   }
 }

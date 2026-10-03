@@ -67,8 +67,9 @@ export default async function ConfirmarePage({ searchParams }: Props) {
         </button>
       </form>
       <p className="text-sm text-muted">
-        Primești cel mult un email de alerte pe zi, cu toate produsele care au ajuns la prag. Te poți
-        dezabona oricând, dintr-un link aflat în fiecare email. Detalii în{' '}
+        Primești cel mult un email de alerte pe zi, cu toate produsele care au ajuns la prag. După
+        anunț, alerta rămâne activă: te anunțăm din nou la fiecare scădere nouă sub prag, până o
+        oprești. Te poți dezabona oricând, dintr-un link aflat în fiecare email. Detalii în{' '}
         <Link href="/confidentialitate">Politica de confidențialitate</Link>.
       </p>
     </LegalPage>

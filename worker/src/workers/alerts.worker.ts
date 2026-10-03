@@ -2,10 +2,14 @@ import pool from '../lib/db.js'
 import pino from 'pino'
 import { alertProductUrl, buildAlertMessage, pickTriggerOffer, siteUrl, type AlertOffer } from '../lib/price-alert.js'
 import { ALERT_HAS_TRIGGER_SQL, ALERT_OFFERS_JSON_SQL } from '../lib/alert-sql.js'
+import { alertRearmPct, bestAvailablePrice, decideAlert, rearmThreshold, telegramMinIntervalHours } from '../lib/alert-rearm.js'
+import { deleteIdleAlerts, markNotified, rearmAlerts } from '../lib/alert-lifecycle.js'
 
 // Alertele pe TELEGRAM (cele pe email: workers/email.worker.ts, cu digest si plafon zilnic).
 // Alerta e pe PRODUS: pleaca atunci cand ORICE oferta disponibila a produsului (orice magazin)
 // ajunge la sau sub prag; mesajul spune magazinul si pretul care au declansat-o.
+// Dupa anunt alerta ramane activa si se RE-ARMEAZA cand pretul urca peste prag + ALERT_REARM_PCT
+// (lib/alert-rearm.ts); plafon: cel mult un mesaj la TELEGRAM_ALERT_MIN_INTERVAL_HOURS per alerta.
 
 const logger = pino({ level: 'info' })
 const TOKEN = process.env.TELEGRAM_BOT_TOKEN
@@ -25,12 +29,20 @@ async function sendMsg(chatId: number, text: string) {
 export async function checkAndSendAlerts() {
   if (!TOKEN) return
 
-  // Doar oferte pe care vizitatorul le vede pe /p/ (lib/alert-sql.ts: aceeasi regula ca
-  // OFFER_AVAILABLE_SQL din web). Alerta ramane activa pana cand o oferta disponibila ajunge la prag.
+  const idle = await deleteIdleAlerts().catch((err) => { logger.error({ err }, 'Alerte: curatenie esuata'); return 0 })
+  if (idle) logger.info({ idle }, 'Alerte: sterse dupa limita de viata')
+
+  const rearmPct = alertRearmPct()
+  const minIntervalHours = telegramMinIntervalHours()
+
+  // ARMATE cu o oferta disponibila la/sub prag (candidate la anunt) + TRIMISE (candidate la
+  // re-armare). Disponibil = aceeasi regula ca pe /p/ (lib/alert-sql.ts).
   const { rows } = await pool.query(`
     SELECT
       pa.id,
       pa.target_price::float AS target_price,
+      pa.triggered_at IS NULL AS armed,
+      to_json(pa.last_notified_at) #>> '{}' AS last_notified_at,
       tu.telegram_chat_id,
       p.name AS product_name,
       p.slug AS product_slug,
@@ -39,16 +51,23 @@ export async function checkAndSendAlerts() {
     JOIN telegram_users tu ON tu.id = pa.telegram_user_id
     JOIN products p ON p.id = pa.product_id
     WHERE pa.is_active = true
-      AND pa.triggered_at IS NULL
-      AND ${ALERT_HAS_TRIGGER_SQL}
+      AND pa.confirmed_at IS NOT NULL
+      AND (pa.triggered_at IS NOT NULL OR ${ALERT_HAS_TRIGGER_SQL})
   `)
 
   if (!rows.length) return
 
-  logger.info({ count: rows.length }, 'Alerte Telegram de trimis')
-
+  const toRearm: number[] = []
+  let sent = 0
   for (const alert of rows) {
-    const best = pickTriggerOffer(alert.offers as AlertOffer[], alert.target_price)
+    const offers = alert.offers as AlertOffer[] | null
+    const decision = decideAlert(
+      { armed: alert.armed, target: alert.target_price, bestPrice: bestAvailablePrice(offers), lastNotifiedAt: alert.last_notified_at },
+      { rearmPct, minIntervalHours, nowMs: Date.now() },
+    )
+    if (decision === 'rearm') { toRearm.push(alert.id); continue }
+    if (decision !== 'notify') continue
+    const best = pickTriggerOffer(offers, alert.target_price)
     if (!best) continue
     try {
       // Numele produsului e escapat (HTML): un „&” sau „<” in nume facea Telegram sa respinga
@@ -56,21 +75,17 @@ export async function checkAndSendAlerts() {
       await sendMsg(
         Number(alert.telegram_chat_id),
         buildAlertMessage({
+          alertId: alert.id,
           productName: alert.product_name,
           retailerName: best.retailerName,
           currentPrice: best.price,
           targetPrice: alert.target_price,
+          rearmPrice: rearmThreshold(alert.target_price, rearmPct),
           url: alertProductUrl(SITE_URL, alert.product_slug, 'telegram'),
         })
       )
-
-      await pool.query(
-        `UPDATE price_alerts
-         SET triggered_at = now(), is_active = false, trigger_offer_id = $2, trigger_price = $3
-         WHERE id = $1`,
-        [alert.id, best.offerId, best.price]
-      )
-
+      await markNotified(alert.id, best.offerId, best.price)
+      sent++
       logger.info({ alertId: alert.id, product: alert.product_name, retailer: best.retailerName }, 'Alerta trimisa')
 
       // Respecta limita Telegram: max 30 mesaje/secunda global, 1/secunda per chat
@@ -79,4 +94,6 @@ export async function checkAndSendAlerts() {
       logger.error({ err, alertId: alert.id }, 'Eroare trimitere alerta')
     }
   }
+  const rearmed = await rearmAlerts(toRearm)
+  if (sent || rearmed) logger.info({ sent, rearmed }, 'Alerte Telegram')
 }
