@@ -15,6 +15,11 @@ import { suggestAlertTarget, telegramAlertUrl } from '@/lib/price-alert'
 import { PriceAlertButton, MobileActionBar } from '@/components/PriceAlert'
 import { EmailAlertForm } from '@/components/EmailAlertForm'
 import { emailAlertsEnabled } from '@/lib/email-alerts'
+import { breadcrumbLd, ldScript, productLd } from '@/lib/seo/jsonld'
+import { priceFacts, variantBase } from '@/lib/seo/product-facts'
+import { getProductVariants, getSimilarProducts, type ProductLink } from '@/lib/seo/queries'
+import { withOg } from '@/lib/seo/og'
+import { absUrl } from '@/lib/seo/site'
 
 export const revalidate = 3600
 
@@ -43,7 +48,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   // (afirmatiile din reclame trebuie sa fie adevarate pe pagina — REGULI.md, regula 9).
   const titlePrice = price ? ` — preț azi de la ${formatPrice(price)}` : ''
   const title = `${product.name}${titlePrice}`
-  const description = `Prețul curent pentru ${product.name} la ${bestOffer?.retailer_name || 'magazine online'}. Grafic de preț și analiză reducere reală față de ultimele 30 de zile.`
+  // Un fapt verificabil in descriere (mediana), fara cuvantul „reducere” (raport SEO, A4)
+  const median = bestOffer?.median_price
+  const description = `Prețul curent pentru ${product.name} la ${bestOffer?.retailer_name || 'magazine online'}` +
+    (median ? `; mediana ultimelor 30 de zile: ${formatPrice(median)}` : '') +
+    '. Grafic cu istoricul prețului pe 90 de zile, comparat cu mediana de 30 de zile.'
 
   return {
     title,
@@ -52,12 +61,37 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     // Fara nicio oferta disponibila: pagina ramane pentru vizitatori, dar nu se indexeaza
     // (iar dupa PRODUCT_GONE_DAYS raspunde 410 — src/proxy.ts)
     ...(product.offers.length === 0 ? { robots: { index: false, follow: true } } : {}),
-    openGraph: {
+    openGraph: withOg({
       title,
       description,
+      url: absUrl(`/p/${slug}`),
       images: product.image_url ? [{ url: product.image_url, alt: product.name }] : [],
-    },
+    }),
   }
+}
+
+// Lista compacta de produse (doar nume + pret, fara verdict/procente — regula 9), pentru
+// „Alte variante” si „Produse similare”: legaturi interne, ca pagina de produs sa nu fie o fundatura.
+function ProductLinks({ title, items }: { title: string; items: ProductLink[] }) {
+  if (!items.length) return null
+  return (
+    <section className="mt-8">
+      <h2 className="font-semibold text-[var(--color-text)] mb-3">{title}</h2>
+      <ul className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
+        {items.map((it) => (
+          <li key={it.id}>
+            <Link
+              href={`/p/${it.slug}`}
+              className="flex items-baseline justify-between gap-3 rounded-lg border border-line bg-surface px-3 py-2 hover:border-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+            >
+              <span className="text-sm text-[var(--color-text)] line-clamp-2">{it.name}</span>
+              <span className="text-sm font-semibold tabular-nums whitespace-nowrap">{formatPrice(it.price)}</span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
 }
 
 export default async function ProductPage({ params }: Props) {
@@ -66,15 +100,26 @@ export default async function ProductPage({ params }: Props) {
   const history = product ? await getPriceHistory(product.id) : []
 
   if (!product) notFound()
-  // Ghidurile publicate care leaga produsul (legatura interna produs ↔ ghid)
-  const guides = await getGuidesForProduct(product.id)
-
   const bestOffer = product.offers[0]
+
+  // „Alte variante” (aceeasi baza de nume, ex. alte culori) + „Produse similare” (aceeasi categorie,
+  // pret apropiat) — query-uri ieftine, cu cache (lib/seo/queries.ts). Doar pentru produsele cu
+  // categorie si, la „similare”, cu un pret de azi.
+  const base = variantBase(product.name)
+  // Ghidurile publicate care leaga produsul (legatura interna produs ↔ ghid)
+  const [guides, variants, similar] = await Promise.all([
+    getGuidesForProduct(product.id),
+    product.category_id && base
+      ? getProductVariants(product.id, product.category_id, base).catch(() => [] as ProductLink[])
+      : Promise.resolve([] as ProductLink[]),
+    product.category_id && bestOffer?.current_price
+      ? getSimilarProducts(product.id, product.category_id, product.brand, bestOffer.current_price, base).catch(() => [] as ProductLink[])
+      : Promise.resolve([] as ProductLink[]),
+  ])
+
   const discountInfo = bestOffer
     ? calculateDiscount(bestOffer.current_price, bestOffer.median_price)
     : null
-
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.superieftin.ro'
 
   // Alerta de pret = actiunea secundara principala, langa „Vezi oferta” (decizia 2026-10-03).
   // Pragul propus: 5% sub min(pret azi, mediana 30 de zile) — lib/price-alert.ts. Pentru un
@@ -102,41 +147,40 @@ export default async function ProductPage({ params }: Props) {
   const primaryBtn = 'text-center bg-yellow-400 hover:bg-yellow-500 text-gray-900 text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2'
   const alertBtn = 'flex items-center justify-center gap-1.5 text-center border-2 border-brand text-brand bg-surface hover:bg-brand-light text-sm font-semibold px-4 py-2 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2'
 
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Product',
+  // JSON-LD (raport SEO, A4): Product cu AggregateOffer, Offer.url = pagina (nu /go/), sku/mpn/gtin,
+  // itemCondition din tag-uri; fara oferte disponibile → fara Product (pagina e oricum noindex).
+  // ATENTIE: ads:validate / ads-guard citesc acest marcaj (vezi lib/seo/jsonld.ts).
+  const jsonLd = productLd({
+    id: product.id,
     name: product.name,
+    slug,
     image: product.image_url,
-    brand: product.brand ? { '@type': 'Brand', name: product.brand } : undefined,
-    category: product.category,
-    offers: product.offers
-      .filter(o => o.current_price != null)
-      .map(o => ({
-        '@type': 'Offer',
-        price: o.current_price,
-        priceCurrency: 'RON',
-        availability: o.in_stock
-          ? 'https://schema.org/InStock'
-          : 'https://schema.org/OutOfStock',
-        seller: { '@type': 'Organization', name: o.retailer_name },
-        url: `${siteUrl}/go/${o.offer_id}`,
-      })),
-  }
+    brand: product.brand,
+    partNo: product.part_no,
+    tags: product.tags,
+    offers: product.offers.map((o) => ({ price: o.current_price, retailer: o.retailer_name })),
+  })
 
-  const breadcrumb = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Acasă', item: siteUrl },
-      { '@type': 'ListItem', position: 2, name: product.category.replace(/-/g, ' '), item: `${siteUrl}/c/${product.category}` },
-      { '@type': 'ListItem', position: 3, name: product.name, item: `${siteUrl}/p/${slug}` },
-    ],
-  }
+  // Breadcrumb cu numele categoriei si parintele ei (nu slug-ul)
+  const breadcrumb = breadcrumbLd([
+    { name: 'Acasă', path: '/' },
+    ...(product.parent_slug && product.parent_name ? [{ name: product.parent_name, path: `/c/${product.parent_slug}` }] : []),
+    { name: product.category_name ?? product.category.replace(/-/g, ' '), path: `/c/${product.category}` },
+    { name: product.name, path: `/p/${slug}` },
+  ])
+
+  // „Pe scurt despre preț”: aceleasi valori ca graficul (istoric 90 de zile + mediana ofertei afisate)
+  const facts = priceFacts({
+    history,
+    median30: bestOffer?.median_price ?? null,
+    lastChecked: bestOffer?.last_checked ?? null,
+    retailer: bestOffer?.retailer_name ?? null,
+  })
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
+      {jsonLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldScript(jsonLd) }} />}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldScript(breadcrumb) }} />
       <TrackViewItem
         item={{
           item_name: product.name,
@@ -400,8 +444,20 @@ export default async function ProductPage({ params }: Props) {
               )}
             </div>
           </div>
+
+          {/* Fraze factuale despre pret (citabile de motoare si asistenti AI): fara verdict, fara
+              promisiuni — regula 9. Sub istoric, nu deasupra butoanelor. */}
+          {facts.length > 0 && (
+            <div>
+              <h2 className="font-semibold text-[var(--color-text)] mb-2">Pe scurt despre preț</h2>
+              <p className="text-sm text-muted">{facts.join(' ')}</p>
+            </div>
+          )}
         </div>
       </div>
+
+      <ProductLinks title="Alte variante" items={variants} />
+      <ProductLinks title="Produse similare" items={similar} />
 
       {/* Bara fixa de pe mobil — doar cand exista macar o actiune */}
       {(affiliateProps || alertProps) && (
