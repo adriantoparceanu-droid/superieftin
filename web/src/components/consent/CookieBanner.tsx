@@ -8,6 +8,8 @@ import { readConsent, saveConsent, OPEN_SETTINGS_EVENT } from '@/lib/consent'
 // - apare pana cand vizitatorul alege; nimic neesential nu porneste inainte (Consent Mode = denied)
 // - „Refuz” e la fel de vizibil ca „Accept” (acelasi stil, aceeasi dimensiune)
 // - alegerea se poate schimba oricand din footer („Setări cookies”)
+// - „Publicitate” include si reclamele personalizate (remarketing) — decizia proprietarului,
+//   2026-10-03: fara bifa separata; detaliile stau in /cookies si /confidentialitate (lib/consent.ts)
 export function CookieBanner() {
   const [open, setOpen] = useState(false)
   const [details, setDetails] = useState(false)
@@ -54,7 +56,7 @@ export function CookieBanner() {
           Folosim cookie-uri necesare pentru funcționarea site-ului. Cu acordul tău, folosim și
           cookie-uri de <strong>analiză</strong> (Google Analytics) și de{' '}
           <strong>publicitate</strong> (Google Ads și bannerele partenerului Profitshare), ca să știm ce pagini sunt utile și ce
-          reclame funcționează. Detalii în{' '}
+          reclame funcționează; publicitatea include și reclame personalizate (remarketing). Detalii în{' '}
           <Link href="/cookies" className="underline underline-offset-2">Politica de cookies</Link>.
         </p>
 
@@ -71,7 +73,7 @@ export function CookieBanner() {
             </label>
             <label className="flex items-start gap-3 text-sm cursor-pointer">
               <input type="checkbox" checked={ads} onChange={(e) => setAds(e.target.checked)} className="mt-0.5 accent-[var(--color-brand)]" />
-              <span><strong>Publicitate</strong> — Google Ads: măsurăm dacă o reclamă a adus o vizită care a dus la o cumpărare. Tot aici: bannerele partenerului Profitshare de pe prima pagină, care își setează propriile cookie-uri.</span>
+              <span><strong>Publicitate</strong> — Google Ads: măsurăm dacă o reclamă a adus o vizită care a dus la o cumpărare și îți putem arăta din nou reclamele noastre în Google (reclame personalizate). Tot aici: bannerele partenerului Profitshare de pe prima pagină, care își setează propriile cookie-uri.</span>
             </label>
           </fieldset>
         )}

@@ -1,5 +1,5 @@
 // Starea contului Google Ads — DOAR citire (GAQL). Folosita de ads:plan si ads:apply ca sa
-// compare YAML-ul cu ce exista deja. ~9 cereri de citire per rulare, indiferent cate campanii.
+// compare YAML-ul cu ce exista deja. ~10 cereri de citire per rulare, indiferent cate campanii.
 
 import { searchAll, type AdsConfig } from '../google-ads.js'
 
@@ -9,10 +9,13 @@ export interface AccCampaign {
   network: { googleSearch: boolean; searchNetwork: boolean; contentNetwork: boolean; partnerSearchNetwork: boolean }
   positiveGeoTargetType: string
   budgetResourceName: string; budgetId: string; budgetMicros: number; budgetShared: boolean
+  // campaign.targeting_setting.target_restrictions; AUDIENCE cu bidOnly=true = „Observare”
+  targetRestrictions?: { targetingDimension: string; bidOnly: boolean }[]
 }
 export interface AccCriterion {
   campaignId: string; criterionId: string; resourceName: string; type: string; negative: boolean
   text?: string; matchType?: string; geo?: string; lang?: string
+  userList?: string; bidModifier?: number | null   // doar pentru type USER_LIST
 }
 export interface AccAdGroup { id: string; campaignId: string; name: string; status: string; cpcMicros: number; resourceName: string }
 export interface AccKeyword { adGroupId: string; criterionId: string; resourceName: string; text: string; matchType: string; status: string; negative: boolean }
@@ -24,6 +27,12 @@ export interface AccAsset { campaignId: string; resourceName: string; fieldType:
 export interface AccCustomGoal { id: string; name: string; resourceName: string; actions: string[]; status: string }
 export interface AccGoalConfig { campaignId: string; level: string; customGoal: string }
 export interface AccConversionAction { id: string; name: string; status: string; primaryForGoal: boolean }
+// Liste de remarketing (inclusiv cele partajate din GA4). sizeForSearch = utilizatori activi
+// folosibili pe Search; sub 100 lista nu influenteaza licitarea (pragul Google, 2026).
+export interface AccUserList {
+  id: string; name: string; resourceName: string; type: string; membershipStatus: string
+  membershipLifeSpan: number; eligibleForSearch: boolean; sizeForSearch: number; sizeRangeForSearch: string
+}
 
 export interface AccountSnapshot {
   campaigns: AccCampaign[]
@@ -35,6 +44,7 @@ export interface AccountSnapshot {
   customGoals: AccCustomGoal[]
   goalConfigs: AccGoalConfig[]
   conversionActions: AccConversionAction[]
+  userLists: AccUserList[]
 }
 
 // Cheia de continut a unei extensii (asa recunoastem ca exista deja, fara ID in YAML)
@@ -44,25 +54,27 @@ export const calloutKey = (text: string) => `CALLOUT|${text}`
 export const snippetKey = (header: string, values: string[]) => `STRUCTURED_SNIPPET|${header}|${values.join('|')}`
 
 export function emptySnapshot(): AccountSnapshot {
-  return { campaigns: [], criteria: [], adGroups: [], keywords: [], ads: [], assets: [], customGoals: [], goalConfigs: [], conversionActions: [] }
+  return { campaigns: [], criteria: [], adGroups: [], keywords: [], ads: [], assets: [], customGoals: [], goalConfigs: [], conversionActions: [], userLists: [] }
 }
 
 const num = (v: unknown) => (v == null ? 0 : Number(v))
 
 export async function readAccount(cfg: AdsConfig): Promise<AccountSnapshot> {
-  const [camps, crits, ags, kws, ads, assets, goals, goalCfgs, convs] = await Promise.all([
+  const [camps, crits, ags, kws, ads, assets, goals, goalCfgs, convs, lists] = await Promise.all([
     searchAll(cfg, `SELECT campaign.id, campaign.name, campaign.status, campaign.resource_name, campaign.advertising_channel_type,
       campaign.bidding_strategy_type, campaign.target_spend.cpc_bid_ceiling_micros,
       campaign.network_settings.target_google_search, campaign.network_settings.target_search_network,
       campaign.network_settings.target_content_network, campaign.network_settings.target_partner_search_network,
       campaign.geo_target_type_setting.positive_geo_target_type, campaign.campaign_budget,
-      campaign_budget.id, campaign_budget.amount_micros, campaign_budget.explicitly_shared
+      campaign_budget.id, campaign_budget.amount_micros, campaign_budget.explicitly_shared,
+      campaign.targeting_setting.target_restrictions
       FROM campaign WHERE campaign.status != 'REMOVED'`),
     searchAll(cfg, `SELECT campaign.id, campaign.status, campaign_criterion.status, campaign_criterion.criterion_id, campaign_criterion.resource_name, campaign_criterion.type,
       campaign_criterion.negative, campaign_criterion.keyword.text, campaign_criterion.keyword.match_type,
-      campaign_criterion.location.geo_target_constant, campaign_criterion.language.language_constant
+      campaign_criterion.location.geo_target_constant, campaign_criterion.language.language_constant,
+      campaign_criterion.user_list.user_list, campaign_criterion.bid_modifier
       FROM campaign_criterion WHERE campaign.status != 'REMOVED' AND campaign_criterion.status != 'REMOVED'
-      AND campaign_criterion.type IN ('KEYWORD', 'LOCATION', 'LANGUAGE')`),
+      AND campaign_criterion.type IN ('KEYWORD', 'LOCATION', 'LANGUAGE', 'USER_LIST')`),
     searchAll(cfg, `SELECT campaign.id, campaign.status, ad_group.id, ad_group.name, ad_group.status, ad_group.cpc_bid_micros, ad_group.resource_name
       FROM ad_group WHERE ad_group.status != 'REMOVED' AND campaign.status != 'REMOVED'`),
     searchAll(cfg, `SELECT campaign.status, ad_group.status, ad_group.id, ad_group_criterion.criterion_id, ad_group_criterion.resource_name, ad_group_criterion.keyword.text,
@@ -85,6 +97,9 @@ export async function readAccount(cfg: AdsConfig): Promise<AccountSnapshot> {
       FROM conversion_goal_campaign_config WHERE campaign.status != 'REMOVED'`),
     searchAll(cfg, `SELECT conversion_action.id, conversion_action.name, conversion_action.status, conversion_action.primary_for_goal
       FROM conversion_action WHERE conversion_action.status != 'REMOVED'`),
+    searchAll(cfg, `SELECT user_list.id, user_list.name, user_list.resource_name, user_list.type, user_list.membership_status,
+      user_list.membership_life_span, user_list.eligible_for_search, user_list.size_for_search, user_list.size_range_for_search
+      FROM user_list`),
   ])
 
   return {
@@ -101,12 +116,15 @@ export async function readAccount(cfg: AdsConfig): Promise<AccountSnapshot> {
       positiveGeoTargetType: r.campaign.geoTargetTypeSetting?.positiveGeoTargetType ?? '',
       budgetResourceName: r.campaign.campaignBudget ?? '', budgetId: String(r.campaignBudget?.id ?? ''),
       budgetMicros: num(r.campaignBudget?.amountMicros), budgetShared: !!r.campaignBudget?.explicitlyShared,
+      targetRestrictions: (r.campaign.targetingSetting?.targetRestrictions ?? []).map((t: any) => ({ targetingDimension: t.targetingDimension, bidOnly: !!t.bidOnly })),
     })),
     criteria: crits.map((r: any) => ({
       campaignId: String(r.campaign.id), criterionId: String(r.campaignCriterion.criterionId),
       resourceName: r.campaignCriterion.resourceName, type: r.campaignCriterion.type, negative: !!r.campaignCriterion.negative,
       text: r.campaignCriterion.keyword?.text, matchType: r.campaignCriterion.keyword?.matchType,
       geo: r.campaignCriterion.location?.geoTargetConstant, lang: r.campaignCriterion.language?.languageConstant,
+      userList: r.campaignCriterion.userList?.userList,
+      bidModifier: r.campaignCriterion.bidModifier != null ? Number(r.campaignCriterion.bidModifier) : null,
     })),
     adGroups: ags.map((r: any) => ({
       id: String(r.adGroup.id), campaignId: String(r.campaign.id), name: r.adGroup.name, status: r.adGroup.status,
@@ -147,6 +165,12 @@ export async function readAccount(cfg: AdsConfig): Promise<AccountSnapshot> {
     conversionActions: convs.map((r: any) => ({
       id: String(r.conversionAction.id), name: r.conversionAction.name, status: r.conversionAction.status,
       primaryForGoal: !!r.conversionAction.primaryForGoal,
+    })),
+    userLists: lists.map((r: any) => ({
+      id: String(r.userList.id), name: r.userList.name ?? '', resourceName: r.userList.resourceName, type: r.userList.type ?? '',
+      membershipStatus: r.userList.membershipStatus ?? '', membershipLifeSpan: num(r.userList.membershipLifeSpan),
+      eligibleForSearch: !!r.userList.eligibleForSearch, sizeForSearch: num(r.userList.sizeForSearch),
+      sizeRangeForSearch: r.userList.sizeRangeForSearch ?? '',
     })),
   }
 }

@@ -23,6 +23,19 @@ campaign:
     networks: { search: true, search_partners: false, display: false }
   source_research: ads/research/AAAA-LL-ZZ-laptopuri.md   # de unde vine decizia
 
+  # OPȚIONAL — remarketing pe Search (RLSA), vezi docs/ads-program/remarketing-vizitatori.md.
+  # Lipsa secțiunii = ads:plan nu atinge audiențele din cont. Cu secțiunea prezentă, contul se
+  # aliniază la listă (o listă scoasă de aici se elimină din campanie).
+  # mode: doar OBSERVATION (campania rulează pentru toți; membrii listei primesc doar ajustarea).
+  # bid_modifier: 0.5–1.5 (-50%…+50%); CPC max × ajustare trebuie să rămână ≤ CPC-ul din guardrails.
+  # user_list_id = ID-ul listei din Google Ads (Unelte → Manager de segmente), NU ID-ul din GA4.
+  # audiences:
+  #   mode: OBSERVATION
+  #   segments:
+  #     - name: "SE | Produs văzut, fără click 7z"
+  #       user_list_id: "0000000000"
+  #       bid_modifier: 1.25
+
   # text = broad (toate cuvintele, orice ordine), "text" = phrase, [text] = exact.
   # Obligatorii (ads:validate): gratis, second hand, folosit, service, reparatie, manual, driver,
   # olx, piese, cum, ce este, forum + brandurile retailerilor (emag, evomag, itgalaxy, ...).

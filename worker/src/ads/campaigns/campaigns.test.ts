@@ -397,3 +397,74 @@ test('findCustomGoal — nume nou, nume vechi, apoi orice obiectiv care conține
   assert.equal(findCustomGoal([g('4', 'Mixt', [rn, 'customers/111/conversionActions/1'])], 'Comision afiliere', rn), undefined)
   assert.equal(findCustomGoal([g('5', 'SE | Comision afiliere', [rn], 'REMOVED')], 'Comision afiliere', rn), undefined)
 })
+
+// --- Audiente (remarketing pe Search, Observare) ------------------------------------------------
+
+const LIST = { id: '555', name: 'SE | Produs văzut, fără click 7z', resourceName: 'customers/111/userLists/555', type: 'REMARKETING',
+  membershipStatus: 'OPEN', membershipLifeSpan: 30, eligibleForSearch: true, sizeForSearch: 0, sizeRangeForSearch: 'LESS_THAN_FIVE_HUNDRED' }
+const AUD = { mode: 'OBSERVATION' as const, segments: [{ name: LIST.name, user_list_id: '555', bid_modifier: 1.25 }] }
+
+test('audiențe: validare — doar OBSERVATION, ajustare -50%…+50%, CPC × ajustare ≤ guardrails', () => {
+  assert.deepEqual(errors(camp({ audiences: AUD })), [])
+  assert.ok(hasErr(camp({ audiences: { ...AUD, mode: 'TARGETING' } }), /TARGETING/))
+  assert.ok(hasErr(camp({ audiences: { mode: 'OBSERVATION', segments: [] } }), /nicio listă/))
+  assert.ok(hasErr(camp({ audiences: { mode: 'OBSERVATION', segments: [{ name: 'x', user_list_id: '555', bid_modifier: 2 }] } }), /în afara intervalului/))
+  assert.ok(hasErr(camp({ audiences: { mode: 'OBSERVATION', segments: [{ name: 'x', user_list_id: 'abc' }] } }), /invalid/))
+  assert.ok(hasErr(camp({ audiences: { mode: 'OBSERVATION', segments: [{ name: 'x', user_list_id: '1' }, { name: 'y', user_list_id: '1' }] } }), /duplicat/))
+  // CPC 2,50 × 1,25 = 3,13 > 3 (guardrails) → refuzat; 2,40 × 1,25 = 3,00 → trece
+  const c1 = camp({ audiences: AUD, bidding: { strategy: 'MANUAL_CPC', max_cpc: 2.5 } })
+  assert.ok(hasErr(c1, /depășește CPC-ul maxim/))
+  assert.ok(!hasErr(camp({ audiences: AUD, bidding: { strategy: 'MANUAL_CPC', max_cpc: 2.4 } }), /depășește CPC-ul maxim/))
+  // fara audiences = nicio verificare (si niciun avertisment)
+  assert.ok(!validateCampaign(cf(camp()), G).some((i) => /audiences/.test(i.where)))
+})
+
+test('audiențe: campanie nouă → setare Observare în create + listă cu ajustare', () => {
+  const plan = buildPlan([cf(camp({ audiences: AUD }))], acc({ userLists: [LIST] }), '111')
+  const ops = planOps(plan)
+  const create: any = (ops.find((o) => 'campaignOperation' in o.op)!.op as any).campaignOperation.create
+  assert.deepEqual(create.targetingSetting, { targetRestrictions: [{ targetingDimension: 'AUDIENCE', bidOnly: true }] })
+  const crit: any = ops.find((o) => (o.op as any).campaignCriterionOperation?.create?.userList)!.op
+  assert.equal(crit.campaignCriterionOperation.create.userList.userList, 'customers/111/userLists/555')
+  assert.equal(crit.campaignCriterionOperation.create.bidModifier, 1.25)
+  assert.equal(crit.campaignCriterionOperation.create.campaign, create.resourceName)
+  // lista sub 100 de utilizatori: avertisment, nu eroare
+  assert.ok(plan.campaigns[0].warnings.some((w) => /sub 100/.test(w)))
+  assert.equal(plan.campaigns[0].errors.length, 0)
+  // fara audiences: nicio setare de audienta in create
+  const plain: any = planOps(buildPlan([cf(camp())], acc({ userLists: [LIST] }), '111')).find((o) => 'campaignOperation' in o.op)!.op
+  assert.equal(plain.campaignOperation.create.targetingSetting, undefined)
+})
+
+test('audiențe: campanie existentă — adăugare, modificare ajustare, eliminare, listă inexistentă', () => {
+  const base: AccountSnapshot['campaigns'][number] = { id: '10', name: 'SE | Search | Test', status: 'PAUSED', resourceName: 'customers/111/campaigns/10', channelType: 'SEARCH',
+    biddingStrategyType: 'MANUAL_CPC', cpcCeilingMicros: null, network: { googleSearch: true, searchNetwork: false, contentNetwork: false, partnerSearchNetwork: false },
+    positiveGeoTargetType: 'PRESENCE', budgetResourceName: 'b', budgetId: '5', budgetMicros: 8_000_000, budgetShared: false, targetRestrictions: [] }
+  const c = camp({ id: '10', audiences: AUD })
+  const audOps = (snap: AccountSnapshot) => planOps(buildPlan([cf(c)], snap, '111'))
+    .filter((o) => /audiențe|listă/.test(o.label))
+  // 1. nimic in cont → Observare + lista noua
+  let ops = audOps(acc({ campaigns: [base], userLists: [LIST] }))
+  assert.deepEqual(ops.map((o) => o.kind), ['update', 'create'])
+  assert.equal((ops[0].op as any).campaignOperation.updateMask, 'targetingSetting.targetRestrictions')
+  assert.deepEqual((ops[0].op as any).campaignOperation.update.targetingSetting.targetRestrictions, [{ targetingDimension: 'AUDIENCE', bidOnly: true }])
+  // 2. deja la zi → zero operatii
+  const crit = { campaignId: '10', criterionId: '7', resourceName: 'customers/111/campaignCriteria/10~7', type: 'USER_LIST', negative: false, userList: LIST.resourceName, bidModifier: 1.25 }
+  const upToDate = { ...base, targetRestrictions: [{ targetingDimension: 'AUDIENCE', bidOnly: true }] }
+  assert.deepEqual(audOps(acc({ campaigns: [upToDate], userLists: [LIST], criteria: [crit] })), [])
+  // 3. ajustare diferita → update bidModifier
+  ops = audOps(acc({ campaigns: [upToDate], userLists: [LIST], criteria: [{ ...crit, bidModifier: 1.1 }] }))
+  assert.deepEqual(ops.map((o) => o.kind), ['update'])
+  assert.equal((ops[0].op as any).campaignCriterionOperation.update.bidModifier, 1.25)
+  // 4. lista din cont care nu e in YAML → eliminata; excluderile manuale (negative) → neatinse
+  const other = { ...crit, criterionId: '8', resourceName: 'customers/111/campaignCriteria/10~8', userList: 'customers/111/userLists/999' }
+  const excl = { ...crit, criterionId: '9', resourceName: 'customers/111/campaignCriteria/10~9', negative: true, userList: 'customers/111/userLists/998' }
+  ops = audOps(acc({ campaigns: [upToDate], userLists: [LIST], criteria: [crit, other, excl] }))
+  assert.deepEqual(ops.map((o) => [o.kind, (o.op as any).campaignCriterionOperation.remove]), [['remove', 'customers/111/campaignCriteria/10~8']])
+  // 5. lista inexistenta in cont → eroare de plan (apply refuza)
+  const p5 = buildPlan([cf(c)], acc({ campaigns: [upToDate], userLists: [] }), '111')
+  assert.ok(p5.campaigns[0].errors.some((e) => /nu există în cont/.test(e)))
+  // 6. YAML fara audiences → listele din cont NU sunt atinse
+  const p6 = planOps(buildPlan([cf(camp({ id: '10' }))], acc({ campaigns: [base], userLists: [LIST], criteria: [crit] }), '111'))
+  assert.ok(!p6.some((o) => /audiențe|listă/.test(o.label)))
+})

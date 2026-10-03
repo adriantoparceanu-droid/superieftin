@@ -40,6 +40,23 @@ export interface AdGroup {
   ads: RsaAd[]
 }
 
+// Segment de audienta (lista de remarketing) atasat campaniei — ex. lista GA4
+// „SE | Produs văzut, fără click 7z” (docs/ads-program/remarketing-vizitatori.md).
+// user_list_id = ID-ul listei din Google Ads (Unelte → Manager de segmente), NU ID-ul din GA4.
+export interface AudienceSegment {
+  name: string                  // eticheta (pentru oameni); potrivirea se face dupa user_list_id
+  user_list_id: string
+  bid_modifier?: number         // 1.25 = +25% la licitare pentru membrii listei; implicit 1 (fara ajustare)
+}
+
+// mode OBSERVATION = campania ruleaza pentru toata lumea ca pana acum; lista doar se masoara si
+// (optional) primeste o ajustare de licitare. TARGETING = reclamele apar DOAR membrilor listei —
+// nepermis deocamdata (listele sunt mici; decizia proprietarului).
+export interface CampaignAudiences {
+  mode: 'OBSERVATION' | 'TARGETING'
+  segments: AudienceSegment[]
+}
+
 export interface Sitelink { text: string; url: string; description1?: string; description2?: string }
 export interface StructuredSnippet { header: string; values: string[] }
 
@@ -61,6 +78,9 @@ export interface Campaign {
   source_research?: string
   negative_keywords?: string[]
   ad_groups: AdGroup[]
+  // Optional. Lipsa cheii = ads:plan NU atinge audientele din cont (nici nu le adauga, nici nu le
+  // scoate). Cu cheia prezenta, contul se aliniaza la lista de aici (ce lipseste se elimina).
+  audiences?: CampaignAudiences
   extensions?: {
     sitelinks?: Sitelink[]
     callouts?: string[]

@@ -1,0 +1,166 @@
+# Remarketing pentru vizitatori (RLSA) — propunere și pași pentru proprietar
+
+> Aprobat ca direcție de proprietar pe 2026-10-03. Pregătit pe branch-ul `feat/remarketing-vizitatori`.
+> **Nimic nu e activ**: codul nu e publicat, iar listele și campaniile nu sunt create.
+> Textele legale noi sunt **de verificat de jurist înainte de deploy**.
+
+## De ce
+
+Ferestrele de comision sunt scurte (eMAG 2 zile la telefoane/TV/laptopuri, evoMAG 10 zile; ITGalaxy și
+CITGrup 60). Cine a văzut un produs la noi și revine mai târziu direct la magazin nu ne mai aduce
+comision. Un click nou pe „Vezi oferta” pornește o fereastră nouă. Scopul: când acel vizitator caută
+din nou pe Google, reclama noastră să aibă o șansă mai mare să apară (Search, mod „Observare”).
+
+## Ce trebuia schimbat: consimțământul (regula 7, GDPR)
+
+Până acum `ad_personalization` era **mereu `denied`**. Cu el refuzat, Google nu pune pe nimeni în
+listele de remarketing. Dovada din cont: listele GA4 partajate („All Users of Superieftin.ro – GA4”,
+„Purchasers…”) există în Google Ads, dar au **0 membri**.
+
+Schimbarea de pe branch (decizia proprietarului, 2026-10-03: banner cât mai simplu, **fără bifă separată**):
+
+| | Înainte | După |
+|---|---|---|
+| Bife în banner | Necesare · Analiză · Publicitate | neschimbat; „Publicitate” include acum și reclamele personalizate |
+| Primul ecran | — | o singură mențiune scurtă: „publicitatea include și reclame personalizate (remarketing)” |
+| `ad_personalization` | mereu `denied` | = „Publicitate”: acordat ⇒ `ad_storage`, `ad_user_data`, `ad_personalization` toate `granted`; refuzat ⇒ toate `denied` |
+| „Accept toate” / „Refuz toate” | | tot / nimic; butoanele rămân identice ca stil și mărime |
+| Acorduri date înainte (v2, text vechi) | — | rămân valabile pentru măsurare, dar **fără** personalizare (vezi mai jos) |
+| Conversii offline (Data Manager) | `adPersonalization` DENIED | neschimbat (sunt pentru măsurare, nu remarketing) |
+
+**Cei care au acceptat deja „Publicitate” cu textul vechi.** Textul de atunci nu pomenea reclamele
+personalizate, deci acordul lor nu acoperă acest scop. Soluția (cea mai simplă):
+- cookie-ul `se_consent` primește un marcaj `personalization`, scris automat egal cu „Publicitate” la
+  orice salvare de acum înainte (deci îl au doar acordurile date cu textul nou);
+- cookie-urile vechi nu au marcajul → `ad_personalization` rămâne `denied`;
+- `CONSENT_VERSION` rămâne 2: bannerul **nu** reapare și gclid-urile **nu** se șterg (o versiune nouă ar
+  fi făcut `AdClickCapture` să retragă ID-urile tuturor);
+- omul intră în remarketing când își salvează din nou alegerea din „Setări cookies” (vede textul nou) sau
+  când acordul expiră (6 luni) și răspunde din nou la banner.
+
+Detaliile sunt în pagini, nu în banner: `/cookies` (rând în tabel + secțiunea „Reclame personalizate
+(remarketing), pe scurt”), `/confidentialitate` (rând în tabel, secțiune nouă, durata în „Cât timp păstrăm
+datele”; afirmația veche „Nu folosim datele pentru reclame personalizate” e restrânsă la conversiile
+offline) și `/termeni`, secțiunea 7 (scurt, cu trimitere spre cele două politici).
+
+**Pentru jurist:** (1) e suficient ca reclamele personalizate să fie incluse în „Publicitate”, cu o
+mențiune scurtă în primul ecran și detaliile în politici? (2) tratarea acordurilor vechi (fără
+personalizare până la o nouă salvare); (3) formularea despre Google ca operator pentru propriile date
+(linkul „partner-sites”); (4) durata „cel mult 540 de zile de la ultima vizită” (maximul GA4, ales de proprietar
+pe 2026-10-03 în locul a 30 de zile) — e proporțională cu scopul?
+
+## Câți oameni ar intra în listă (estimare prudentă)
+
+- GA4 (doar vizitatori cu acord „Analiză”): **~180 utilizatori în ultimele 30 de zile**, ~6/zi; o parte
+  ești tu și roboți. Din reclame (`google / cpc`): 8 sesiuni.
+- `ad_clicks` pe producție: `has_ad_consent` la ~30 din ~41.000 de rânduri, dar >99% din rânduri sunt
+  roboții din 30 sep – 2 oct, deci raportul nu spune nimic despre oameni. După protecția anti-roboți
+  (3 oct, după-amiază): 1 click cu acord din ~22 clickuri externe — eșantion prea mic.
+- Realist: din vizitatorii umani, **20–40% apasă „Accept toate”** la un banner cu „Refuz” la fel de vizibil.
+  Cu personalizarea inclusă în „Publicitate”, lista ar strânge ~**40–100 de membri activi / 30 zile**
+  (după ce Google pierde o parte: Safari, blocare de reclame, browsere fără cookie-uri Google).
+  (acordurile vechi nu contează, dar sunt puține: site-ul are acord de o săptămână).
+- Pragul Google (din dec. 2025, toate rețelele): **minim 100 de utilizatori activi în 30 de zile**. Sub
+  prag lista se poate atașa, dar nu influențează nimic. Concluzie: totul e pregătit, dar efectul apare
+  abia când traficul crește (ordinul a 1.000+ vizitatori umani pe /p/ pe lună).
+
+## Variante tehnice
+
+**(a) Audiență GA4 legată de Google Ads — RECOMANDAT**
+- Pro: folosește tagul existent (G-74GYJN8XLB) și evenimentele care există deja (`view_item`,
+  `click_affiliate_link`); excluderea „a dat click spre magazin” e posibilă direct; fără cod nou pe site
+  în afară de consimțământ; GA4 adaugă la creare și membrii din ultimele 30 de zile.
+- Contra: lista apare în Ads la 24–48 h; condițiile se fac în interfața GA4 (manual).
+
+**(b) Segment de date Google Ads din tagul Google (AW-18476577168)**
+- Pro: lista trăiește direct în Google Ads.
+- Contra: trebuie adăugat tagul Ads pe site (cod nou, cookie-uri noi `_gcl_*` de descris în politici);
+  regulile pe URL nu văd clickul spre magazin (`/go/` e un redirect pe server, fără tag) → ar trebui
+  trimis și evenimentul către Ads; dublează ce face deja GA4.
+
+## Pașii tăi (după verificarea juristului și deploy)
+
+**GA4** (analytics.google.com, „Admin” = rotița):
+
+1. **Setări de consimțământ**: Admin → Colectarea datelor → verifică la „Setări consimțământ” că
+   proprietatea primește `ad_personalization` (poate dura 1–2 zile după deploy).
+2. **Google Signals rămâne OPRIT** (Admin → Colectarea datelor). Nu e necesar pentru remarketing pe
+   date first-party cu acord, iar politicile spun că nu îl folosim.
+3. **Listele GA4 deja partajate** („All Users”, „Purchasers”): Admin → Audiențe → deschide fiecare →
+   pot rămâne la 540 de zile: politicile spun „cel mult 540 de zile” (decizia proprietarului,
+   2026-10-03). Nu e nevoie de nicio schimbare; nicio listă nu poate depăși 540 de zile.
+4. **Legătura Google Ads** (Admin → Linkuri de produse → Google Ads): „Publicitate personalizată”
+   trebuie să fie **activă** (listele GA4 apar deja în Ads, deci pare activă — verifică).
+   Aceasta schimbă recomandarea din `ghid-setari-ga4.md`, pasul 5.
+5. **Audiența nouă**: Admin → Afișare date → Audiențe → Audiență nouă → Creează audiență personalizată:
+   - Nume: `SE | Produs văzut, fără click 7z`
+   - **Include**: eveniment `view_item`, cu condiția pe produs **Categorie articol** (Item category)
+     *corespunde expresiei regulate* `^(telefoane-mobile|laptopuri|televizoare|monitoare|desktop-uri|casti)$`
+     — listă albă. Motiv: Sănătate & Naturale (Vegis) e categorie sensibilă; politica Google interzice
+     reclamele personalizate bazate pe interese de sănătate (și regula 8).
+   - **Exclude** → „Exclude temporar utilizatorii când”: eveniment `click_affiliate_link`, număr de
+     evenimente > 0 **în orice perioadă de 7 zile** (fereastra de timp a condiției).
+   - **Durata de apartenență: 30 de zile.**
+   - Verifică în panoul din dreapta că numărul estimat scade când adaugi excluderea, apoi Salvează.
+   - *Dacă interfața nu permite fereastra de 7 zile la excludere*: fă două audiențe — `SE | Produs văzut 30z`
+     (doar includerea, 30 de zile) și `SE | Click magazin 7z` (`click_affiliate_link`, 7 zile) — și în
+     Google Ads un segment combinat „primul ȘI NU al doilea”.
+
+**Google Ads** (după 24–48 h):
+
+6. Unelte → Biblioteca partajată → Manager de segmente → „Segmentele tale de date”: găsește lista,
+   notează **ID-ul** (în URL, `userListId=…`) și verifică „Eligibilă pentru Search”.
+7. Trimite ID-ul agentului `ads-builder`, care adaugă în YAML-ul campaniei:
+   ```yaml
+   audiences:
+     mode: OBSERVATION
+     segments:
+       - name: "SE | Produs văzut, fără click 7z"
+         user_list_id: "<ID>"
+         bid_modifier: 1.25
+   ```
+   Apoi: `ads:validate` → policy-reviewer (hash nou, PASS nou) → `ads:apply -- --confirm` (validate_only)
+   → scrierea reală doar cu acordul tău (`ADS_ENV=prod`, `--prod`). Campaniile rămân cum sunt (PAUSED/ENABLED).
+8. După 30 de zile: Google Ads → campania → Audiențe → compară CPC, CTR, conversii pentru membri vs restul.
+
+## Durata listei și ajustarea de licitare
+
+| Magazin | Fereastră click | Reclame Google Ads permise? |
+|---|---|---|
+| eMAG | 2 zile (telefoane/TV/laptopuri), 15 restul | NU (interzis PPC) |
+| evoMAG | 10 zile | doar cu acord scris |
+| ITGalaxy | 60 de zile | da |
+| CITGrup | 60 de zile | da (feed oprit acum) |
+
+- **Durata apartenenței: 30 de zile.** E ciclul tipic de decizie la electronice și depășește
+  ferestrele scurte (2–10 zile): cine revine în 30 de zile pornește prin noi o fereastră nouă. Peste
+  30 de zile interesul scade. Politicile spun „cel mult 540 de zile” (maximul GA4), deci și listele
+  existente de 540 de zile sunt acoperite; audiența nouă rămâne totuși la 30 de zile.
+- **Excluderea după click: 7 zile.** În primele zile după „Vezi oferta” fereastra e încă deschisă la
+  majoritatea magazinelor, deci un click plătit nou ar fi bani dați pe ceva deja al nostru. 7 zile e
+  compromisul între 2 (eMAG) și 10 (evoMAG); la ITGalaxy (60) e prudent.
+- **Ajustare: +25% în Observare**, nu Direcționare (Targeting ar opri reclamele pentru toți ceilalți).
+  `ads:validate` refuză în afara -50%…+50% și orice CPC × ajustare peste plafonul din guardrails
+  (3 lei; ex. Samsung pliabile 1,30 → 1,63 lei). Revizuire după ≥100 de clickuri din listă: dacă
+  rata de click spre magazin a membrilor e ≥1,5× restul, poți urca spre +40%; dacă nu, înapoi la 0%.
+- La `MAXIMIZE_CLICKS` Google poate ignora ajustarea (lista rămâne utilă pentru observare).
+
+## Display / Demand Gen spre /p/ (de studiat, NU acum)
+
+- Același consimțământ și același prag de 100; volumul nu-l susține acum.
+- `ads/config/guardrails.yaml` permite doar Search (`display: false`); codul `ads:*` creează doar Search.
+  Ar cere decizia ta + extinderea codului (alt tip de campanie, anunțuri cu imagini).
+- Remarketingul dinamic cere feed în Merchant Center → interzis pentru afiliere (regula Shopping).
+- eMAG și Vexio interzic PPC (inclusiv Display): paginile /p/ promovate trebuie să aibă ofertă
+  ITGalaxy/CITGrup, iar anunțul nu poate numi magazinul.
+- Concluzie: întâi Search în Observare; Display doar după ce lista trece constant de câteva sute.
+
+## Riscuri
+
+- **Listă prea mică** (cel mai probabil): nimic nu se întâmplă; costul e zero.
+- **Juridic**: personalizarea inclusă în „Publicitate” fără bifă proprie; textele noi nevăzute de jurist.
+- **Cookie-uri Google**: după deploy verifică în DevTools (Application → Cookies) ce setează Google cu
+  „Publicitate” acceptată și ajustează tabelul din `/cookies` dacă apare ceva nedescris.
+- **Categorie sensibilă**: dacă audiența ar include Sănătate & Naturale, Google o poate respinge și
+  încalcă regula 8 — de aceea lista albă de categorii.
+- **Listele GA4 vechi (540 de zile)** încep să se umple după deploy — acoperite de politici (max. 540 de zile).

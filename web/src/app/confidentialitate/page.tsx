@@ -12,6 +12,7 @@ export const metadata: Metadata = {
 // ATENTIE: textul descrie ce face REAL codul. Cand se schimba colectarea de date (tracking nou,
 // formular nou, alt furnizor), actualizeaza pagina + data de mai jos.
 // Text redactat fara jurist — recomandat sa fie verificat inainte de lansarea reclamelor.
+// Sectiunile despre reclamele personalizate (parte din „Publicitate”, 3 oct 2026) sunt NOI — de verificat de jurist inainte de deploy.
 export default function ConfidentialitatePage() {
   const privacyEmail = COMPANY.privacyEmail ?? COMPANY.email
   return (
@@ -83,6 +84,16 @@ export default function ConfidentialitatePage() {
             <td>Consimțământ (categoria „Publicitate”); fără acord, bannerele nu se încarcă</td>
           </tr>
           <tr>
+            <td>
+              <strong>Reclame personalizate (remarketing)</strong>: din datele Google Analytics, faptul că ai
+              văzut pagini de produs pe site și dacă ai mers spre un magazin; Google te recunoaște prin
+              cookie-urile sale de publicitate
+            </td>
+            <td>Să îți arătăm din nou reclamele noastre în Google (de exemplu, când cauți din nou un produs),
+              timp de cel mult 540 de zile (aproximativ 18 luni) de la vizită</td>
+            <td>Consimțământ (categoria „Publicitate”, acordat începând cu 3 octombrie 2026)</td>
+          </tr>
+          <tr>
             <td><strong>Alerte de preț pe Telegram</strong>: ID-ul conversației, numele de utilizator și prenumele din Telegram, alertele setate</td>
             <td>Să îți trimitem alertele cerute</td>
             <td>Executarea serviciului cerut de tine</td>
@@ -138,9 +149,10 @@ export default function ConfidentialitatePage() {
           se anulează, îi cerem lui Google să o retragă, pe baza ID-ului comenzii.
         </li>
         <li>
-          <strong>Nu folosim datele pentru reclame personalizate.</strong> Nu cerem și nu declarăm acord
-          pentru reclame personalizate sau remarketing: semnalul <code>ad_personalization</code> este
-          mereu „refuzat”, atât pe site, cât și în datele trimise la Google.
+          <strong>Identificatorul clickului nu e folosit pentru reclame personalizate.</strong> În conversiile
+          offline descrise mai sus, semnalul <code>ad_personalization</code> este mereu „refuzat”.
+          Reclamele personalizate (remarketing) funcționează separat, prin Google Analytics, cu acordul
+          „Publicitate” — vezi secțiunea de mai jos.
         </li>
         <li>
           <strong>Dacă îți retragi acordul</strong> (din „Setări cookies”), dacă acordul expiră (după
@@ -154,6 +166,29 @@ export default function ConfidentialitatePage() {
           Cloudflare (vezi „Cât timp păstrăm datele”), păstrate de regulă câteva săptămâni, doar pentru
           securitate.
         </li>
+      </ul>
+
+      <h2>Reclame personalizate (remarketing)</h2>
+      <p>
+        Dacă accepți „Publicitate”, site-ul trimite către Google
+        semnalul <code>ad_personalization</code> = „acordat”. Google Analytics poate atunci include browserul
+        tău într-o listă de vizitatori, de exemplu „a văzut un produs, dar nu a mers spre magazin în
+        ultimele 7 zile”, pe care o folosim în Google Ads ca să îți arătăm reclamele noastre când cauți din
+        nou pe Google (eventual cu o licitare mai mare pentru tine). Nu vedem cine este în listă:
+        Google ne arată doar numere agregate. Acordurile „Publicitate” date înainte de 3 octombrie 2026, când textul nu pomenea reclamele
+        personalizate, nu le includ: pentru ele semnalul rămâne „refuzat” până îți salvezi din nou alegerea
+        din „Setări cookies” sau până îți cerem din nou acordul.
+      </p>
+      <ul>
+        <li>Nu folosim Google Signals și nu trimitem la Google email, telefon sau adresa IP. Google poate
+          combina aceste informații cu datele pe care le are deja despre tine (de exemplu, dacă ești
+          autentificat într-un cont Google), conform propriei politici:{' '}
+          <a href="https://policies.google.com/technologies/partner-sites" rel="noopener" target="_blank">
+            cum folosește Google datele de pe site-urile partenerilor</a>.</li>
+        <li>Durata: cel mult 540 de zile (aproximativ 18 luni) de la ultima vizită care te-a inclus în listă.</li>
+        <li>Retragere: debifezi „Publicitate” din „Setări cookies”. De atunci nu mai ești
+          adăugat; apartenența existentă expiră în cel mult 540 de zile. Poți folosi și setările Google, la{' '}
+          <a href="https://myadcenter.google.com" rel="noopener" target="_blank">myadcenter.google.com</a>.</li>
       </ul>
 
       <h2>Linkurile spre magazine</h2>
@@ -196,6 +231,8 @@ export default function ConfidentialitatePage() {
           automat, indiferent dacă a dus la o comandă (codul de click rămâne, fără identificatorul Google).
           Îl ștergem mai devreme dacă îți retragi acordul sau dacă acordul expiră.</li>
         <li>Datele Google Analytics: 14 luni (setarea din Google Analytics).</li>
+        <li>Apartenența la listele de reclame personalizate: cel mult 540 de zile (aproximativ 18 luni) de la ultima vizită care
+          te-a inclus (setarea listelor din Google Analytics).</li>
         <li>Alertele Telegram: până le ștergi (comanda <code>/sterge</code>) sau ne ceri ștergerea.</li>
         <li>Jurnalele tehnice: cât e necesar pentru securitate, de regulă câteva săptămâni.</li>
       </ul>
