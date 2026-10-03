@@ -11,6 +11,8 @@ import { Sparkline } from '@/components/Sparkline'
 import { TrackViewItem } from '@/components/analytics/TrackViewItem'
 import { AffiliateLink } from '@/components/analytics/AffiliateLink'
 import { getGuidesForProduct } from '@/lib/guides/queries'
+import { suggestAlertTarget, telegramAlertUrl } from '@/lib/price-alert'
+import { PriceAlertButton, MobileActionBar } from '@/components/PriceAlert'
 
 export const revalidate = 3600
 
@@ -71,6 +73,31 @@ export default async function ProductPage({ params }: Props) {
     : null
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.superieftin.ro'
+
+  // Alerta de pret = actiunea secundara principala, langa „Vezi oferta” (decizia 2026-10-03).
+  // Pragul propus: 5% sub min(pret azi, mediana 30 de zile) — lib/price-alert.ts. Pentru un
+  // produs indisponibil nu propunem nimic (nu avem un pret de azi): botul il intreaba.
+  const botUsername = process.env.TELEGRAM_BOT_USERNAME
+  const alertTarget = bestOffer ? suggestAlertTarget(bestOffer.current_price, bestOffer.median_price) : null
+  const alertHref = botUsername && product.alert_offer_id
+    ? telegramAlertUrl(botUsername, product.alert_offer_id, alertTarget)
+    : null
+  const alertProps = alertHref
+    ? { href: alertHref, productId: product.id, category: product.category, price: bestOffer?.current_price ?? null, target: alertTarget }
+    : null
+  const affiliateProps = bestOffer
+    ? {
+        offerId: bestOffer.offer_id,
+        productId: product.id,
+        productName: product.name,
+        merchantName: bestOffer.retailer_name,
+        price: bestOffer.current_price,
+        category: product.category,
+        discountPct: discountInfo?.verdict === 'real' ? discountInfo.discountPct : null,
+      }
+    : null
+  const primaryBtn = 'text-center bg-yellow-400 hover:bg-yellow-500 text-gray-900 text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2'
+  const alertBtn = 'flex items-center justify-center gap-1.5 text-center border-2 border-brand text-brand bg-surface hover:bg-brand-light text-sm font-semibold px-4 py-2 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2'
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -197,6 +224,58 @@ export default async function ProductPage({ params }: Props) {
             <h1 className="text-xl font-black font-archivo text-[var(--color-text)] mt-1 leading-snug">{product.name}</h1>
           </div>
 
+          {/* Actiunile principale: „Vezi oferta” (cea mai ieftina oferta disponibila) + alerta de
+              pret. Pe mobil acelasi lucru sta si in bara fixa de jos (MobileActionBar), care se
+              ascunde cand blocul acesta e pe ecran. */}
+          {(affiliateProps || alertProps) && (
+            <div id="actiuni-produs" className="rounded-lg border border-line bg-surface p-4 space-y-3">
+              {bestOffer && (
+                <div>
+                  <div className="text-xs text-muted">
+                    {product.offers.length > 1 ? 'Cel mai bun preț azi' : 'Preț azi'}, la{' '}
+                    {bestOffer.retailer_name}
+                  </div>
+                  <PriceTag
+                    price={bestOffer.current_price}
+                    discountPct={discountInfo?.verdict === 'real' ? discountInfo.discountPct : null}
+                  />
+                </div>
+              )}
+              <div className="grid sm:grid-cols-2 gap-2">
+                {affiliateProps && (
+                  <AffiliateLink {...affiliateProps} className={primaryBtn}>
+                    Vezi oferta →
+                  </AffiliateLink>
+                )}
+                {alertProps && (
+                  <PriceAlertButton {...alertProps} placement={bestOffer ? 'actiuni' : 'indisponibil'} className={alertBtn}>
+                    <span aria-hidden="true">🔔</span> {bestOffer ? 'Anunță-mă când scade prețul' : 'Setează o alertă de preț'}
+                  </PriceAlertButton>
+                )}
+              </div>
+              {/* Rândul de beneficiu: descrie EXACT ce face alerta (o oferta, pragul ales, o
+                  singura data) — fara sa promita ca pretul va scadea (REGULI.md, regula 9).
+                  „pe Telegram” trebuie sa ramana vizibil: reclamele promit „Alertă de preț pe Telegram”. */}
+              {alertProps && (
+                <p className="text-xs text-muted">
+                  {bestOffer && alertTarget != null ? (
+                    <>
+                      Gratuit, pe Telegram: îți scriem când prețul la{' '}
+                      {bestOffer.retailer_name} ajunge la{' '}
+                      <strong className="text-[var(--color-text)]">{formatPrice(alertTarget)}</strong> sau mai puțin.
+                      Poți alege alt prag în conversație. Fără cont, fără email.
+                    </>
+                  ) : (
+                    <>
+                      Gratuit, pe Telegram: alegi prețul dorit și îți scriem când produsul e disponibil
+                      la acel preț sau mai puțin. Fără cont, fără email.
+                    </>
+                  )}
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Oferte per retailer — doar cele disponibile (lib/availability.ts) */}
           <div className="space-y-3">
             <h2 className="font-semibold text-[var(--color-text)]">Prețuri per magazin</h2>
@@ -209,7 +288,7 @@ export default async function ProductPage({ params }: Props) {
                   {product.last_seen
                     ? `Ultima dată l-am găsit ${formatVerified(product.last_seen).replace(/^Verificat /, '')}. `
                     : ''}
-                  Setează o alertă de preț și te anunțăm când reapare.
+                  Setează o alertă de preț și te anunțăm când reapare la prețul dorit.
                 </p>
               </div>
             )}
@@ -247,19 +326,6 @@ export default async function ProductPage({ params }: Props) {
               )
             })}
           </div>
-
-          {/* Buton alerta Telegram */}
-          {process.env.TELEGRAM_BOT_USERNAME && product.alert_offer_id && (
-            <a
-              href={`https://t.me/${process.env.TELEGRAM_BOT_USERNAME}?start=offer_${product.alert_offer_id}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 w-full border border-line rounded-lg py-2.5 text-sm font-semibold text-[var(--color-text)] hover:border-brand hover:text-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
-            >
-              {/* „pe Telegram” vizibil: reclamele promit „Alertă de preț pe Telegram” */}
-              🔔 Alertă de preț pe Telegram
-            </a>
-          )}
 
           {/* Ghiduri despre acest produs — doar cand exista ghiduri publicate */}
           {guides.length > 0 && (
@@ -323,6 +389,26 @@ export default async function ProductPage({ params }: Props) {
           </div>
         </div>
       </div>
+
+      {/* Bara fixa de pe mobil — doar cand exista macar o actiune */}
+      {(affiliateProps || alertProps) && (
+        <MobileActionBar watchId="actiuni-produs">
+          {affiliateProps && (
+            <AffiliateLink {...affiliateProps} className={`flex-1 ${primaryBtn}`}>
+              Vezi oferta · <span className="tabular-nums whitespace-nowrap">{formatPrice(affiliateProps.price)}</span>
+            </AffiliateLink>
+          )}
+          {alertProps && (
+            <PriceAlertButton
+              {...alertProps}
+              placement="bara-mobil"
+              className={`${affiliateProps ? 'shrink-0' : 'flex-1'} ${alertBtn}`}
+            >
+              <span aria-hidden="true">🔔</span> {affiliateProps ? 'Alertă preț' : 'Setează o alertă de preț'}
+            </PriceAlertButton>
+          )}
+        </MobileActionBar>
+      )}
     </>
   )
 }

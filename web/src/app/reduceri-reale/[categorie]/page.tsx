@@ -106,7 +106,7 @@ export default async function LandingPage({ params }: Props) {
           </h2>
           <p className="mt-1 text-sm text-muted">
             Prețurile sunt în intervalul lor obișnuit. Deschide un produs și apasă{' '}
-            <strong>🔔 Alertă de preț</strong>: te anunțăm pe Telegram când scade.
+            <strong>🔔 Anunță-mă când scade prețul</strong>: te anunțăm pe Telegram când ajunge la prețul ales.
           </p>
         </section>
       )}
