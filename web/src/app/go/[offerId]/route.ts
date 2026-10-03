@@ -24,6 +24,21 @@ import { renderInterstitial } from '@/lib/go-interstitial'
 
 const NO_STORE = { 'Cache-Control': 'no-store' }
 
+// Cate cereri au fost oprite (limita / fara token), scrise in logul containerului cel mult o data
+// pe minut — ca proprietarul sa vada un val de roboti in `docker compose logs web` fara mii de
+// randuri. Fara IP-uri sau alte date despre vizitator.
+const blocked = { minute: 0, rate: 0, interstitial: 0 }
+function countBlocked(kind: 'rate' | 'interstitial') {
+  const minute = Math.floor(Date.now() / 60_000)
+  if (minute !== blocked.minute) {
+    if (blocked.rate || blocked.interstitial) {
+      console.warn(`[go] minutul anterior: ${blocked.rate} oprite de limita de viteza, ${blocked.interstitial} pe pagina intermediara`)
+    }
+    blocked.minute = minute; blocked.rate = 0; blocked.interstitial = 0
+  }
+  blocked[kind]++
+}
+
 export async function GET(req: NextRequest, ctx: { params: Promise<{ offerId: string }> }) {
   return handle(req, ctx, 'GET')
 }
@@ -88,6 +103,7 @@ async function handle(
   // Peste limita de viteza: inapoi pe pagina produsului (un om ajuns aici din greseala vede
   // oferta si poate reveni peste un minut). 303 la POST, ca browserul sa faca GET pe /p/.
   if (!limit.allowed) {
+    countBlocked('rate')
     return NextResponse.redirect(productPage, {
       status: method === 'POST' ? 303 : 302,
       headers: { ...NO_STORE, 'X-Robots-Tag': 'noindex, nofollow' },
@@ -108,6 +124,7 @@ async function handle(
       tooFast = r === 'too_fast'
     }
     if (!ok) {
+      countBlocked('interstitial')
       const html = renderInterstitial({
         offerId: id, productName: product_name, retailerName: retailer_name, productSlug: product_slug,
         formToken: signFormToken(secret, id), tooFast,
