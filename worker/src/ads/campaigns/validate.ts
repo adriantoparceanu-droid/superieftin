@@ -186,6 +186,14 @@ export function validateCampaign(cf: CampaignFile, g: Guardrails): Issue[] {
   }
   if (!c.conversion_goal?.conversion_action_id) err('campaign.conversion_goal', 'lipsește obiectivul de conversie („Comision afiliere”)')
 
+  // Audiente (liste de remarketing) — vezi validateAudiences
+  if (c.audiences !== undefined) {
+    const agCpcs = (c.ad_groups ?? []).map((ag) => ag.max_cpc ?? maxCpc).filter((x): x is number => typeof x === 'number')
+    for (const [where, msg, level] of validateAudiences(c.audiences, Math.max(0, ...agCpcs), g, strategy)) {
+      if (level === 'error') err(where, msg); else warn(where, msg)
+    }
+  }
+
   // Negative la nivel de campanie
   const campNeg = (c.negative_keywords ?? []).map(parseNegative)
   const seenNeg = new Set<string>()
@@ -284,6 +292,42 @@ export function validateCampaign(cf: CampaignFile, g: Guardrails): Issue[] {
   for (const u of allUrls(c)) for (const p of checkUrlStatic(u, g)) err('url', p)
 
   return issues
+}
+
+// --- Audiente (remarketing pe Search, docs/ads-program/remarketing-vizitatori.md) -----------------
+//
+// Ajustarea de licitare e plafonata aici (nu in guardrails.yaml, pe care nu-l modificam fara
+// cererea proprietarului): intre -50% si +50%. In plus, CPC-ul maxim inmultit cu ajustarea nu
+// are voie sa treaca de CPC-ul maxim din guardrails — altfel lista ar ocoli plafonul dur.
+export const AUDIENCE_BID_MODIFIER = { min: 0.5, max: 1.5 }
+
+export function validateAudiences(
+  a: Campaign['audiences'], highestCpc: number, g: Guardrails, strategy: string,
+): [string, string, 'error' | 'warn'][] {
+  const out: [string, string, 'error' | 'warn'][] = []
+  const w = 'campaign.audiences'
+  if (!a || typeof a !== 'object') return [[w, 'secțiune invalidă (aștept mode + segments)', 'error']]
+  if (a.mode === 'TARGETING') out.push([`${w}.mode`, 'TARGETING (reclame DOAR pentru membrii listei) nu e permis încă — listele sunt sub pragul de 100 de utilizatori activi; folosește OBSERVATION (decizia proprietarului)', 'error'])
+  else if (a.mode !== 'OBSERVATION') out.push([`${w}.mode`, `mod necunoscut „${String(a.mode)}” (OBSERVATION)`, 'error'])
+  const segs = Array.isArray(a.segments) ? a.segments : []
+  if (!segs.length) out.push([`${w}.segments`, 'nicio listă (scoate secțiunea audiences dacă nu vrei liste)', 'error'])
+  const seen = new Set<string>()
+  for (const [i, s] of segs.entries()) {
+    const sw = `${w}.segments[${i}] „${s?.name ?? ''}”`
+    const id = String(s?.user_list_id ?? '')
+    if (!s?.name) out.push([sw, 'lipsește name', 'error'])
+    if (!/^\d+$/.test(id)) out.push([sw, `user_list_id „${id}” invalid (doar cifre — ID-ul listei din Google Ads, nu din GA4)`, 'error'])
+    if (seen.has(id)) out.push([sw, 'listă duplicată', 'error'])
+    seen.add(id)
+    const m = s?.bid_modifier ?? 1
+    if (typeof m !== 'number' || !(m >= AUDIENCE_BID_MODIFIER.min && m <= AUDIENCE_BID_MODIFIER.max)) {
+      out.push([sw, `bid_modifier ${String(m)} în afara intervalului ${AUDIENCE_BID_MODIFIER.min}–${AUDIENCE_BID_MODIFIER.max} (-50%…+50%)`, 'error'])
+    } else if (highestCpc * m > g.bidding.max_cpc + 1e-9) {
+      out.push([sw, `CPC ${highestCpc} lei × ${m} = ${(highestCpc * m).toFixed(2)} lei depășește CPC-ul maxim de ${g.bidding.max_cpc} lei (guardrails)`, 'error'])
+    }
+    if (m !== 1 && strategy === 'MAXIMIZE_CLICKS') out.push([sw, 'la MAXIMIZE_CLICKS Google poate ignora ajustarea de licitare pe audiențe — lista rămâne utilă pentru observare', 'warn'])
+  }
+  return out
 }
 
 function validateRsa(ad: RsaAd, w: string, err: (w: string, m: string) => void, warn: (w: string, m: string) => void) {

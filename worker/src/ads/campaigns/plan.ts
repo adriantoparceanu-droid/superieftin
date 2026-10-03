@@ -7,7 +7,10 @@
 //    (activarea si pauza campaniei sunt ale proprietarului, in Google Ads / dashboard);
 //  - ce a disparut din YAML: cuvinte cheie, grupuri si anunturi → PAUZA (nu stergere);
 //    negative, geo/limba si extensii → eliminate (nu au status de pauza / nu cheltuie);
-//  - totul pleaca intr-o SINGURA cerere googleAds:mutate (atomica, putine operatii API).
+//  - totul pleaca intr-o SINGURA cerere googleAds:mutate (atomica, putine operatii API);
+//  - audiente (liste de remarketing): DOAR daca YAML-ul are cheia `audiences` — atunci contul se
+//    aliniaza (lista noua → adaugata, ajustare schimbata → modificata, lista scoasa → eliminata);
+//    fara cheie, audientele din cont nu sunt atinse. Modul e mereu „Observare” (bidOnly).
 //
 // Cuvintele cheie si extensiile noi se creeaza ENABLED, dar nu pot rula cat timp grupul si
 // campania sunt PAUSED (regula 1 cere PAUSED pentru campanii, grupuri si anunturi). Asa,
@@ -177,6 +180,7 @@ export function buildPlan(files: CampaignFile[], acc: AccountSnapshot, customerI
             resourceName: campaignRn, name: c.name, status: 'PAUSED', advertisingChannelType: 'SEARCH',
             campaignBudget: budgetRn, ...biddingFields, networkSettings,
             geoTargetTypeSetting: { positiveGeoTargetType: 'PRESENCE', negativeGeoTargetType: 'PRESENCE' },
+            ...(c.audiences ? { targetingSetting: { targetRestrictions: [{ targetingDimension: 'AUDIENCE', bidOnly: c.audiences.mode !== 'TARGETING' }] } } : {}),
             containsEuPoliticalAdvertising: 'DOES_NOT_CONTAIN_EU_POLITICAL_ADVERTISING',
           },
         },
@@ -254,6 +258,9 @@ export function buildPlan(files: CampaignFile[], acc: AccountSnapshot, customerI
       if (!wantNegKeys.has(kwKey(k))) add('remove', `negativ campanie ${formatKw(k)} (nu e în YAML)`, { campaignCriterionOperation: { remove: x.resourceName } })
     }
     if (wantNeg.length - newNeg.length > 0) same(`${wantNeg.length - newNeg.length} negative de campanie`)
+
+    // --- Audiente (liste de remarketing), doar daca YAML-ul are cheia `audiences` ---
+    if (c.audiences) planAudiences(c, ac, campaignRn, accCrit, acc, C, add, same, cp)
 
     // --- Grupuri de anunturi ---
     const accAgs = campId ? acc.adGroups.filter((x) => x.campaignId === campId) : []
@@ -359,6 +366,67 @@ export function buildPlan(files: CampaignFile[], acc: AccountSnapshot, customerI
 
   plan.unmanaged = acc.campaigns.filter((x) => !managedIds.has(x.id))
   return plan
+}
+
+// Liste de remarketing pe campanie (RLSA). „Observare” = targeting_setting AUDIENCE cu bidOnly=true:
+// campania ruleaza pentru toti ca inainte; membrii listei doar primesc ajustarea de licitare si
+// apar separat in rapoarte. Pragul Google pentru Search e 100 de utilizatori activi — sub el
+// lista se poate atasa, dar nu influenteaza nimic (avertisment, nu eroare).
+export const MIN_SEARCH_LIST_SIZE = 100
+
+function planAudiences(
+  c: CampaignFile['campaign'], ac: AccCampaign | undefined, campaignRn: string,
+  accCrit: AccountSnapshot['criteria'], acc: AccountSnapshot, C: string,
+  add: (kind: OpKind, label: string, op: Record<string, unknown>) => void,
+  same: (label: string) => void, cp: CampaignPlan,
+) {
+  const a = c.audiences!
+  const bidOnly = a.mode !== 'TARGETING'
+  const modeLabel = bidOnly ? 'Observare' : 'Direcționare'
+  // 1. Setarea campaniei (la campanie noua e deja in create)
+  if (ac) {
+    const cur = (ac.targetRestrictions ?? []).find((t) => t.targetingDimension === 'AUDIENCE')
+    if (!cur || cur.bidOnly !== bidOnly) {
+      const others = (ac.targetRestrictions ?? []).filter((t) => t.targetingDimension !== 'AUDIENCE')
+      add('update', `audiențe în modul „${modeLabel}”${bidOnly ? ' (campania rulează pentru toți, lista doar ajustează licitarea)' : ''}`, {
+        campaignOperation: {
+          update: { resourceName: campaignRn, targetingSetting: { targetRestrictions: [...others, { targetingDimension: 'AUDIENCE', bidOnly }] } },
+          updateMask: 'targetingSetting.targetRestrictions',
+        },
+      })
+    } else same(`audiențe în modul „${modeLabel}”`)
+  }
+  // 2. Listele
+  const accLists = accCrit.filter((x) => x.type === 'USER_LIST' && !x.negative)
+  const wantRns = new Set<string>()
+  for (const s of a.segments ?? []) {
+    const rn = `${C}/userLists/${s.user_list_id}`
+    wantRns.add(rn)
+    const m = s.bid_modifier ?? 1
+    const pct = `${m >= 1 ? '+' : ''}${Math.round((m - 1) * 100)}%`
+    const list = acc.userLists.find((l) => l.id === String(s.user_list_id))
+    if (!list) { cp.errors.push(`lista „${s.name}” (${s.user_list_id}) nu există în cont — verifică ID-ul în Google Ads → Manager de segmente (listele GA4 apar la 24–48 h după creare)`); continue }
+    if (!list.eligibleForSearch) { cp.errors.push(`lista „${list.name}” (${list.id}) nu e eligibilă pentru Search`); continue }
+    if (list.name !== s.name) cp.warnings.push(`lista ${list.id} se numește „${list.name}” în cont, nu „${s.name}” (potrivirea e după ID)`)
+    if (list.membershipStatus === 'CLOSED') cp.warnings.push(`lista „${list.name}” e închisă (nu mai primește membri noi)`)
+    if (list.sizeForSearch < MIN_SEARCH_LIST_SIZE) cp.warnings.push(`lista „${list.name}” are ${list.sizeForSearch} utilizatori activi pe Search (${list.sizeRangeForSearch || '-'}); sub ${MIN_SEARCH_LIST_SIZE} nu influențează licitarea — se poate atașa, dar efectul apare abia când crește`)
+    const ex = accLists.find((x) => x.userList === rn)
+    if (!ex) {
+      add('create', `listă de remarketing „${list.name}” (${list.id}) · ${modeLabel} · ajustare ${pct}`, {
+        campaignCriterionOperation: { create: { campaign: campaignRn, userList: { userList: rn }, ...(m !== 1 ? { bidModifier: m } : {}) } },
+      })
+    } else if (Math.abs((ex.bidModifier ?? 1) - m) > 1e-6) {
+      add('update', `listă „${list.name}”: ajustare ${Math.round(((ex.bidModifier ?? 1) - 1) * 100)}% → ${pct}`, {
+        campaignCriterionOperation: { update: { resourceName: ex.resourceName, bidModifier: m }, updateMask: 'bidModifier' },
+      })
+    } else same(`listă „${list.name}” · ajustare ${pct}`)
+  }
+  for (const x of accLists) if (!wantRns.has(x.userList ?? '')) {
+    const name = acc.userLists.find((l) => l.resourceName === x.userList)?.name ?? x.userList
+    add('remove', `listă de remarketing „${name}” (nu e în YAML)`, { campaignCriterionOperation: { remove: x.resourceName } })
+  }
+  const excl = accCrit.filter((x) => x.type === 'USER_LIST' && x.negative).length
+  if (excl) same(`${excl} liste excluse setate manual în cont (neatinse)`)
 }
 
 export function planOps(plan: Plan): PlannedOp[] {
