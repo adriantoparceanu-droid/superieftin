@@ -84,12 +84,14 @@ export interface AdminCategory {
   sort_order: number
   is_visible: boolean
   product_count: number
+  has_content: boolean   // are text / întrebări frecvente pentru /c/ (migrația 030)
 }
 
 export async function getCategoriesTree(): Promise<AdminCategory[]> {
   const { rows } = await pool.query<AdminCategory>(`
     SELECT c.id, c.name, c.slug, c.parent_id, c.icon, c.sort_order, c.is_visible,
-           (SELECT count(*) FROM products p WHERE p.category_id = c.id)::int AS product_count
+           (SELECT count(*) FROM products p WHERE p.category_id = c.id)::int AS product_count,
+           (c.intro_md IS NOT NULL OR c.faq <> '[]'::jsonb) AS has_content
     FROM categories c
     ORDER BY c.parent_id NULLS FIRST, c.sort_order, c.id
   `)

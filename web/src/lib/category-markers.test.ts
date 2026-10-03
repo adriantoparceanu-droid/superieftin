@@ -4,7 +4,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import {
-  needsDe, formatCount, formatLei, joinRo, renderCategoryMarkers, categoryFaqLd, markdownToPlain,
+  renderCategoryMarkdown, needsDe, formatCount, formatLei, joinRo, renderCategoryMarkers, categoryFaqLd, markdownToPlain,
   validateCategoryContent, validateCategoryText, parseFaq, markerValue, type CategoryStats,
 } from './category-markers'
 import { renderMarkdown } from './guides/markdown'
@@ -89,6 +89,14 @@ test('mod md: valorile sunt protejate pentru Markdown', () => {
   const html = renderMarkdown(renderCategoryMarkers('Mărci: {{cat:branduri-top}}', s))
   assert.ok(html.includes('*Brand_X*'), html)
   assert.ok(!html.includes('<em>'), html)
+})
+
+test('renderCategoryMarkdown: magazinele nu devin linkuri directe, HTML-ul nu se executa', () => {
+  const html = renderCategoryMarkdown('La {{cat:lista-magazine}}. <script>x</script> [Lista](/reduceri-reale/laptopuri)', STATS)
+  assert.ok(html.includes('eMAG și evomag.ro'), html)
+  assert.ok(!html.includes('href="http://evomag.ro'), html)
+  assert.ok(!html.includes('<script>'), html)
+  assert.ok(html.includes('<a href="/reduceri-reale/laptopuri">Lista</a>'), html)
 })
 
 test('markdownToPlain: linkuri → text, fara a strica cratimele', () => {

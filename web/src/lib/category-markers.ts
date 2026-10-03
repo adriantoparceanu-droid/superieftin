@@ -27,6 +27,7 @@
 //   actualizat     — momentul calculului („4 octombrie 2026, ora 14:05”)
 //   prag           — pragul reducerii reale („5%”, din lib/discount.ts)
 
+import MarkdownIt from 'markdown-it'
 import { REAL_DISCOUNT_PCT } from './discount'
 import { findHealthClaims } from './guides/format'
 
@@ -145,6 +146,15 @@ export function renderCategoryMarkers(text: string, stats: CategoryStats, mode: 
     if (v == null) return ''
     return mode === 'md' ? escapeMd(v) : v
   })
+}
+
+// Markdown-ul textelor de categorie: ca la ghiduri (html: false → HTML-ul scris apare ca text),
+// dar FARA linkify — altfel numele magazinelor din {{cat:lista-magazine}} („evomag.ro”) ar
+// deveni linkuri directe spre magazin, ocolind /go/. Linkurile se scriu explicit: [text](/c/…).
+const md = new MarkdownIt({ html: false, linkify: false, typographer: false, breaks: false })
+
+export function renderCategoryMarkdown(text: string, stats: CategoryStats): string {
+  return md.render(renderCategoryMarkers(text, stats, 'md'))
 }
 
 // Markdown → text simplu pentru JSON-LD (linkuri → doar textul, fara ** / _ / `).

@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState, useTransition } from 'react'
+import Link from 'next/link'
 import {
   DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors,
   type DragMoveEvent, type DragEndEvent, type DragStartEvent, type DragOverEvent,
@@ -128,6 +129,10 @@ function SortableRow({ item, depth, allCategories }: {
       </form>
 
       <span className="text-xs text-muted shrink-0">/c/{cat.slug}</span>
+      {/* Textul + întrebările frecvente afișate pe /c/<slug> (migrația 030) */}
+      <Link href={`/admin/categorii/${cat.id}`} className="text-xs text-brand hover:underline shrink-0" title="Text și întrebări frecvente pe pagina categoriei">
+        {cat.has_content ? 'text ✓' : 'text'}
+      </Link>
       <span className="text-sm text-right shrink-0 w-16">{cat.product_count.toLocaleString('ro-RO')}</span>
 
       <div className="flex items-center gap-1 shrink-0">
