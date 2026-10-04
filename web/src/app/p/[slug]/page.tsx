@@ -149,7 +149,7 @@ export default async function ProductPage({ params }: Props) {
       }
     : null
   const primaryBtn = 'text-center bg-yellow-400 hover:bg-yellow-500 text-gray-900 text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2'
-  const alertBtn = 'flex items-center justify-center gap-1.5 text-center border-2 border-brand text-brand bg-surface hover:bg-brand-light text-sm font-semibold px-4 py-2 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2'
+  const alertBtn = 'flex items-center justify-center gap-1.5 text-center border-2 border-brand text-red-ink bg-surface hover:bg-brand-light text-sm font-semibold px-4 py-2 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2'
 
   // JSON-LD (raport SEO, A4): Product cu AggregateOffer, Offer.url = pagina (nu /go/), sku/mpn/gtin,
   // itemCondition din tag-uri; fara oferte disponibile → fara Product (pagina e oricum noindex).
@@ -234,9 +234,11 @@ export default async function ProductPage({ params }: Props) {
           {/* Pragurile: lib/discount.ts (±5% fata de mediana 30 de zile) */}
           {discountInfo && (
             <div className="rounded-lg border border-line bg-surface p-4">
+              {/* Insigna de verdict pentru toate cele 4 stări (redesign); textele de dedesubt rămân —
+                  „Reducere reală: X% sub mediana…” e citit de ads:validate / ads-guard */}
+              <div className="mb-2"><VerdictBadge verdict={discountInfo.verdict} discountPct={discountInfo.discountPct} size="lg" /></div>
               {discountInfo.verdict === 'real' && (
                 <>
-                  <div className="mb-1"><VerdictBadge discountPct={discountInfo.discountPct} /></div>
                   <p className="font-semibold text-[var(--color-text)]">
                     Reducere reală: {formatPct(discountInfo.discountPct ?? 0)}% sub mediana de 30 de zile
                   </p>
@@ -398,7 +400,7 @@ export default async function ProductPage({ params }: Props) {
               <ul className="space-y-1 text-sm">
                 {guides.map((g) => (
                   <li key={g.slug}>
-                    <Link href={`/ghiduri/${g.slug}`} className="text-brand hover:underline">{g.title}</Link>
+                    <Link href={`/ghiduri/${g.slug}`} className="text-red-ink hover:underline">{g.title}</Link>
                   </li>
                 ))}
               </ul>

@@ -82,11 +82,11 @@ export default async function GuidePage({ params }: Props) {
         <p className="mb-5 rounded-lg bg-[var(--color-page)] border border-line px-3 py-2 text-xs text-muted">
           Articolul conține linkuri de afiliere: dacă cumperi prin ele, primim un comision de la magazin,
           fără cost suplimentar pentru tine. Comisionul nu schimbă ordinea ofertelor.{' '}
-          <Link href="/ghiduri/metodologie" className="text-brand underline underline-offset-2">Cum lucrăm</Link>
+          <Link href="/ghiduri/metodologie" className="text-red-ink underline underline-offset-2">Cum lucrăm</Link>
         </p>
 
         {guide.category_slug && guide.category_name && (
-          <Link href={`/c/${guide.category_slug}`} className="text-xs font-semibold uppercase tracking-wide text-brand hover:underline">
+          <Link href={`/c/${guide.category_slug}`} className="text-xs font-semibold uppercase tracking-wide text-red-ink hover:underline">
             {guide.category_name}
           </Link>
         )}
@@ -97,7 +97,7 @@ export default async function GuidePage({ params }: Props) {
             <span>
               De{' '}
               {guide.author.url
-                ? <Link href={guide.author.url} className="text-[var(--color-text)] hover:text-brand">{guide.author.name}</Link>
+                ? <Link href={guide.author.url} className="text-[var(--color-text)] hover:text-red-ink">{guide.author.name}</Link>
                 : <span className="text-[var(--color-text)]">{guide.author.name}</span>}
             </span>
           )}
@@ -105,7 +105,7 @@ export default async function GuidePage({ params }: Props) {
             <span>
               Verificat de:{' '}
               {guide.reviewer.url
-                ? <Link href={guide.reviewer.url} className="text-[var(--color-text)] hover:text-brand">{guide.reviewer.name}</Link>
+                ? <Link href={guide.reviewer.url} className="text-[var(--color-text)] hover:text-red-ink">{guide.reviewer.name}</Link>
                 : <span className="text-[var(--color-text)]">{guide.reviewer.name}</span>}
             </span>
           )}
@@ -149,7 +149,7 @@ export default async function GuidePage({ params }: Props) {
             <ul className="space-y-1 text-sm">
               {linkedProducts.map((p) => (
                 <li key={p.id} className="flex flex-wrap justify-between gap-2">
-                  <Link href={`/p/${p.slug}`} className="text-brand hover:underline">{p.name}</Link>
+                  <Link href={`/p/${p.slug}`} className="text-red-ink hover:underline">{p.name}</Link>
                   <span className="text-muted tabular-nums">
                     {p.offers[0] ? `de la ${formatPrice(p.offers[0].current_price)}` : 'indisponibil momentan'}
                   </span>

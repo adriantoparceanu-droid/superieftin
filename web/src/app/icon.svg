@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Simbolul superieftin.ro: prețul (linia în trepte) coboară sub mediană (linia punctată) și se oprește în „azi” (punctul) -->
+  <rect width="32" height="32" rx="8" fill="#D42B2B"/>
+  <path d="M5.5 14.5h21" stroke="#fff" stroke-width="1.6" stroke-dasharray="2.2 2.2" stroke-linecap="round" opacity=".7"/>
+  <path d="M5.5 9.5h6v3.5h5.5v9h9.5" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="26" cy="22" r="2.6" fill="#fff"/>
+</svg>

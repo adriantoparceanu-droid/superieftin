@@ -15,7 +15,7 @@ export const PROSE_CLASS = `text-base leading-relaxed text-[var(--color-text)] s
   [&_h2]:font-archivo [&_h2]:text-xl [&_h2]:mt-8 [&_h2]:mb-2
   [&_h3]:font-semibold [&_h3]:text-lg [&_h3]:mt-6 [&_h3]:mb-1
   [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:space-y-1
-  [&_a]:text-brand [&_a]:underline [&_a]:underline-offset-2
+  [&_a]:text-red-ink [&_a]:underline [&_a]:underline-offset-2
   [&_blockquote]:border-l-4 [&_blockquote]:border-line [&_blockquote]:pl-4 [&_blockquote]:text-muted
   [&_code]:bg-[var(--color-page)] [&_code]:px-1 [&_code]:rounded [&_pre]:overflow-x-auto
   [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg
@@ -45,11 +45,11 @@ function Unavailable({ product, raw, preview }: { product: LiveProduct | undefin
       {product ? (
         <>
           <p className="font-semibold">
-            <Link href={`/p/${product.slug}`} className="hover:text-brand">{product.name}</Link>
+            <Link href={`/p/${product.slug}`} className="hover:text-red-ink">{product.name}</Link>
           </p>
           <p className="text-sm text-muted mt-1">
             Indisponibil momentan la magazinele monitorizate. Pe{' '}
-            <Link href={`/p/${product.slug}`} className="text-brand underline underline-offset-2">pagina produsului</Link>{' '}
+            <Link href={`/p/${product.slug}`} className="text-red-ink underline underline-offset-2">pagina produsului</Link>{' '}
             poți seta o alertă de preț.
           </p>
         </>
@@ -57,7 +57,7 @@ function Unavailable({ product, raw, preview }: { product: LiveProduct | undefin
         <p className="text-sm text-muted">Produs indisponibil momentan.</p>
       )}
       {preview && !product && (
-        <p className="mt-2 text-xs text-red-700">Previzualizare: marcajul <code>{raw}</code> nu corespunde niciunui produs (id sau slug greșit).</p>
+        <p className="mt-2 text-xs text-red-ink">Previzualizare: marcajul <code>{raw}</code> nu corespunde niciunui produs (id sau slug greșit).</p>
       )}
     </div>
   )
@@ -65,7 +65,7 @@ function Unavailable({ product, raw, preview }: { product: LiveProduct | undefin
 
 function ProductTitle({ p }: { p: LiveProduct }) {
   return (
-    <Link href={`/p/${p.slug}`} className="font-semibold text-[var(--color-text)] hover:text-brand leading-snug">
+    <Link href={`/p/${p.slug}`} className="font-semibold text-[var(--color-text)] hover:text-red-ink leading-snug">
       {p.name}
     </Link>
   )
@@ -87,7 +87,7 @@ function OffersBlock({ p }: { p: LiveProduct }) {
               <div className="text-right tabular-nums">
                 <span className="font-archivo text-lg">{formatPrice(o.current_price)}</span>
                 {pct != null && (
-                  <span className="ml-2 text-xs font-semibold bg-brand-light text-brand rounded-full px-2 py-0.5">−{formatPct(pct)}%</span>
+                  <span className="ml-2 text-xs font-semibold bg-brand-light text-red-ink rounded-full px-2 py-0.5">−{formatPct(pct)}%</span>
                 )}
               </div>
               <AffiliateLink
@@ -153,7 +153,7 @@ function DiscountBlock({ p }: { p: LiveProduct }) {
   return (
     <div className={boxClass}>
       <ProductTitle p={p} />
-      <p className={`mt-1 font-semibold ${v.verdict === 'real' ? 'text-brand' : ''}`}><DiscountText offer={best} /></p>
+      <p className={`mt-1 font-semibold ${v.verdict === 'real' ? 'text-red-ink' : ''}`}><DiscountText offer={best} /></p>
       <p className="text-sm text-muted mt-1">
         Prețul de acum: <span className="tabular-nums">{formatPrice(best.current_price)}</span>
         {best.median_price != null && <> · mediana 30 de zile: <span className="tabular-nums">{formatPrice(best.median_price)}</span></>}
@@ -248,7 +248,7 @@ function Block({ seg, products, preview }: {
       <>
         <CompareBlock items={seg.refs.map((r) => products.get(r))} />
         {preview && missing.length > 0 && (
-          <p className="text-xs text-red-700 -mt-4 mb-4">Previzualizare: produse negăsite în <code>{seg.raw}</code>: {missing.join(', ')}</p>
+          <p className="text-xs text-red-ink -mt-4 mb-4">Previzualizare: produse negăsite în <code>{seg.raw}</code>: {missing.join(', ')}</p>
         )}
       </>
     )

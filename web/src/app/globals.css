@@ -1,42 +1,190 @@
 @import "tailwindcss";
 
-:root {
-  /* Design brief tokens */
-  --color-brand: #E53E3E;
-  --color-brand-dark: #C53030;
-  --color-brand-light: #FED7D7;
-  --color-success: #38A169;
-  --color-text: #1A202C;
-  --color-muted: #718096;
-  --color-line: #E2E8F0;
-  --color-surface: #FFFFFF;
-  --color-page: #F7FAFC;
+/* =========================================================================================
+   TOKENI DE CULOARE (redesign „Verdict întâi”, docs/plans/2026-10-05-redesign-design.md §3)
+   =========================================================================================
+   De ce două niveluri:
+   1) tokenii „bruți” (--red, --ink, --surface…) = paleta din machetă; se redefinesc în modul
+      întunecat (@media prefers-color-scheme: dark), deci site-ul urmează setarea telefonului;
+   2) aliasurile vechi (--color-brand, --color-text, --color-muted…) arată spre tokenii bruți,
+      ca toate componentele existente (bg-brand, text-muted, var(--color-text)…) să preia
+      automat noua paletă și modul întunecat, fără să le rescriem una câte una.
+
+   Selectorul `[data-theme="light"]` re-declară paleta luminoasă pentru un subarbore: adminul
+   (app/admin/layout.tsx) are multe `bg-white` scrise de mână, deci rămâne mereu luminos.
+   Aliasurile stau în ACELAȘI bloc cu tokenii: o variabilă care folosește var() se calculează
+   acolo unde e declarată — declarate doar pe :root, adminul ar fi moștenit valorile întunecate. */
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+
+  --bg: #F4F5F7;          /* fundalul paginii */
+  --surface: #FFFFFF;     /* carduri */
+  --surface-2: #F0F1F4;   /* zone secundare, rânduri alternante */
+  --ink: #14161A;         /* text principal */
+  --ink-2: #424854;       /* text secundar */
+  --ink-3: #6A707C;       /* text discret (AA pe alb și pe --bg) */
+  --line: #E1E4E9;
+  --line-2: #CDD2D9;
+
+  --head: #15171C;        /* antetul cărbune */
+  --head-2: #22252C;
+  --head-ink: #FFFFFF;
+  --head-ink-2: #A5ADBA;
+
+  --red: #D42B2B;         /* butoane / insigne pline (alb pe roșu 5,0:1) */
+  --red-hover: #B91C22;
+  --red-ink: #B91C22;     /* roșu ca TEXT pe fundal deschis (roșul plin nu trece AA ca text în modul întunecat) */
+  --red-tint: #FDECEC;
+  --red-zone: rgba(212, 43, 43, .10);
+  --red-on-head: #FF6B61; /* roșu pe antetul închis */
+
+  --amber: #E58A10;
+  --amber-ink: #A14A06;   /* „Peste obișnuit” */
+  --amber-tint: #FFF3E3;
+  --neutral-tint: #ECEEF2; /* „Preț obișnuit” */
+
+  /* Confirmări (abonare reușită etc.) — nu sunt în machetă, dar aveau verde scris de mână */
+  --success-ink: #1F6B3A;
+  --success-tint: #E8F5EC;
+
+  --shadow: 0 1px 2px rgba(16, 18, 24, .06), 0 4px 16px rgba(16, 18, 24, .06);
+  --shadow-lg: 0 12px 40px rgba(16, 18, 24, .18);
+
+  /* Aliasuri vechi → tokenii noi (folosite în cod ca var(--color-…) și ca utilitare Tailwind) */
+  --color-brand: var(--red);
+  --color-brand-dark: var(--red-hover);
+  --color-brand-light: var(--red-tint);
+  --color-success: var(--success-ink);
+  --color-text: var(--ink);
+  --color-muted: var(--ink-3);
+  --color-line: var(--line);
+  --color-surface: var(--surface);
+  --color-page: var(--bg);
 }
 
+/* Modul întunecat: urmează telefonul/sistemul (fără comutator în UI — YAGNI, design §3).
+   Doar :root — subarborii marcați data-theme="light" (adminul) își păstrează paleta luminoasă. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+
+    --bg: #0E0F12;
+    --surface: #17191E;
+    --surface-2: #1F2228;
+    --ink: #F2F3F5;
+    --ink-2: #C3C8D0;
+    --ink-3: #9AA1AD;
+    --line: #2A2E36;
+    --line-2: #3A3F49;
+
+    --head: #08090B;
+    --head-2: #17191E;
+    --head-ink: #FFFFFF;
+    --head-ink-2: #A5ADBA;
+
+    --red: #D42B2B;
+    --red-hover: #E0322F;
+    --red-ink: #FF6B61;
+    --red-tint: #3A1517;
+    --red-zone: rgba(255, 107, 97, .13);
+    --red-on-head: #FF6B61;
+
+    --amber: #F5A524;
+    --amber-ink: #F5A524;
+    --amber-tint: #2B2112;
+    --neutral-tint: #262A31;
+
+    --success-ink: #6FD39A;
+    --success-tint: #13261B;
+
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 4px 16px rgba(0, 0, 0, .3);
+    --shadow-lg: 0 12px 40px rgba(0, 0, 0, .6);
+  }
+}
+
+/* Utilitarele Tailwind. `inline` = clasele folosesc direct var(--red) etc., rezolvate pe
+   elementul curent → schimbarea de temă (sau data-theme="light" pe admin) se vede imediat. */
 @theme inline {
-  /* Font implicit al site-ului = Instrument Sans */
-  --font-sans: var(--font-instrument-sans);
+  /* Fonturi: --ff-inter / --ff-archivo vin din next/font (app/layout.tsx). Nume diferite de
+     --font-* ca să nu se suprapună cu variabilele de temă (ar ieși o referință circulară). */
+  --font-sans: var(--ff-inter), system-ui, sans-serif;
+  --font-display: var(--ff-archivo), system-ui, sans-serif;
+  /* Numele vechi `font-archivo` rămâne (folosit în multe pagini) — acum e Archivo variabil */
+  --font-archivo: var(--ff-archivo), system-ui, sans-serif;
 
-  /* Brand tokens — disponibile ca clase Tailwind: bg-brand, text-brand, border-line etc. */
-  --color-brand: #E53E3E;
-  --color-brand-dark: #C53030;
-  --color-brand-light: #FED7D7;
-  --color-success: #38A169;
-  --color-muted: #718096;
-  --color-line: #E2E8F0;
-  --color-surface: #FFFFFF;
-  --color-page: #F7FAFC;
+  /* Aliasuri vechi: bg-brand, text-muted, border-line, bg-surface, bg-page… */
+  --color-brand: var(--red);
+  --color-brand-dark: var(--red-hover);
+  --color-brand-light: var(--red-tint);
+  --color-success: var(--success-ink);
+  --color-muted: var(--ink-3);
+  --color-line: var(--line);
+  --color-surface: var(--surface);
+  --color-page: var(--bg);
 
-  /* Alias-uri explicite pentru font-archivo și font-instrument */
-  --font-archivo: var(--font-archivo-black);
-  --font-instrument: var(--font-instrument-sans);
+  /* Tokenii noi: bg-head, text-ink-2, bg-red-tint, text-amber-ink, bg-neutral-tint… */
+  --color-head: var(--head);
+  --color-head-2: var(--head-2);
+  --color-head-ink: var(--head-ink);
+  --color-head-ink-2: var(--head-ink-2);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-red: var(--red);
+  --color-red-hover: var(--red-hover);
+  --color-red-ink: var(--red-ink);
+  --color-red-tint: var(--red-tint);
+  --color-red-zone: var(--red-zone);
+  --color-red-on-head: var(--red-on-head);
+  --color-amber: var(--amber);
+  --color-amber-ink: var(--amber-ink);
+  --color-amber-tint: var(--amber-tint);
+  --color-neutral-tint: var(--neutral-tint);
+  --color-success-ink: var(--success-ink);
+  --color-success-tint: var(--success-tint);
+  --color-surface-2: var(--surface-2);
+  --color-line-2: var(--line-2);
+
+  --shadow-card: var(--shadow);
+  --shadow-pop: var(--shadow-lg);
 }
 
 body {
-  font-family: var(--font-instrument-sans), system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--ff-inter), system-ui, sans-serif;
 }
 
-/* Cifre tabular pe toate prețurile și procentele */
+@layer base {
+  /* Titlurile folosesc fontul de afișaj, ușor condensat (machetă: h1–h4 Archivo 88%) */
+  h1, h2, h3, h4 {
+    font-family: var(--ff-archivo), system-ui, sans-serif;
+    font-stretch: 88%;
+    letter-spacing: -0.01em;
+  }
+  /* Preflight pune font-weight: inherit pe titluri; cu Archivo Black titlurile erau oricum
+     groase. Clasele font-* de pe element (stratul utilities) câștigă în continuare. */
+  h1, h2 { font-weight: 800; }
+  h3, h4 { font-weight: 700; }
+
+  /* `font-display` / `font-archivo`: Archivo semi-condensat. Greutatea implicită 800 (Archivo
+     Black era mereu „gros”; fără ea, titlurile care aveau doar font-archivo ar fi ieșit subțiri).
+     În stratul base, deci font-black / font-bold de pe element câștigă. */
+  .font-display,
+  .font-archivo {
+    font-stretch: 88%;
+    font-weight: 800;
+  }
+
+  /* Inelul de focus cu `ring-offset-*` lasă implicit o bandă ALBĂ — în modul întunecat ieșea
+     ca un contur alb. Fundalul cardului e o alegere sigură în ambele teme. */
+  * {
+    --tw-ring-offset-color: var(--surface);
+  }
+}
+
+/* Cifre tabulare pe toate prețurile și procentele */
 .tabular {
   font-variant-numeric: tabular-nums;
 }

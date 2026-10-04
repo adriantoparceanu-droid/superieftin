@@ -48,7 +48,7 @@ export default async function NotFound() {
           <ul className="mt-3 flex flex-wrap justify-center gap-2">
             {roots.map((c) => (
               <li key={c.slug}>
-                <Link href={`/c/${c.slug}`} className="inline-block text-sm px-3 py-1.5 rounded-full border border-line bg-surface hover:border-brand hover:text-brand transition-colors">
+                <Link href={`/c/${c.slug}`} className="inline-block text-sm px-3 py-1.5 rounded-full border border-line bg-surface hover:border-brand hover:text-red-ink transition-colors">
                   {c.name}
                 </Link>
               </li>
@@ -58,9 +58,9 @@ export default async function NotFound() {
       )}
 
       <p className="mt-8 text-sm flex flex-wrap justify-center gap-x-5 gap-y-2">
-        <Link href="/" className="text-brand hover:underline">Pagina principală</Link>
-        <Link href="/reduceri-reale" className="text-brand hover:underline">Reduceri reale azi</Link>
-        <Link href="/ghiduri" className="text-brand hover:underline">Ghiduri de cumpărare</Link>
+        <Link href="/" className="text-red-ink hover:underline">Pagina principală</Link>
+        <Link href="/reduceri-reale" className="text-red-ink hover:underline">Reduceri reale azi</Link>
+        <Link href="/ghiduri" className="text-red-ink hover:underline">Ghiduri de cumpărare</Link>
       </p>
     </section>
   )

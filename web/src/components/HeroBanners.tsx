@@ -71,7 +71,7 @@ export function HeroBanners({ heroProduct, isRealDiscount, secondaryCategory }: 
             <h2 className="text-2xl font-black font-archivo text-[var(--color-text)] leading-tight mb-2">
               {secondaryCategory.name}
             </h2>
-            <span className="text-sm font-semibold text-brand group-hover:underline">Vezi ofertele →</span>
+            <span className="text-sm font-semibold text-red-ink group-hover:underline">Vezi ofertele →</span>
           </div>
           {secondaryCategory.image && (
             <div className="relative h-32 mt-3">

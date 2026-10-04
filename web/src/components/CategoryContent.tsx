@@ -9,7 +9,7 @@ import { getCategoryContent, getCategoryStats } from '@/lib/category-content'
 import { renderCategoryMarkers, renderCategoryMarkdown, categoryFaqLd, formatDateTime, type CategoryFaqItem, type CategoryStats } from '@/lib/category-markers'
 
 const PROSE = `text-[15px] leading-relaxed text-[var(--color-text)] space-y-3
-  [&_a]:text-brand [&_a]:underline [&_a]:underline-offset-2
+  [&_a]:text-red-ink [&_a]:underline [&_a]:underline-offset-2
   [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1 [&_strong]:font-semibold`
 
 export async function CategoryContent({ slug, name }: { slug: string; name: string }) {

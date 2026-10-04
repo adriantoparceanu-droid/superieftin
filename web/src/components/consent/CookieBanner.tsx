@@ -51,7 +51,7 @@ export function CookieBanner() {
       aria-label="Setări cookies"
       className="fixed inset-x-0 bottom-0 z-50 p-3 sm:p-4"
     >
-      <div className="max-w-3xl mx-auto bg-white border border-line rounded-xl shadow-lg p-4 sm:p-5">
+      <div className="max-w-3xl mx-auto bg-surface border border-line rounded-xl shadow-lg p-4 sm:p-5">
         <p className="text-sm text-[var(--color-text)]">
           Folosim cookie-uri necesare pentru funcționarea site-ului. Cu acordul tău, folosim și
           cookie-uri de <strong>analiză</strong> (Google Analytics) și de{' '}

@@ -85,7 +85,7 @@ export default async function SearchPage({ searchParams }: Props) {
           <p className="text-5xl mb-4">😔</p>
           <p className="text-base">Niciun rezultat pentru <strong className="text-[var(--color-text)]">&ldquo;{query}&rdquo;</strong>.</p>
           <p className="text-sm mt-2">Încearcă cu mai puține cuvinte sau verifică ortografia.</p>
-          <Link href="/" className="mt-4 inline-block text-sm text-brand hover:underline">
+          <Link href="/" className="mt-4 inline-block text-sm text-red-ink hover:underline">
             ← Înapoi la pagina principală
           </Link>
         </div>

@@ -28,7 +28,7 @@ export default async function GuidesPage({ searchParams }: Props) {
   ])
 
   const pill = (active: boolean) =>
-    `px-3 py-1 rounded-full border text-sm transition-colors ${active ? 'bg-brand text-white border-brand' : 'border-line hover:border-brand hover:text-brand'}`
+    `px-3 py-1 rounded-full border text-sm transition-colors ${active ? 'bg-brand text-white border-brand' : 'border-line hover:border-brand hover:text-red-ink'}`
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -37,7 +37,7 @@ export default async function GuidesPage({ searchParams }: Props) {
         <p className="mt-2 text-muted">
           Prețurile din ghiduri se actualizează automat din datele noastre, iar o reducere e „reală”
           doar dacă prețul e cu minim 5% sub mediana ultimelor 30 de zile.{' '}
-          <Link href="/ghiduri/metodologie" className="text-brand underline underline-offset-2">Cum lucrăm</Link>
+          <Link href="/ghiduri/metodologie" className="text-red-ink underline underline-offset-2">Cum lucrăm</Link>
         </p>
       </header>
 
@@ -55,17 +55,17 @@ export default async function GuidesPage({ searchParams }: Props) {
       {guides.length === 0 ? (
         <p className="rounded-lg border border-line bg-surface p-6 text-muted">
           Încă nu am publicat ghiduri{categorie ? ' în această categorie' : ''}. Până atunci, vezi{' '}
-          <Link href="/" className="text-brand underline underline-offset-2">reducerile reale de azi</Link>.
+          <Link href="/" className="text-red-ink underline underline-offset-2">reducerile reale de azi</Link>.
         </p>
       ) : (
         <ul className="grid gap-4 sm:grid-cols-2">
           {guides.map((g) => (
             <li key={g.slug} className="rounded-xl border border-line bg-surface p-5 flex flex-col">
               {g.category_name && (
-                <span className="text-xs font-semibold uppercase tracking-wide text-brand">{g.category_name}</span>
+                <span className="text-xs font-semibold uppercase tracking-wide text-red-ink">{g.category_name}</span>
               )}
               <h2 className="mt-1 font-semibold text-lg leading-snug">
-                <Link href={`/ghiduri/${g.slug}`} className="hover:text-brand">{g.title}</Link>
+                <Link href={`/ghiduri/${g.slug}`} className="hover:text-red-ink">{g.title}</Link>
               </h2>
               {g.meta_description && <p className="mt-2 text-sm text-muted line-clamp-3">{g.meta_description}</p>}
               <p className="mt-auto pt-3 text-xs text-muted">

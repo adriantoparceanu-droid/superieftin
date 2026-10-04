@@ -50,7 +50,7 @@ export function MobileFilters(props: Props) {
         type="button"
         onClick={show}
         aria-haspopup="dialog"
-        className="lg:hidden inline-flex items-center gap-1.5 rounded-lg border border-line bg-surface px-3 py-1.5 text-sm font-medium text-[var(--color-text)] hover:border-brand hover:text-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-1"
+        className="lg:hidden inline-flex items-center gap-1.5 rounded-lg border border-line bg-surface px-3 py-1.5 text-sm font-medium text-[var(--color-text)] hover:border-brand hover:text-red-ink transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-1"
       >
         <SlidersHorizontal size={15} aria-hidden="true" />
         Filtre

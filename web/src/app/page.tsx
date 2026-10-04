@@ -129,7 +129,7 @@ export default async function HomePage() {
           {/* Legatura interna spre hubul /reduceri-reale (raport SEO, A8) */}
           <Link
             href="/reduceri-reale"
-            className="text-sm text-brand hover:text-brand-dark font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 rounded"
+            className="text-sm text-red-ink hover:text-ink font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 rounded"
           >
             Reduceri reale pe categorii →
           </Link>
@@ -164,7 +164,7 @@ export default async function HomePage() {
               </h2>
               <Link
                 href={`/c/${f.slug}`}
-                className="text-sm text-brand hover:text-brand-dark font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 rounded"
+                className="text-sm text-red-ink hover:text-ink font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 rounded"
               >
                 Vezi toate →
               </Link>
@@ -185,17 +185,17 @@ export default async function HomePage() {
         <h2 className="font-semibold text-[var(--color-text)] mb-5 text-center">Cum verificăm reducerile</h2>
         <div className="grid sm:grid-cols-3 gap-6 text-sm">
           <div className="flex flex-col items-center text-center gap-2">
-            <span className="text-4xl font-black font-archivo text-brand">1</span>
+            <span className="text-4xl font-black font-archivo text-red-ink">1</span>
             <strong className="text-[var(--color-text)]">Colectăm prețuri zilnic</strong>
             <p className="text-muted">Sincronizăm ofertele retailerilor în fiecare zi.</p>
           </div>
           <div className="flex flex-col items-center text-center gap-2">
-            <span className="text-4xl font-black font-archivo text-brand">2</span>
+            <span className="text-4xl font-black font-archivo text-red-ink">2</span>
             <strong className="text-[var(--color-text)]">Calculăm mediana 30 de zile</strong>
             <p className="text-muted">Mediana elimină vârfurile artificiale de preț.</p>
           </div>
           <div className="flex flex-col items-center text-center gap-2">
-            <span className="text-4xl font-black font-archivo text-brand">3</span>
+            <span className="text-4xl font-black font-archivo text-red-ink">3</span>
             <strong className="text-[var(--color-text)]">Validăm reducerea</strong>
             <p className="text-muted">Reducere reală = preț actual cu cel puțin 5% sub mediana de 30 de zile.</p>
           </div>

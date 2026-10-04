@@ -13,7 +13,7 @@ export function LegalPage({ title, updated, children }: {
       <div className="mt-6 space-y-4 text-sm sm:text-base leading-relaxed text-[var(--color-text)]
         [&_h2]:font-semibold [&_h2]:text-lg [&_h2]:mt-8 [&_h2]:mb-2
         [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1
-        [&_a]:text-brand [&_a]:underline [&_a]:underline-offset-2
+        [&_a]:text-red-ink [&_a]:underline [&_a]:underline-offset-2
         [&_table]:w-full [&_table]:text-sm [&_th]:text-left [&_th]:font-semibold [&_th]:py-2 [&_th]:pr-3
         [&_td]:py-2 [&_td]:pr-3 [&_td]:align-top [&_tr]:border-b [&_tr]:border-line">
         {children}

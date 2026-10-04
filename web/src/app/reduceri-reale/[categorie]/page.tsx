@@ -140,16 +140,16 @@ export default async function LandingPage({ params }: Props) {
       )}
 
       <p className="mt-8 text-sm">
-        <Link href={`/c/${category.slug}`} className="text-brand underline underline-offset-2">
+        <Link href={`/c/${category.slug}`} className="text-red-ink underline underline-offset-2">
           Vezi toate produsele din {lowerFirst(category.name)}
         </Link>
       </p>
       {/* Legaturi suplimentare (raport SEO, A8): linkul „Cum verificăm” de sus ramane spre /despre */}
       <p className="mt-2 text-sm flex flex-wrap gap-x-5 gap-y-1">
-        <Link href="/ghiduri/metodologie" className="text-brand underline underline-offset-2">
+        <Link href="/ghiduri/metodologie" className="text-red-ink underline underline-offset-2">
           Metodologia completă
         </Link>
-        <Link href="/reduceri-reale" className="text-brand underline underline-offset-2">
+        <Link href="/reduceri-reale" className="text-red-ink underline underline-offset-2">
           Reduceri reale în alte categorii
         </Link>
       </p>

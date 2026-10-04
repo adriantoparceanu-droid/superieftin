@@ -40,7 +40,8 @@ export function calculateDiscount(
   if (ratio <= 1 + ABOVE_MEDIAN_PCT / 100) {
     return { verdict: 'normal', discountPct: pct, label: 'normal', labelRo: 'Preț obișnuit' }
   }
-  return { verdict: 'higher', discountPct: pct, label: 'higher', labelRo: `Mai scump +${formatPct(pct)}%` }
+  // „Peste obișnuit” (redesign): aceeași denumire ca insigna de verdict (components/VerdictBadge.tsx)
+  return { verdict: 'higher', discountPct: pct, label: 'higher', labelRo: `Peste obișnuit +${formatPct(pct)}%` }
 }
 
 // Procent in format romanesc, fara semn: 16.2 → „16,2”, 8 → „8”
@@ -74,11 +75,29 @@ export function formatPrice(price: number | null): string {
   }).format(price)
 }
 
+// Clasele insignei de verdict (redesign, design §3) — pe tokeni, deci corecte și în modul
+// întunecat: roșu plin = reducere reală (singurul alt roșu plin în afară de „Vezi oferta”),
+// gri = preț obișnuit, chihlimbar = peste obișnuit, contur = fără istoric suficient.
 export function verdictColor(verdict: DiscountVerdict): string {
   switch (verdict) {
-    case 'real':   return 'bg-green-100 text-green-800 border-green-200'
-    case 'normal': return 'bg-gray-100 text-gray-600 border-gray-200'
-    case 'higher': return 'bg-orange-100 text-orange-800 border-orange-200'
-    default:       return 'bg-gray-50 text-gray-400 border-gray-100'
+    case 'real':   return 'bg-red text-white'
+    case 'normal': return 'bg-neutral-tint text-ink-2'
+    case 'higher': return 'bg-amber-tint text-amber-ink'
+    default:       return 'bg-transparent text-ink-3 ring-1 ring-inset ring-line-2'
+  }
+}
+
+// Textul insignei de verdict. „Reducere reală” trebuie să rămână scris EXACT așa: garda de
+// reclame (worker/src/ads/campaigns/guard.ts + validate.ts) îl caută pe landing-ul /p/.
+export function verdictBadgeText(verdict: DiscountVerdict, discountPct: number | null): string {
+  switch (verdict) {
+    case 'real':
+      return discountPct != null ? `Reducere reală −${formatPct(discountPct)}%` : 'Reducere reală'
+    case 'normal':
+      return 'Preț obișnuit'
+    case 'higher':
+      return discountPct != null ? `Peste obișnuit +${formatPct(discountPct)}%` : 'Peste obișnuit'
+    default:
+      return 'Monitorizăm prețul'
   }
 }

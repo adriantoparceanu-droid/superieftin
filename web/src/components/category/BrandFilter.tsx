@@ -143,7 +143,7 @@ export function BrandFilter({ basePath, options, selected, sort, tot, total, mod
             intern, ca o categorie cu 200 de marci sa nu impinga totul in jos */}
         {tail.length > 0 && (
           <details open={expanded} onToggle={e => setExpanded((e.currentTarget as HTMLDetailsElement).open)} className="mt-1">
-            <summary className="list-none [&::-webkit-details-marker]:hidden cursor-pointer select-none px-1.5 py-1.5 text-sm font-medium text-brand hover:underline rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand">
+            <summary className="list-none [&::-webkit-details-marker]:hidden cursor-pointer select-none px-1.5 py-1.5 text-sm font-medium text-red-ink hover:underline rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand">
               {expanded ? 'Arată mai puține' : `Arată toate (${ordered.length.toLocaleString('ro-RO')})`}
             </summary>
             <ul className="max-h-80 overflow-y-auto overscroll-contain border-t border-line pt-1">
@@ -159,7 +159,7 @@ export function BrandFilter({ basePath, options, selected, sort, tot, total, mod
             <Link
               href={buildListingUrl(basePath, { sort, brands: [], tot })}
               scroll={false}
-              className="mt-3 inline-block text-sm text-brand hover:underline rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+              className="mt-3 inline-block text-sm text-red-ink hover:underline rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
             >
               Șterge filtrele
             </Link>

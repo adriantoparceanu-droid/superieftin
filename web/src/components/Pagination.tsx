@@ -28,7 +28,7 @@ export function Pagination({ currentPage, totalPages, buildUrl }: PaginationProp
   const pages = getPages()
   const btnBase = 'inline-flex items-center justify-center min-w-[36px] h-9 px-2 rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2'
   const btnActive = 'bg-brand text-white'
-  const btnInactive = 'bg-surface border border-line text-[var(--color-text)] hover:border-brand hover:text-brand'
+  const btnInactive = 'bg-surface border border-line text-[var(--color-text)] hover:border-brand hover:text-red-ink'
   const btnDisabled = 'bg-surface border border-line text-muted cursor-not-allowed opacity-50'
 
   return (

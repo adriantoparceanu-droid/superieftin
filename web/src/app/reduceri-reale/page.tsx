@@ -75,7 +75,7 @@ export default async function RealDiscountsHub() {
             <section key={root?.slug ?? 'altele'} className="rounded-xl border border-line bg-surface p-5">
               <h2 className="font-semibold text-lg text-[var(--color-text)]">
                 {root ? (
-                  <Link href={`/reduceri-reale/${root.slug}`} className="hover:text-brand">
+                  <Link href={`/reduceri-reale/${root.slug}`} className="hover:text-red-ink">
                     Reduceri reale la {root.name}
                   </Link>
                 ) : 'Alte categorii'}
@@ -87,7 +87,7 @@ export default async function RealDiscountsHub() {
                     <li key={c.slug}>
                       <Link
                         href={`/reduceri-reale/${c.slug}`}
-                        className="flex items-baseline justify-between gap-3 rounded-lg border border-line px-3 py-2 hover:border-brand hover:text-brand transition-colors"
+                        className="flex items-baseline justify-between gap-3 rounded-lg border border-line px-3 py-2 hover:border-brand hover:text-red-ink transition-colors"
                       >
                         <span className="text-sm font-medium">{c.name}</span>
                         <span className="text-xs text-muted whitespace-nowrap">{countText(c.slug)}</span>

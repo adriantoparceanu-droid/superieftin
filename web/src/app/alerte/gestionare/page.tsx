@@ -64,8 +64,8 @@ export default async function GestionarePage({ searchParams }: Props) {
   return (
     <LegalPage title="Alertele mele de preț">
       <p className="text-sm text-muted">Adresa: <strong className="text-[var(--color-text)]">{subscriber.email}</strong></p>
-      {mesaj && <p role="status" className="rounded-lg bg-green-50 border border-green-200 text-green-900 px-3 py-2 text-sm">{mesaj}</p>}
-      {eroare && <p role="alert" className="rounded-lg bg-red-50 border border-red-200 text-red-900 px-3 py-2 text-sm">{eroare}</p>}
+      {mesaj && <p role="status" className="rounded-lg bg-success-tint border border-success-ink/30 text-success-ink px-3 py-2 text-sm">{mesaj}</p>}
+      {eroare && <p role="alert" className="rounded-lg bg-red-tint border border-red-ink/30 text-red-ink px-3 py-2 text-sm">{eroare}</p>}
 
       {alerts.length === 0 ? (
         <p>Nu ai nicio alertă activă. Poți seta una de pe pagina oricărui produs.</p>
@@ -81,7 +81,7 @@ export default async function GestionarePage({ searchParams }: Props) {
                   peste prag + marja, apoi anuntam din nou la urmatoarea scadere */}
               <p className="text-sm mt-1">
                 {a.armed ? (
-                  <span className="text-green-800">● Activă — te anunțăm când prețul ajunge la prag.</span>
+                  <span className="text-success-ink">● Activă — te anunțăm când prețul ajunge la prag.</span>
                 ) : (
                   <span className="text-[var(--color-text)]">
                     ● Trimisă{a.triggerPrice != null ? `: ${formatPrice(a.triggerPrice)}` : ''}
@@ -104,12 +104,12 @@ export default async function GestionarePage({ searchParams }: Props) {
                       required
                     />
                   </label>
-                  <button type="submit" className={`${btn} border border-line hover:border-brand hover:text-brand`}>Salvează</button>
+                  <button type="submit" className={`${btn} border border-line hover:border-brand hover:text-red-ink`}>Salvează</button>
                 </form>
                 <form action={deleteAlertAction}>
                   <input type="hidden" name="t" value={token} />
                   <input type="hidden" name="alertId" value={a.id} />
-                  <button type="submit" className={`${btn} text-muted hover:text-brand`}>Oprește alerta</button>
+                  <button type="submit" className={`${btn} text-muted hover:text-red-ink`}>Oprește alerta</button>
                 </form>
               </div>
             </li>
@@ -123,7 +123,7 @@ export default async function GestionarePage({ searchParams }: Props) {
       </p>
       <form action={unsubscribeAllAction}>
         <input type="hidden" name="t" value={token} />
-        <button type="submit" className={`${btn} border border-brand text-brand hover:bg-brand-light`}>
+        <button type="submit" className={`${btn} border border-brand text-red-ink hover:bg-brand-light`}>
           Dezabonează-mă de la toate alertele
         </button>
       </form>

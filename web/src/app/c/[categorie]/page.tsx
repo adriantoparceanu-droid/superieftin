@@ -198,7 +198,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
         )}
         {/* Legatura interna spre landing-ul de reduceri reale (fara Sanatate & Naturale — regula 8) */}
         {!isExcludedFromAds(category.slug, category.parent_slug) && (
-          <Link href={`/reduceri-reale/${categorie}`} className="inline-block mt-2 text-sm text-brand hover:underline">
+          <Link href={`/reduceri-reale/${categorie}`} className="inline-block mt-2 text-sm text-red-ink hover:underline">
             Vezi doar reducerile reale la {lowerFirst(label)} →
           </Link>
         )}
@@ -221,7 +221,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
                   className={`flex items-center gap-2.5 rounded-lg border px-3 py-2.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
                     active
                       ? 'bg-brand text-white border-brand'
-                      : 'bg-surface border-line hover:border-brand hover:text-brand'
+                      : 'bg-surface border-line hover:border-brand hover:text-red-ink'
                   }`}
                 >
                   <CategoryIcon name={sub.icon} className="w-5 h-5 shrink-0" />
@@ -236,7 +236,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
             })}
           </div>
           {hasChildren && (
-            <a href={buildTotUrl(!includeSub)} className="inline-block mt-3 text-sm text-brand hover:underline">
+            <a href={buildTotUrl(!includeSub)} className="inline-block mt-3 text-sm text-red-ink hover:underline">
               {includeSub
                 ? `Vezi doar „${label}"`
                 : 'Vezi tot, inclusiv subcategoriile'}
@@ -293,7 +293,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
                         href={withoutBrand(b)}
                         scroll={false}
                         aria-label={`Scoate marca ${b}`}
-                        className="inline-flex items-center gap-1 rounded-full border border-brand bg-surface px-2.5 py-1 text-xs font-medium text-brand hover:bg-brand hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-1"
+                        className="inline-flex items-center gap-1 rounded-full border border-brand bg-surface px-2.5 py-1 text-xs font-medium text-red-ink hover:bg-brand hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-1"
                       >
                         {b} <span aria-hidden="true">×</span>
                       </Link>
@@ -350,7 +350,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
                 {selectedBrands.length === 1 ? ` pentru marca ${selectedBrands[0]}` : selectedBrands.length > 1 ? ' pentru mărcile selectate' : ''}.
               </p>
               {selectedBrands.length > 0 && (
-                <a href={buildListingUrl(basePath, { sort: sortValue, brands: [], tot: includeSub })} className="mt-3 inline-block text-sm text-brand hover:underline">
+                <a href={buildListingUrl(basePath, { sort: sortValue, brands: [], tot: includeSub })} className="mt-3 inline-block text-sm text-red-ink hover:underline">
                   Șterge filtrul de marcă
                 </a>
               )}

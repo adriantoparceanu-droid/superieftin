@@ -35,7 +35,7 @@ export function EmailAlertForm({ productId, offerId, defaultTarget, category, pr
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="text-sm text-brand underline underline-offset-2 hover:text-brand-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand rounded"
+        className="text-sm text-red-ink underline underline-offset-2 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand rounded"
         aria-expanded="false"
         aria-controls={`${id}-form`}
       >
@@ -45,7 +45,7 @@ export function EmailAlertForm({ productId, offerId, defaultTarget, category, pr
   }
 
   if (state === 'done') {
-    return <p role="status" id={`${id}-form`} className="rounded-lg bg-green-50 border border-green-200 text-green-900 px-3 py-2 text-sm">{message}</p>
+    return <p role="status" id={`${id}-form`} className="rounded-lg bg-success-tint border border-success-ink/30 text-success-ink px-3 py-2 text-sm">{message}</p>
   }
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -113,7 +113,7 @@ export function EmailAlertForm({ productId, offerId, defaultTarget, category, pr
         </button>
         <span className="text-xs text-muted">Primești întâi un email de confirmare.</span>
       </div>
-      {state === 'error' && <p role="alert" className="text-sm text-red-700">{message}</p>}
+      {state === 'error' && <p role="alert" className="text-sm text-red-ink">{message}</p>}
     </form>
   )
 }
@@ -142,7 +142,7 @@ export function RequestManageLinkForm() {
     }
   }
 
-  if (state === 'done') return <p role="status" className="rounded-lg bg-green-50 border border-green-200 text-green-900 px-3 py-2 text-sm">{message}</p>
+  if (state === 'done') return <p role="status" className="rounded-lg bg-success-tint border border-success-ink/30 text-success-ink px-3 py-2 text-sm">{message}</p>
 
   return (
     <form onSubmit={onSubmit} className="flex flex-wrap items-end gap-2">
@@ -154,7 +154,7 @@ export function RequestManageLinkForm() {
         <label>Website<input name="website" type="text" tabIndex={-1} autoComplete="off" /></label>
       </div>
       <button type="submit" disabled={state === 'sending'} className={submitBtn}>Trimite-mi linkul</button>
-      {state === 'error' && <p role="alert" className="w-full text-sm text-red-700">{message}</p>}
+      {state === 'error' && <p role="alert" className="w-full text-sm text-red-ink">{message}</p>}
     </form>
   )
 }

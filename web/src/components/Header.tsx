@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Logo } from './Logo'
 import { Search } from 'lucide-react'
 import { getMenu, type MenuItem } from '@/lib/queries'
 
@@ -14,7 +15,7 @@ function MenuLink({ item, flyoutAlign = 'left' }: { item: MenuItem; flyoutAlign?
   const hasChildren = !!item.children?.length
   if (!hasChildren) {
     return (
-      <Link href={item.href} className="block px-4 py-1.5 hover:bg-surface hover:text-brand whitespace-nowrap">
+      <Link href={item.href} className="block px-4 py-1.5 hover:bg-surface hover:text-red-ink whitespace-nowrap">
         {item.label}
       </Link>
     )
@@ -24,13 +25,13 @@ function MenuLink({ item, flyoutAlign = 'left' }: { item: MenuItem; flyoutAlign?
     <div className="relative group/sub">
       <Link
         href={item.href}
-        className="flex items-center justify-between gap-4 px-4 py-1.5 hover:bg-surface hover:text-brand whitespace-nowrap"
+        className="flex items-center justify-between gap-4 px-4 py-1.5 hover:bg-surface hover:text-red-ink whitespace-nowrap"
       >
         <span>{item.label}</span>
         <span className="text-muted">›</span>
       </Link>
       <div className={`absolute ${flyoutSide} top-0 hidden group-hover/sub:block group-focus-within/sub:block z-50`}>
-        <div className="bg-white border border-line rounded-xl shadow-lg py-2 min-w-48 max-h-96 overflow-y-auto">
+        <div className="bg-surface border border-line rounded-xl shadow-lg py-2 min-w-48 max-h-96 overflow-y-auto">
           {item.children!.map((c) => <MenuLink key={c.id} item={c} flyoutAlign={flyoutAlign} />)}
         </div>
       </div>
@@ -48,7 +49,7 @@ function Dropdown({ items, align = 'left' }: { items: MenuItem[]; align?: 'left'
         align === 'right' ? 'right-0' : 'right-0 sm:right-auto sm:left-0'
       }`}
     >
-      <div className="bg-white border border-line rounded-xl shadow-lg py-2 min-w-48 max-h-96 overflow-y-auto">
+      <div className="bg-surface border border-line rounded-xl shadow-lg py-2 min-w-48 max-h-96 overflow-y-auto">
         {items.map((item) => <MenuLink key={item.id} item={item} flyoutAlign={align} />)}
       </div>
     </div>
@@ -63,7 +64,7 @@ function MobileItems({ items, depth = 0 }: { items: MenuItem[]; depth?: number }
         <div key={item.id}>
           <Link
             href={item.href}
-            className="block py-1.5 pr-4 hover:bg-surface hover:text-brand whitespace-nowrap"
+            className="block py-1.5 pr-4 hover:bg-surface hover:text-red-ink whitespace-nowrap"
             style={{ paddingLeft: 16 + depth * 16 }}
           >
             {depth > 0 ? '• ' : ''}{item.label}
@@ -84,7 +85,7 @@ function SearchForm({ autoFocus, className = '' }: { autoFocus?: boolean; classN
     <form action="/cautare" method="get" className={`flex gap-2 ${className}`}>
       <input
         name="q" type="search" placeholder="Caută produs sau brand..." autoComplete="off" autoFocus={autoFocus}
-        className="flex-1 min-w-0 px-3 py-1.5 rounded-lg border border-line bg-white text-sm text-[var(--color-text)] placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand"
+        className="flex-1 min-w-0 px-3 py-1.5 rounded-lg border border-line bg-surface text-sm text-[var(--color-text)] placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand"
       />
       <button type="submit" className="px-3 py-1.5 bg-brand hover:bg-brand-dark text-white text-sm font-semibold rounded-lg transition-colors shrink-0">
         Caută
@@ -102,9 +103,8 @@ export async function Header() {
   return (
     <header className="bg-surface border-b border-line sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 h-14 flex items-center gap-4">
-        <Link href="/" className="font-black font-archivo text-xl text-brand tracking-tight shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 rounded">
-          superieftin<span className="text-[var(--color-text)]">.ro</span>
-        </Link>
+        {/* Logo-ul nou (redesign); antetul cărbune vine în etapa 2 → atunci onDark */}
+        <Logo className="shrink-0" />
 
         <SearchForm className="hidden sm:flex flex-1 max-w-md" />
 
@@ -118,7 +118,7 @@ export async function Header() {
             <Search size={20} />
           </summary>
           <div className="absolute right-0 top-full pt-2 z-50 w-72 max-w-[calc(100vw-2rem)]">
-            <div className="bg-white border border-line rounded-xl shadow-lg p-3">
+            <div className="bg-surface border border-line rounded-xl shadow-lg p-3">
               <SearchForm autoFocus />
             </div>
           </div>
@@ -160,7 +160,7 @@ export async function Header() {
                 Categorii ▾
               </summary>
               <div className="absolute right-0 top-full pt-2 z-50">
-                <div className="bg-white border border-line rounded-xl shadow-lg py-2 min-w-56 max-h-96 overflow-y-auto">
+                <div className="bg-surface border border-line rounded-xl shadow-lg py-2 min-w-56 max-h-96 overflow-y-auto">
                   <MobileItems items={menu} />
                 </div>
               </div>
