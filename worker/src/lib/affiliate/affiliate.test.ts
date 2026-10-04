@@ -2,6 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { extractDomain } from './domain.js'
 import { AffiliateResolver } from './resolver.js'
+import { chooseAffiliate } from './keep-link.js'
 import type { AffiliateProvider, AffiliateAdvertiser } from './types.js'
 
 // --- extractDomain -----------------------------------------------------------
@@ -73,4 +74,28 @@ test('resolve — ignora advertiserii inactivi si retelele neinregistrate', () =
   ])
   // ambii candidati pică => null
   assert.equal(r.resolve('https://emag.ro/x'), null)
+})
+
+// --- chooseAffiliate (incidentul din 28.09.2026) -----------------------------
+
+
+test('chooseAffiliate — linkul din feed ramane, chiar daca rezolverul are alt cod', () => {
+  const feed = { affiliateUrl: 'https://profitshare.ro/lps/djp/piC/?redirect=https%3A%2F%2Fvegis.ro%2Fp', affiliateNetwork: 'profitshare' }
+  const resolved = { affiliateUrl: 'https://l.profitshare.ro/lps/djp/deC/?redirect=https%3A%2F%2Fvegis.ro%2Fp', network: 'profitshare', commission: 5 }
+  assert.deepEqual(chooseAffiliate(feed, resolved), feed)
+})
+
+test('chooseAffiliate — fara link in feed, folosim rezolverul', () => {
+  const resolved = { affiliateUrl: 'https://l.profitshare.ro/lps/9/piC/?redirect=x', network: 'profitshare', commission: 3 }
+  assert.deepEqual(
+    chooseAffiliate({ affiliateUrl: null, affiliateNetwork: null }, resolved),
+    { affiliateUrl: resolved.affiliateUrl, affiliateNetwork: 'profitshare' },
+  )
+})
+
+test('chooseAffiliate — fara link si fara rezolutie, oferta ramane neafiliata', () => {
+  assert.deepEqual(
+    chooseAffiliate({ affiliateUrl: null, affiliateNetwork: null }, null),
+    { affiliateUrl: null, affiliateNetwork: null },
+  )
 })
