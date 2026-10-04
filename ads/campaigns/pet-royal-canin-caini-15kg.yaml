@@ -1,0 +1,500 @@
+# Test pet din research 2026-10-03 (secțiunile 3.0 și 3.4) — decizia proprietarului, 4.10.2026:
+# Royal Canin câini, saci de 15 kg. Proprietarul a confirmat că petmart / 2Performant permite
+# Google Ads Search spre comparator (problema „pending_deletion” din raport e lămurită).
+#
+# ATENȚIE — e un test de DATE, nu o investiție: research-ul arată că la CPC ~1,2 lei și ~15 lei
+# comision pe sac, ar trebui să cumpere ~10% dintre vizitatori ca să ieșim pe zero (realist 0,5–2%).
+# De aceea: 15 lei/zi, 14 zile (plafon de cheltuială ~210 lei), CPC maxim 1,20 lei, DOAR exact
+# match. Scopul e să aflăm CPC-ul real și dacă vine vreo comandă petmart prin noi.
+#
+# De ce CPC manual: contul nu are încă destule conversii. Strategiile automate (tROAS) au nevoie
+# de ~30 de conversii reale ca să învețe; până atunci plafonăm noi prețul pe click.
+# De ce câte un grup pe produs: fiecare cuvânt cheie duce pe pagina /p/ exactă a sacului de 15 kg
+# (nu pe /c/hrana-uscata, sortată după preț, unde primele sunt plicuri mici).
+#
+# Texte: pe pet NU există azi nicio reducere reală (paginile arată „Preț în intervalul obișnuit”),
+# deci fără „redus”, „reducere”, „sub mediană”, procente sau „cel mai mic preț” (regula 9, verdict
+# B1). Fără afirmații de sănătate (spiritul regulii 8). Pe fiecare pagină există o singură ofertă
+# (petmart.ro), deci NU scriem „compară mai multe magazine”. Ce e adevărat pe pagină (verificat
+# 4.10.2026): prețul la petmart.ro „Verificat acum X ore”, istoricul prețului (min, max) —
+# DOAR 2 zile de date (3–4.10.2026), deci fără „90 de zile” / „evoluție” (FAIL regula 9, 4.10.2026);
+# mediana pe 30 de zile, alertă de preț gratuită pe Telegram sau email, fără cont.
+# Marca „Royal Canin” apare în titlul fiecărei pagini (de semnalat la policy-reviewer).
+# Câmpurile `id` / `budget_id` le completează ads:apply după crearea în Google Ads.
+
+campaign:
+  name: "SE | Search | Pet Royal Canin caini 15 kg"
+  id: "24323451025"
+  budget_id: "15916001666"
+  status: PAUSED # rămâne PAUSED; activarea o faci tu în Google Ads
+  daily_budget: 15 # lei/zi — test de 14 zile (~210 lei în total)
+  bidding:
+    strategy: MANUAL_CPC
+    max_cpc: 1.20 # lei — egal cu limita de JOS a intervalului top-of-page din Keyword Planner (1,2–3,4)
+  exact_only: true # ads:validate refuză orice cuvânt care nu e exact
+  conversion_goal:
+    name: Comision afiliere # Profitshare + 2Performant (petmart e pe 2Performant)
+    conversion_action_id: "7799099014"
+  targeting:
+    countries: [ RO ]
+    languages: [ ro ]
+    location_mode: PRESENCE
+    networks:
+      search: true
+      search_partners: false
+      display: false
+  source_research: ads/research/2026-10-03-animale-de-companie.md # secțiunile 3.0 și 3.4
+
+  negative_keywords:
+    # de bază
+    - gratis
+    - second hand
+    - folosit
+    - service
+    - reparatie
+    - manual
+    - driver
+    - olx
+    - piese
+    - cum
+    - ce este
+    - forum
+    # branduri de retaileri și magazine pet — doar ca negative
+    - emag
+    - evomag
+    - evo mag
+    - itgalaxy
+    - '"it galaxy"'
+    - vexio
+    - citgrup
+    - cit grup
+    - forit
+    - vegis
+    - altex
+    - flanco
+    - petmart
+    - '"pet mart"'
+    - animax
+    - zooplus
+    - petmax
+    - pentruanimale
+    - fera
+    # pisici (gama de pisici nu e în campanie)
+    - pisici
+    - pisica
+    - kitten
+    # talii mici (nu avem sacii lor în campanie)
+    - mini
+    - x-small
+    - '"x small"'
+    # hrană umedă
+    - umeda
+    - plic
+    - plicuri
+    - conserva
+    - conserve
+    # diete veterinare — duc spre afirmații de sănătate (regula 8)
+    - gastro
+    - hypoallergenic
+    - anallergenic
+    - urinary
+    - renal
+    - recovery
+    - veterinary
+    - veterinar
+    - veterinara
+    # recomandate de policy-reviewer (4.10.2026): diete / game cu afirmații de sănătate
+    - gastrointestinal
+    - hipoalergenic
+    - hepatic
+    - diabetic
+    - satiety
+    - obesity
+    - dermacomfort
+    - digestive
+    - sensitivity
+    - joint
+    - sterilised
+    - prescription
+    # gramaje mici (alt produs decât sacul de 15 kg)
+    - '"1 kg"'
+    - '"1kg"'
+    - '"3 kg"'
+    - '"3kg"'
+    - '"3.5 kg"'
+    - '"4 kg"'
+    - '"4kg"'
+
+  ad_groups:
+
+    - name: "RC Maxi Adult 15 kg"
+      id: "201782762058"
+      # pagina văzută pe 4.10.2026: în stoc, o ofertă petmart.ro (361,12 lei), „Preț în intervalul obișnuit”
+      final_url: https://www.superieftin.ro/p/royal-canin-maxi-adult-hrana-uscata-caine-15-kg
+      keywords:
+        exact:
+          - "royal canin maxi adult"
+          - "royal canin maxi adult 15 kg"
+          - "royal canin maxi adult 15kg"
+          - "royal canin maxi adult pret"
+      negative_keywords: []
+      ads:
+        - type: RSA
+          id: "826946351183"
+          headlines:
+            - "Royal Canin Maxi Adult"
+            - "Royal Canin Maxi Adult 15 kg"
+            - "Hrană uscată câini, 15 kg"
+            - "Preț Maxi Adult 15 kg"
+            - "Istoricul prețului, zi de zi"
+            - "Comparăm cu mediana pe 30 zile"
+            - "Minim, maxim și mediană"
+            - "Alertă de preț pe Telegram"
+            - "Alertă de preț și pe email"
+            - "Prețuri verificate zilnic"
+            - "Alertă gratuită, fără cont"
+            - "Vezi prețul actual"
+            - "Vezi prețul înainte să cumperi"
+            - "Nu comparăm cu prețul vechi"
+            - "superieftin.ro"
+          descriptions:
+            - "Vezi prețul Royal Canin Maxi Adult 15 kg și istoricul lui, înainte să cumperi."
+            - "Comparăm prețul cu mediana pe 30 de zile, nu cu prețul vechi al magazinului."
+            - "Urmărim prețul zilnic și îl comparăm cu mediana pe 30 de zile, nu cu prețul vechi."
+            - "Setează gratuit o alertă de preț pe Telegram sau pe email. Fără cont."
+          path1: royal-canin
+          path2: maxi-adult
+
+    - name: "RC Medium Adult 15 kg"
+      id: "201081857895"
+      # pagina văzută pe 4.10.2026: în stoc, o ofertă petmart.ro (361,13 lei), „Preț în intervalul obișnuit”
+      final_url: https://www.superieftin.ro/p/royal-canin-medium-adult-hrana-uscata-caine-15-kg
+      keywords:
+        exact:
+          - "royal canin medium adult"
+          - "royal canin medium adult 15 kg"
+          - "royal canin medium adult 15kg"
+          - "royal canin medium adult pret"
+      negative_keywords: []
+      ads:
+        - type: RSA
+          id: "826946363516"
+          headlines:
+            - "Royal Canin Medium Adult"
+            - "Royal Canin Medium Adult 15 kg"
+            - "Hrană uscată câini, 15 kg"
+            - "Preț Medium Adult 15 kg"
+            - "Istoricul prețului, zi de zi"
+            - "Comparăm cu mediana pe 30 zile"
+            - "Minim, maxim și mediană"
+            - "Alertă de preț pe Telegram"
+            - "Alertă de preț și pe email"
+            - "Prețuri verificate zilnic"
+            - "Alertă gratuită, fără cont"
+            - "Vezi prețul actual"
+            - "Vezi prețul înainte să cumperi"
+            - "Nu comparăm cu prețul vechi"
+            - "superieftin.ro"
+          descriptions:
+            - "Vezi prețul Royal Canin Medium Adult 15 kg și istoricul lui, înainte să cumperi."
+            - "Comparăm prețul cu mediana pe 30 de zile, nu cu prețul vechi al magazinului."
+            - "Urmărim prețul zilnic și îl comparăm cu mediana pe 30 de zile, nu cu prețul vechi."
+            - "Setează gratuit o alertă de preț pe Telegram sau pe email. Fără cont."
+          path1: royal-canin
+          path2: medium-adult
+
+    - name: "RC Maxi Adult 5+ 15 kg"
+      id: "205930940372"
+      # pagina văzută pe 4.10.2026: în stoc, o ofertă petmart.ro (379,19 lei), „Preț în intervalul obișnuit”
+      final_url: https://www.superieftin.ro/p/royal-canin-maxi-adult-5-hrana-uscata-caine-15-kg
+      keywords:
+        exact:
+          - "royal canin maxi adult 5+"
+          - "royal canin maxi adult 5+ 15 kg"
+      negative_keywords: []
+      ads:
+        - type: RSA
+          id: "826823846859"
+          headlines:
+            - "Royal Canin Maxi Adult 5+"
+            - "Maxi Adult 5+ 15 kg"
+            - "Hrană uscată câini, 15 kg"
+            - "Preț Maxi Adult 5+ 15 kg"
+            - "Istoricul prețului, zi de zi"
+            - "Comparăm cu mediana pe 30 zile"
+            - "Minim, maxim și mediană"
+            - "Alertă de preț pe Telegram"
+            - "Alertă de preț și pe email"
+            - "Prețuri verificate zilnic"
+            - "Alertă gratuită, fără cont"
+            - "Vezi prețul actual"
+            - "Vezi prețul înainte să cumperi"
+            - "Nu comparăm cu prețul vechi"
+            - "superieftin.ro"
+          descriptions:
+            - "Vezi prețul Royal Canin Maxi Adult 5+ 15 kg și istoricul lui, înainte să cumperi."
+            - "Comparăm prețul cu mediana pe 30 de zile, nu cu prețul vechi al magazinului."
+            - "Urmărim prețul zilnic și îl comparăm cu mediana pe 30 de zile, nu cu prețul vechi."
+            - "Setează gratuit o alertă de preț pe Telegram sau pe email. Fără cont."
+          path1: royal-canin
+          path2: maxi-adult-5
+
+    - name: "RC Maxi Puppy 15 kg"
+      id: "201782762098"
+      # pagina văzută pe 4.10.2026: în stoc, o ofertă petmart.ro (424,13 lei), „Preț în intervalul obișnuit”
+      final_url: https://www.superieftin.ro/p/royal-canin-maxi-puppy-hrana-uscata-caine-junior-15-kg
+      keywords:
+        exact:
+          - "royal canin maxi puppy"
+          - "royal canin maxi puppy 15 kg"
+      negative_keywords: []
+      ads:
+        - type: RSA
+          id: "826823731845"
+          headlines:
+            - "Royal Canin Maxi Puppy"
+            - "Royal Canin Maxi Puppy 15 kg"
+            - "Hrană uscată câini, 15 kg"
+            - "Preț Maxi Puppy 15 kg"
+            - "Istoricul prețului, zi de zi"
+            - "Comparăm cu mediana pe 30 zile"
+            - "Minim, maxim și mediană"
+            - "Alertă de preț pe Telegram"
+            - "Alertă de preț și pe email"
+            - "Prețuri verificate zilnic"
+            - "Alertă gratuită, fără cont"
+            - "Vezi prețul actual"
+            - "Vezi prețul înainte să cumperi"
+            - "Nu comparăm cu prețul vechi"
+            - "superieftin.ro"
+          descriptions:
+            - "Vezi prețul Royal Canin Maxi Puppy 15 kg și istoricul lui, înainte să cumperi."
+            - "Comparăm prețul cu mediana pe 30 de zile, nu cu prețul vechi al magazinului."
+            - "Urmărim prețul zilnic și îl comparăm cu mediana pe 30 de zile, nu cu prețul vechi."
+            - "Setează gratuit o alertă de preț pe Telegram sau pe email. Fără cont."
+          path1: royal-canin
+          path2: maxi-puppy
+
+    - name: "RC Medium Puppy 15 kg"
+      id: "203490317889"
+      # pagina văzută pe 4.10.2026: în stoc, o ofertă petmart.ro (424,13 lei), „Preț în intervalul obișnuit”
+      final_url: https://www.superieftin.ro/p/royal-canin-medium-puppy-hrana-uscata-caine-junior-15-kg
+      keywords:
+        exact:
+          - "royal canin medium puppy"
+          - "royal canin medium puppy 15 kg"
+      negative_keywords: []
+      ads:
+        - type: RSA
+          id: "826946369456"
+          headlines:
+            - "Royal Canin Medium Puppy"
+            - "Royal Canin Medium Puppy 15 kg"
+            - "Hrană uscată câini, 15 kg"
+            - "Preț Medium Puppy 15 kg"
+            - "Istoricul prețului, zi de zi"
+            - "Comparăm cu mediana pe 30 zile"
+            - "Minim, maxim și mediană"
+            - "Alertă de preț pe Telegram"
+            - "Alertă de preț și pe email"
+            - "Prețuri verificate zilnic"
+            - "Alertă gratuită, fără cont"
+            - "Vezi prețul actual"
+            - "Vezi prețul înainte să cumperi"
+            - "Nu comparăm cu prețul vechi"
+            - "superieftin.ro"
+          descriptions:
+            - "Vezi prețul Royal Canin Medium Puppy 15 kg și istoricul lui, înainte să cumperi."
+            - "Comparăm prețul cu mediana pe 30 de zile, nu cu prețul vechi al magazinului."
+            - "Urmărim prețul zilnic și îl comparăm cu mediana pe 30 de zile, nu cu prețul vechi."
+            - "Setează gratuit o alertă de preț pe Telegram sau pe email. Fără cont."
+          path1: royal-canin
+          path2: medium-puppy
+
+    - name: "RC Giant Puppy 15 kg"
+      id: "203490318129"
+      # pagina văzută pe 4.10.2026: în stoc, o ofertă petmart.ro (402,91 lei), „Preț în intervalul obișnuit”
+      final_url: https://www.superieftin.ro/p/royal-canin-giant-puppy-hrana-uscata-caine-junior-etapa-1-de-crestere-15-kg
+      keywords:
+        exact:
+          - "royal canin giant puppy"
+          - "royal canin giant puppy 15 kg"
+      negative_keywords: []
+      ads:
+        - type: RSA
+          id: "826823836026"
+          headlines:
+            - "Royal Canin Giant Puppy"
+            - "Royal Canin Giant Puppy 15 kg"
+            - "Hrană uscată câini, 15 kg"
+            - "Preț Giant Puppy 15 kg"
+            - "Istoricul prețului, zi de zi"
+            - "Comparăm cu mediana pe 30 zile"
+            - "Minim, maxim și mediană"
+            - "Alertă de preț pe Telegram"
+            - "Alertă de preț și pe email"
+            - "Prețuri verificate zilnic"
+            - "Alertă gratuită, fără cont"
+            - "Vezi prețul actual"
+            - "Vezi prețul înainte să cumperi"
+            - "Nu comparăm cu prețul vechi"
+            - "superieftin.ro"
+          descriptions:
+            - "Vezi prețul Royal Canin Giant Puppy 15 kg și istoricul lui, înainte să cumperi."
+            - "Comparăm prețul cu mediana pe 30 de zile, nu cu prețul vechi al magazinului."
+            - "Urmărim prețul zilnic și îl comparăm cu mediana pe 30 de zile, nu cu prețul vechi."
+            - "Setează gratuit o alertă de preț pe Telegram sau pe email. Fără cont."
+          path1: royal-canin
+          path2: giant-puppy
+
+    - name: "RC Giant Junior 15 kg"
+      id: "201081858455"
+      # pagina văzută pe 4.10.2026: în stoc, o ofertă petmart.ro (402,91 lei), „Preț în intervalul obișnuit”
+      final_url: https://www.superieftin.ro/p/royal-canin-giant-junior-hrana-uscata-caine-junior-etapa-2-de-crestere-15-kg
+      keywords:
+        exact:
+          - "royal canin giant junior"
+          - "royal canin giant junior 15 kg"
+      negative_keywords: []
+      ads:
+        - type: RSA
+          id: "826823849994"
+          headlines:
+            - "Royal Canin Giant Junior"
+            - "Royal Canin Giant Junior 15 kg"
+            - "Hrană uscată câini, 15 kg"
+            - "Preț Giant Junior 15 kg"
+            - "Istoricul prețului, zi de zi"
+            - "Comparăm cu mediana pe 30 zile"
+            - "Minim, maxim și mediană"
+            - "Alertă de preț pe Telegram"
+            - "Alertă de preț și pe email"
+            - "Prețuri verificate zilnic"
+            - "Alertă gratuită, fără cont"
+            - "Vezi prețul actual"
+            - "Vezi prețul înainte să cumperi"
+            - "Nu comparăm cu prețul vechi"
+            - "superieftin.ro"
+          descriptions:
+            - "Vezi prețul Royal Canin Giant Junior 15 kg și istoricul lui, înainte să cumperi."
+            - "Comparăm prețul cu mediana pe 30 de zile, nu cu prețul vechi al magazinului."
+            - "Urmărim prețul zilnic și îl comparăm cu mediana pe 30 de zile, nu cu prețul vechi."
+            - "Setează gratuit o alertă de preț pe Telegram sau pe email. Fără cont."
+          path1: royal-canin
+          path2: giant-junior
+
+    - name: "RC Maxi Starter 15 kg"
+      id: "203490318169"
+      # pagina văzută pe 4.10.2026: în stoc, o ofertă petmart.ro (462,69 lei), „Preț în intervalul obișnuit”
+      final_url: https://www.superieftin.ro/p/royal-canin-maxi-starter-mother-babydog-mama-si-puiul-hrana-uscata-caine-15-kg
+      keywords:
+        exact:
+          - "royal canin maxi starter"
+          - "royal canin maxi starter 15 kg"
+      negative_keywords: []
+      ads:
+        - type: RSA
+          id: "826823847039"
+          headlines:
+            - "Royal Canin Maxi Starter"
+            - "Royal Canin Maxi Starter 15 kg"
+            - "Hrană uscată câini, 15 kg"
+            - "Preț Maxi Starter 15 kg"
+            - "Istoricul prețului, zi de zi"
+            - "Comparăm cu mediana pe 30 zile"
+            - "Minim, maxim și mediană"
+            - "Alertă de preț pe Telegram"
+            - "Alertă de preț și pe email"
+            - "Prețuri verificate zilnic"
+            - "Alertă gratuită, fără cont"
+            - "Vezi prețul actual"
+            - "Vezi prețul înainte să cumperi"
+            - "Nu comparăm cu prețul vechi"
+            - "superieftin.ro"
+          descriptions:
+            - "Vezi prețul Royal Canin Maxi Starter 15 kg și istoricul lui, înainte să cumperi."
+            - "Comparăm prețul cu mediana pe 30 de zile, nu cu prețul vechi al magazinului."
+            - "Urmărim prețul zilnic și îl comparăm cu mediana pe 30 de zile, nu cu prețul vechi."
+            - "Setează gratuit o alertă de preț pe Telegram sau pe email. Fără cont."
+          path1: royal-canin
+          path2: maxi-starter
+
+    - name: "RC Medium Starter 15 kg"
+      id: "203490318209"
+      # pagina văzută pe 4.10.2026: în stoc, o ofertă petmart.ro (462,69 lei), „Preț în intervalul obișnuit”
+      final_url: https://www.superieftin.ro/p/royal-canin-medium-starter-mother-babydog-mama-si-puiul-hrana-uscata-caine-15-kg
+      keywords:
+        exact:
+          - "royal canin medium starter"
+          - "royal canin medium starter 15 kg"
+      negative_keywords: []
+      ads:
+        - type: RSA
+          id: "826823850126"
+          headlines:
+            - "Royal Canin Medium Starter"
+            - "Medium Starter 15 kg"
+            - "Hrană uscată câini, 15 kg"
+            - "Preț Medium Starter 15 kg"
+            - "Istoricul prețului, zi de zi"
+            - "Comparăm cu mediana pe 30 zile"
+            - "Minim, maxim și mediană"
+            - "Alertă de preț pe Telegram"
+            - "Alertă de preț și pe email"
+            - "Prețuri verificate zilnic"
+            - "Alertă gratuită, fără cont"
+            - "Vezi prețul actual"
+            - "Vezi prețul înainte să cumperi"
+            - "Nu comparăm cu prețul vechi"
+            - "superieftin.ro"
+          descriptions:
+            - "Vezi prețul Royal Canin Medium Starter 15 kg și istoricul lui, înainte să cumperi."
+            - "Comparăm prețul cu mediana pe 30 de zile, nu cu prețul vechi al magazinului."
+            - "Urmărim prețul zilnic și îl comparăm cu mediana pe 30 de zile, nu cu prețul vechi."
+            - "Setează gratuit o alertă de preț pe Telegram sau pe email. Fără cont."
+          path1: royal-canin
+          path2: medium-starter
+
+  extensions:
+    sitelinks:
+      - text: Royal Canin Maxi Adult
+        url: https://www.superieftin.ro/p/royal-canin-maxi-adult-hrana-uscata-caine-15-kg
+        description1: Hrană uscată câini, sac de 15 kg
+        description2: Prețul urmărit zilnic
+      - text: Royal Canin Medium Adult
+        url: https://www.superieftin.ro/p/royal-canin-medium-adult-hrana-uscata-caine-15-kg
+        description1: Hrană uscată câini, sac de 15 kg
+        description2: Prețul urmărit zilnic
+      - text: Royal Canin Maxi Puppy
+        url: https://www.superieftin.ro/p/royal-canin-maxi-puppy-hrana-uscata-caine-junior-15-kg
+        description1: Hrană uscată câini, sac de 15 kg
+        description2: Prețul urmărit zilnic
+      - text: Cum verificăm prețurile
+        url: https://www.superieftin.ro/ghiduri/metodologie
+        description1: Mediana pe 30 de zile explicată
+        description2: Fără prețuri vechi umflate
+    callouts:
+      - Istoric de preț zilnic
+      - Mediana pe 30 de zile
+      - Alertă de preț gratuită
+      - Fără cont necesar
+      - Prețuri verificate zilnic
+      - Nu folosim prețul vechi
+    structured_snippets:
+      - header: Modele
+        values:
+          - Maxi Adult
+          - Medium Adult
+          - Maxi Adult 5+
+          - Maxi Puppy
+          - Medium Puppy
+          - Giant Puppy
+          - Giant Junior
+          - Maxi Starter
+          - Medium Starter
+      - header: Servicii
+        values:
+          - Istoric de preț zilnic
+          - Mediana pe 30 de zile
+          - Alerte de preț
+          - Prețuri verificate zilnic

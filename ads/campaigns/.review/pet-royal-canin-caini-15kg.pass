@@ -1,0 +1,6 @@
+verdict: PASS
+date: 2026-10-04T07:32:49Z
+sha256: c8670e855d37fbb197c2eca01aa71cbccfe1d9cd8ca07763d24f6db8f438c743
+reviewer: policy-reviewer
+file: ads/campaigns/pet-royal-canin-caini-15kg.yaml
+notes: "Reverificare dupa ads:apply validate_only HTTP 400 KEYWORD_HAS_INVALID_CHARS pe negativul de campanie '\"3,5 kg\"'. git diff fata de a575d1e: singura schimbare din YAML este stergerea liniei '- '\"3,5 kg\"'' (ramane '\"3.5 kg\"'); niciun alt continut modificat. Negative de campanie 71 -> 70. Restul verdictului din 2026-10-04T07:30:43Z (hash anterior 88ea3efa) ramane valabil: texte, landing pages, PAUSED, 15 lei/zi, CPC 1,20, fara secrete. ads:validate 0 erori, 0 avertismente. sha256 fisier brut b6035d7b."
