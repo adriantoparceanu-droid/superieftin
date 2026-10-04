@@ -15,7 +15,7 @@ import { parseTpFeed, mapTpFeedRow } from '../importers/twoperformant-feed.js'
 import { upsertProduct, upsertOfferPrice, upsertRetailerByDomain } from '../lib/upsert.js'
 import { loadFeedRules, IGNORE, type RuleLookup } from '../lib/feedRules.js'
 import { compileCategoryFilter, importsNothing } from '../lib/feed-category-filter.js'
-import { resolver, syncAffiliateAdvertisers, extractDomain } from '../lib/affiliate/index.js'
+import { resolver, syncAffiliateAdvertisers, extractDomain, chooseAffiliate } from '../lib/affiliate/index.js'
 import { isBlockedImageHost, blockedImageHostRegex } from '../lib/images.js'
 import type { ImportedProduct } from '../lib/types.js'
 import { toSlug } from '../lib/slug.js'
@@ -113,15 +113,15 @@ async function refreshPriceStats(log: pino.Logger): Promise<void> {
   }
 }
 
-// Verifica afilierea pe baza domeniului si suprascrie linkul/reteaua produsului.
-// Daca rezolverul nu gaseste un advertiser, pastram ce a setat mapFeedRow (linkul din
-// feed, daca exista) — altfel produsul ramane neafiliat si se afiseaza fara comision.
+// Linkul afiliat DIN FEED ramane neatins (sursa de adevar — vezi lib/affiliate/keep-link.ts,
+// incidentul din 28.09.2026). Rezolverul completeaza doar produsele fara link in feed.
 function applyAffiliate(product: ImportedProduct): void {
-  const aff = resolver.resolve(product.url)
-  if (aff) {
-    product.affiliateUrl = aff.affiliateUrl
-    product.affiliateNetwork = aff.network
-  }
+  const choice = chooseAffiliate(
+    { affiliateUrl: product.affiliateUrl, affiliateNetwork: product.affiliateNetwork },
+    product.affiliateUrl ? null : resolver.resolve(product.url),
+  )
+  product.affiliateUrl = choice.affiliateUrl
+  product.affiliateNetwork = choice.affiliateNetwork
 }
 
 // --- Sincronizare feed-uri ---------------------------------------------------
@@ -133,7 +133,10 @@ async function syncOneFeed(
 ): Promise<{ imported: number; errors: number } | 'skipped' | 'rejected'> {
   const log = logger.child({ feed: feed.name, type: feed.type })
 
-  // Descarcam doar feed-urile regenerate de la ultima sincronizare reusita
+  // Descarcam doar feed-urile regenerate de la ultima sincronizare reusita.
+  // FEED_SYNC_FORCE=1 (rulare manuala) reimporta si feed-urile neschimbate — ex. ca sa
+  // rescrie linkurile afiliate stricate (incidentul din 28.09.2026).
+  const force = process.env.FEED_SYNC_FORCE === '1'
   const last = await pool.query<{ ps_updated_at: Date | null; products_count: number | null }>(`
     SELECT ps_updated_at, products_count FROM feed_syncs
     WHERE feed_link = $1 AND status = 'success'
@@ -141,7 +144,7 @@ async function syncOneFeed(
   `, [feed.link])
   const lastSync = last.rows[0]
   const feedUpdatedAt = new Date(feed.updated_at.replace(' ', 'T') + 'Z')
-  if (lastSync?.ps_updated_at && new Date(lastSync.ps_updated_at) >= feedUpdatedAt) {
+  if (!force && lastSync?.ps_updated_at && new Date(lastSync.ps_updated_at) >= feedUpdatedAt) {
     log.info('Feed neschimbat — sarit')
     return 'skipped'
   }
@@ -411,20 +414,25 @@ export async function runPriceCheck(jobId = 'direct') {
 
         // Oferte noi doar daca brandul produsului apare in numele din API —
         // SKU-urile interne ale advertiserilor pot coincide pentru produse diferite
-        const existing = await pool.query(`
-          SELECT 1 FROM offers WHERE product_id = $1 AND retailer_id = $2
+        const existing = await pool.query<{ affiliate_url: string | null; affiliate_network: string | null }>(`
+          SELECT affiliate_url, affiliate_network FROM offers WHERE product_id = $1 AND retailer_id = $2
         `, [candidate.id, retailer.id])
         if (!existing.rows.length) {
           const brandOk = candidate.brand && psProduct.name.toLowerCase().includes(candidate.brand.toLowerCase())
           if (!brandOk) continue
         }
 
-        // Afilierea se rezolva pe domeniu (comision maxim intre retele); fara afiliere
-        // oferta se salveaza oricum, cu link brut.
-        const aff = resolver.resolve(psProduct.link)
+        // Linkul afiliat existent (din feed) ramane; rezolverul (cod din API) doar pentru
+        // ofertele fara link — vezi lib/affiliate/keep-link.ts. Fara afiliere oferta se
+        // salveaza oricum, cu link brut.
+        const current = existing.rows[0]
+        const aff = chooseAffiliate(
+          { affiliateUrl: current?.affiliate_url ?? null, affiliateNetwork: current?.affiliate_network ?? null },
+          current?.affiliate_url ? null : resolver.resolve(psProduct.link),
+        )
         await upsertOfferPrice(
           candidate.id, retailer.id, psProduct.price_vat, psProduct.link,
-          aff?.affiliateUrl ?? null, aff?.network ?? null,
+          aff.affiliateUrl, aff.affiliateNetwork,
         )
         updated++
       }

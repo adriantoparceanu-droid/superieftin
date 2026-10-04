@@ -21,6 +21,7 @@ export const resolver = new AffiliateResolver(providers, priority)
 
 export { AffiliateResolver } from './resolver.js'
 export { extractDomain } from './domain.js'
+export { chooseAffiliate } from './keep-link.js'
 export type { AffiliateAdvertiser, ResolvedAffiliate, AffiliateProvider } from './types.js'
 
 // Sincronizeaza advertiserii din toate retelele in affiliate_advertisers (harta domeniu->advertiser).
