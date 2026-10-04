@@ -15,7 +15,7 @@ import { parseTpFeed, mapTpFeedRow } from '../importers/twoperformant-feed.js'
 import { upsertProduct, upsertOfferPrice, upsertRetailerByDomain } from '../lib/upsert.js'
 import { loadFeedRules, IGNORE, type RuleLookup } from '../lib/feedRules.js'
 import { compileCategoryFilter, importsNothing } from '../lib/feed-category-filter.js'
-import { resolver, syncAffiliateAdvertisers, extractDomain, chooseAffiliate } from '../lib/affiliate/index.js'
+import { resolver, syncAffiliateAdvertisers, extractDomain, chooseAffiliate, withFeedCode } from '../lib/affiliate/index.js'
 import { isBlockedImageHost, blockedImageHostRegex } from '../lib/images.js'
 import type { ImportedProduct } from '../lib/types.js'
 import { toSlug } from '../lib/slug.js'
@@ -404,6 +404,18 @@ export async function runPriceCheck(jobId = 'direct') {
   `)
   const retailerByAdvId = new Map(retailers.rows.map((r) => [r.ps_advertiser_id, r]))
 
+  // Codul de afiliat folosit de feed-ul fiecarui magazin = cel mai des intalnit pe ofertele lui
+  // in stoc (vin din feed). Ofertele NOI create aici primesc acest cod, nu codul zilei din API,
+  // care poate sa nu fie numarat in Profitshare (incidentul din 28.09.2026).
+  const feedCodes = await pool.query<{ retailer_id: number; code: string }>(`
+    SELECT DISTINCT ON (retailer_id) retailer_id, split_part(affiliate_url, '/', 6) AS code
+    FROM offers
+    WHERE in_stock AND affiliate_url ~ '^https?://(l\\.)?profitshare\\.ro/lps/'
+    GROUP BY retailer_id, code
+    ORDER BY retailer_id, count(*) DESC
+  `)
+  const feedCodeByRetailer = new Map(feedCodes.rows.map((r) => [r.retailer_id, r.code]))
+
   let updated = 0, errors = 0
   for (const candidate of candidates.rows) {
     try {
@@ -422,13 +434,17 @@ export async function runPriceCheck(jobId = 'direct') {
           if (!brandOk) continue
         }
 
-        // Linkul afiliat existent (din feed) ramane; rezolverul (cod din API) doar pentru
-        // ofertele fara link — vezi lib/affiliate/keep-link.ts. Fara afiliere oferta se
-        // salveaza oricum, cu link brut.
+        // Linkul afiliat existent (din feed) ramane; rezolverul doar pentru ofertele fara link,
+        // cu codul de afiliat al feed-ului magazinului — vezi lib/affiliate/keep-link.ts.
+        // Fara afiliere oferta se salveaza oricum, cu link brut.
         const current = existing.rows[0]
+        const resolved = current?.affiliate_url ? null : resolver.resolve(psProduct.link)
+        if (resolved?.network === 'profitshare') {
+          resolved.affiliateUrl = withFeedCode(resolved.affiliateUrl, feedCodeByRetailer.get(retailer.id) ?? null)
+        }
         const aff = chooseAffiliate(
           { affiliateUrl: current?.affiliate_url ?? null, affiliateNetwork: current?.affiliate_network ?? null },
-          current?.affiliate_url ? null : resolver.resolve(psProduct.link),
+          resolved,
         )
         await upsertOfferPrice(
           candidate.id, retailer.id, psProduct.price_vat, psProduct.link,

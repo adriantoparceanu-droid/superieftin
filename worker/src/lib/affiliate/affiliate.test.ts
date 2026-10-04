@@ -2,7 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { extractDomain } from './domain.js'
 import { AffiliateResolver } from './resolver.js'
-import { chooseAffiliate } from './keep-link.js'
+import { chooseAffiliate, lpsAffiliateCode, withFeedCode } from './keep-link.js'
 import type { AffiliateProvider, AffiliateAdvertiser } from './types.js'
 
 // --- extractDomain -----------------------------------------------------------
@@ -98,4 +98,18 @@ test('chooseAffiliate — fara link si fara rezolutie, oferta ramane neafiliata'
     chooseAffiliate({ affiliateUrl: null, affiliateNetwork: null }, null),
     { affiliateUrl: null, affiliateNetwork: null },
   )
+})
+
+test('withFeedCode — linkul rezolverului primeste codul feed-ului magazinului', () => {
+  const api = 'https://l.profitshare.ro/lps/djp/deC/?redirect=https%3A%2F%2Fvegis.ro%2Fp'
+  assert.equal(withFeedCode(api, 'piC'), 'https://l.profitshare.ro/lps/djp/piC/?redirect=https%3A%2F%2Fvegis.ro%2Fp')
+  assert.equal(withFeedCode(api, null), api)                       // fara cod de feed → neschimbat
+  assert.equal(withFeedCode('https://event.2performant.com/x', 'piC'), 'https://event.2performant.com/x')
+})
+
+test('lpsAffiliateCode — citeste codul din ambele forme de link Profitshare', () => {
+  assert.equal(lpsAffiliateCode('https://profitshare.ro/lps/pPv/piC/?redirect=x'), 'piC')
+  assert.equal(lpsAffiliateCode('//l.profitshare.ro/lps/9/xR9/?redirect=x'), 'xR9')
+  assert.equal(lpsAffiliateCode('https://l.profitshare.ro/l/16601432'), null)
+  assert.equal(lpsAffiliateCode(null), null)
 })
