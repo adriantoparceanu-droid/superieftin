@@ -24,8 +24,8 @@
 
 campaign:
   name: "SE | Search | Pet Royal Canin caini 15 kg"
-  id: null
-  budget_id: null
+  id: "24323451025"
+  budget_id: "15916001666"
   status: PAUSED # rămâne PAUSED; activarea o faci tu în Google Ads
   daily_budget: 15 # lei/zi — test de 14 zile (~210 lei în total)
   bidding:
@@ -128,7 +128,7 @@ campaign:
   ad_groups:
 
     - name: "RC Maxi Adult 15 kg"
-      id: null
+      id: "201782762058"
       # pagina văzută pe 4.10.2026: în stoc, o ofertă petmart.ro (361,12 lei), „Preț în intervalul obișnuit”
       final_url: https://www.superieftin.ro/p/royal-canin-maxi-adult-hrana-uscata-caine-15-kg
       keywords:
@@ -140,7 +140,7 @@ campaign:
       negative_keywords: []
       ads:
         - type: RSA
-          id: null
+          id: "826946351183"
           headlines:
             - "Royal Canin Maxi Adult"
             - "Royal Canin Maxi Adult 15 kg"
@@ -166,7 +166,7 @@ campaign:
           path2: maxi-adult
 
     - name: "RC Medium Adult 15 kg"
-      id: null
+      id: "201081857895"
       # pagina văzută pe 4.10.2026: în stoc, o ofertă petmart.ro (361,13 lei), „Preț în intervalul obișnuit”
       final_url: https://www.superieftin.ro/p/royal-canin-medium-adult-hrana-uscata-caine-15-kg
       keywords:
@@ -178,7 +178,7 @@ campaign:
       negative_keywords: []
       ads:
         - type: RSA
-          id: null
+          id: "826946363516"
           headlines:
             - "Royal Canin Medium Adult"
             - "Royal Canin Medium Adult 15 kg"
@@ -204,7 +204,7 @@ campaign:
           path2: medium-adult
 
     - name: "RC Maxi Adult 5+ 15 kg"
-      id: null
+      id: "205930940372"
       # pagina văzută pe 4.10.2026: în stoc, o ofertă petmart.ro (379,19 lei), „Preț în intervalul obișnuit”
       final_url: https://www.superieftin.ro/p/royal-canin-maxi-adult-5-hrana-uscata-caine-15-kg
       keywords:
@@ -214,7 +214,7 @@ campaign:
       negative_keywords: []
       ads:
         - type: RSA
-          id: null
+          id: "826823846859"
           headlines:
             - "Royal Canin Maxi Adult 5+"
             - "Maxi Adult 5+ 15 kg"
@@ -240,7 +240,7 @@ campaign:
           path2: maxi-adult-5
 
     - name: "RC Maxi Puppy 15 kg"
-      id: null
+      id: "201782762098"
       # pagina văzută pe 4.10.2026: în stoc, o ofertă petmart.ro (424,13 lei), „Preț în intervalul obișnuit”
       final_url: https://www.superieftin.ro/p/royal-canin-maxi-puppy-hrana-uscata-caine-junior-15-kg
       keywords:
@@ -250,7 +250,7 @@ campaign:
       negative_keywords: []
       ads:
         - type: RSA
-          id: null
+          id: "826823731845"
           headlines:
             - "Royal Canin Maxi Puppy"
             - "Royal Canin Maxi Puppy 15 kg"
@@ -276,7 +276,7 @@ campaign:
           path2: maxi-puppy
 
     - name: "RC Medium Puppy 15 kg"
-      id: null
+      id: "203490317889"
       # pagina văzută pe 4.10.2026: în stoc, o ofertă petmart.ro (424,13 lei), „Preț în intervalul obișnuit”
       final_url: https://www.superieftin.ro/p/royal-canin-medium-puppy-hrana-uscata-caine-junior-15-kg
       keywords:
@@ -286,7 +286,7 @@ campaign:
       negative_keywords: []
       ads:
         - type: RSA
-          id: null
+          id: "826946369456"
           headlines:
             - "Royal Canin Medium Puppy"
             - "Royal Canin Medium Puppy 15 kg"
@@ -312,7 +312,7 @@ campaign:
           path2: medium-puppy
 
     - name: "RC Giant Puppy 15 kg"
-      id: null
+      id: "203490318129"
       # pagina văzută pe 4.10.2026: în stoc, o ofertă petmart.ro (402,91 lei), „Preț în intervalul obișnuit”
       final_url: https://www.superieftin.ro/p/royal-canin-giant-puppy-hrana-uscata-caine-junior-etapa-1-de-crestere-15-kg
       keywords:
@@ -322,7 +322,7 @@ campaign:
       negative_keywords: []
       ads:
         - type: RSA
-          id: null
+          id: "826823836026"
           headlines:
             - "Royal Canin Giant Puppy"
             - "Royal Canin Giant Puppy 15 kg"
@@ -348,7 +348,7 @@ campaign:
           path2: giant-puppy
 
     - name: "RC Giant Junior 15 kg"
-      id: null
+      id: "201081858455"
       # pagina văzută pe 4.10.2026: în stoc, o ofertă petmart.ro (402,91 lei), „Preț în intervalul obișnuit”
       final_url: https://www.superieftin.ro/p/royal-canin-giant-junior-hrana-uscata-caine-junior-etapa-2-de-crestere-15-kg
       keywords:
@@ -358,7 +358,7 @@ campaign:
       negative_keywords: []
       ads:
         - type: RSA
-          id: null
+          id: "826823849994"
           headlines:
             - "Royal Canin Giant Junior"
             - "Royal Canin Giant Junior 15 kg"
@@ -384,7 +384,7 @@ campaign:
           path2: giant-junior
 
     - name: "RC Maxi Starter 15 kg"
-      id: null
+      id: "203490318169"
       # pagina văzută pe 4.10.2026: în stoc, o ofertă petmart.ro (462,69 lei), „Preț în intervalul obișnuit”
       final_url: https://www.superieftin.ro/p/royal-canin-maxi-starter-mother-babydog-mama-si-puiul-hrana-uscata-caine-15-kg
       keywords:
@@ -394,7 +394,7 @@ campaign:
       negative_keywords: []
       ads:
         - type: RSA
-          id: null
+          id: "826823847039"
           headlines:
             - "Royal Canin Maxi Starter"
             - "Royal Canin Maxi Starter 15 kg"
@@ -420,7 +420,7 @@ campaign:
           path2: maxi-starter
 
     - name: "RC Medium Starter 15 kg"
-      id: null
+      id: "203490318209"
       # pagina văzută pe 4.10.2026: în stoc, o ofertă petmart.ro (462,69 lei), „Preț în intervalul obișnuit”
       final_url: https://www.superieftin.ro/p/royal-canin-medium-starter-mother-babydog-mama-si-puiul-hrana-uscata-caine-15-kg
       keywords:
@@ -430,7 +430,7 @@ campaign:
       negative_keywords: []
       ads:
         - type: RSA
-          id: null
+          id: "826823850126"
           headlines:
             - "Royal Canin Medium Starter"
             - "Medium Starter 15 kg"
