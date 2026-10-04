@@ -8,8 +8,8 @@ import { ldScript } from '@/lib/guides/jsonld'
 import { getCategoryContent, getCategoryStats } from '@/lib/category-content'
 import { renderCategoryMarkers, renderCategoryMarkdown, categoryFaqLd, formatDateTime, type CategoryFaqItem, type CategoryStats } from '@/lib/category-markers'
 
-const PROSE = `text-[15px] leading-relaxed text-[var(--color-text)] space-y-3
-  [&_a]:text-red-ink [&_a]:underline [&_a]:underline-offset-2
+const PROSE = `text-[15px] leading-relaxed text-ink-2 space-y-3
+  [&_a]:text-red-ink [&_strong]:text-ink [&_a]:underline [&_a]:underline-offset-2
   [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1 [&_strong]:font-semibold`
 
 export async function CategoryContent({ slug, name }: { slug: string; name: string }) {
@@ -33,25 +33,25 @@ export function CategoryContentView({ name, intro, faq, stats }: {
 }) {
   const faqLd = categoryFaqLd(faq, stats)
   return (
-    <section aria-labelledby="despre-categorie" className="mt-12 border-t border-line pt-8 max-w-3xl">
+    <section aria-labelledby="despre-categorie" className="mt-12 border-t border-line pt-8 max-w-3xl text-ink">
       {faqLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldScript(faqLd) }} />}
 
       {intro?.trim() && (
         <>
-          <h2 id="despre-categorie" className="font-archivo text-xl font-bold mb-3">Despre {name}</h2>
+          <h2 id="despre-categorie" className="text-xl font-extrabold text-ink mb-3">Despre {name}</h2>
           <div className={PROSE} dangerouslySetInnerHTML={{ __html: renderCategoryMarkdown(intro, stats) }} />
         </>
       )}
 
       {faq.length > 0 && (
         <div className={intro?.trim() ? 'mt-8' : ''}>
-          <h2 id={intro?.trim() ? 'intrebari-frecvente' : 'despre-categorie'} className="font-archivo text-xl font-bold mb-3">
+          <h2 id={intro?.trim() ? 'intrebari-frecvente' : 'despre-categorie'} className="text-xl font-extrabold text-ink mb-3">
             Întrebări frecvente despre {name}
           </h2>
           <div className="space-y-5">
             {faq.map((f, i) => (
               <div key={i}>
-                <h3 className="font-semibold">{renderCategoryMarkers(f.q, stats, 'plain')}</h3>
+                <h3 className="text-base font-bold text-ink">{renderCategoryMarkers(f.q, stats, 'plain')}</h3>
                 <div className={`mt-1 ${PROSE}`} dangerouslySetInnerHTML={{ __html: renderCategoryMarkdown(f.a, stats) }} />
               </div>
             ))}
@@ -59,7 +59,7 @@ export function CategoryContentView({ name, intro, faq, stats }: {
         </div>
       )}
 
-      <p className="mt-6 text-xs text-muted">
+      <p className="mt-6 text-xs text-ink-3">
         Cifrele din acest text sunt calculate automat din ofertele disponibile, la momentul actualizării: {formatDateTime(stats.actualizat)}.
       </p>
     </section>

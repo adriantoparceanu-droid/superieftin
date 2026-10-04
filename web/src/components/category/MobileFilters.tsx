@@ -50,12 +50,13 @@ export function MobileFilters(props: Props) {
         type="button"
         onClick={show}
         aria-haspopup="dialog"
-        className="lg:hidden inline-flex items-center gap-1.5 rounded-lg border border-line bg-surface px-3 py-1.5 text-sm font-medium text-[var(--color-text)] hover:border-brand hover:text-red-ink transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-1"
+        // „.tb-btn” din machetă: contur, 40 px, numărul de filtre active pe pastila roșie
+        className="lg:hidden inline-flex h-10 shrink-0 items-center gap-[7px] rounded-[10px] bg-surface px-3 text-sm font-bold text-ink ring-[1.5px] ring-inset ring-line-2 transition-shadow hover:ring-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink"
       >
-        <SlidersHorizontal size={15} aria-hidden="true" />
+        <SlidersHorizontal size={17} aria-hidden="true" />
         Filtre
         {count > 0 && (
-          <span className="ml-0.5 inline-flex min-w-5 h-5 items-center justify-center rounded-full bg-brand px-1.5 text-xs font-semibold text-white">
+          <span className="inline-grid min-w-[19px] h-[19px] place-items-center rounded-full bg-red px-[5px] text-[11px] font-bold tabular-nums text-white">
             {count}
             <span className="sr-only">{count === 1 ? ' marcă bifată' : ' mărci bifate'}</span>
           </span>
@@ -68,21 +69,23 @@ export function MobileFilters(props: Props) {
         onClose={() => setOpen(false)}
         // click pe fundalul intunecat (in afara panoului) = inchide
         onClick={e => { if (e.target === e.currentTarget) close() }}
-        className="lg:hidden fixed inset-x-0 bottom-0 top-auto m-0 w-full max-w-none max-h-[85dvh] rounded-t-2xl border border-line bg-surface p-0 text-[var(--color-text)] shadow-xl backdrop:bg-black/40"
+        // Foaia de jos din machetă („.sheet”): colțuri de 20 px sus, mâner, fundal întunecat 55%
+        className="lg:hidden fixed inset-x-0 bottom-0 top-auto m-0 w-full max-w-none max-h-[86dvh] rounded-t-[20px] bg-surface p-0 text-ink shadow-pop backdrop:bg-[rgba(8,9,11,.55)]"
       >
-        <div className="flex max-h-[85dvh] flex-col">
-          <div className="flex items-center justify-between border-b border-line px-4 py-3">
-            <h2 id={titleId} className="text-base font-semibold">Filtre</h2>
+        <div className="flex max-h-[86dvh] flex-col">
+          <div aria-hidden="true" className="mx-auto mt-2 h-[5px] w-10 shrink-0 rounded-full bg-line-2" />
+          <div className="flex shrink-0 items-center justify-between border-b border-line py-1.5 pl-4 pr-2">
+            <h2 id={titleId} className="text-xl font-extrabold">Filtre</h2>
             <button
               type="button"
               onClick={close}
               aria-label="Închide filtrele"
-              className="-m-1.5 rounded p-1.5 text-muted hover:text-[var(--color-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+              className="grid h-11 w-11 place-items-center rounded-[10px] text-ink hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink"
             >
-              <X size={20} aria-hidden="true" />
+              <X size={22} aria-hidden="true" />
             </button>
           </div>
-          <div className="overflow-y-auto overscroll-contain px-4 pt-3">
+          <div className="overflow-y-auto overscroll-contain px-4 pt-3.5">
             {open && <BrandFilter {...props} mode="panel" onApplied={close} />}
           </div>
         </div>

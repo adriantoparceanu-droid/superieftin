@@ -2,7 +2,9 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { getCategoryBySlug, getLandingProducts } from '@/lib/queries'
-import { ProductCard } from '@/components/ProductCard'
+import { ProductList } from '@/components/listing/ProductList'
+import { ListInfo, ListingHeader, MethodNote } from '@/components/listing/ListingParts'
+import { BellIcon } from '@/components/product/icons'
 import { REAL_DISCOUNT_PCT } from '@/lib/discount'
 import { breadcrumbLd, itemListLd, ldScript } from '@/lib/seo/jsonld'
 import { withOg } from '@/lib/seo/og'
@@ -81,75 +83,71 @@ export default async function LandingPage({ params }: Props) {
     <>
       {shown.length > 0 && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldScript(listLd) }} />}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldScript(crumbsLd) }} />
-      <nav aria-label="Breadcrumb" className="text-xs text-muted mb-3">
-        <Link href="/" className="hover:underline">Acasă</Link>
-        {' / '}
-        <Link href={`/c/${category.slug}`} className="hover:underline">{category.name}</Link>
-        {' / '}
-        <span>Reduceri reale</span>
-      </nav>
+      <ListingHeader
+        crumbs={[
+          { label: 'Acasă', href: '/' },
+          { label: category.name, href: `/c/${category.slug}` },
+          { label: 'Reduceri reale' },
+        ]}
+        title={<>Reduceri reale la {lowerFirst(category.name)}</>}
+      />
 
-      <header className="mb-6">
-        <h1 className="font-archivo text-2xl sm:text-3xl text-[var(--color-text)]">
-          Reduceri reale la {lowerFirst(category.name)}
-        </h1>
-        <p className="mt-2 text-sm sm:text-base text-muted max-w-3xl">
-          Aici apar doar produsele care costă azi cu cel puțin {REAL_DISCOUNT_PCT}% mai puțin decât
-          mediana prețurilor lor din ultimele 30 de zile — nu față de „prețul vechi” afișat de
-          magazin. <Link href="/despre" className="underline underline-offset-2">Cum verificăm</Link>
-        </p>
-        {lastChecked && (
-          <p className="mt-1 text-xs text-muted">Ultima verificare a prețurilor: {lastChecked}</p>
-        )}
-      </header>
+      {/* Textul de metodă al landing-ului (citit de vizitatorii din reclame) — neschimbat, doar în
+          caseta „.method” din machetă, cu data ultimei verificări sub el */}
+      <MethodNote className="mb-1 max-w-3xl">
+        Aici apar doar produsele care costă azi cu cel puțin {REAL_DISCOUNT_PCT}% mai puțin decât
+        mediana prețurilor lor din ultimele 30 de zile — nu față de „prețul vechi” afișat de
+        magazin. <Link href="/despre" className="font-semibold text-ink underline underline-offset-2 hover:text-red-ink">Cum verificăm</Link>
+      </MethodNote>
 
       {deals.length > 0 ? (
         <>
-          <p className="text-sm text-muted mb-3">
+          <ListInfo aside={lastChecked ? <>Ultima verificare a prețurilor: {lastChecked}</> : undefined}>
             {deals.length === 1 ? '1 reducere reală' : `${deals.length} reduceri reale`}, ordonate după procent
-          </p>
+          </ListInfo>
           <h2 className="sr-only">Produse</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-            {deals.map((product) => (
-              <ProductCard key={product.offer_id} product={product} />
-            ))}
-          </div>
+          <ProductList products={deals} />
         </>
       ) : (
-        <section className="rounded-xl border border-line bg-surface p-5">
-          <h2 className="font-semibold text-lg text-[var(--color-text)]">
-            Acum nu avem reduceri reale la {lowerFirst(category.name)}
-          </h2>
-          <p className="mt-1 text-sm text-muted">
-            Prețurile sunt în intervalul lor obișnuit. Deschide un produs și apasă{' '}
-            <strong>🔔 Anunță-mă când scade prețul</strong>: te anunțăm pe Telegram când ajunge la prețul ales.
-          </p>
-        </section>
+        <>
+          {lastChecked && <ListInfo>Ultima verificare a prețurilor: {lastChecked}</ListInfo>}
+          {/* Starea goală: spunem cinstit că acum nu sunt reduceri și trimitem spre alertă */}
+          <section className="mt-1 flex gap-3 rounded-2xl bg-surface p-4 shadow-card ring-1 ring-inset ring-line/60 lg:p-5">
+            <span aria-hidden="true" className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-amber-tint text-amber-ink">
+              <BellIcon className="h-5 w-5" />
+            </span>
+            <div>
+              <h2 className="text-lg font-extrabold leading-tight text-ink">
+                Acum nu avem reduceri reale la {lowerFirst(category.name)}
+              </h2>
+              <p className="mt-1 text-sm text-ink-2">
+                Prețurile sunt în intervalul lor obișnuit. Deschide un produs și folosește cardul{' '}
+                <strong className="text-ink">„Alertă de preț”</strong>: te anunțăm pe Telegram când ajunge la prețul ales.
+              </p>
+            </div>
+          </section>
+        </>
       )}
 
-      {/* Grila in afara cutiei: pe mobil, cardurile au nevoie de toata latimea (altfel pretul se taie) */}
+      {/* Lista în afara casetei: pe mobil, rândurile au nevoie de toată lățimea */}
       {nearest.length > 0 && (
         <>
-          <h2 className="mt-6 mb-3 text-sm font-semibold text-[var(--color-text)]">Cele mai apropiate de o reducere</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-            {nearest.map((product) => (
-              <ProductCard key={product.offer_id} product={product} />
-            ))}
-          </div>
+          <h2 className="mt-6 mb-2 text-base font-extrabold text-ink">Cele mai apropiate de o reducere</h2>
+          <ProductList products={nearest} />
         </>
       )}
 
       <p className="mt-8 text-sm">
-        <Link href={`/c/${category.slug}`} className="text-red-ink underline underline-offset-2">
+        <Link href={`/c/${category.slug}`} className="font-semibold text-ink underline underline-offset-[3px] hover:text-red-ink">
           Vezi toate produsele din {lowerFirst(category.name)}
         </Link>
       </p>
-      {/* Legaturi suplimentare (raport SEO, A8): linkul „Cum verificăm” de sus ramane spre /despre */}
+      {/* Legături suplimentare (raport SEO, A8): linkul „Cum verificăm” de sus rămâne spre /despre */}
       <p className="mt-2 text-sm flex flex-wrap gap-x-5 gap-y-1">
-        <Link href="/ghiduri/metodologie" className="text-red-ink underline underline-offset-2">
+        <Link href="/ghiduri/metodologie" className="font-semibold text-ink underline underline-offset-[3px] hover:text-red-ink">
           Metodologia completă
         </Link>
-        <Link href="/reduceri-reale" className="text-red-ink underline underline-offset-2">
+        <Link href="/reduceri-reale" className="font-semibold text-ink underline underline-offset-[3px] hover:text-red-ink">
           Reduceri reale în alte categorii
         </Link>
       </p>
