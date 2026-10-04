@@ -55,12 +55,24 @@ export function pickTriggerOffer(offers: AlertOffer[] | null | undefined, target
 
 export const MAX_TARGET_PRICE = 100000
 
-// Pragul trebuie sa fie SUB pretul de azi: altfel alerta pleaca imediat cu „pretul a ajuns la…”
-// fara ca pretul sa fi scazut (mesaj inselator). Fara pret curent (oferta disparuta) nu limitam.
-export function checkTarget(target: number, currentPrice: number | null): 'ok' | 'invalid' | 'not-below-current' {
+// Pragul poate fi ORICE suma pozitiva (decizia proprietarului, 5 oct. 2026). Inainte ceream sa fie
+// sub pretul de azi; acum un prag la sau peste pretul de azi e acceptat, iar alerta pleaca la
+// urmatoarea verificare de pret — botul spune asta clar la salvare ('immediate'), ca vizitatorul
+// sa nu creada ca pretul a scazut. Mesajul alertei spune doar ce e adevarat („pretul a ajuns la X,
+// pragul tau Y”). Raman refuzate: suma nepozitiva / nenumerica si plafonul MAX_TARGET_PRICE.
+// Fara pret curent (oferta disparuta) nu putem spune nimic despre „imediat” → 'ok'.
+export type TargetCheck = 'ok' | 'invalid' | 'immediate'
+
+export function checkTarget(target: number, currentPrice: number | null): TargetCheck {
   if (!Number.isFinite(target) || target <= 0 || target > MAX_TARGET_PRICE) return 'invalid'
-  if (currentPrice != null && currentPrice > 0 && target >= currentPrice) return 'not-below-current'
+  if (currentPrice != null && currentPrice > 0 && target >= currentPrice) return 'immediate'
   return 'ok'
+}
+
+// Fraza adaugata la confirmarea salvarii cand pragul e la/peste pretul de azi: spunem clar ca
+// alerta pleaca la urmatoarea verificare, fara „reducere” sau promisiuni (regula 9).
+export function immediateAlertNote(currentPrice: number): string {
+  return `Pragul e la sau peste cel mai mic preț de acum (${formatRon(currentPrice)} RON), așa că alerta pleacă la următoarea verificare a prețurilor.`
 }
 
 // Suma tastata in chat: „800”, „1.299,90”, „1299.9”, „1 299”

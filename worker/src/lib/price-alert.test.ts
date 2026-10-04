@@ -2,7 +2,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
-  alertProductUrl, buildAlertMessage, checkTarget, parseAlertStartParam, parseTypedPrice, pickTriggerOffer, siteUrl,
+  alertProductUrl, buildAlertMessage, checkTarget, immediateAlertNote, parseAlertStartParam, parseTypedPrice, pickTriggerOffer, siteUrl,
 } from './price-alert.js'
 
 test('link alerta: /p/ al produsului cu UTM, nu /go/ si nu magazinul', () => {
@@ -48,10 +48,12 @@ test('alerta pe produs: pleaca la ORICE magazin disponibil la sau sub prag, cel 
   assert.equal(pickTriggerOffer(tie, 100)?.offerId, 5)
 })
 
-test('prag: trebuie sa fie sub pretul de azi', () => {
+test('prag: orice suma pozitiva; la/peste pretul de azi → acceptat, pleaca imediat', () => {
   assert.equal(checkTarget(1610, 1699.99), 'ok')
-  assert.equal(checkTarget(1700, 1699.99), 'not-below-current')
-  assert.equal(checkTarget(1699.99, 1699.99), 'not-below-current')
+  assert.equal(checkTarget(1700, 1699.99), 'immediate')
+  assert.equal(checkTarget(1699.99, 1699.99), 'immediate')
+  assert.equal(checkTarget(5, 1699.99), 'ok')
+  assert.equal(checkTarget(-10, 100), 'invalid')
   assert.equal(checkTarget(5000, null), 'ok')
   assert.equal(checkTarget(0, 100), 'invalid')
   assert.equal(checkTarget(NaN, 100), 'invalid')
@@ -86,4 +88,11 @@ test('mesaj: HTML escapat, link /p/, fara promisiuni de reducere', () => {
   assert.match(msg, /rămâne activă/)
   assert.match(msg, /1\.658,30 RON/)
   assert.match(msg, /\/sterge 17/)
+})
+
+test('prag la/peste pretul de azi: mesajul spune ca alerta pleaca la urmatoarea verificare', () => {
+  const t = immediateAlertNote(1699.99)
+  assert.match(t, /1\.699,99 RON/)
+  assert.match(t, /următoarea verificare/)
+  assert.doesNotMatch(t, /reducere|garantat|economis/i)
 })
