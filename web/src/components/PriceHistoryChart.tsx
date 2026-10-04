@@ -11,6 +11,7 @@ import {
   ReferenceLine,
 } from 'recharts'
 import type { PricePoint } from '@/lib/queries'
+import { formatAmount } from '@/lib/discount'
 
 interface PriceHistoryChartProps {
   data: PricePoint[]
@@ -25,8 +26,9 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('ro-RO', { day: 'numeric', month: 'short' })
 }
 
+// Prețul din tooltip: întreg sau exact 2 zecimale (lib/discount.ts → formatAmount)
 function formatLei(value: number) {
-  return `${value.toLocaleString('ro-RO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} lei`
+  return `${formatAmount(value)} lei`
 }
 
 export function PriceHistoryChart({ data, currentPrice, medianPrice }: PriceHistoryChartProps) {

@@ -65,14 +65,28 @@ export function formatVerified(checkedAt: string | Date): string {
   return `Verificat pe ${day}`
 }
 
+// Prețurile (regula redesignului, 5 oct. 2026): suma întreagă FĂRĂ zecimale („1.299 RON”), altfel
+// EXACT 2 zecimale („4.199,90 RON”, niciodată „4.199,9 RON”). Rotunjim întâi la bani: o mediană
+// de 1.299,004 e afișată „1.299 RON”, nu „1.299,00 RON”.
+function priceDigits(price: number): number {
+  return Math.round(price * 100) % 100 === 0 ? 0 : 2
+}
+
 export function formatPrice(price: number | null): string {
   if (price == null) return 'N/A'
+  const d = priceDigits(price)
   return new Intl.NumberFormat('ro-RO', {
     style: 'currency',
     currency: 'RON',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: d,
+    maximumFractionDigits: d,
   }).format(price)
+}
+
+// Aceeași regulă, fără monedă — pentru „mediana 1.299” din liste și etichetele graficului.
+export function formatAmount(price: number): string {
+  const d = priceDigits(price)
+  return price.toLocaleString('ro-RO', { minimumFractionDigits: d, maximumFractionDigits: d })
 }
 
 // Clasele insignei de verdict (redesign, design §3) — pe tokeni, deci corecte și în modul

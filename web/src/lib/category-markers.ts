@@ -84,7 +84,9 @@ export function formatCount(n: number, singular?: string, plural?: string): stri
 // Preturi: sub 100 lei cu zecimale (doar daca exista), peste 100 rotunjit la leu.
 export function formatLei(value: number): string {
   const v = value >= 100 ? Math.round(value) : Math.round(value * 100) / 100
-  const num = v.toLocaleString('ro-RO', { minimumFractionDigits: 0, maximumFractionDigits: 2 })
+  // sub 100 lei: întreg sau exact 2 zecimale („2,50 lei”, nu „2,5 lei”) — regula din formatPrice
+  const d = Number.isInteger(v) ? 0 : 2
+  const num = v.toLocaleString('ro-RO', { minimumFractionDigits: d, maximumFractionDigits: d })
   return `${num} ${needsDe(v) ? 'de ' : ''}lei`
 }
 

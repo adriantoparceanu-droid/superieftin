@@ -44,6 +44,7 @@ test('formatLei: rotunjire si „de lei”', () => {
   assert.equal(formatLei(57), '57 de lei')
   assert.equal(formatLei(8), '8 lei')
   assert.equal(formatLei(2.49), '2,49 lei')
+  assert.equal(formatLei(2.5), '2,50 lei')
   assert.equal(formatLei(15210), '15.210 lei')
   assert.equal(formatLei(2499.99), '2.500 de lei')
 })

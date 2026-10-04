@@ -58,7 +58,7 @@ test('Pe scurt: produs urmărit de puțin — „de când urmărim produsul”, 
   assert.equal(rows.length, 3)
   assert.match(t[0], /^Prețul de azi, 2\.040\s?RON, e cel mai mic de la 20 septembrie 2026, de când urmărim produsul \(maximul perioadei: 2\.599,99\s?RON\)\.$/)
   assert.match(t[1], /^Cel mai mic preț a scăzut azi, de la 2\.479,99\s?RON\.$/)
-  assert.match(t[2], /^Diferența de azi dintre cel mai ieftin și cel mai scump dintre cele 3 magazine: 209,9\s?RON\.$/)
+  assert.match(t[2], /^Diferența de azi dintre cel mai ieftin și cel mai scump dintre cele 3 magazine: 209,90\s?RON\.$/)
   for (const x of t) {
     assert.doesNotMatch(x, /90 de zile/)
     assert.doesNotMatch(x, /reducere|%/i)   // regula 9: fără verdict / procente

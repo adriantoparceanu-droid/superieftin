@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import type { DiscountVerdict } from '@/lib/discount'
-import { formatPct, formatPrice } from '@/lib/discount'
+import { formatAmount, formatPct, formatPrice } from '@/lib/discount'
 import type { DayPrice } from '@/lib/price-series'
 import { TouchIcon } from './icons'
 
@@ -25,7 +25,8 @@ interface Props {
 const MONTH_DAY = new Intl.DateTimeFormat('ro-RO', { day: 'numeric', month: 'short', timeZone: 'UTC' })
 const FULL_DAY = new Intl.DateTimeFormat('ro-RO', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
 const asDate = (day: string) => new Date(`${day}T00:00:00Z`)
-const num = (v: number) => v.toLocaleString('ro-RO', { maximumFractionDigits: 0 })
+// Etichetele de pe grafic: aceeași regulă ca prețurile (întreg sau exact 2 zecimale)
+const num = formatAmount
 
 export function PriceStepChart({ series, median, verdict, endsToday }: Props) {
   const box = useRef<HTMLDivElement>(null)

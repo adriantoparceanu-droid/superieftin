@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import type { ProductWithDiscount } from '@/lib/queries'
+import { formatAmount } from '@/lib/discount'
 
 interface Props {
   heroProduct: ProductWithDiscount | null      // produsul-vedeta (cea mai mare reducere reala)
@@ -52,7 +53,7 @@ export function HeroBanners({ heroProduct, isRealDiscount, secondaryCategory }: 
               )}
               {heroProduct.current_price != null && (
                 <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs font-bold rounded-full px-3 py-1 whitespace-nowrap">
-                  {heroProduct.current_price.toLocaleString('ro-RO')} lei
+                  {formatAmount(heroProduct.current_price)} lei
                 </span>
               )}
             </div>

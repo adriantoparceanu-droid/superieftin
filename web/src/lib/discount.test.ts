@@ -31,3 +31,18 @@ test('insigna: culori pe tokeni (functioneaza si in modul intunecat)', () => {
     assert.doesNotMatch(verdictColor(v), /(gray|green|orange)-\d/)
   }
 })
+
+test('formatPrice: intreg fara zecimale, altfel exact 2 zecimale', async () => {
+  const { formatPrice: fp, formatAmount } = await import('./discount')
+  // Intl pune un spațiu fără întrerupere înainte de „RON” — îl normalizăm pentru comparație
+  const formatPrice = (n: number | null) => fp(n).replace(/\u00a0/g, ' ')
+  assert.equal(formatPrice(1299), '1.299 RON')
+  assert.equal(formatPrice(4199.9), '4.199,90 RON')
+  assert.equal(formatPrice(99.99), '99,99 RON')
+  assert.equal(formatPrice(1299.004), '1.299 RON')      // rotunjit la bani → intreg
+  assert.equal(formatPrice(12999.5), '12.999,50 RON')
+  assert.equal(formatPrice(null), 'N/A')
+  assert.equal(formatAmount(3755.27), '3.755,27')
+  assert.equal(formatAmount(1469), '1.469')
+  assert.equal(formatAmount(1469.1), '1.469,10')
+})
