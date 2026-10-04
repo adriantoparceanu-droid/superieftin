@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { pickLinkConfig, findLinkConfig, buildDeepLink, type PsLinkConfig } from './profitshare-deeplink.js'
+import { pickLinkConfig, findLinkConfig, buildDeepLink, officialLinkBase, buildOfficialLink, type PsLinkConfig } from './profitshare-deeplink.js'
 import type { PsAdvertiser } from '../profitshare.js'
 
 // withSubId REAL din web (ce face /go cu linkul). Import dinamic cu cale calculata, ca tsc-ul
@@ -104,4 +104,38 @@ test('findLinkConfig — mereu inactiv / API cazut → null cu motiv clar', asyn
   const down = await findLinkConfig('emag.ro', 2, async () => { throw new Error('timeout') })
   assert.equal(down.config, null)
   assert.match(down.reason ?? '', /API Profitshare: timeout/)
+})
+
+// --- Link oficial fix (PROFITSHARE_EMAG_LINK) ---
+
+const BASE = 'https://l.profitshare.ro/l/16601999'
+
+test('officialLinkBase — citit din .env per domeniu; lipsa → null; „/” final tolerat', () => {
+  assert.equal(officialLinkBase('emag.ro', {}), null)
+  assert.equal(officialLinkBase('emag.ro', { PROFITSHARE_EMAG_LINK: '  ' }), null)
+  assert.equal(officialLinkBase('emag.ro', { PROFITSHARE_EMAG_LINK: BASE }), BASE)
+  assert.equal(officialLinkBase('emag.ro', { PROFITSHARE_EMAG_LINK: BASE + '/' }), BASE)
+  assert.equal(officialLinkBase('altex.ro', { PROFITSHARE_EMAG_LINK: BASE }), null)
+})
+
+test('officialLinkBase — setat gresit → eroare (nu scriem sute de linkuri stricate)', () => {
+  for (const bad of ['https://l.profitshare.ro/lps/9/piC/', 'http://l.profitshare.ro/l/1', 'https://l.profitshare.ro/l/1?x=2', 'https://evil.com/l/1']) {
+    assert.throws(() => officialLinkBase('emag.ro', { PROFITSHARE_EMAG_LINK: bad }), /PROFITSHARE_EMAG_LINK invalid/)
+  }
+})
+
+test('buildOfficialLink — /l/<id>?redirect=<URL encodat>, aceleasi reguli ca deep link-ul', () => {
+  const p = 'https://www.emag.ro/căști/pd/D1/?ref=a&b=2#reviews'
+  const link = buildOfficialLink(p, BASE, 'emag.ro')
+  assert.equal(link, BASE + '?redirect=' + encodeURIComponent('https://www.emag.ro/c%C4%83%C8%99ti/pd/D1/?ref=a&b=2'))
+  assert.deepEqual([...new URL(link).searchParams.keys()], ['redirect'])
+  assert.throws(() => buildOfficialLink('https://www.altex.ro/x', BASE, 'emag.ro'), /nu e pe emag\.ro/)
+})
+
+test('buildOfficialLink — compatibil cu withSubId din web (&hash=<click_id>)', () => {
+  const link = buildOfficialLink('https://www.emag.ro/tv/pd/D2/', BASE, 'emag.ro')
+  assert.equal(detectNetwork(link), 'profitshare')
+  const u = new URL(withSubId(link, 'profitshare', 'abc123xyz789'))
+  assert.equal(u.searchParams.get('hash'), 'abc123xyz789')
+  assert.equal(u.searchParams.get('redirect'), 'https://www.emag.ro/tv/pd/D2/')
 })

@@ -17,6 +17,7 @@
     "admin:create": "tsx --env-file=../.env src/scripts/create-admin.ts",
     "ghiduri:import": "tsx --env-file=../.env src/scripts/import-guide-drafts.ts",
     "emag:backfill-affiliate": "tsx --env-file=../.env src/scripts/backfill-emag-affiliate.ts",
+    "profitshare:create-link": "tsx --env-file=../.env src/scripts/create-profitshare-link.ts",
     "ads:auth": "tsx src/ads/auth.ts",
     "ads:check": "tsx --env-file=../.env src/ads/check.ts",
     "ads:conversion-action": "tsx --env-file=../.env src/ads/conversion-action.ts",
