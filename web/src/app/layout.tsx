@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Archivo_Black, Instrument_Sans } from 'next/font/google'
+import { Archivo, Inter } from 'next/font/google'
 import './globals.css'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
@@ -8,17 +8,20 @@ import { CookieBanner } from '@/components/consent/CookieBanner'
 import { AdClickCapture } from '@/components/consent/AdClickCapture'
 import { organizationLd, websiteLd, ldScript } from '@/lib/seo/jsonld'
 
-const archivoBlack = Archivo_Black({
-  weight: '400',
-  subsets: ['latin'],
-  variable: '--font-archivo-black',
+// Fonturile redesignului (design §3): Archivo variabil pentru titluri, prețuri și verdicte —
+// cu axa de lățime (`wdth`), ca să-l putem condensa din CSS (font-stretch: 84–92%) fără un
+// al doilea font; Inter pentru text. `latin-ext` = ă, â, î, ș, ț corecte (virgulă dedesubt).
+// Fără `weight`: un font variabil aduce toată plaja de greutăți într-un singur fișier.
+const archivo = Archivo({
+  subsets: ['latin', 'latin-ext'],
+  axes: ['wdth'],
+  variable: '--ff-archivo',
   display: 'swap',
 })
 
-const instrumentSans = Instrument_Sans({
-  weight: ['400', '600'],
-  subsets: ['latin'],
-  variable: '--font-instrument-sans',
+const inter = Inter({
+  subsets: ['latin', 'latin-ext'],
+  variable: '--ff-inter',
   display: 'swap',
 })
 
@@ -47,9 +50,10 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ro" className={`${archivoBlack.variable} ${instrumentSans.variable}`}>
+    <html lang="ro" className={`${archivo.variable} ${inter.variable}`}>
       <GoogleAnalytics />
-      <body className="min-h-screen antialiased" style={{ background: 'var(--color-page)', color: 'var(--color-text)' }}>
+      {/* Fundalul și culoarea textului vin din tokeni (globals.css → body), inclusiv modul întunecat */}
+      <body className="min-h-screen antialiased">
         {/* Entitatea site-ului (Organization + WebSite cu cautare), aceeasi pe toate paginile —
             ghidurile si produsele trimit la ea prin @id (lib/seo/jsonld.ts) */}
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldScript(organizationLd()) }} />

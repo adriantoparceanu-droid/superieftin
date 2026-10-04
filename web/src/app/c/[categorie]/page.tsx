@@ -2,7 +2,10 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { getCategoryProducts, getCategoryProductCount, getCategoryBrands, getCategoryBySlug, getSubcategories, getRandomCategoryProducts, PAGE_SIZE } from '@/lib/queries'
-import { ProductCard } from '@/components/ProductCard'
+import { X } from 'lucide-react'
+import { ProductList } from '@/components/listing/ProductList'
+import { EmptyState, ListInfo, ListingHeader, MethodNote } from '@/components/listing/ListingParts'
+import { getCategoryStats } from '@/lib/category-content'
 import { Pagination } from '@/components/Pagination'
 import { CategoryIcon } from '@/components/CategoryIcon'
 import { CategoryContent } from '@/components/CategoryContent'
@@ -14,7 +17,7 @@ import { brandsForQuery, brandTitlePart, buildListingUrl, parseBrandParam, parse
 import { BrandFilter } from '@/components/category/BrandFilter'
 import { MobileFilters } from '@/components/category/MobileFilters'
 import { SortSelect } from '@/components/category/SortSelect'
-import { absUrl, lowerFirst } from '@/lib/seo/site'
+import { absUrl, lowerFirst, roCount } from '@/lib/seo/site'
 
 export const dynamic = 'force-dynamic'
 
@@ -116,7 +119,6 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   // ?page= peste ultima pagina → 404 adevarat, nu „Niciun produs găsit” cu 200 (soft 404)
   if (currentPage > 1 && currentPage > totalPages) notFound()
   const label = category.name
-  const discountCount = products.filter(p => p.discount_pct != null).length
 
   // URL-urile vederii (lib/listing-filters.ts): paginatia pastreaza sortarea + marcile + „tot”
   const buildUrl = (page: number) => buildListingUrl(basePath, { sort: sortValue, brands: selectedBrands, tot: includeSub, page })
@@ -161,200 +163,204 @@ export default async function CategoryPage({ params, searchParams }: Props) {
     itemListElement: breadcrumbItems.map((b, i) => ({ '@type': 'ListItem', position: i + 1, ...b })),
   }
 
+  // Cifrele din antet, pentru toată categoria (cu subcategoriile): aceeași interogare ca textul
+  // de sub listă (getCategoryStats, cache 1 h) — „M cu reducere reală” = exact regula de pe
+  // /reduceri-reale/. Fără Sănătate & Naturale (regula 8: fără landing de reduceri acolo).
+  const excludedFromAds = isExcludedFromAds(category.slug, category.parent_slug)
+  const stats = await getCategoryStats(categorie).catch(() => null)
+  const headerCount = stats?.produse ?? unfilteredCount
+  const realCount = !excludedFromAds ? stats?.reduceri ?? null : null
+
+  const productWord = (n: number) => roCount(n, 'produse', 'produs')
+  // Numărul de produse al VEDERII curente (cu filtrele de marcă / „vezi tot”) + pagina
+  const countText = `${productWord(totalCount)}${includeSub && hasChildren ? ' (inclusiv subcategoriile)' : ''}` +
+    (totalPages > 1 ? ` · pagina ${currentPage} din ${totalPages}` : '')
+  // Jetoanele de „categorii înrudite” n-au rost când singura soră e chiar categoria curentă
+  const showSubNav = navSubs.length > 0 && !(navSubs.length === 1 && navSubs[0].slug === categorie)
+
   return (
     <>
       {products.length > 0 && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
 
-      {/* Breadcrumb */}
-      <nav className="text-sm text-muted mb-4 flex gap-1.5 items-center">
-        <Link href="/" className="hover:text-[var(--color-text)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand rounded">Acasă</Link>
-        {category.parent_slug && (
-          <>
-            <span>/</span>
-            <Link href={`/c/${category.parent_slug}`} className="hover:text-[var(--color-text)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand rounded">
-              {category.parent_name}
-            </Link>
-          </>
-        )}
-        <span>/</span>
-        <span className="text-[var(--color-text)]">{label}</span>
-      </nav>
-
-      {/* Header */}
-      <div className="mb-5">
-        <h1 className="text-2xl font-black font-archivo text-[var(--color-text)] capitalize">{label}</h1>
-        {/* Numarul de produse sta in bara de deasupra grilei (langa sortare); aici raman doar
-            reducerile de pe pagina si pagina curenta */}
+      <ListingHeader
+        crumbs={[
+          { label: 'Acasă', href: '/' },
+          ...(category.parent_slug ? [{ label: category.parent_name!, href: `/c/${category.parent_slug}` }] : []),
+          { label },
+        ]}
+        title={label}
+      >
         {showRandomFallback ? (
-          <p className="text-sm text-muted mt-1">Alege o subcategorie mai jos, sau răsfoiește o selecție din toate</p>
-        ) : (discountCount > 0 || totalPages > 1) && (
-          <p className="text-sm text-muted mt-1">
-            {[
-              discountCount > 0 ? `${discountCount} cu reducere reală pe această pagină` : null,
-              totalPages > 1 ? `pagina ${currentPage} din ${totalPages}` : null,
-            ].filter(Boolean).join(' · ')}
+          <p>Alege o subcategorie mai jos sau răsfoiește o selecție din toate.</p>
+        ) : (
+          <p className="tabular-nums">
+            {productWord(headerCount)}
+            {realCount != null && realCount > 0 && (
+              <>
+                {' · '}
+                <Link href={`/reduceri-reale/${categorie}`} className="font-bold text-red-ink hover:underline underline-offset-2">
+                  {realCount.toLocaleString('ro-RO')} cu reducere reală azi
+                </Link>
+              </>
+            )}
           </p>
         )}
-        {/* Legatura interna spre landing-ul de reduceri reale (fara Sanatate & Naturale — regula 8) */}
-        {!isExcludedFromAds(category.slug, category.parent_slug) && (
-          <Link href={`/reduceri-reale/${categorie}`} className="inline-block mt-2 text-sm text-brand hover:underline">
+        {/* Legătura internă spre landing-ul de reduceri reale (fără Sănătate & Naturale — regula 8) */}
+        {!excludedFromAds && (realCount == null || realCount === 0) && (
+          <Link href={`/reduceri-reale/${categorie}`} className="mt-1 inline-block font-semibold text-red-ink hover:underline underline-offset-2">
             Vezi doar reducerile reale la {lowerFirst(label)} →
           </Link>
         )}
-      </div>
+      </ListingHeader>
 
-      {/* Navigare subcategorii: carduri catre copii (pe parinte) sau surori (pe copil) */}
-      {navSubs.length > 0 && (
-        <div className="mb-6">
-          <span className="text-xs font-semibold text-muted uppercase tracking-wide">
+      {/* Navigare subcategorii: carduri spre copii (pe părinte) sau jetoane spre surori (pe copil) */}
+      {showSubNav && (
+        <nav aria-label={hasChildren ? 'Subcategorii' : 'Categorii înrudite'} className="mb-4">
+          <h2 className="mb-2 font-sans text-xs font-bold uppercase tracking-[.08em] text-ink-3 [font-stretch:100%]">
             {hasChildren ? 'Alege o subcategorie' : 'Categorii înrudite'}
-          </span>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 mt-2">
-            {navSubs.map(sub => {
-              const active = sub.slug === categorie
-              return (
-                <Link
-                  key={sub.slug}
-                  href={`/c/${sub.slug}`}
-                  aria-current={active ? 'page' : undefined}
-                  className={`flex items-center gap-2.5 rounded-lg border px-3 py-2.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
-                    active
-                      ? 'bg-brand text-white border-brand'
-                      : 'bg-surface border-line hover:border-brand hover:text-brand'
-                  }`}
-                >
-                  <CategoryIcon name={sub.icon} className="w-5 h-5 shrink-0" />
-                  <span className="min-w-0">
-                    <span className="block text-sm font-medium truncate">{sub.name}</span>
-                    <span className={`block text-xs ${active ? 'text-white/80' : 'text-muted'}`}>
-                      {sub.count.toLocaleString('ro-RO')} produse
+          </h2>
+          {hasChildren ? (
+            <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+              {navSubs.map(sub => (
+                <li key={sub.slug}>
+                  <Link
+                    href={`/c/${sub.slug}`}
+                    className="flex h-full items-center gap-2.5 rounded-xl bg-surface px-3 py-2.5 shadow-card ring-1 ring-inset ring-line/60 transition-shadow hover:ring-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink"
+                  >
+                    <CategoryIcon name={sub.icon} className="h-5 w-5 shrink-0 text-ink-2" />
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-semibold text-ink">{sub.name}</span>
+                      <span className="block text-xs tabular-nums text-ink-3">{productWord(sub.count)}</span>
                     </span>
-                  </span>
-                </Link>
-              )
-            })}
-          </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <ul className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] lg:mx-0 lg:flex-wrap lg:overflow-visible lg:px-0">
+              {navSubs.map(sub => {
+                const active = sub.slug === categorie
+                return (
+                  <li key={sub.slug} className="shrink-0">
+                    <Link
+                      href={`/c/${sub.slug}`}
+                      aria-current={active ? 'page' : undefined}
+                      className={`inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded-full px-3 text-[13px] font-semibold transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2 ${
+                        active ? 'bg-ink text-page' : 'bg-surface text-ink ring-1 ring-inset ring-line-2 hover:ring-ink'
+                      }`}
+                    >
+                      {sub.name}
+                      <span className={`tabular-nums text-xs font-medium ${active ? 'opacity-75' : 'text-ink-3'}`}>{sub.count.toLocaleString('ro-RO')}</span>
+                    </Link>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
           {hasChildren && (
-            <a href={buildTotUrl(!includeSub)} className="inline-block mt-3 text-sm text-brand hover:underline">
-              {includeSub
-                ? `Vezi doar „${label}"`
-                : 'Vezi tot, inclusiv subcategoriile'}
+            <a href={buildTotUrl(!includeSub)} className="mt-2.5 inline-block text-sm font-semibold text-ink underline underline-offset-[3px] hover:text-red-ink">
+              {includeSub ? `Vezi doar „${label}”` : 'Vezi tot, inclusiv subcategoriile'}
             </a>
           )}
-        </div>
+        </nav>
       )}
 
-      {/* Fara JavaScript butonul „Filtre” de pe mobil nu deschide nimic → aratam coloana si pe
-          ecranele mici (deasupra listei), ca filtrul sa ramana folosibil */}
+      {/* Fără JavaScript butonul „Filtre” de pe mobil nu deschide nimic → arătăm coloana și pe
+          ecranele mici (deasupra listei), ca filtrul să rămână folosibil */}
       {showFilters && (
         <noscript>
-          <style>{'#filtre-categorie{display:block;margin-bottom:1.5rem}'}</style>
+          <style>{'#filtre-categorie{display:block;margin-bottom:1rem}'}</style>
         </noscript>
       )}
 
       <div className={showFilters ? 'lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-6 lg:items-start' : ''}>
-        {/* Coloana „Filtre” (desktop). Sticky sub antetul fix (h-14), cu scroll propriu daca
-            lista de marci e mai inalta decat ecranul. */}
+        {/* Coloana „Filtre” (desktop). Lipicioasă sub antet, cu scroll propriu dacă lista de mărci
+            e mai înaltă decât ecranul. */}
         {showFilters && (
           <aside
             id="filtre-categorie"
             aria-label="Filtre"
-            className="hidden lg:block lg:sticky lg:top-[4.5rem] lg:max-h-[calc(100dvh-5.5rem)] lg:overflow-y-auto lg:overscroll-contain rounded-xl border border-line bg-surface p-4"
+            className="hidden lg:block lg:sticky lg:top-[7.5rem] lg:max-h-[calc(100dvh-8.5rem)] lg:overflow-y-auto lg:overscroll-contain rounded-2xl bg-surface p-4 shadow-card ring-1 ring-inset ring-line/60"
           >
-            <h2 className="text-base font-semibold text-[var(--color-text)] mb-3">Filtre</h2>
+            <h2 className="mb-3 text-lg font-extrabold text-ink">Filtre</h2>
             <BrandFilter key={filterKey} {...filterProps} mode="sidebar" />
           </aside>
         )}
 
         <div className="min-w-0">
-          {/* Bara de deasupra grilei: numarul de produse | Filtre (mobil) + Sortare */}
           {!showRandomFallback && (
-            <div className="mb-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-sm text-muted" aria-live="polite">
-                  <strong className="text-[var(--color-text)] tabular">{totalCount.toLocaleString('ro-RO')}</strong>{' '}
-                  {totalCount === 1 ? 'produs' : 'produse'}
-                  {includeSub && hasChildren && ' (inclusiv subcategoriile)'}
+            <>
+              {/* Bara „Filtre / Sortare” (macheta „.toolbar”): pe mobil lipită sub antet, de la o
+                  margine la alta; pe desktop un rând simplu cu numărul de produse și sortarea */}
+              <div className="sticky top-14 z-20 -mx-4 flex items-center gap-2 border-b border-line bg-page px-4 py-2 lg:static lg:mx-0 lg:border-0 lg:bg-transparent lg:px-0 lg:pt-0 lg:pb-3">
+                <p className="mr-auto hidden text-sm tabular-nums text-ink-3 lg:block" aria-live="polite">
+                  {countText}
                 </p>
-                <div className="flex items-center gap-2">
-                  {showFilters && <MobileFilters key={filterKey} {...filterProps} />}
-                  <SortSelect key={`${sortValue}|${filterKey}|${includeSub}`} basePath={basePath} sort={sortValue} brands={selectedBrands} tot={includeSub} />
-                </div>
+                {showFilters && <MobileFilters key={filterKey} {...filterProps} />}
+                <SortSelect key={`${sortValue}|${filterKey}|${includeSub}`} basePath={basePath} sort={sortValue} brands={selectedBrands} tot={includeSub} />
               </div>
 
-              {/* Marcile bifate, ca pastile care se pot scoate una cate una (utile mai ales pe
-                  mobil, unde coloana nu se vede) */}
+              {/* Mărcile bifate, ca jetoane care se scot dintr-o atingere (macheta „.chips”) */}
               {selectedBrands.length > 0 && (
-                <ul className="mt-3 flex flex-wrap items-center gap-2" aria-label="Mărci selectate">
+                <ul className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pt-2.5 pb-1 [scrollbar-width:none] lg:mx-0 lg:flex-wrap lg:overflow-visible lg:px-0 lg:pt-0 lg:pb-3" aria-label="Mărci selectate">
                   {selectedBrands.map(b => (
-                    <li key={b}>
+                    <li key={b} className="shrink-0">
                       <Link
                         href={withoutBrand(b)}
                         scroll={false}
                         aria-label={`Scoate marca ${b}`}
-                        className="inline-flex items-center gap-1 rounded-full border border-brand bg-surface px-2.5 py-1 text-xs font-medium text-brand hover:bg-brand hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-1"
+                        className="inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded-full bg-ink px-3 text-[13px] font-semibold text-page transition-opacity hover:opacity-85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2"
                       >
-                        {b} <span aria-hidden="true">×</span>
+                        {b} <X size={14} aria-hidden="true" />
                       </Link>
                     </li>
                   ))}
-                  {/* pe desktop „Șterge filtrele” e deja in coloana */}
-                  <li className={showFilters ? 'lg:hidden' : ''}>
+                  {/* pe desktop „Șterge filtrele” e deja în coloană */}
+                  <li className={`shrink-0 ${showFilters ? 'lg:hidden' : ''}`}>
                     <Link
                       href={buildListingUrl(basePath, { sort: sortValue, brands: [], tot: includeSub })}
                       scroll={false}
-                      className="text-xs text-muted underline underline-offset-2 hover:text-[var(--color-text)] rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                      className="inline-flex h-8 items-center whitespace-nowrap rounded-full bg-surface px-3 text-[13px] font-semibold text-ink ring-1 ring-inset ring-line-2 hover:ring-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink"
                     >
                       Șterge filtrele
                     </Link>
                   </li>
                 </ul>
               )}
-            </div>
+
+              <div className="lg:hidden">
+                <ListInfo>{countText}</ListInfo>
+              </div>
+              {products.length > 0 && <MethodNote className="mb-3 mt-1 lg:mt-0" />}
+            </>
           )}
 
-          {/* Grid produse */}
           {products.length > 0 ? (
             <>
-              {/* Titlul de sectiune pentru cititoarele de ecran: cardurile au <h3> (ierarhie corecta) */}
+              {/* Titlul de secțiune pentru cititoarele de ecran: cardurile au <h3> (ierarhie corectă) */}
               <h2 className="sr-only">Produse</h2>
-              <div className={`grid grid-cols-2 sm:grid-cols-3 gap-3 ${showFilters ? 'xl:grid-cols-4' : 'lg:grid-cols-4'}`}>
-                {products.map(product => (
-                  <ProductCard key={product.offer_id} product={product} />
-                ))}
-              </div>
-              <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                buildUrl={buildUrl}
-              />
+              <ProductList products={products} withSidebar={showFilters} />
+              <Pagination currentPage={currentPage} totalPages={totalPages} buildUrl={buildUrl} />
             </>
           ) : randomProducts.length > 0 ? (
             <div>
-              <h2 className="sr-only">Produse</h2>
-              <span className="text-xs font-semibold text-muted uppercase tracking-wide">
+              <h2 className="mb-2 mt-2 font-sans text-xs font-bold uppercase tracking-[.08em] text-ink-3 [font-stretch:100%]">
                 Selecție aleatorie din subcategorii
-              </span>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mt-2">
-                {randomProducts.map(product => (
-                  <ProductCard key={product.offer_id} product={product} />
-                ))}
-              </div>
+              </h2>
+              <MethodNote className="mb-3" />
+              <ProductList products={randomProducts} />
             </div>
           ) : (
-            <div className="text-center py-16 text-muted">
-              <p className="text-5xl mb-4">📦</p>
-              <p>
-                Niciun produs găsit
-                {selectedBrands.length === 1 ? ` pentru marca ${selectedBrands[0]}` : selectedBrands.length > 1 ? ' pentru mărcile selectate' : ''}.
-              </p>
+            <EmptyState
+              title={<>Niciun produs găsit{selectedBrands.length === 1 ? ` pentru marca ${selectedBrands[0]}` : selectedBrands.length > 1 ? ' pentru mărcile selectate' : ''}.</>}
+            >
               {selectedBrands.length > 0 && (
-                <a href={buildListingUrl(basePath, { sort: sortValue, brands: [], tot: includeSub })} className="mt-3 inline-block text-sm text-brand hover:underline">
+                <a href={buildListingUrl(basePath, { sort: sortValue, brands: [], tot: includeSub })} className="font-semibold text-ink underline underline-offset-[3px] hover:text-red-ink">
                   Șterge filtrul de marcă
                 </a>
               )}
-            </div>
+            </EmptyState>
           )}
         </div>
       </div>

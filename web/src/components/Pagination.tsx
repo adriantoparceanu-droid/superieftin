@@ -26,13 +26,15 @@ export function Pagination({ currentPage, totalPages, buildUrl }: PaginationProp
   }
 
   const pages = getPages()
-  const btnBase = 'inline-flex items-center justify-center min-w-[36px] h-9 px-2 rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2'
-  const btnActive = 'bg-brand text-white'
-  const btnInactive = 'bg-surface border border-line text-[var(--color-text)] hover:border-brand hover:text-brand'
-  const btnDisabled = 'bg-surface border border-line text-muted cursor-not-allowed opacity-50'
+  // Pe tokeni (corect și în modul întunecat). Pagina curentă = cerneală plină, nu roșu: roșul
+  // plin e rezervat butonului „Vezi oferta” (design §3).
+  const btnBase = 'inline-flex items-center justify-center min-w-10 h-10 px-2.5 rounded-[10px] text-sm font-semibold tabular-nums transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2'
+  const btnActive = 'bg-ink text-page'
+  const btnInactive = 'bg-surface text-ink ring-[1.5px] ring-inset ring-line-2 hover:ring-ink'
+  const btnDisabled = 'bg-surface text-ink-3 ring-1 ring-inset ring-line cursor-not-allowed opacity-60'
 
   return (
-    <nav className="flex items-center justify-center gap-1 mt-8 flex-wrap" aria-label="Paginație">
+    <nav className="flex items-center justify-center gap-1.5 mt-8 flex-wrap" aria-label="Paginație">
       {currentPage > 1 ? (
         <a href={buildUrl(currentPage - 1)} className={`${btnBase} ${btnInactive}`} aria-label="Pagina anterioară">
           ← Anterior
@@ -43,7 +45,7 @@ export function Pagination({ currentPage, totalPages, buildUrl }: PaginationProp
 
       {pages.map((p, i) =>
         p === '...' ? (
-          <span key={`ellipsis-${i}`} className={`${btnBase} text-muted`}>…</span>
+          <span key={`ellipsis-${i}`} className={`${btnBase} text-ink-3`}>…</span>
         ) : p === currentPage ? (
           <span key={p} className={`${btnBase} ${btnActive}`} aria-current="page">{p}</span>
         ) : (

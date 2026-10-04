@@ -1,7 +1,7 @@
 import pool from '../lib/db.js'
 import pino from 'pino'
 import { escHtml } from '../lib/admin-telegram.js'
-import { checkTarget, formatRon, parseAlertStartParam, parseTypedPrice, siteUrl } from '../lib/price-alert.js'
+import { checkTarget, formatRon, immediateAlertNote, parseAlertStartParam, parseTypedPrice, siteUrl } from '../lib/price-alert.js'
 import { PRODUCT_BEST_PRICE_SQL } from '../lib/alert-sql.js'
 import { alertRearmPct, rearmThreshold } from '../lib/alert-rearm.js'
 
@@ -43,7 +43,7 @@ async function getOrCreateUser(chatId: number, username?: string, firstName?: st
 // O singura alerta activa per utilizator + produs: un al doilea click pe buton (sau o suma noua
 // trimisa in chat) schimba pragul, nu dubleaza alerta. Pe Telegram alerta e confirmata din start
 // (vizitatorul a pornit singur conversatia), deci confirmed_at = acum. Un prag nou = alerta ARMATA
-// din nou (pragul e oricum sub pretul de acum).
+// din nou; daca pragul e la/peste pretul de acum, pleaca la urmatoarea verificare (checkTarget).
 async function saveAlert(userId: number, productId: number, target: number) {
   const upd = await pool.query(
     `UPDATE price_alerts SET target_price = $3, triggered_at = NULL, updated_at = now()
@@ -61,9 +61,10 @@ async function saveAlert(userId: number, productId: number, target: number) {
 async function handleStart(chatId: number, param: string | null, username?: string, firstName?: string) {
   await getOrCreateUser(chatId, username, firstName)
 
-  if (param?.startsWith('offer_')) {
-    // Butonul de pe site trimite prod_<id produs>_<prag>; linkurile vechi offer_<id oferta>[_<prag>]
-    // se muta pe produsul ofertei (alerta e pe produs, orice magazin)
+  // Butonul de pe site trimite prod_<id produs>_<prag>; linkurile vechi offer_<id oferta>[_<prag>]
+  // se muta pe produsul ofertei (alerta e pe produs, orice magazin). Inainte testam doar prefixul
+  // „offer_”, asa ca linkurile noi prod_… primeau mesajul de bun venit in loc de alerta.
+  if (param?.startsWith('offer_') || param?.startsWith('prod_')) {
     const parsed = parseAlertStartParam(param)
     if (!parsed) {
       await sendMsg(chatId, 'Link invalid. Încearcă din nou de pe site.')
@@ -90,13 +91,16 @@ async function handleStart(chatId: number, param: string | null, username?: stri
       ? `Cel mai mic preț acum: <b>${formatRon(currentPrice)} RON</b>\n`
       : 'Momentan indisponibil la magazinele monitorizate.\n'
 
-    // Prag propus de site si inca valid (sub pretul de acum) → salvam direct: vizitatorul l-a
-    // vazut pe pagina si a apasat butonul, iar /start l-a trimis chiar el. Poate trimite alta suma.
-    if (parsed.target != null && checkTarget(parsed.target, currentPrice) === 'ok') {
+    // Prag ales pe site si valid → salvam direct: vizitatorul l-a vazut pe pagina si a apasat
+    // butonul, iar /start l-a trimis chiar el. Poate trimite alta suma. Daca pragul e la/peste
+    // pretul de acum ('immediate'), il salvam oricum si spunem ca alerta pleaca imediat.
+    const startCheck = parsed.target != null ? checkTarget(parsed.target, currentPrice) : 'invalid'
+    if (parsed.target != null && startCheck !== 'invalid') {
       const userId = await getOrCreateUser(chatId, username, firstName)
       await saveAlert(userId, productId, parsed.target)
+      const note = startCheck === 'immediate' && currentPrice != null ? `\n${immediateAlertNote(currentPrice)}\n` : ''
       await sendMsg(chatId,
-        `✅ <b>Alertă salvată</b>\n\n<b>${escHtml(name)}</b>\n${priceLine}Te anunțăm când prețul, la oricare dintre magazinele monitorizate, ajunge la <b>${formatRon(parsed.target)} RON</b> sau mai puțin — și din nou la fiecare scădere nouă sub prag (cel mult un mesaj pe zi).\n\nVrei alt prag? Trimite suma în RON (ex: <code>${Math.floor(parsed.target * 0.95)}</code>).\n/alertele_mele — toate alertele tale · /sterge &lt;id&gt; — oprește o alertă`
+        `✅ <b>Alertă salvată</b>\n\n<b>${escHtml(name)}</b>\n${priceLine}${note}Te anunțăm când prețul, la oricare dintre magazinele monitorizate, ajunge la <b>${formatRon(parsed.target)} RON</b> sau mai puțin — și din nou la fiecare scădere nouă sub prag (cel mult un mesaj pe zi).\n\nVrei alt prag? Trimite suma în RON (ex: <code>${Math.floor(parsed.target * 0.95)}</code>).\n/alertele_mele — toate alertele tale · /sterge &lt;id&gt; — oprește o alertă`
       )
       return
     }
@@ -107,7 +111,7 @@ async function handleStart(chatId: number, param: string | null, username?: stri
   } else {
     const name = firstName ? `, ${firstName}` : ''
     await sendMsg(chatId,
-      `👋 Salut${name}!\n\nSunt botul <b>superieftin.ro</b> — te anunț când prețul unui produs scade sub pragul tău.\n\n📌 <b>Cum funcționează:</b>\n1. Mergi pe <a href="${SITE_URL}">${SITE_URL}</a>\n2. Deschide pagina unui produs\n3. Apasă butonul <b>🔔 Anunță-mă când scade prețul</b>\n\n<b>Comenzi:</b>\n/alertele_mele — alertele active\n/sterge &lt;id&gt; — șterge o alertă`
+      `👋 Salut${name}!\n\nSunt botul <b>superieftin.ro</b> — te anunț când prețul unui produs scade sub pragul tău.\n\n📌 <b>Cum funcționează:</b>\n1. Mergi pe <a href="${SITE_URL}">${SITE_URL}</a>\n2. Deschide pagina unui produs\n3. În cardul <b>🔔 Alertă de preț</b> alege pragul și apasă <b>Telegram</b>\n\n<b>Comenzi:</b>\n/alertele_mele — alertele active\n/sterge &lt;id&gt; — șterge o alertă`
     )
   }
 }
@@ -127,7 +131,7 @@ async function handleAlerteleMele(chatId: number) {
 
   if (!rows.length) {
     await sendMsg(chatId,
-      `📋 Nu ai alerte active.\n\nMergi pe <a href="${SITE_URL}">${SITE_URL}</a> și apasă <b>🔔 Anunță-mă când scade prețul</b> pe un produs.`
+      `📋 Nu ai alerte active.\n\nMergi pe <a href="${SITE_URL}">${SITE_URL}</a> și, pe pagina unui produs, apasă <b>Telegram</b> în cardul <b>🔔 Alertă de preț</b>.`
     )
     return
   }
@@ -178,20 +182,16 @@ async function handlePrice(chatId: number, text: string) {
     await sendMsg(chatId, '❌ Preț invalid. Trimite o sumă în RON, ex: <code>800</code>')
     return
   }
-  if (check === 'not-below-current') {
-    // Pragul peste pretul de azi ar declansa alerta imediat, fara nicio scadere
-    await sendMsg(chatId,
-      `Prețul e deja ${formatRon(pending.currentPrice ?? 0)} RON, deci alerta s-ar trimite imediat.\nTrimite o sumă mai mică decât prețul actual.`
-    )
-    return
-  }
+  // Pragul la/peste pretul de azi e acceptat (decizia proprietarului, 5 oct. 2026): il salvam
+  // si spunem clar ca alerta pleaca la urmatoarea verificare
+  const note = check === 'immediate' && pending.currentPrice != null ? `\n${immediateAlertNote(pending.currentPrice)}` : ''
 
   const userId = await getOrCreateUser(chatId)
   await saveAlert(userId, pending.productId, price)
   pendingAlerts.delete(chatId)
 
   await sendMsg(chatId,
-    `✅ <b>Alertă salvată!</b>\n\n${escHtml(pending.productName)}\nTe anunțăm când prețul, la oricare dintre magazinele monitorizate, ajunge la <b>${formatRon(price)} RON</b> sau mai puțin.\n\n/alertele_mele — toate alertele tale`
+    `✅ <b>Alertă salvată!</b>\n\n${escHtml(pending.productName)}\nTe anunțăm când prețul, la oricare dintre magazinele monitorizate, ajunge la <b>${formatRon(price)} RON</b> sau mai puțin.${note}\n\n/alertele_mele — toate alertele tale`
   )
 }
 

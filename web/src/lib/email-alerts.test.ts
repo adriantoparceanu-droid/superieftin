@@ -1,7 +1,7 @@
 // Teste pentru regulile alertelor pe email (lib/email-alerts.ts). Rulare: cd web && npm test
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { alertRearmPct, emailAlertsEnabled, normalizeEmail, parseTargetPrice, rearmThreshold, targetBelowCurrent } from './email-alerts'
+import { alertRearmPct, emailAlertsEnabled, normalizeEmail, parseTargetPrice, rearmThreshold } from './email-alerts'
 
 test('activ doar cu SMTP_HOST + EMAIL_FROM + ALERT_TOKEN_SECRET', () => {
   const ok = { SMTP_HOST: 'smtp-relay.brevo.com', EMAIL_FROM: 'alerte@superieftin.ro', ALERT_TOKEN_SECRET: 'x' }
@@ -35,10 +35,4 @@ test('re-armare: aceeasi formula ca in worker (lib/alert-rearm.ts)', () => {
   assert.equal(alertRearmPct({ ALERT_REARM_PCT: '5' }), 5)
   assert.equal(rearmThreshold(1000, 3), 1030)
   assert.equal(rearmThreshold(1610, 3), 1658.3)
-})
-
-test('prag sub cel mai mic pret de acum (altfel alerta ar pleca imediat)', () => {
-  assert.equal(targetBelowCurrent(1610, 1699.99), true)
-  assert.equal(targetBelowCurrent(1699.99, 1699.99), false)
-  assert.equal(targetBelowCurrent(5000, null), true)
 })

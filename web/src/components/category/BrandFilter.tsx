@@ -9,6 +9,7 @@ import {
   type BrandOption, type ListingSort,
 } from '@/lib/listing-filters'
 import { roCount } from '@/lib/seo/site'
+import { btn } from '@/components/product/buttons'
 
 // Sectiunea „Marcă” din coloana de filtre (desktop) si din panoul „Filtre” (mobil).
 //
@@ -78,21 +79,28 @@ export function BrandFilter({ basePath, options, selected, sort, tot, total, mod
       <li key={o.brand}>
         <label
           htmlFor={id}
-          className="flex items-center gap-2.5 rounded-md px-1.5 py-1.5 text-sm cursor-pointer hover:bg-[var(--color-page)] has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand"
+          className={`flex items-center gap-2.5 rounded-lg px-1 cursor-pointer hover:bg-surface-2 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ink ${mode === 'panel' ? 'min-h-[42px] text-[14.5px]' : 'min-h-9 text-sm'}`}
         >
-          <input
-            id={id}
-            type="checkbox"
-            name="brand"
-            value={o.brand}
-            checked={isOn}
-            onChange={e => toggle(o.brand, e.target.checked)}
-            className="h-4 w-4 shrink-0 accent-[var(--color-brand)] focus-visible:outline-none"
-          />
-          <span className={`min-w-0 flex-1 truncate ${isOn ? 'font-semibold text-[var(--color-text)]' : 'text-[var(--color-text)]'}`} title={o.brand}>
+          {/* Căsuța desenată pe tokeni (macheta „.cb”): input-ul nativ rămâne (tastatură, formular
+              fără JS), doar fără aspectul implicit; bifa e un SVG arătat când e bifat */}
+          <span className="relative grid h-[22px] w-[22px] shrink-0 place-items-center">
+            <input
+              id={id}
+              type="checkbox"
+              name="brand"
+              value={o.brand}
+              checked={isOn}
+              onChange={e => toggle(o.brand, e.target.checked)}
+              className="peer absolute inset-0 m-0 cursor-pointer appearance-none rounded-md bg-surface ring-[1.5px] ring-inset ring-line-2 checked:bg-ink checked:ring-ink focus-visible:outline-none"
+            />
+            <svg viewBox="0 0 24 24" aria-hidden="true" className="pointer-events-none relative hidden h-3.5 w-3.5 text-page peer-checked:block" fill="none" stroke="currentColor" strokeWidth={3.2} strokeLinecap="round" strokeLinejoin="round">
+              <path d="m5 12.5 4.5 4.5L19 7.5" />
+            </svg>
+          </span>
+          <span className={`min-w-0 flex-1 truncate text-ink ${isOn ? 'font-semibold' : ''}`} title={o.brand}>
             {o.brand}
           </span>
-          <span className="tabular text-xs text-muted">{o.count.toLocaleString('ro-RO')}</span>
+          <span className="tabular-nums text-[13px] text-ink-3">{o.count.toLocaleString('ro-RO')}</span>
         </label>
       </li>
     )
@@ -111,13 +119,18 @@ export function BrandFilter({ basePath, options, selected, sort, tot, total, mod
       {tot && <input type="hidden" name="tot" value="1" />}
 
       <fieldset>
-        <legend className="flex w-full items-center justify-between text-xs font-semibold text-muted uppercase tracking-wide mb-2">
+        <legend className="mb-2 flex w-full items-baseline justify-between font-display text-[15px] font-extrabold text-ink">
           Marcă
+          {checked.length > 0 && (
+            <small className="font-sans text-[12.5px] font-medium text-ink-3">
+              {checked.length === 1 ? '1 selectată' : `${checked.length} selectate`}
+            </small>
+          )}
         </legend>
 
         {options.length > VISIBLE_COUNT && (
           <div className="relative mb-2">
-            <Search size={14} aria-hidden="true" className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted" />
+            <Search size={15} aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-3" />
             {/* Fara `name`: cautarea filtreaza doar lista de pe ecran, nu intra in URL */}
             <input
               type="search"
@@ -126,13 +139,13 @@ export function BrandFilter({ basePath, options, selected, sort, tot, total, mod
               placeholder="Caută marca…"
               aria-label="Caută marca"
               autoComplete="off"
-              className="w-full rounded-lg border border-line bg-surface py-1.5 pl-8 pr-2 text-sm text-[var(--color-text)] placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+              className="h-10 w-full rounded-[10px] bg-surface pl-9 pr-2 text-sm text-ink ring-[1.5px] ring-inset ring-line-2 placeholder:text-ink-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink"
             />
           </div>
         )}
 
         {searching && filtered.length === 0 && (
-          <p className="px-1.5 py-2 text-sm text-muted">Nicio marcă găsită.</p>
+          <p className="px-1 py-2 text-sm text-ink-3">Nicio marcă găsită.</p>
         )}
 
         <ul className={searching ? 'max-h-80 overflow-y-auto overscroll-contain' : ''}>
@@ -143,10 +156,10 @@ export function BrandFilter({ basePath, options, selected, sort, tot, total, mod
             intern, ca o categorie cu 200 de marci sa nu impinga totul in jos */}
         {tail.length > 0 && (
           <details open={expanded} onToggle={e => setExpanded((e.currentTarget as HTMLDetailsElement).open)} className="mt-1">
-            <summary className="list-none [&::-webkit-details-marker]:hidden cursor-pointer select-none px-1.5 py-1.5 text-sm font-medium text-brand hover:underline rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand">
+            <summary className="list-none [&::-webkit-details-marker]:hidden cursor-pointer select-none px-1 py-1.5 text-[13.5px] font-bold text-ink underline underline-offset-[3px] hover:text-red-ink rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink">
               {expanded ? 'Arată mai puține' : `Arată toate (${ordered.length.toLocaleString('ro-RO')})`}
             </summary>
-            <ul className="max-h-80 overflow-y-auto overscroll-contain border-t border-line pt-1">
+            <ul className="max-h-80 overflow-y-auto overscroll-contain border-t border-line pt-1 mt-1">
               {tail.map(checkbox)}
             </ul>
           </details>
@@ -159,34 +172,29 @@ export function BrandFilter({ basePath, options, selected, sort, tot, total, mod
             <Link
               href={buildListingUrl(basePath, { sort, brands: [], tot })}
               scroll={false}
-              className="mt-3 inline-block text-sm text-brand hover:underline rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+              className="mt-3 inline-block text-sm font-semibold text-ink underline underline-offset-[3px] hover:text-red-ink rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink"
             >
               Șterge filtrele
             </Link>
           )}
           {/* Fara JavaScript bifarea nu trimite nimic singura → buton explicit */}
           <noscript>
-            <button type="submit" className="mt-3 w-full rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark">
+            <button type="submit" className={`mt-3 w-full ${btn('secondary', 'sm')}`}>
               Aplică
             </button>
           </noscript>
         </>
       ) : (
-        <div className="sticky bottom-0 -mx-4 mt-4 flex items-center gap-3 border-t border-line bg-surface px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        // Subsolul foii („.sheet-foot”): rămâne jos, deasupra zonei sigure de pe iPhone. Butonul
+        // roșu e singurul de pe ecran cât foaia e deschisă (design §3).
+        <div className="sticky bottom-0 -mx-4 mt-4 flex items-center gap-2.5 border-t border-line bg-surface px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           {checked.length > 0 && (
-            <button
-              type="button"
-              onClick={() => setChecked([])}
-              className="text-sm text-muted underline underline-offset-2 hover:text-[var(--color-text)] rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
-            >
-              Șterge
+            <button type="button" onClick={() => setChecked([])} className={btn('secondary', 'sm')}>
+              Resetează
             </button>
           )}
-          <button
-            type="submit"
-            className="ml-auto flex-1 rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-dark transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
-          >
-            Vezi {roCount(resultCount, 'produse', 'produs')}
+          <button type="submit" className={`flex-1 ${btn('primary')}`}>
+            Arată {roCount(resultCount, 'produse', 'produs')}
           </button>
         </div>
       )}

@@ -2,7 +2,9 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { searchProducts, searchProductCount, logSearch, PAGE_SIZE } from '@/lib/queries'
 import { TrackSearch } from '@/components/analytics/TrackSearch'
-import { ProductCard } from '@/components/ProductCard'
+import { ProductList } from '@/components/listing/ProductList'
+import { EmptyState, ListingHeader, MethodNote } from '@/components/listing/ListingParts'
+import { roCount } from '@/lib/seo/site'
 import { Pagination } from '@/components/Pagination'
 
 export const dynamic = 'force-dynamic'
@@ -51,20 +53,34 @@ export default async function SearchPage({ searchParams }: Props) {
   return (
     <div>
       {query && <TrackSearch term={query} />}
-      {/* Search bar */}
-      <form action="/cautare" method="get" className="flex gap-2 mb-6 max-w-xl">
+      <ListingHeader
+        crumbs={[{ label: 'Acasă', href: '/' }, { label: 'Căutare' }]}
+        title={query ? <>Rezultate pentru „{query}”</> : 'Caută un produs'}
+      >
+        {query && products.length > 0 && (
+          <p className="tabular-nums">
+            {roCount(totalCount, 'rezultate', 'rezultat')}
+            {totalPages > 1 && ` · pagina ${currentPage} din ${totalPages}`}
+          </p>
+        )}
+      </ListingHeader>
+
+      {/* Formularul de căutare (GET, merge și fără JavaScript) */}
+      <form action="/cautare" method="get" role="search" className="mb-4 flex max-w-xl gap-2">
         <input
           name="q"
           type="search"
           defaultValue={query}
           placeholder="Caută produs, brand sau categorie..."
+          aria-label="Caută produs, brand sau categorie"
           autoFocus
           autoComplete="off"
-          className="flex-1 px-4 py-2.5 rounded-lg border border-line bg-surface text-[var(--color-text)] text-sm placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2"
+          className="h-12 min-w-0 flex-1 rounded-xl bg-surface px-4 text-[15px] text-ink ring-[1.5px] ring-inset ring-line-2 placeholder:text-ink-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-ink"
         />
+        {/* Cerneală, nu roșu: roșul plin e rezervat butonului „Vezi oferta” (design §3) */}
         <button
           type="submit"
-          className="px-5 py-2.5 bg-brand hover:bg-brand-dark text-white text-sm font-semibold rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+          className="inline-flex h-12 items-center rounded-xl bg-ink px-5 font-display text-[15px] font-extrabold text-page transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2"
         >
           Caută
         </button>
@@ -72,41 +88,27 @@ export default async function SearchPage({ searchParams }: Props) {
 
       {/* Stare: fără query */}
       {!query && (
-        <div className="text-center py-16 text-muted">
-          <p className="text-5xl mb-4">🔍</p>
-          <p className="text-base">Scrie un produs sau o marcă pentru a căuta.</p>
-          <p className="text-sm mt-2">Exemplu: <em>Samsung Galaxy</em>, <em>iPhone 15</em>, <em>Xiaomi</em></p>
-        </div>
+        <EmptyState title="Scrie un produs sau o marcă pentru a căuta.">
+          <p>Exemplu: <em>Samsung Galaxy</em>, <em>iPhone 15</em>, <em>Xiaomi</em></p>
+        </EmptyState>
       )}
 
       {/* Stare: query fără rezultate */}
       {query && products.length === 0 && (
-        <div className="text-center py-16 text-muted">
-          <p className="text-5xl mb-4">😔</p>
-          <p className="text-base">Niciun rezultat pentru <strong className="text-[var(--color-text)]">&ldquo;{query}&rdquo;</strong>.</p>
-          <p className="text-sm mt-2">Încearcă cu mai puține cuvinte sau verifică ortografia.</p>
-          <Link href="/" className="mt-4 inline-block text-sm text-brand hover:underline">
+        <EmptyState title={<>Niciun rezultat pentru „{query}”.</>}>
+          <p>Încearcă cu mai puține cuvinte sau verifică ortografia.</p>
+          <Link href="/" className="mt-3 inline-block font-semibold text-ink underline underline-offset-[3px] hover:text-red-ink">
             ← Înapoi la pagina principală
           </Link>
-        </div>
+        </EmptyState>
       )}
 
       {/* Rezultate */}
       {query && products.length > 0 && (
         <>
-          <p className="text-sm text-muted mb-4">
-            {totalCount.toLocaleString('ro-RO')} rezultate pentru{' '}
-            <strong className="text-[var(--color-text)]">&ldquo;{query}&rdquo;</strong>
-            {totalPages > 1 && ` · pagina ${currentPage} din ${totalPages}`}
-          </p>
-
+          <MethodNote className="mb-3" />
           <h2 className="sr-only">Produse</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-            {products.map(product => (
-              <ProductCard key={product.offer_id} product={product} />
-            ))}
-          </div>
-
+          <ProductList products={products} />
           <Pagination currentPage={currentPage} totalPages={totalPages} buildUrl={buildUrl} />
         </>
       )}

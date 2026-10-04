@@ -1,0 +1,1368 @@
+<meta name="color-scheme" content="light dark">
+<title>Superieftin Direcția B</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Inter:wght@400..700&display=swap" rel="stylesheet">
+<style>
+/* =========================================================
+   TOKENI — luminos (implicit)
+   ========================================================= */
+:root{
+  --bg:#F4F5F7;          /* fundalul paginii */
+  --surface:#FFFFFF;     /* carduri */
+  --surface-2:#F0F1F4;   /* zone secundare, rânduri alternante */
+  --ink:#14161A;         /* text principal */
+  --ink-2:#424854;       /* text secundar */
+  --ink-3:#6A707C;       /* text discret (AA pe alb și pe --bg) */
+  --line:#E1E4E9;
+  --line-2:#CDD2D9;
+
+  --head:#15171C;        /* antetul cărbune */
+  --head-2:#22252C;
+  --head-ink:#FFFFFF;
+  --head-ink-2:#A5ADBA;
+
+  --red:#D42B2B;         /* butoane / insigne pline (alb pe roșu 5,0:1) */
+  --red-hover:#B91C22;
+  --red-ink:#B91C22;     /* text roșu pe fundal deschis */
+  --red-tint:#FDECEC;
+  --red-zone:rgba(212,43,43,.10);
+  --red-on-head:#FF6B61; /* roșu pe antetul închis */
+
+  --amber-ink:#A14A06;
+  --amber-tint:#FFF3E3;
+  --amber:#E58A10;
+  --neutral-tint:#ECEEF2;
+
+  --chart-line:#14161A;
+  --chart-area:rgba(20,22,26,.06);
+  --shadow:0 1px 2px rgba(16,18,24,.06),0 4px 16px rgba(16,18,24,.06);
+  --shadow-lg:0 12px 40px rgba(16,18,24,.18);
+
+  --f-display:"Archivo",system-ui,sans-serif;
+  --f-body:"Inter",system-ui,sans-serif;
+  --r-s:6px; --r-m:10px; --r-l:16px;
+}
+/* =========================================================
+   TOKENI — întunecat: urmează telefonul, dacă nu s-a ales explicit „luminos”
+   ========================================================= */
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E0F12; --surface:#17191E; --surface-2:#1F2228;
+    --ink:#F2F3F5; --ink-2:#C3C8D0; --ink-3:#9AA1AD;
+    --line:#2A2E36; --line-2:#3A3F49;
+    --head:#08090B; --head-2:#17191E; --head-ink:#FFFFFF; --head-ink-2:#A5ADBA;
+    --red:#D42B2B; --red-hover:#E0322F; --red-ink:#FF6B61; --red-tint:#3A1517;
+    --red-zone:rgba(255,107,97,.13); --red-on-head:#FF6B61;
+    --amber-ink:#F5A524; --amber-tint:#2B2112; --amber:#F5A524; --neutral-tint:#262A31;
+    --chart-line:#F2F3F5; --chart-area:rgba(242,243,245,.07);
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 4px 16px rgba(0,0,0,.3);
+    --shadow-lg:0 12px 40px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E0F12; --surface:#17191E; --surface-2:#1F2228;
+  --ink:#F2F3F5; --ink-2:#C3C8D0; --ink-3:#9AA1AD;
+  --line:#2A2E36; --line-2:#3A3F49;
+  --head:#08090B; --head-2:#17191E; --head-ink:#FFFFFF; --head-ink-2:#A5ADBA;
+  --red:#D42B2B; --red-hover:#E0322F; --red-ink:#FF6B61; --red-tint:#3A1517;
+  --red-zone:rgba(255,107,97,.13); --red-on-head:#FF6B61;
+  --amber-ink:#F5A524; --amber-tint:#2B2112; --amber:#F5A524; --neutral-tint:#262A31;
+  --chart-line:#F2F3F5; --chart-area:rgba(242,243,245,.07);
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 4px 16px rgba(0,0,0,.3);
+  --shadow-lg:0 12px 40px rgba(0,0,0,.6);
+}
+
+/* =========================================================
+   BAZĂ
+   ========================================================= */
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;overflow-x:hidden}
+h1,h2,h3,h4{font-family:var(--f-display);font-stretch:88%;margin:0;letter-spacing:-.01em}
+a{color:inherit}
+button{font:inherit;color:inherit}
+.num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+
+/* =========================================================
+   PAGINA MACHETEI (nu face parte din site)
+   ========================================================= */
+.doc{max-width:1320px;margin:0 auto;padding:24px 20px 80px}
+.doc-top{display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between;margin-bottom:8px}
+.doc-top h1{font-size:28px;font-weight:850}
+.doc-top p{margin:4px 0 0;color:var(--ink-3);font-size:14px}
+.seg{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px}
+.seg button{border:0;background:none;padding:7px 14px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;color:var(--ink-2)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.doc-nav{display:flex;flex-wrap:wrap;gap:6px;margin:16px 0 8px}
+.doc-nav a{font-size:13px;font-weight:600;text-decoration:none;padding:6px 12px;border-radius:999px;background:var(--surface);border:1px solid var(--line)}
+.doc-sec{padding-top:48px}
+.doc-sec>h2{font-size:24px;font-weight:850;margin-bottom:4px}
+.doc-sec>.lead{color:var(--ink-3);margin:0 0 20px;max-width:760px}
+.demo-row{display:flex;flex-wrap:wrap;gap:36px;align-items:flex-start}
+.notes{flex:1 1 300px;max-width:460px;font-size:14px;color:var(--ink-2)}
+.notes h3{font-size:16px;font-weight:800;color:var(--ink);margin:18px 0 6px}
+.notes h3:first-child{margin-top:0}
+.notes ul{margin:0;padding-left:18px}
+.notes li{margin:4px 0}
+.notes .seg{margin-top:6px}
+
+/* Cadrul de telefon (pe telefon real dispare) */
+.phone{width:390px;height:820px;border-radius:46px;border:11px solid #0B0C0E;background:var(--bg);overflow:hidden;position:relative;box-shadow:var(--shadow-lg);flex:0 0 auto}
+.phone::before{content:"";position:absolute;top:8px;left:50%;transform:translateX(-50%);width:110px;height:30px;border-radius:20px;background:#0B0C0E;z-index:60}
+.screen{height:100%;overflow-y:auto;overflow-x:hidden;position:relative;scrollbar-width:none;background:var(--bg)}
+.screen::-webkit-scrollbar{display:none}
+.phone .sh{top:46px}
+.phone .toolbar{top:102px}
+.statusbar{position:sticky;top:0;z-index:45;height:46px;background:var(--head);color:var(--head-ink);display:flex;align-items:flex-end;justify-content:space-between;padding:0 26px 6px;font-size:13px;font-weight:600}
+@media (max-width:520px){
+  .doc{padding:16px 0 60px}
+  .doc-top,.doc-nav,.doc-sec>h2,.doc-sec>.lead,.notes,.ds{padding-left:16px;padding-right:16px}
+  .phone{width:100%;height:auto;border:0;border-radius:0;box-shadow:none}
+  .phone::before,.statusbar{display:none}
+  .phone .sh{top:0}
+  .phone .toolbar{top:56px}
+  .screen{height:auto;overflow:visible}
+  .demo-row{gap:20px}
+}
+
+/* =========================================================
+   ANTETUL SITE-ULUI (cărbune)
+   ========================================================= */
+.sh{position:sticky;top:0;z-index:40;background:var(--head);color:var(--head-ink)}
+.sh-row{display:flex;align-items:center;gap:6px;height:56px;padding:0 8px}
+.ibtn{width:44px;height:44px;display:grid;place-items:center;border:0;background:none;border-radius:10px;cursor:pointer;color:inherit;flex:0 0 auto}
+.ibtn:hover{background:rgba(255,255,255,.08)}
+.ibtn svg{width:22px;height:22px}
+.sh .logo{flex:1;display:flex;justify-content:center}
+.sh-search{padding:0 12px 12px}
+.search{display:flex;align-items:center;gap:8px;height:46px;border-radius:12px;background:#fff;color:#14161A;padding:0 6px 0 14px}
+.search svg{width:20px;height:20px;color:#6A707C;flex:0 0 auto}
+.search span{flex:1;color:#6A707C;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.search b{background:var(--red);color:#fff;border-radius:9px;padding:0 14px;height:36px;display:grid;place-items:center;font-size:14px}
+
+/* Logo */
+.logo-mark{display:inline-flex;align-items:center;gap:8px;text-decoration:none;color:inherit}
+.logo-mark svg.sym{width:30px;height:30px;flex:0 0 auto}
+.wm{font-family:var(--f-display);font-weight:850;font-stretch:84%;font-size:21px;letter-spacing:-.02em;line-height:1}
+.wm .ro{color:var(--red-ink)}
+.sh .wm .ro,.on-dark .wm .ro{color:var(--red-on-head)}
+
+/* =========================================================
+   INSIGNE DE VERDICT
+   ========================================================= */
+.vb{display:inline-flex;align-items:center;gap:5px;font-family:var(--f-display);font-stretch:88%;font-weight:800;font-size:12.5px;line-height:1;padding:5px 8px 5px 7px;border-radius:6px;white-space:nowrap;letter-spacing:.005em}
+.vb svg{width:13px;height:13px;flex:0 0 auto}
+.vb.real{background:var(--red);color:#fff}
+.vb.norm{background:var(--neutral-tint);color:var(--ink-2)}
+.vb.high{background:var(--amber-tint);color:var(--amber-ink)}
+.vb.nod{background:transparent;color:var(--ink-3);box-shadow:inset 0 0 0 1px var(--line-2)}
+.vb.lg{font-size:15px;padding:7px 11px 7px 9px;border-radius:8px}
+.vb.lg svg{width:16px;height:16px}
+
+/* =========================================================
+   BUTOANE
+   ========================================================= */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 20px;border-radius:12px;border:0;font-family:var(--f-display);font-stretch:92%;font-weight:800;font-size:16.5px;text-decoration:none;cursor:pointer;letter-spacing:.005em}
+.btn svg{width:18px;height:18px}
+.btn-p{background:var(--red);color:#fff;box-shadow:0 1px 0 rgba(0,0,0,.12),0 6px 16px -6px rgba(212,43,43,.6)}
+.btn-p:hover{background:var(--red-hover)}
+.btn-s{background:var(--surface);color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--line-2)}
+.btn-s:hover{box-shadow:inset 0 0 0 1.5px var(--ink)}
+.btn-g{background:transparent;color:var(--ink);min-height:40px;padding:0 12px;font-size:14.5px}
+.btn-sm{min-height:40px;padding:0 14px;font-size:14.5px;border-radius:10px}
+.btn-block{width:100%}
+
+/* =========================================================
+   PAGINA DE PRODUS — mobil
+   ========================================================= */
+.pp{padding:12px 14px 8px}
+.crumbs{font-size:12.5px;color:var(--ink-3);display:flex;gap:6px;align-items:center;white-space:nowrap;overflow:hidden}
+.crumbs a{text-decoration:none}
+.pp-head{display:flex;gap:12px;align-items:flex-start;margin:10px 0 12px}
+.thumb{width:76px;height:76px;border-radius:12px;background:var(--surface);border:1px solid var(--line);display:grid;place-items:center;color:var(--line-2);flex:0 0 auto}
+.thumb svg{width:60%;height:60%}
+.brandk{font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.pp-head h1{font-size:19px;line-height:1.22;font-weight:800;margin-top:2px}
+
+/* Cardul de verdict */
+.vcard{background:var(--surface);border-radius:var(--r-l);box-shadow:var(--shadow);overflow:hidden;position:relative}
+.vcard-top{padding:14px 16px 0}
+.q{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);display:flex;justify-content:space-between;align-items:center}
+.q i{font-style:normal;text-transform:none;letter-spacing:0;font-weight:500}
+.verdict{display:flex;align-items:baseline;gap:10px;margin-top:6px;flex-wrap:wrap}
+.verdict .word{font-family:var(--f-display);font-stretch:84%;font-weight:900;font-size:30px;line-height:1.05;letter-spacing:-.02em}
+.verdict .pct{font-family:var(--f-display);font-stretch:84%;font-weight:900;font-size:30px;line-height:1.05}
+.v-real .word,.v-real .pct{color:var(--red-ink)}
+.v-high .word,.v-high .pct{color:var(--amber-ink)}
+.v-norm .pct{color:var(--ink-2)}
+.vexpl{font-size:14.5px;color:var(--ink-2);margin:6px 0 0}
+.vexpl b{color:var(--ink)}
+.v-strip{position:absolute;left:0;top:0;bottom:0;width:5px}
+.v-real .v-strip{background:var(--red)}
+.v-high .v-strip{background:var(--amber)}
+.v-norm .v-strip{background:var(--line-2)}
+
+.pricebox{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)}
+.big-price{font-family:var(--f-display);font-stretch:88%;font-weight:850;font-size:32px;line-height:1;letter-spacing:-.02em}
+.big-price small{font-size:17px;font-weight:700;margin-left:3px}
+.at{font-size:13.5px;color:var(--ink-2);margin-top:5px}
+.at b{color:var(--ink)}
+.shop{display:inline-flex;align-items:center;gap:6px;font-weight:700}
+.shop i{width:20px;height:20px;border-radius:5px;display:grid;place-items:center;font-style:normal;font-size:10px;font-weight:800;color:#fff;font-family:var(--f-display)}
+
+/* Termometrul */
+.thermo{padding:16px 16px 6px}
+.th-track{position:relative;height:12px;border-radius:999px;background:var(--surface-2);margin:34px 0 0}
+.th-zone{position:absolute;top:0;bottom:0}
+.th-zone.z-real{background:repeating-linear-gradient(135deg,var(--red-zone) 0 6px,transparent 6px 9px),var(--red-zone);border-radius:999px 0 0 999px}
+.th-zone.z-high{background:var(--amber-tint);border-radius:0 999px 999px 0}
+.th-med{position:absolute;top:-5px;bottom:-5px;width:2px;background:var(--ink);border-radius:2px}
+.th-pin{position:absolute;top:50%;width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;background:var(--ink);border:4px solid var(--surface);box-shadow:0 0 0 2px var(--ink)}
+.v-real .th-pin{background:var(--red);box-shadow:0 0 0 2px var(--red)}
+.v-high .th-pin{background:var(--amber);box-shadow:0 0 0 2px var(--amber)}
+.th-flag{position:absolute;bottom:20px;transform:translateX(-50%);background:var(--ink);color:var(--bg);font-size:11.5px;font-weight:700;padding:3px 7px;border-radius:6px;white-space:nowrap}
+.v-real .th-flag{background:var(--red);color:#fff}
+.v-high .th-flag{background:var(--amber);color:#14161A}
+.th-flag::after{content:"";position:absolute;left:50%;bottom:-4px;margin-left:-4px;border:4px solid transparent;border-bottom:0;border-top-color:inherit}
+.v-real .th-flag::after{border-top-color:var(--red)} .v-high .th-flag::after{border-top-color:var(--amber)} .v-norm .th-flag::after{border-top-color:var(--ink)}
+.th-legend{display:grid;grid-template-columns:1fr 1fr 1fr;margin-top:10px;font-size:12px;color:var(--ink-3)}
+.th-legend div:nth-child(2){text-align:center}
+.th-legend div:nth-child(3){text-align:right}
+.th-legend b{display:block;color:var(--ink);font-size:13.5px;font-weight:700}
+.th-key{display:flex;gap:12px;flex-wrap:wrap;font-size:11.5px;color:var(--ink-3);margin-top:10px}
+.th-key span{display:inline-flex;align-items:center;gap:5px}
+.th-key i{width:12px;height:8px;border-radius:2px;display:inline-block}
+.vcard-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 16px 12px;font-size:12.5px;color:var(--ink-3);border-top:1px solid var(--line);margin-top:10px}
+.vcard-foot a{color:var(--ink);font-weight:600}
+
+/* Secțiuni sub primul ecran */
+.blk{margin-top:14px;background:var(--surface);border-radius:var(--r-l);box-shadow:var(--shadow);padding:14px 14px}
+.blk h2{font-size:18px;font-weight:800;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.blk h2 small{font-family:var(--f-body);font-size:12.5px;color:var(--ink-3);font-weight:500;letter-spacing:0}
+.offer{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
+.offer:first-of-type{border-top:0}
+.offer .o-name{font-weight:700;font-size:14.5px}
+.offer .o-meta{font-size:12px;color:var(--ink-3)}
+.offer .o-price{font-family:var(--f-display);font-stretch:88%;font-weight:800;font-size:19px;text-align:right}
+.offer .o-act{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;margin-top:6px}
+.offer.best{background:linear-gradient(90deg,var(--red-tint),transparent 80%);margin:0 -14px;padding:12px 14px;border-radius:0}
+.tag-best{font-size:11px;font-weight:800;color:var(--red-ink);text-transform:uppercase;letter-spacing:.06em}
+.delta{font-size:12px;font-weight:600}
+.delta.dn{color:var(--red-ink)} .delta.up{color:var(--amber-ink)} .delta.eq{color:var(--ink-3)}
+
+/* Graficul */
+.ch-tabs{display:flex;gap:4px;margin:10px 0 4px}
+.ch-tabs button{border:0;background:var(--surface-2);padding:6px 12px;border-radius:999px;font-size:12.5px;font-weight:700;cursor:pointer;color:var(--ink-2)}
+.ch-tabs button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.chart{position:relative;touch-action:pan-y;user-select:none;-webkit-user-select:none;margin:0 -4px}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.ch-tip{position:absolute;top:0;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:6px 9px;border-radius:8px;font-size:12px;line-height:1.25;white-space:nowrap;pointer-events:none;box-shadow:var(--shadow);transition:opacity .12s}
+.ch-tip b{font-size:14px;font-family:var(--f-display);font-stretch:88%;display:block}
+.ch-tip em{font-style:normal;font-size:11px;opacity:.85}
+.ch-hint{font-size:12px;color:var(--ink-3);margin-top:4px;display:flex;gap:6px;align-items:center}
+.ch-legend{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--ink-2);margin-top:8px}
+.ch-legend span{display:inline-flex;gap:6px;align-items:center}
+.ch-legend i{display:inline-block;width:16px;height:0;border-top:2px solid var(--chart-line)}
+.ch-legend i.med{border-top:2px dashed var(--ink-2)}
+.ch-legend i.zone{height:9px;border:0;background:var(--red-zone)}
+
+.facts{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border-radius:12px;overflow:hidden;margin-top:10px}
+.facts div{background:var(--surface);padding:10px 12px}
+.facts span{display:block;font-size:12px;color:var(--ink-3)}
+.facts b{font-family:var(--f-display);font-stretch:88%;font-size:17px;font-weight:800}
+.prose{font-size:14px;color:var(--ink-2);margin:10px 0 0}
+
+.alert-blk{display:flex;gap:12px;align-items:flex-start}
+.alert-ic{width:40px;height:40px;border-radius:10px;background:var(--red-tint);color:var(--red-ink);display:grid;place-items:center;flex:0 0 auto}
+.alert-ic svg{width:20px;height:20px}
+.alert-row{display:flex;gap:8px;margin-top:10px}
+.field{flex:1;min-width:0;height:44px;border-radius:10px;border:1.5px solid var(--line-2);display:flex;align-items:center;padding:0 12px;background:var(--surface);color:var(--ink-3);font-size:14.5px}
+
+.specs{width:100%;border-collapse:collapse;font-size:14px;margin-top:6px}
+.specs th{text-align:left;font-weight:500;color:var(--ink-3);padding:8px 0;width:44%;vertical-align:top;border-top:1px solid var(--line)}
+.specs td{padding:8px 0;border-top:1px solid var(--line);font-weight:600}
+.specs tr:first-child th,.specs tr:first-child td{border-top:0}
+
+.hscroll{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;margin:10px -14px 0;padding:0 14px 4px;scrollbar-width:none}
+.hscroll::-webkit-scrollbar{display:none}
+.hscroll .pc{flex:0 0 156px;scroll-snap-align:start}
+
+/* Bara fixă jos */
+.stickybar{position:sticky;bottom:0;z-index:30;background:color-mix(in srgb,var(--surface) 94%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:10px 12px calc(10px + env(safe-area-inset-bottom));display:flex;align-items:center;gap:10px}
+.sb-price{flex:1;min-width:0;line-height:1.15}
+.sb-price b{font-family:var(--f-display);font-stretch:88%;font-size:19px;font-weight:850;display:block}
+.sb-price>span{font-size:12px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.sb-bell{width:48px;height:48px;border-radius:12px;border:0;box-shadow:inset 0 0 0 1.5px var(--line-2);background:var(--surface);display:grid;place-items:center;cursor:pointer;color:var(--ink)}
+.sb-bell svg{width:21px;height:21px}
+.sb-bell.hot{box-shadow:inset 0 0 0 2px var(--amber);color:var(--amber-ink)}
+
+/* Subsol */
+.ft{background:var(--head);color:var(--head-ink-2);padding:22px 16px 26px;font-size:13px;margin-top:20px}
+.ft .links{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;margin:16px 0}
+.ft a{color:var(--head-ink);text-decoration:none}
+.ft button{background:none;border:1px solid #3A3F49;color:var(--head-ink);border-radius:8px;padding:8px 12px;font-size:13px;cursor:pointer}
+.ft p{margin:10px 0 0;line-height:1.5}
+.desk .ft .links{grid-template-columns:repeat(8,max-content);gap:8px 24px}
+
+/* =========================================================
+   CARDURI DE PRODUS (grilă) + rânduri de listă
+   ========================================================= */
+.pc{background:var(--surface);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column;text-decoration:none;color:inherit;position:relative}
+.pc-img{height:112px;background:var(--surface-2);display:grid;place-items:center;color:var(--line-2);position:relative}
+.pc-img svg.ph{width:56%;height:70%}
+.pc-img .vb{position:absolute;left:8px;top:8px}
+.pc-body{padding:9px 10px 11px;display:flex;flex-direction:column;flex:1}
+.pc-name{font-size:13px;line-height:1.3;font-weight:600;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:34px}
+.pc-price{font-family:var(--f-display);font-stretch:88%;font-weight:850;font-size:18px;margin-top:6px;line-height:1.1}
+.pc-med{font-size:11.5px;color:var(--ink-3)}
+.pc-shop{font-size:11.5px;color:var(--ink-2);margin-top:auto;padding-top:6px}
+.mini-th{position:relative;height:5px;border-radius:9px;background:var(--surface-2);margin:7px 0 2px;box-shadow:inset 0 0 0 1px var(--line)}
+.mini-th i{position:absolute;top:50%;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;border-radius:50%;background:var(--ink);border:2px solid var(--surface)}
+.mini-th u{position:absolute;top:-3px;bottom:-3px;width:1.5px;background:var(--ink-3);text-decoration:none}
+.mini-th.real i{background:var(--red)} .mini-th.high i{background:var(--amber)}
+.mini-th s{position:absolute;left:0;top:0;bottom:0;border-radius:9px 0 0 9px;background:var(--red-zone);text-decoration:none}
+
+.row{display:flex;gap:12px;padding:12px 14px;background:var(--surface);border-bottom:1px solid var(--line);text-decoration:none;color:inherit}
+.row .thumb{width:84px;height:84px;background:var(--surface-2);border:0}
+.row-main{flex:1;min-width:0}
+.row-name{font-size:14px;font-weight:600;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-top:5px}
+.row-pr{display:flex;align-items:baseline;gap:8px;margin-top:5px;flex-wrap:wrap}
+.row-pr b{font-family:var(--f-display);font-stretch:88%;font-size:18.5px;font-weight:850}
+.row-pr span{font-size:12px;color:var(--ink-3)}
+.row-meta{font-size:12px;color:var(--ink-2);display:flex;justify-content:space-between;gap:8px;align-items:center}
+.row-meta .mini-th{width:72px;flex:0 0 auto;margin:0}
+
+/* Categorie */
+.cat-head{padding:12px 14px 10px}
+.cat-head h1{font-size:25px;font-weight:850;margin-top:6px}
+.cat-head p{margin:2px 0 0;font-size:13px;color:var(--ink-3)}
+.toolbar{position:sticky;top:56px;z-index:20;background:var(--bg);display:flex;gap:8px;padding:8px 14px;border-bottom:1px solid var(--line)}
+.tb-btn{height:40px;border-radius:10px;border:0;box-shadow:inset 0 0 0 1.5px var(--line-2);background:var(--surface);display:inline-flex;align-items:center;gap:7px;padding:0 12px;font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap}
+.tb-btn svg{width:17px;height:17px}
+.tb-btn .cnt{background:var(--red);color:#fff;font-size:11px;border-radius:999px;min-width:19px;height:19px;display:grid;place-items:center;padding:0 5px}
+.tb-btn.grow{flex:1;justify-content:space-between;font-weight:600;min-width:0}
+.tb-btn.grow span{overflow:hidden;text-overflow:ellipsis}
+.chips{display:flex;gap:6px;padding:10px 14px 4px;overflow-x:auto;scrollbar-width:none}
+.chip{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 10px;border-radius:999px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line-2);font-size:13px;font-weight:600;white-space:nowrap}
+.chip.on{background:var(--ink);color:var(--bg);box-shadow:none}
+.chip.redon{background:var(--red-tint);color:var(--red-ink);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--red-ink) 35%,transparent)}
+.chip svg{width:14px;height:14px}
+.list-info{display:flex;justify-content:space-between;padding:8px 14px;font-size:12.5px;color:var(--ink-3)}
+.method{margin:0 14px 10px;padding:10px 12px;border-radius:10px;background:var(--surface);font-size:12.5px;color:var(--ink-2);display:flex;gap:10px;align-items:flex-start;box-shadow:inset 0 0 0 1px var(--line)}
+.method svg{width:18px;height:18px;flex:0 0 auto;color:var(--red-ink);margin-top:1px}
+
+/* Panoul Filtre (foaie de jos) */
+.sheet-wrap{position:absolute;inset:0;z-index:50;display:none}
+.sheet-wrap.open{display:block}
+.backdrop{position:absolute;inset:0;background:rgba(8,9,11,.55)}
+.sheet{position:absolute;left:0;right:0;bottom:0;max-height:86%;display:flex;flex-direction:column;background:var(--surface);border-radius:20px 20px 0 0;box-shadow:var(--shadow-lg)}
+.sheet-grab{width:40px;height:5px;border-radius:9px;background:var(--line-2);margin:8px auto 0}
+.sheet-head{display:flex;justify-content:space-between;align-items:center;padding:6px 8px 8px 16px;border-bottom:1px solid var(--line)}
+.sheet-head h2{font-size:20px;font-weight:850}
+.sheet-head>div{display:flex;align-items:center}
+.sheet-body{overflow-y:auto;padding:4px 16px 12px}
+.fgroup{padding:14px 0;border-bottom:1px solid var(--line)}
+.fgroup h3{font-size:15px;font-weight:800;display:flex;justify-content:space-between;align-items:center}
+.fgroup h3 small{font-family:var(--f-body);font-weight:500;font-size:12.5px;color:var(--ink-3)}
+.cb{display:flex;align-items:center;gap:10px;min-height:42px;font-size:14.5px;cursor:pointer}
+.cb input{position:absolute;opacity:0}
+.cb .box{width:22px;height:22px;border-radius:6px;box-shadow:inset 0 0 0 1.5px var(--line-2);display:grid;place-items:center;flex:0 0 auto;background:var(--surface)}
+.cb input:checked+.box{background:var(--ink);box-shadow:none}
+.cb input:checked+.box::after{content:"";width:11px;height:6px;border:2px solid var(--bg);border-top:0;border-right:0;transform:rotate(-45deg) translate(1px,-1px)}
+.cb .lbl{flex:1}
+.cb .c{color:var(--ink-3);font-size:13px}
+.switch{display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer}
+.switch .tx{font-size:14.5px;font-weight:700}
+.switch .tx small{display:block;font-weight:400;color:var(--ink-3);font-size:12.5px}
+.tg{width:48px;height:28px;border-radius:999px;background:var(--line-2);position:relative;flex:0 0 auto;transition:background .15s}
+.tg::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:left .15s}
+.switch input{position:absolute;opacity:0}
+.switch input:checked+.tg{background:var(--red)}
+.switch input:checked+.tg::after{left:23px}
+.range{display:flex;gap:8px;align-items:center;margin-top:10px}
+.range .field{height:42px}
+.seg2{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.more{font-size:13.5px;font-weight:700;color:var(--ink);background:none;border:0;padding:6px 0;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.sheet-foot{display:flex;gap:10px;padding:12px 16px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
+
+/* Homepage */
+.hero{background:var(--head);color:var(--head-ink);padding:6px 16px 22px;position:relative;overflow:hidden}
+.hero h1{font-size:31px;line-height:1.04;font-weight:900;font-stretch:82%;letter-spacing:-.02em}
+.hero h1 em{font-style:normal;color:var(--red-on-head)}
+.hero p{color:var(--head-ink-2);margin:10px 0 14px;font-size:14.5px}
+.hero-stats{display:flex;gap:16px;margin-top:14px;font-size:12px;color:var(--head-ink-2)}
+.hero-stats b{display:block;font-family:var(--f-display);font-stretch:88%;font-size:18px;color:var(--head-ink)}
+.how{display:grid;gap:8px;padding:14px}
+.how-item{display:flex;gap:10px;align-items:center;background:var(--surface);border-radius:12px;padding:10px 12px;box-shadow:var(--shadow);font-size:13px;color:var(--ink-2)}
+.how-item .vb{min-width:118px;justify-content:center}
+.sec-h{display:flex;justify-content:space-between;align-items:baseline;padding:18px 14px 8px}
+.sec-h h2{font-size:21px;font-weight:850}
+.sec-h a{font-size:13.5px;font-weight:700;color:var(--red-ink);text-decoration:none}
+.sec-sub{font-size:12.5px;color:var(--ink-3);padding:0 14px 10px;margin-top:-4px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 14px}
+.cats{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 14px}
+.cat{display:flex;align-items:center;gap:10px;background:var(--surface);border-radius:12px;padding:10px;box-shadow:var(--shadow);text-decoration:none;font-size:13.5px;font-weight:700;line-height:1.2}
+.cat .ci{width:38px;height:38px;border-radius:10px;background:var(--surface-2);display:grid;place-items:center;color:var(--ink-2);flex:0 0 auto}
+.cat .ci svg{width:22px;height:22px}
+.cat small{display:block;font-weight:500;color:var(--ink-3);font-size:11.5px;margin-top:2px}
+.guide{display:flex;gap:12px;background:var(--surface);margin:0 14px 8px;border-radius:12px;padding:12px;box-shadow:var(--shadow);text-decoration:none}
+.guide .gi{width:54px;height:54px;border-radius:10px;background:var(--surface-2);flex:0 0 auto;display:grid;place-items:center;color:var(--ink-3)}
+.guide b{font-size:14px;line-height:1.3;display:block}
+.guide span{font-size:12px;color:var(--ink-3)}
+
+/* Meniu */
+.menu{background:var(--surface);min-height:calc(100% - 56px)}
+.menu-search{padding:12px 14px;background:var(--head)}
+.m-hl{display:flex;align-items:center;justify-content:space-between;margin:12px 14px 6px;padding:14px;border-radius:12px;background:var(--red);color:#fff;text-decoration:none;font-family:var(--f-display);font-stretch:88%;font-weight:850;font-size:17px}
+.m-hl small{display:block;font-family:var(--f-body);font-weight:500;font-size:12.5px;opacity:.92;font-stretch:100%}
+.m-hl svg{width:20px;height:20px}
+.acc{border-bottom:1px solid var(--line)}
+.acc>button{width:100%;display:flex;align-items:center;gap:12px;padding:14px;background:none;border:0;cursor:pointer;text-align:left;font-weight:750;font-size:16px;min-height:56px}
+.acc>button .ci{width:36px;height:36px;border-radius:10px;background:var(--surface-2);display:grid;place-items:center;flex:0 0 auto}
+.acc>button .ci svg{width:21px;height:21px}
+.acc>button .chev{margin-left:auto;width:20px;height:20px;transition:transform .2s;color:var(--ink-3)}
+.acc[data-open="true"]>button .chev{transform:rotate(180deg)}
+.acc-sub{display:none;padding:0 14px 10px 62px}
+.acc[data-open="true"] .acc-sub{display:block}
+.acc-sub a{display:flex;justify-content:space-between;align-items:center;min-height:44px;text-decoration:none;font-size:15px;border-top:1px solid var(--line)}
+.acc-sub a:first-child{border-top:0}
+.acc-sub a span{font-size:12.5px;color:var(--ink-3)}
+.acc-sub a.all{font-weight:700;color:var(--red-ink)}
+.m-links{padding:10px 14px}
+.m-links a{display:block;padding:12px 0;font-weight:600;text-decoration:none;border-bottom:1px solid var(--line)}
+.m-tags{padding:12px 14px 20px;font-size:13px;color:var(--ink-3)}
+.m-tags .chip{margin:6px 6px 0 0}
+
+/* =========================================================
+   DESKTOP (scalat)
+   ========================================================= */
+.desk-wrap{width:100%;max-width:1240px;border-radius:14px;overflow:hidden;box-shadow:var(--shadow-lg);background:var(--bg)}
+.desk{width:1240px;zoom:var(--z,1)}
+.dh{background:var(--head);color:var(--head-ink)}
+.dh-row{display:flex;align-items:center;gap:28px;height:72px;padding:0 32px}
+.dh-row .search{flex:1;max-width:620px}
+.dh-row .wm{font-size:25px}
+.dh-row .logo-mark svg.sym{width:36px;height:36px}
+.dh-links{display:flex;gap:18px;font-size:14px;font-weight:600;margin-left:auto}
+.dh-links a{text-decoration:none;color:var(--head-ink-2)}
+.dh-nav{display:flex;gap:4px;padding:0 24px;border-top:1px solid rgba(255,255,255,.08);background:var(--head-2)}
+.dh-nav a{color:var(--head-ink);text-decoration:none;font-size:14px;font-weight:600;padding:12px 12px;display:flex;gap:6px;align-items:center}
+.dh-nav a svg{width:14px;height:14px;opacity:.7}
+.dh-nav a.hl{color:var(--red-on-head)}
+.dh-nav a.cur{box-shadow:inset 0 -3px 0 var(--red)}
+.dmain{padding:20px 32px 40px}
+.dtop{display:grid;grid-template-columns:300px 1fr 380px;gap:24px;align-items:start;margin-top:12px}
+.dimg{background:var(--surface);border-radius:var(--r-l);height:300px;display:grid;place-items:center;color:var(--line-2);box-shadow:var(--shadow)}
+.dimg svg{width:50%;height:70%}
+.dtitle h1{font-size:28px;line-height:1.15;font-weight:850}
+.dtop .vcard .verdict .word,.dtop .vcard .verdict .pct{font-size:38px}
+.dtop .vcard .big-price{font-size:38px}
+.doffers{background:var(--surface);border-radius:var(--r-l);box-shadow:var(--shadow);padding:16px 18px;position:sticky;top:12px}
+.dgrid2{display:grid;grid-template-columns:1fr 380px;gap:24px;margin-top:24px;align-items:start}
+
+/* =========================================================
+   SISTEM DE DESIGN
+   ========================================================= */
+.ds{display:grid;gap:20px}
+.ds-card{background:var(--surface);border-radius:var(--r-l);box-shadow:var(--shadow);padding:20px}
+.ds-card>h3{font-size:18px;font-weight:850;margin-bottom:12px}
+.sw-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.sw{border-radius:12px;overflow:hidden;box-shadow:inset 0 0 0 1px var(--line);font-size:12px}
+.sw .c{height:56px}
+.sw .t{padding:8px 10px}
+.sw .t b{display:block;font-size:13px}
+.sw .t code{color:var(--ink-3);font-size:11.5px}
+table.ctr{width:100%;border-collapse:collapse;font-size:13px}
+table.ctr th,table.ctr td{text-align:left;padding:8px 6px;border-top:1px solid var(--line)}
+table.ctr th{color:var(--ink-3);font-weight:600;border-top:0}
+.pill-ok{font-weight:800;color:#1E7A46}
+.pill-bad{font-weight:800;color:var(--red-ink)}
+:root[data-theme="dark"] .pill-ok{color:#5BD08A}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .pill-ok{color:#5BD08A}}
+.sample{display:inline-grid;place-items:center;min-width:58px;height:28px;border-radius:6px;font-weight:700;font-size:13px;padding:0 8px}
+.ts-row{display:grid;grid-template-columns:150px 1fr;gap:12px;align-items:baseline;padding:10px 0;border-top:1px solid var(--line)}
+.ts-row:first-of-type{border-top:0}
+.ts-row code{font-size:12px;color:var(--ink-3)}
+.flex-w{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.sp{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
+.sp div{text-align:center;font-size:12px;color:var(--ink-3)}
+.sp i{display:block;background:var(--red);border-radius:3px;margin:0 auto 6px}
+.logo-big{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.logo-tile{border-radius:var(--r-l);padding:32px 20px;display:grid;place-items:center;gap:10px;min-height:170px;font-size:12px;box-shadow:var(--shadow)}
+.logo-tile.lt{background:#FFFFFF;color:#14161A}
+.logo-tile.lt .wm .ro{color:#B91C22}
+.logo-tile.dk{background:#15171C;color:#fff}
+.logo-tile.dk .wm .ro{color:#FF6B61}
+.logo-tile .cap{opacity:.65;font-size:12px}
+.logo-tile .wm{font-size:40px}
+.logo-tile .logo-mark svg.sym{width:54px;height:54px}
+.favs{display:flex;gap:18px;align-items:flex-end}
+@media (max-width:520px){.ds-card{padding:16px}.ts-row{grid-template-columns:1fr}}
+
+/* ---- Carduri luate din direcția C: Alertă de preț (prag editabil) + Pe scurt ---- */
+.ac-h{display:flex;gap:10px;align-items:flex-start}
+.ac-ic{width:24px;height:24px;color:var(--red-ink);flex:0 0 auto;margin-top:2px}
+.ac-h h2{font-size:18px;font-weight:800;display:block}
+.ac-h p{margin:2px 0 0;font-size:13.5px;color:var(--ink-3)}
+.ac-thr{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;border:1.5px solid var(--line-2);border-radius:12px;padding:4px 10px 4px 12px;background:var(--surface-2);cursor:text}
+.ac-thr:focus-within{border-color:var(--ink);background:var(--surface)}
+.ac-lbl{font-size:13.5px;font-weight:700;color:var(--ink);line-height:1.25}
+.ac-lbl small{display:block;font-weight:500;color:var(--ink-3);font-size:12px}
+.ac-in{display:flex;align-items:baseline;gap:4px;min-width:0}
+.ac-in input{width:7.5ch;min-width:0;border:0;background:transparent;text-align:right;font-family:var(--f-display);font-stretch:88%;font-weight:850;font-size:24px;color:var(--ink);padding:8px 0;outline:none;font-variant-numeric:tabular-nums}
+.ac-in span{font-weight:700;font-size:14px;color:var(--ink-2)}
+.ac-msg{margin:6px 2px 0;font-size:12.5px;line-height:1.4;color:var(--ink-3);min-height:1.4em}
+.ac-msg.warn{color:var(--amber-ink)}
+.ac-msg.err{color:var(--red-ink);font-weight:600}
+.ac-msg button{border:0;background:none;padding:0;font:inherit;font-weight:700;color:var(--ink);text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+.ac-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.ac-btns .btn{width:100%}
+.ps{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:10px;font-size:14px;color:var(--ink-2)}
+.ps li{display:grid;grid-template-columns:20px 1fr;gap:8px}
+.ps svg{width:18px;height:18px;margin-top:2px;color:var(--ink-3)}
+.ps b{color:var(--ink)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+<script>
+  // Tema aleasă în machetă (implicit: urmează setarea telefonului)
+  (function(){try{var t=localStorage.getItem('dirB-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)}catch(e){}})();
+</script>
+
+<!-- ============ Sprite cu simboluri (silhuete neutre, iconițe) ============ -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="ph-phone" viewBox="0 0 48 64"><rect x="10" y="2" width="28" height="60" rx="6" fill="none" stroke="currentColor" stroke-width="3"/><rect x="19" y="7" width="10" height="3" rx="1.5" fill="currentColor"/></symbol>
+    <symbol id="ph-tv" viewBox="0 0 64 48"><rect x="3" y="4" width="58" height="34" rx="3" fill="none" stroke="currentColor" stroke-width="3"/><path d="M24 44h16M32 38v6" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></symbol>
+    <symbol id="ph-laptop" viewBox="0 0 64 44"><rect x="10" y="4" width="44" height="28" rx="3" fill="none" stroke="currentColor" stroke-width="3"/><path d="M3 38h58" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></symbol>
+    <symbol id="ph-bag" viewBox="0 0 48 64"><path d="M10 10h28l4 50H6z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><path d="M10 10l2-6h24l2 6" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="24" cy="34" r="7" fill="none" stroke="currentColor" stroke-width="3"/></symbol>
+    <symbol id="ph-monitor" viewBox="0 0 64 52"><rect x="3" y="3" width="58" height="36" rx="3" fill="none" stroke="currentColor" stroke-width="3"/><path d="M26 49h12M32 39v10" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></symbol>
+    <symbol id="ph-head" viewBox="0 0 64 56"><path d="M10 34a22 22 0 0 1 44 0" fill="none" stroke="currentColor" stroke-width="3"/><rect x="6" y="32" width="12" height="20" rx="4" fill="none" stroke="currentColor" stroke-width="3"/><rect x="46" y="32" width="12" height="20" rx="4" fill="none" stroke="currentColor" stroke-width="3"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="2" fill="none"/><path d="M16 16l4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M10 20.5a2 2 0 0 0 4 0" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+    <symbol id="i-ext" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-filter" viewBox="0 0 24 24"><path d="M4 6h16M7 12h10M10 18h4" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></symbol>
+    <symbol id="i-sort" viewBox="0 0 24 24"><path d="M7 5v14M4 16l3 3 3-3M17 19V5M14 8l3-3 3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+    <symbol id="i-right" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 5v13M6 12l6 6 6-6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+    <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 19V6M6 12l6-6 6 6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+    <symbol id="i-eq" viewBox="0 0 24 24"><path d="M5 9h14M5 15h14" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" fill="none"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 11v6M12 7.5v.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-touch" viewBox="0 0 24 24"><path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V11m0-1.5a1.5 1.5 0 0 1 3 0V12m0-1a1.5 1.5 0 0 1 3 0v4a6 6 0 0 1-6 6h-1a6 6 0 0 1-5-2.7L4 15.5a1.5 1.5 0 0 1 2.4-1.8L9 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-paw" viewBox="0 0 24 24"><circle cx="7" cy="9" r="2" fill="currentColor"/><circle cx="17" cy="9" r="2" fill="currentColor"/><circle cx="10" cy="5" r="2" fill="currentColor"/><circle cx="14" cy="5" r="2" fill="currentColor"/><path d="M12 11c-3 0-6 4-6 6.5S8 20 12 18.5 18 20 18 17.5 15 11 12 11z" fill="currentColor"/></symbol>
+    <symbol id="i-tg" viewBox="0 0 24 24"><path d="M21 4 3 11l6 2 2 6 3-4 5 4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="m9 13 8-6" stroke="currentColor" stroke-width="1.8"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5.5" width="18" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m4 7 8 6 8-6" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 7.5V12l3 2" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 19h16M5 15l4-5 4 3 6-7" stroke="currentColor" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-store" viewBox="0 0 24 24"><path d="M4 9.5 5.5 4h13L20 9.5M4 9.5h16M4 9.5V20h16V9.5M9.5 20v-5h5v5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+    <!-- Simbolul logo-ului: prețul (linie în trepte) coboară sub mediană (linia punctată) -->
+    <symbol id="logo-sym" viewBox="0 0 32 32">
+      <rect width="32" height="32" rx="8" fill="#D42B2B"/>
+      <path d="M5.5 14.5h21" stroke="#fff" stroke-width="1.6" stroke-dasharray="2.2 2.2" stroke-linecap="round" opacity=".7"/>
+      <path d="M5.5 9.5h6v3.5h5.5v9h9.5" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="26" cy="22" r="2.6" fill="#fff"/>
+    </symbol>
+  </defs>
+</svg>
+
+<template id="tpl-logo"><a class="logo-mark" href="#" aria-label="superieftin.ro — acasă"><svg class="sym" aria-hidden="true"><use href="#logo-sym"/></svg><span class="wm">superieftin<span class="ro">.ro</span></span></a></template>
+
+<div class="doc">
+  <div class="doc-top">
+    <div>
+      <h1>Direcția B — „Verdict întâi”</h1>
+      <p>Machetă superieftin.ro · Keepa + retail · date realiste, nu de producție · 4 oct. 2026</p>
+    </div>
+    <div class="seg" role="group" aria-label="Temă" id="themeSeg">
+      <button data-t="auto">Automat</button><button data-t="light">Luminos</button><button data-t="dark">Întunecat</button>
+    </div>
+  </div>
+  <nav class="doc-nav" aria-label="Ecrane">
+    <a href="#s-produs">1. Produs (mobil)</a><a href="#s-categorie">2. Categorie + Filtre</a><a href="#s-home">3. Homepage</a><a href="#s-meniu">4. Meniu</a><a href="#s-desktop">5. Produs (desktop)</a><a href="#s-logo">Logo</a><a href="#s-ds">Sistem de design</a>
+  </nav>
+
+  <!-- ===================================================== 1. PRODUS MOBIL -->
+  <section class="doc-sec" id="s-produs">
+    <h2>1. Pagina de produs — mobil</h2>
+    <p class="lead">Primul ecran răspunde la „Merită acum?”: verdictul în cuvinte + procent, prețul, magazinul și termometrul (minim · mediană · maxim pe 30 de zile). „Vezi oferta” stă fix jos. Derulează în cadru pentru oferte, grafic, alertă, detalii.</p>
+    <div class="demo-row">
+      <div class="phone"><div class="screen" id="prodScreen">
+        <div class="statusbar"><span>9:41</span><span>5G ▮▮▮</span></div>
+        <header class="sh"><div class="sh-row">
+          <button class="ibtn" aria-label="Meniu"><svg><use href="#i-menu"/></svg></button>
+          <div class="logo" data-logo></div>
+          <button class="ibtn" aria-label="Caută"><svg><use href="#i-search"/></svg></button>
+        </div></header>
+
+        <main class="pp">
+          <nav class="crumbs" aria-label="Breadcrumb"><a href="#">Telefoane &amp; Accesorii</a><span>›</span><a href="#">Telefoane mobile</a></nav>
+          <div class="pp-head">
+            <div class="thumb"><svg><use href="#ph-phone"/></svg></div>
+            <div><div class="brandk">Poco</div><h1>Telefon mobil Poco X8 Pro, 8GB RAM, 256GB, 5G, Black</h1></div>
+          </div>
+
+          <section class="vcard" data-vcard aria-label="Verdictul prețului"></section>
+
+          <section class="blk" id="oferte">
+            <h2>Prețuri în 4 magazine <small>verificat azi, 06:40</small></h2>
+            <div data-offers></div>
+          </section>
+
+          <section class="blk">
+            <h2>Istoricul prețului <small>de la 6 iul. 2026</small></h2>
+            <div class="ch-tabs" role="group" aria-label="Interval"><button aria-pressed="false" data-range="30">30 de zile</button><button aria-pressed="true" data-range="90">90 de zile</button></div>
+            <div class="chart" data-chart></div>
+            <div class="ch-hint"><svg width="16" height="16"><use href="#i-touch"/></svg>Atinge sau trage pe grafic ca să vezi prețul fiecărei zile.</div>
+            <div class="ch-legend"><span><i></i>Cel mai mic preț pe zi</span><span><i class="med"></i>Mediana 30 de zile</span><span><i class="zone"></i>Zona „reducere reală” (≥5% sub mediană)</span></div>
+          </section>
+
+          <section class="blk" data-alert>
+            <div class="ac-h"><svg class="ac-ic" aria-hidden="true"><use href="#i-bell"/></svg><div><h2>Alertă de preț</h2><p>Te anunțăm când oricare magazin ajunge la pragul tău sau sub el.</p></div></div>
+            <label class="ac-thr" for="thr-m"><span class="ac-lbl">Pragul tău<small data-alert-hint>propus: 1.938 lei</small></span><span class="ac-in"><input id="thr-m" data-alert-input type="text" inputmode="decimal" autocomplete="off" value="1.938" aria-describedby="thr-m-msg"><span>lei</span></span></label>
+            <p class="ac-msg" id="thr-m-msg" data-alert-msg aria-live="polite"></p>
+            <div class="ac-btns"><a class="btn btn-s btn-sm" href="#"><svg><use href="#i-tg"/></svg>Telegram</a><a class="btn btn-s btn-sm" href="#"><svg><use href="#i-mail"/></svg>Email</a></div>
+          </section>
+
+          <section class="blk">
+            <h2>Pe scurt despre preț</h2>
+            <ul class="ps" data-ps></ul>
+          </section>
+
+          <section class="blk">
+            <h2>Specificații</h2>
+            <table class="specs">
+              <tr><th>Memorie RAM</th><td>8 GB</td></tr>
+              <tr><th>Stocare</th><td>256 GB</td></tr>
+              <tr><th>Conectivitate</th><td>5G</td></tr>
+              <tr><th>Culoare</th><td>Black</td></tr>
+              <tr><th>Stare</th><td>Nou</td></tr>
+            </table>
+          </section>
+
+          <section class="blk" style="padding-bottom:14px">
+            <h2>Similare cu reducere reală</h2>
+            <div class="hscroll" data-cards="similar"></div>
+          </section>
+        </main>
+
+        <footer class="ft on-dark" data-footer></footer>
+
+        <div class="stickybar" data-sticky></div>
+      </div></div>
+
+      <div class="notes">
+        <h3>Simulează verdictul</h3>
+        <p style="margin:0">Același produs, cu alt preț azi. Cardul, termometrul, graficul și bara de jos se recalculează (mediana e calculată real din seria de 30 de zile).</p>
+        <div class="seg" role="group" aria-label="Simulare verdict" id="simSeg">
+          <button data-s="real" aria-pressed="true">Reducere reală</button><button data-s="norm" aria-pressed="false">Preț obișnuit</button><button data-s="high" aria-pressed="false">Peste obișnuit</button>
+        </div>
+        <h3>De ce așa</h3>
+        <ul>
+          <li><b>Verdictul e titlul ecranului</b>, nu o insignă mică: cuvânt + procent, mare, în culoarea stării. Sub el, prețul și magazinul.</li>
+          <li><b>Termometrul</b> arată pe aceeași bară minimul, mediana și maximul din 30 de zile + unde e prețul de azi. Zona hașurată roșie = pragul de 5% sub mediană; vizitatorul vede singur de ce e „reducere reală”.</li>
+          <li><b>Bara fixă jos</b>: preț + „Vezi oferta” (roșu, prin /go/) + clopoțel pentru alertă. Când prețul e peste obișnuit, clopoțelul e evidențiat (alerta e acțiunea logică).</li>
+          <li><b>Graficul</b> e în trepte (prețurile se schimbă în salturi, ca la Keepa), cu fereastra de 30 de zile, mediana punctată și zona de reducere; atingi și vezi prețul zilei.</li>
+          <li>Fereastra „de la 6 iul. 2026” urmează regula existentă (90 de zile doar dacă avem istoric).</li>
+          <li>Texte fără promisiuni: „Prețul de azi e cu 18% sub mediana pe 30 de zile”, nu „economisești”.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================== 2. CATEGORIE -->
+  <section class="doc-sec" id="s-categorie">
+    <h2>2. Pagina de categorie — mobil, cu panoul „Filtre” deschis</h2>
+    <p class="lead">Listă densă (idealo): o linie de verdict pe fiecare rând + un mini-termometru. Panoul „Filtre” e o foaie care urcă de jos, cu mărci multiple, comutator „Doar reduceri reale”, preț, stare (tag) și magazine.</p>
+    <div class="demo-row">
+      <div class="phone"><div class="screen" id="catScreen">
+        <div class="statusbar"><span>9:41</span><span>5G ▮▮▮</span></div>
+        <header class="sh"><div class="sh-row">
+          <button class="ibtn" aria-label="Meniu"><svg><use href="#i-menu"/></svg></button>
+          <div class="logo" data-logo></div>
+          <button class="ibtn" aria-label="Caută"><svg><use href="#i-search"/></svg></button>
+        </div></header>
+        <div class="cat-head">
+          <nav class="crumbs"><a href="#">Telefoane &amp; Accesorii</a><span>›</span></nav>
+          <h1>Telefoane mobile</h1>
+          <p class="num">1.284 de produse · <b style="color:var(--red-ink)">96 cu reducere reală azi</b></p>
+        </div>
+        <div class="toolbar">
+          <button class="tb-btn" data-open-sheet><svg><use href="#i-filter"/></svg>Filtre <span class="cnt">1</span></button>
+          <button class="tb-btn grow"><span>Sortare: cea mai mare reducere</span><svg><use href="#i-chev"/></svg></button>
+        </div>
+        <div class="chips">
+          <span class="chip on">Preț: 1.000 – 4.000 lei <svg><use href="#i-x"/></svg></span>
+          <span class="chip redon">Doar reduceri reale</span>
+          <span class="chip">Samsung</span><span class="chip">Apple</span><span class="chip">Xiaomi</span>
+        </div>
+        <div class="list-info"><span class="num">412 produse</span><span>Verificat azi, 06:40</span></div>
+        <div class="method"><svg><use href="#i-info"/></svg><span>„Reducere reală” = preț de azi cu cel puțin 5% sub mediana prețurilor din ultimele 30 de zile, nu față de „prețul vechi” afișat de magazin.</span></div>
+        <div data-rows></div>
+        <footer class="ft on-dark" data-footer></footer>
+
+        <div class="sheet-wrap open" id="sheet" role="dialog" aria-modal="true" aria-label="Filtre">
+          <div class="backdrop" data-close-sheet></div>
+          <div class="sheet">
+            <div class="sheet-grab"></div>
+            <div class="sheet-head"><h2>Filtre</h2><div><button class="btn btn-g">Resetează</button><button class="ibtn" aria-label="Închide" data-close-sheet><svg><use href="#i-x"/></svg></button></div></div>
+            <div class="sheet-body">
+              <div class="fgroup">
+                <label class="switch"><span class="tx">Doar reduceri reale<small>≥5% sub mediana pe 30 de zile · 96 de produse</small></span><input type="checkbox"><span class="tg"></span></label>
+              </div>
+              <div class="fgroup">
+                <h3>Marcă <small>2 selectate</small></h3>
+                <label class="cb"><input type="checkbox" checked><span class="box"></span><span class="lbl">Samsung</span><span class="c">212</span></label>
+                <label class="cb"><input type="checkbox" checked><span class="box"></span><span class="lbl">Xiaomi</span><span class="c">187</span></label>
+                <label class="cb"><input type="checkbox"><span class="box"></span><span class="lbl">Apple</span><span class="c">98</span></label>
+                <label class="cb"><input type="checkbox"><span class="box"></span><span class="lbl">Motorola</span><span class="c">76</span></label>
+                <label class="cb"><input type="checkbox"><span class="box"></span><span class="lbl">Poco</span><span class="c">41</span></label>
+                <button class="more">Arată toate cele 24 de mărci</button>
+              </div>
+              <div class="fgroup">
+                <h3>Preț (lei)</h3>
+                <div class="range"><div class="field num">1.000</div><span>–</span><div class="field num">4.000</div></div>
+              </div>
+              <div class="fgroup">
+                <h3>Stare</h3>
+                <div class="seg2"><span class="chip on">Nou</span><span class="chip">Refurbished</span><span class="chip">Second Hand</span></div>
+              </div>
+              <div class="fgroup" style="border-bottom:0">
+                <h3>Magazin</h3>
+                <label class="cb"><input type="checkbox"><span class="box"></span><span class="lbl">eMAG</span><span class="c">706</span></label>
+                <label class="cb"><input type="checkbox"><span class="box"></span><span class="lbl">evomag</span><span class="c">318</span></label>
+                <label class="cb"><input type="checkbox"><span class="box"></span><span class="lbl">ITGalaxy</span><span class="c">241</span></label>
+              </div>
+            </div>
+            <div class="sheet-foot"><button class="btn btn-p btn-block" data-close-sheet>Arată 214 produse</button></div>
+          </div>
+        </div>
+      </div></div>
+      <div class="notes">
+        <h3>Ce vezi</h3>
+        <ul>
+          <li>Butonul <b>Filtre</b> arată câte filtre sunt active; filtrele aplicate apar ca „chips” ce se pot șterge dintr-o atingere.</li>
+          <li>Rândul de produs: insigna de verdict, numele pe 2 rânduri, preț + mediană, magazinul cel mai ieftin și numărul de magazine, mini-termometrul (punctul = prețul de azi, liniuța = mediana).</li>
+          <li>Butonul din foaie numără rezultatele <i>înainte</i> de aplicare („Arată 214 produse”), ca să nu ajungi la o listă goală.</li>
+          <li>Pe desktop, aceleași grupuri stau în coloana din stânga (ce ați implementat deja), doar restilizate.</li>
+        </ul>
+        <p><button class="btn btn-s btn-sm" data-open-sheet>Deschide / închide panoul</button></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================== 3. HOMEPAGE -->
+  <section class="doc-sec" id="s-home">
+    <h2>3. Homepage — mobil</h2>
+    <p class="lead">Antetul cărbune continuă într-un „hero” care explică promisiunea în 2 rânduri, cu căutarea mare. Apoi legenda verdictelor, reducerile reale de azi, categoriile, ghidurile.</p>
+    <div class="demo-row">
+      <div class="phone"><div class="screen">
+        <div class="statusbar"><span>9:41</span><span>5G ▮▮▮</span></div>
+        <header class="sh"><div class="sh-row">
+          <button class="ibtn" aria-label="Meniu"><svg><use href="#i-menu"/></svg></button>
+          <div class="logo" data-logo></div>
+          <button class="ibtn" aria-label="Alertele mele"><svg><use href="#i-bell"/></svg></button>
+        </div></header>
+        <section class="hero">
+          <h1>Merită acum? <em>Vezi prețul față de ultimele 30 de zile.</em></h1>
+          <p>Comparăm prețul de azi cu mediana ultimelor 30 de zile. Reducere reală = cel puțin 5% sub ea.</p>
+          <div class="search"><svg><use href="#i-search"/></svg><span>Caută un produs, ex. „Galaxy A56”</span><b>Caută</b></div>
+          <div class="hero-stats num"><div><b>38.912</b>produse urmărite</div><div><b>7</b>magazine</div><div><b>1.406</b>reduceri reale azi</div></div>
+        </section>
+        <div class="how">
+          <div class="how-item"><span class="vb real"><svg><use href="#i-down"/></svg>Reducere reală</span><span>cu ≥5% sub mediana pe 30 de zile</span></div>
+          <div class="how-item"><span class="vb norm"><svg><use href="#i-eq"/></svg>Preț obișnuit</span><span>la ±5% de mediană</span></div>
+          <div class="how-item"><span class="vb high"><svg><use href="#i-up"/></svg>Peste obișnuit</span><span>cu peste 5% peste mediană</span></div>
+        </div>
+        <div class="sec-h"><h2>Reduceri reale azi</h2><a href="#">Toate ›</a></div>
+        <p class="sec-sub">Sortate după procent · prețuri verificate azi, 06:40</p>
+        <div class="grid2" data-cards="home"></div>
+        <div class="sec-h"><h2>Categorii</h2></div>
+        <div class="cats">
+          <a class="cat" href="#"><span class="ci"><svg><use href="#ph-phone"/></svg></span><span>Telefoane mobile<small class="num">1.284 produse</small></span></a>
+          <a class="cat" href="#"><span class="ci"><svg><use href="#ph-laptop"/></svg></span><span>Laptopuri<small class="num">2.071 produse</small></span></a>
+          <a class="cat" href="#"><span class="ci"><svg><use href="#ph-tv"/></svg></span><span>Televizoare<small class="num">864 produse</small></span></a>
+          <a class="cat" href="#"><span class="ci"><svg><use href="#ph-monitor"/></svg></span><span>Monitoare<small class="num">1.122 produse</small></span></a>
+          <a class="cat" href="#"><span class="ci"><svg><use href="#ph-head"/></svg></span><span>Căști<small class="num">540 produse</small></span></a>
+          <a class="cat" href="#"><span class="ci"><svg><use href="#i-paw"/></svg></span><span>Hrană câini<small class="num">3.410 produse</small></span></a>
+        </div>
+        <div class="sec-h"><h2>Ghiduri</h2><a href="#">Toate ›</a></div>
+        <a class="guide" href="#"><span class="gi"><svg width="26" height="26"><use href="#ph-tv"/></svg></span><span><b>Cum alegi un televizor 4K în 2026: QLED, Mini LED sau OLED</b><span>Actualizat 2 oct. 2026 · 8 min</span></span></a>
+        <a class="guide" href="#"><span class="gi"><svg width="22" height="26"><use href="#ph-phone"/></svg></span><span><b>Telefoane 5G sub 2.000 de lei: ce contează la cumpărare</b><span>Actualizat 29 sep. 2026 · 6 min</span></span></a>
+        <footer class="ft on-dark" data-footer></footer>
+      </div></div>
+      <div class="notes">
+        <h3>Ce vezi</h3>
+        <ul>
+          <li>Titlul pune întrebarea vizitatorului („Merită acum?”) și explică metoda într-o frază. Cifrele din hero vin live din DB (aici: exemple).</li>
+          <li>Legenda celor trei verdicte apare o singură dată, sus — după ea, insignele de pe carduri se înțeleg fără text.</li>
+          <li>Cardul de produs: insigna cu procent peste imagine, prețul mare, mediana dedesubt (nu „preț vechi” tăiat — nu e prețul magazinului), mini-termometru și magazinul.</li>
+          <li>Fără bară de navigare tip aplicație jos.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================== 4. MENIU -->
+  <section class="doc-sec" id="s-meniu">
+    <h2>4. Antet cu meniul deschis — mobil</h2>
+    <p class="lead">Meniu pe 2 niveluri, condus de arborele de categorii: părinții se deschid ca acordeon, subcategoriile au numărul de produse. „Reduceri reale azi” e scurtătura principală.</p>
+    <div class="demo-row">
+      <div class="phone"><div class="screen">
+        <div class="statusbar"><span>9:41</span><span>5G ▮▮▮</span></div>
+        <header class="sh"><div class="sh-row">
+          <button class="ibtn" aria-label="Închide meniul"><svg><use href="#i-x"/></svg></button>
+          <div class="logo" data-logo></div>
+          <span style="width:44px"></span>
+        </div></header>
+        <nav class="menu" aria-label="Meniu principal">
+          <div class="menu-search"><div class="search"><svg><use href="#i-search"/></svg><span>Caută în 38.912 produse</span></div></div>
+          <a class="m-hl" href="#"><span>Reduceri reale azi<small class="num">1.406 produse, sortate după procent</small></span><svg><use href="#i-right"/></svg></a>
+          <div class="acc" data-open="true">
+            <button aria-expanded="true"><span class="ci"><svg><use href="#ph-phone"/></svg></span>Telefoane &amp; Accesorii<svg class="chev"><use href="#i-chev"/></svg></button>
+            <div class="acc-sub">
+              <a href="#">Telefoane mobile <span class="num">1.284</span></a>
+              <a href="#">Smartwatch &amp; brățări <span class="num">312</span></a>
+              <a href="#">Căști <span class="num">540</span></a>
+              <a href="#">Tablete <span class="num">268</span></a>
+              <a href="#">Accesorii telefoane <span class="num">2.110</span></a>
+              <a href="#" class="all">Tot din Telefoane &amp; Accesorii <span>›</span></a>
+            </div>
+          </div>
+          <div class="acc" data-open="false">
+            <button aria-expanded="false"><span class="ci"><svg><use href="#ph-laptop"/></svg></span>Laptopuri &amp; Calculatoare<svg class="chev"><use href="#i-chev"/></svg></button>
+            <div class="acc-sub"><a href="#">Laptopuri <span>2.071</span></a><a href="#">Monitoare <span>1.122</span></a><a href="#">Desktop PC <span>904</span></a><a href="#">Componente <span>3.318</span></a></div>
+          </div>
+          <div class="acc" data-open="false">
+            <button aria-expanded="false"><span class="ci"><svg><use href="#ph-tv"/></svg></span>TV &amp; Audio<svg class="chev"><use href="#i-chev"/></svg></button>
+            <div class="acc-sub"><a href="#">Televizoare <span>864</span></a><a href="#">Soundbar <span>201</span></a><a href="#">Boxe portabile <span>377</span></a></div>
+          </div>
+          <div class="acc" data-open="false">
+            <button aria-expanded="false"><span class="ci"><svg><use href="#i-paw"/></svg></span>Animale de companie<svg class="chev"><use href="#i-chev"/></svg></button>
+            <div class="acc-sub"><a href="#">Hrană câini <span>3.410</span></a><a href="#">Hrană pisici <span>2.986</span></a><a href="#">Nisip pisici <span>412</span></a><a href="#">Accesorii <span>1.454</span></a></div>
+          </div>
+          <div class="m-links"><a href="#">Ghiduri de cumpărare</a><a href="#">Cum calculăm reducerea reală</a><a href="#">Alertele mele</a><a href="#">Despre noi</a></div>
+          <div class="m-tags">Filtre transversale (tag-uri):<br><span class="chip">Refurbished</span><span class="chip">Second Hand</span></div>
+        </nav>
+      </div></div>
+      <div class="notes">
+        <h3>Ce vezi</h3>
+        <ul>
+          <li>Meniul acoperă tot ecranul, cu căutarea în capul lui; antetul rămâne cărbune, deci tranziția e calmă.</li>
+          <li>Acordeonul arată un singur părinte deschis odată (atinge părinții ca să testezi).</li>
+          <li>„Refurbished” și „Second Hand” sunt tag-uri, nu categorii — apar separat, ca filtre transversale.</li>
+          <li>Pe desktop: aceleași categorii într-o bară sub antet, cu meniu derulant pe 2 coloane.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================== 5. DESKTOP -->
+  <section class="doc-sec" id="s-desktop">
+    <h2>5. Pagina de produs — desktop (scalată)</h2>
+    <p class="lead">Trei coloane: imagine · verdict cu termometru · oferte (lipicioase). Sub ele, graficul pe toată lățimea, cu faptele de preț alături.</p>
+    <div class="desk-wrap" id="deskWrap"><div class="desk" id="desk">
+      <header class="dh">
+        <div class="dh-row">
+          <div data-logo></div>
+          <div class="search"><svg><use href="#i-search"/></svg><span>Caută un produs, ex. „Galaxy A56”</span><b>Caută</b></div>
+          <div class="dh-links"><a href="#">Ghiduri</a><a href="#">Cum calculăm</a><a href="#">Alertele mele</a></div>
+        </div>
+        <nav class="dh-nav">
+          <a href="#" class="hl">Reduceri reale azi</a>
+          <a href="#" class="cur">Telefoane &amp; Accesorii <svg><use href="#i-chev"/></svg></a>
+          <a href="#">Laptopuri &amp; Calculatoare <svg><use href="#i-chev"/></svg></a>
+          <a href="#">TV &amp; Audio <svg><use href="#i-chev"/></svg></a>
+          <a href="#">Animale de companie <svg><use href="#i-chev"/></svg></a>
+        </nav>
+      </header>
+      <main class="dmain">
+        <nav class="crumbs"><a href="#">Acasă</a><span>›</span><a href="#">Telefoane &amp; Accesorii</a><span>›</span><a href="#">Telefoane mobile</a><span>›</span><span>Poco X8 Pro</span></nav>
+        <div class="dtop">
+          <div>
+            <div class="dimg"><svg><use href="#ph-phone"/></svg></div>
+            <table class="specs" style="margin-top:14px">
+              <tr><th>Memorie RAM</th><td>8 GB</td></tr><tr><th>Stocare</th><td>256 GB</td></tr><tr><th>Conectivitate</th><td>5G</td></tr><tr><th>Culoare</th><td>Black</td></tr>
+            </table>
+          </div>
+          <div>
+            <div class="dtitle"><div class="brandk">Poco</div><h1>Telefon mobil Poco X8 Pro, 8GB RAM, 256GB, 5G, Black</h1></div>
+            <div style="height:14px"></div>
+            <section class="vcard" data-vcard="desk"></section>
+          </div>
+          <aside class="doffers">
+            <h2 style="font-size:19px;font-weight:850">Prețuri în 4 magazine</h2>
+            <p style="margin:2px 0 6px;font-size:12.5px;color:var(--ink-3)">Verificat azi, 06:40</p>
+            <div data-offers="desk"></div>
+            <div data-alert style="border-top:1px solid var(--line);margin-top:6px;padding-top:14px">
+            <div class="ac-h"><svg class="ac-ic" aria-hidden="true"><use href="#i-bell"/></svg><div><h2>Alertă de preț</h2><p>Te anunțăm când oricare magazin ajunge la pragul tău sau sub el.</p></div></div>
+            <label class="ac-thr" for="thr-d"><span class="ac-lbl">Pragul tău<small data-alert-hint>propus: 1.938 lei</small></span><span class="ac-in"><input id="thr-d" data-alert-input type="text" inputmode="decimal" autocomplete="off" value="1.938" aria-describedby="thr-d-msg"><span>lei</span></span></label>
+            <p class="ac-msg" id="thr-d-msg" data-alert-msg aria-live="polite"></p>
+            <div class="ac-btns"><a class="btn btn-s btn-sm" href="#"><svg><use href="#i-tg"/></svg>Telegram</a><a class="btn btn-s btn-sm" href="#"><svg><use href="#i-mail"/></svg>Email</a></div>
+            </div>
+          </aside>
+        </div>
+        <div class="dgrid2">
+          <section class="blk" style="margin:0;padding:18px 20px">
+            <h2 style="font-size:20px">Istoricul prețului <small>de la 6 iul. 2026 · cel mai mic preț pe zi, toate magazinele</small></h2>
+            <div class="ch-tabs" role="group"><button aria-pressed="false" data-range="30">30 de zile</button><button aria-pressed="true" data-range="90">90 de zile</button></div>
+            <div class="chart" data-chart="desk"></div>
+            <div class="ch-legend"><span><i></i>Cel mai mic preț pe zi</span><span><i class="med"></i>Mediana 30 de zile</span><span><i class="zone"></i>Zona „reducere reală”</span></div>
+          </section>
+          <section class="blk" style="margin:0;padding:18px 20px">
+            <h2 style="font-size:20px">Pe scurt despre preț</h2>
+            <ul class="ps" data-ps></ul>
+          </section>
+        </div>
+      </main>
+      <footer class="ft on-dark" style="padding:24px 32px" data-footer="desk"></footer>
+    </div></div>
+  </section>
+
+  <!-- ===================================================== LOGO -->
+  <section class="doc-sec" id="s-logo">
+    <h2>Logo propus</h2>
+    <p class="lead">Simbolul e chiar ideea site-ului: o linie de preț în trepte care coboară sub mediană (linia punctată). Wordmark în Archivo semi-condensat, „.ro” în roșu. Funcționează la 16 px (favicon) și monocrom.</p>
+    <div class="logo-big">
+      <div class="logo-tile lt"><div data-logo></div><span class="cap">Pe fundal deschis</span></div>
+      <div class="logo-tile dk on-dark"><div data-logo></div><span class="cap">Pe antetul cărbune</span></div>
+      <div class="logo-tile lt">
+        <div class="favs">
+          <svg width="64" height="64" aria-hidden="true"><use href="#logo-sym"/></svg>
+          <svg width="32" height="32" aria-hidden="true"><use href="#logo-sym"/></svg>
+          <svg width="16" height="16" aria-hidden="true"><use href="#logo-sym"/></svg>
+          <svg width="48" height="48" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#14161A"/><path d="M5.5 14.5h21" stroke="#fff" stroke-width="1.6" stroke-dasharray="2.2 2.2" stroke-linecap="round" opacity=".7"/><path d="M5.5 9.5h6v3.5h5.5v9h9.5" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="26" cy="22" r="2.6" fill="#fff"/></svg>
+        </div>
+        <span class="cap">Simbol: 64 / 32 / 16 px + variantă monocromă</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================== SISTEM DE DESIGN -->
+  <section class="doc-sec" id="s-ds">
+    <h2>Sistem de design</h2>
+    <p class="lead">Tokenii de mai jos sunt variabile CSS pe <code>:root</code> (vezi sursa). Contrastul e calculat live, în tema curentă — comută tema ca să verifici și modul întunecat.</p>
+    <div class="ds">
+      <div class="ds-card">
+        <h3>Paletă</h3>
+        <div class="sw-grid" id="swatches"></div>
+      </div>
+      <div class="ds-card">
+        <h3>Contrast (WCAG 2.1 AA: ≥4,5 text normal · ≥3 text mare / elemente grafice)</h3>
+        <div style="overflow-x:auto"><table class="ctr" id="contrast"></table></div>
+      </div>
+      <div class="ds-card">
+        <h3>Fonturi și scară tipografică</h3>
+        <p style="margin:0 0 10px;color:var(--ink-2);font-size:14px"><b>Archivo</b> (variabil, lățime 82–92%, greutate 700–900) pentru titluri, verdicte și prețuri — condensat, „de etichetă de preț”, cu cifre tabulare. <b>Inter</b> (400–700) pentru text și interfață. Ambele au ă, â, î, ș, ț corecte (virgulă dedesubt).</p>
+        <div class="ts-row"><code>Verdict · 30/32 Archivo 900 84%</code><div style="font-family:var(--f-display);font-stretch:84%;font-weight:900;font-size:30px;line-height:1.05;color:var(--red-ink)">Reducere reală −18%</div></div>
+        <div class="ts-row"><code>Preț XL · 32 Archivo 850</code><div class="num" style="font-family:var(--f-display);font-stretch:88%;font-weight:850;font-size:32px;line-height:1">2.040,00 <span style="font-size:17px">lei</span></div></div>
+        <div class="ts-row"><code>H1 hero · 31/32 Archivo 900</code><div style="font-family:var(--f-display);font-stretch:82%;font-weight:900;font-size:31px;line-height:1.04">Merită acum?</div></div>
+        <div class="ts-row"><code>H1 pagină · 19–25 Archivo 800</code><div style="font-family:var(--f-display);font-stretch:88%;font-weight:800;font-size:22px;line-height:1.2">Telefoane mobile</div></div>
+        <div class="ts-row"><code>H2 · 18/24 Archivo 800</code><div style="font-family:var(--f-display);font-stretch:88%;font-weight:800;font-size:18px">Prețuri în 4 magazine</div></div>
+        <div class="ts-row"><code>Text · 15/22 Inter 400</code><div style="font-size:15px">Comparăm prețul de azi cu mediana prețurilor din ultimele 30 de zile.</div></div>
+        <div class="ts-row"><code>Mic · 12,5/18 Inter 500</code><div style="font-size:12.5px;color:var(--ink-3)">Verificat azi, 06:40 · mediana 2.479,99 lei</div></div>
+        <div class="ts-row"><code>Etichetă · 12 Inter 700 majuscule</code><div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)">Merită acum?</div></div>
+      </div>
+      <div class="ds-card">
+        <h3>Insigna de verdict</h3>
+        <div class="flex-w">
+          <span class="vb real"><svg><use href="#i-down"/></svg>Reducere reală −18%</span>
+          <span class="vb norm"><svg><use href="#i-eq"/></svg>Preț obișnuit</span>
+          <span class="vb high"><svg><use href="#i-up"/></svg>Peste obișnuit +7%</span>
+          <span class="vb nod">Monitorizăm prețul</span>
+        </div>
+        <div class="flex-w" style="margin-top:10px">
+          <span class="vb lg real"><svg><use href="#i-down"/></svg>Reducere reală −18%</span>
+          <span class="vb lg norm"><svg><use href="#i-eq"/></svg>Preț obișnuit</span>
+          <span class="vb lg high"><svg><use href="#i-up"/></svg>Peste obișnuit +7%</span>
+        </div>
+        <p style="font-size:13px;color:var(--ink-3);margin:10px 0 0">Formă + săgeată + cuvânt, nu doar culoare (daltonism). Roșul plin e rezervat reducerii reale și butonului principal. Praguri: <code>lib/discount.ts</code> (&lt;0,95 × mediană / ≤1,05 / &gt;1,05).</p>
+      </div>
+      <div class="ds-card">
+        <h3>Butoane</h3>
+        <div class="flex-w">
+          <a class="btn btn-p" href="#">Vezi oferta <svg><use href="#i-ext"/></svg></a>
+          <button class="btn btn-s"><svg><use href="#i-bell"/></svg>Alertă de preț</button>
+          <button class="btn btn-p btn-sm">Vezi oferta</button>
+          <button class="btn btn-s btn-sm">Abonează-te</button>
+          <button class="btn btn-g">Resetează</button>
+          <button class="sb-bell" aria-label="Alertă"><svg><use href="#i-bell"/></svg></button>
+        </div>
+        <p style="font-size:13px;color:var(--ink-3);margin:10px 0 0">Înălțime minimă 48 px (40 px varianta mică, doar pe desktop sau în liste). Un singur buton roșu pe ecran: „Vezi oferta”.</p>
+      </div>
+      <div class="ds-card">
+        <h3>Carduri</h3>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,180px));gap:12px" data-cards="ds"></div>
+      </div>
+      <div class="ds-card">
+        <h3>Spațieri și raze</h3>
+        <div class="sp">
+          <div><i style="width:4px;height:4px"></i>4</div><div><i style="width:8px;height:8px"></i>8</div><div><i style="width:12px;height:12px"></i>12</div><div><i style="width:16px;height:16px"></i>16</div><div><i style="width:24px;height:24px"></i>24</div><div><i style="width:32px;height:32px"></i>32</div><div><i style="width:48px;height:48px"></i>48</div>
+        </div>
+        <p style="font-size:13px;color:var(--ink-3);margin:12px 0 0">Scară de 4 px. Margini laterale mobil 14 px; între blocuri 14 px; în interiorul cardurilor 14–16 px. Raze: 6 (insigne) · 10–12 (butoane, câmpuri) · 16 (carduri) · 20 (foaia de filtre). Umbre discrete în luminos, înlocuite de contrast de suprafață în întunecat.</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+/* ============================== utilitare ============================== */
+function fmtNum(n){ // 2040 -> "2.040,00" (format românesc, grupare și la 4 cifre)
+  var s=(Math.round(n*100)/100).toFixed(2).split('.');
+  return s[0].replace(/\B(?=(\d{3})+(?!\d))/g,'.')+','+s[1];
+}
+function lei(n){return fmtNum(n)+' lei'}
+function pctInt(p){return Math.round(Math.abs(p))}
+var MONTHS=['ian.','feb.','mar.','apr.','mai','iun.','iul.','aug.','sep.','oct.','nov.','dec.'];
+var TODAY=new Date(2026,9,4);
+function dayDate(i,total){var d=new Date(TODAY);d.setDate(d.getDate()-(total-1-i));return d}
+function fmtDate(d){return d.getDate()+' '+MONTHS[d.getMonth()]}
+function median(a){var s=a.slice().sort(function(x,y){return x-y});var m=s.length>>1;return s.length%2?s[m]:(s[m-1]+s[m])/2}
+
+/* Logo, subsol */
+document.querySelectorAll('[data-logo]').forEach(function(el){el.appendChild(document.getElementById('tpl-logo').content.cloneNode(true))});
+var FOOT='<div data-logo2></div><p>Comparăm prețurile din 7 magazine online și arătăm dacă prețul de azi e o reducere reală față de mediana ultimelor 30 de zile.</p><div class="links"><a href="#">Despre noi</a><a href="#">Cum calculăm</a><a href="#">Contact</a><a href="#">Ghiduri</a><a href="#">Confidențialitate</a><a href="#">Termeni</a><a href="#">Cookies</a><a href="#">Alertele mele</a></div><button>Setări cookies</button><p>Unele linkuri sunt de afiliere: primim un comision de la magazin dacă cumperi prin ele. Prețurile pot diferi pe site-ul magazinului.</p><p>© 2026 superieftin.ro</p>';
+document.querySelectorAll('[data-footer]').forEach(function(el){el.innerHTML=FOOT;el.querySelector('[data-logo2]').appendChild(document.getElementById('tpl-logo').content.cloneNode(true))});
+
+/* ============================== date produs ============================== */
+// Seria: cel mai mic preț pe zi, 90 de zile (6 iul. – 4 oct. 2026). Ultimele 30 de zile = fereastra medianei.
+function buildSeries(todayPrice){
+  var s=[],i;
+  for(i=0;i<90;i++){
+    var p;
+    if(i<21)p=2599.99; else if(i<36)p=2549.99; else if(i<45)p=2499.99; else if(i<53)p=2579.99; else if(i<60)p=2529.99;
+    else if(i<70)p=2499.99; else if(i<76)p=2449.99; else if(i<81)p=2399.00; else if(i<87)p=2479.99; else p=todayPrice;
+    s.push(p);
+  }
+  return s;
+}
+var SCEN={real:2040.00,norm:2449.99,high:2649.99};
+var SHOPS=[{n:'eMAG',c:'#C4161C',a:'eM'},{n:'evomag',c:'#E5781E',a:'ev'},{n:'ITGalaxy',c:'#1F5FBF',a:'IT'},{n:'Vexio',c:'#2A8C4A',a:'Vx'}];
+var OFFSETS=[0,89.99,159.00,209.90];
+
+function model(state){
+  var series=buildSeries(SCEN[state]);
+  var w=series.slice(60);
+  var today=series[89], med=median(w);
+  var ratio=today/med, pct=(1-ratio)*100;
+  var verdict=ratio<0.95?'real':(ratio<=1.05?'norm':'high');
+  return {series:series,today:today,median:med,min30:Math.min.apply(null,w),max30:Math.max.apply(null,w),pct:pct,verdict:verdict,
+    alert:Math.floor(Math.min(today,med)*0.95)};
+}
+
+/* ============================== cardul de verdict ============================== */
+function verdictCard(m,wide){
+  var V=m.verdict, p=pctInt(m.pct);
+  var word = V==='real'?'Reducere reală':V==='norm'?'Preț obișnuit':'Peste prețul obișnuit';
+  var pctTxt = V==='real'?'−'+p+'%':V==='high'?'+'+p+'%':(m.pct>=0?'−':'+')+p+'%';
+  var expl = V==='real' ? 'Prețul de azi e cu <b>'+p+'% sub mediana</b> pe 30 de zile ('+lei(m.median)+').'
+          : V==='norm' ? 'Prețul de azi e la <b>'+p+'% de mediana</b> pe 30 de zile ('+lei(m.median)+'). Nu e o reducere reală.'
+          : 'Prețul de azi e cu <b>'+p+'% peste mediana</b> pe 30 de zile ('+lei(m.median)+'). Setează o alertă ca să afli când scade.';
+  // domeniul termometrului: min..max pe 30 de zile, cu puțin spațiu
+  var lo=m.min30, hi=m.max30, pad=(hi-lo)*0.08||50; lo-=pad; hi+=pad;
+  function x(v){return Math.max(0,Math.min(100,(v-lo)/(hi-lo)*100))}
+  var zr=x(m.median*0.95), zh=x(m.median*1.05);
+  var flagX=Math.max(14,Math.min(86,x(m.today)));
+  return '<div class="v-'+V+'"><span class="v-strip"></span>'+
+   '<div class="vcard-top"><div class="q">Merită acum? <i>verdictul de azi</i></div>'+
+   '<div class="verdict"><span class="word">'+word+'</span><span class="pct num">'+pctTxt+'</span></div>'+
+   '<p class="vexpl">'+expl+'</p>'+
+   '<div class="pricebox"><div><div class="big-price num">'+fmtNum(m.today)+'<small>lei</small></div>'+
+   '<div class="at">la <span class="shop"><i style="background:#C4161C">eM</i>eMAG</span> · cel mai mic din 4 magazine</div></div></div></div>'+
+   '<div class="thermo" aria-label="Prețul de azi față de ultimele 30 de zile">'+
+     '<div class="th-track">'+
+       '<span class="th-zone z-real" style="left:0;width:'+zr+'%"></span>'+
+       '<span class="th-zone z-high" style="left:'+zh+'%;right:0"></span>'+
+       '<span class="th-med" style="left:'+x(m.median)+'%"></span>'+
+       '<span class="th-pin" style="left:'+x(m.today)+'%"></span>'+
+       '<span class="th-flag num" style="left:'+flagX+'%">Azi · '+lei(m.today)+'</span>'+
+     '</div>'+
+     '<div class="th-legend num"><div>Minim 30 z<b>'+lei(m.min30)+'</b></div><div>Mediana<b>'+lei(m.median)+'</b></div><div>Maxim 30 z<b>'+lei(m.max30)+'</b></div></div>'+
+     '<div class="th-key"><span><i style="background:var(--red-zone);box-shadow:inset 0 0 0 1px var(--red-ink)"></i>≥5% sub mediană = reducere reală</span><span><i style="background:var(--amber-tint);box-shadow:inset 0 0 0 1px var(--amber)"></i>peste +5%</span></div>'+
+   '</div>'+
+   '<div class="vcard-foot"><span>Verificat azi, 06:40</span><a href="#">Cum calculăm?</a></div></div>';
+}
+
+function offersHTML(m){
+  var h='';
+  SHOPS.forEach(function(s,i){
+    var p=m.today+OFFSETS[i], d=(p/m.median-1)*100, cls=d<=-5?'dn':(d>5?'up':'eq');
+    var dTxt=(d<0?'−':'+')+pctInt(d)+'% față de mediană';
+    h+='<div class="offer'+(i===0?' best':'')+'">'+
+      '<div><div class="o-name"><span class="shop"><i style="background:'+s.c+'">'+s.a+'</i>'+s.n+'</span></div><div class="o-meta">'+(i===0?'<span class="tag-best">Cel mai mic preț</span> · ':'')+'în stoc</div></div>'+
+      '<div><div class="o-price num">'+lei(p)+'</div><div class="delta num '+cls+'" style="text-align:right">'+dTxt+'</div></div>'+
+      '<div class="o-act"><span class="o-meta">Preț pe site-ul magazinului</span><a class="btn '+(i===0?'btn-p':'btn-s')+' btn-sm" href="#">Vezi oferta <svg><use href="#i-ext"/></svg></a></div></div>';
+  });
+  return h;
+}
+function factsHTML(m){
+  return '<div><span>Preț azi</span><b class="num">'+lei(m.today)+'</b></div><div><span>Mediana 30 de zile</span><b class="num">'+lei(m.median)+'</b></div>'+
+         '<div><span>Minim 30 de zile</span><b class="num">'+lei(m.min30)+'</b></div><div><span>Maxim 30 de zile</span><b class="num">'+lei(m.max30)+'</b></div>';
+}
+function summary(m){
+  var low90=Math.min.apply(null,m.series);
+  var s='De la 6 iulie 2026, de când urmărim produsul, prețul a variat între '+lei(low90)+' și '+lei(Math.max.apply(null,m.series))+'. ';
+  if(m.today<=low90) s+='Prețul de azi e cel mai mic din această perioadă.';
+  else s+='Cel mai mic preț din perioadă: '+lei(low90)+'.';
+  return s;
+}
+function stickyHTML(m){
+  return '<div class="sb-price"><b class="num">'+lei(m.today)+'</b><span>eMAG · '+(m.verdict==='real'?'<span style="color:var(--red-ink);font-weight:700">−'+pctInt(m.pct)+'% vs. mediană</span>':m.verdict==='high'?'<span style="color:var(--amber-ink);font-weight:700">+'+pctInt(m.pct)+'% vs. mediană</span>':'preț obișnuit')+'</span></div>'+
+    '<button class="sb-bell'+(m.verdict==='high'?' hot':'')+'" aria-label="Alertă de preț"><svg><use href="#i-bell"/></svg></button>'+
+    '<a class="btn btn-p" href="#" style="padding:0 18px">Vezi oferta <svg><use href="#i-ext"/></svg></a>';
+}
+
+/* ============================== graficul ============================== */
+function Chart(host,wide){
+  this.host=host; this.wide=wide; this.range=90;
+  this.W=wide?760:360; this.H=wide?260:210;
+  host.innerHTML='<svg role="img" aria-label="Istoricul prețului"></svg><div class="ch-tip" style="opacity:0"></div>';
+  this.svg=host.querySelector('svg'); this.tip=host.querySelector('.ch-tip');
+  var self=this;
+  function move(e){self.hover(e.clientX)}
+  host.addEventListener('pointermove',move);
+  host.addEventListener('pointerdown',move);
+  host.addEventListener('pointerleave',function(){self.hover(null)});
+}
+Chart.prototype.set=function(m){this.m=m;this.draw()};
+Chart.prototype.draw=function(){
+  var m=this.m, W=this.W, H=this.H, padL=4, padR=this.wide?92:70, padT=40, padB=24;
+  var data=m.series.slice(90-this.range), n=data.length;
+  var lo=Math.min.apply(null,data.concat([m.median*0.95])), hi=Math.max.apply(null,data);
+  var span=hi-lo; lo-=span*0.12; hi+=span*0.1;
+  var iw=W-padL-padR, ih=H-padT-padB;
+  function X(i){return padL+i/(n-1)*iw}
+  function Y(v){return padT+(1-(v-lo)/(hi-lo))*ih}
+  this.X=X; this.Y=Y; this.data=data; this.padL=padL; this.iw=iw;
+  var d='M'+X(0)+','+Y(data[0]);
+  for(var i=1;i<n;i++){d+='H'+X(i)+'V'+Y(data[i])}
+  var area=d+'V'+(padT+ih)+'H'+X(0)+'Z';
+  var w0=X(Math.max(0,n-30)), yMed=Y(m.median), yThr=Y(m.median*0.95);
+  var col=m.verdict==='real'?'var(--red)':m.verdict==='high'?'var(--amber)':'var(--chart-line)';
+  var s='';
+  // grila
+  [hi- (hi-lo)*0.1, (hi+lo)/2, lo+(hi-lo)*0.1].forEach(function(v){s+='<line x1="'+padL+'" x2="'+(padL+iw)+'" y1="'+Y(v)+'" y2="'+Y(v)+'" stroke="var(--line)" stroke-width="1"/>'});
+  // fereastra de 30 de zile + zona de reducere reală
+  if(this.range>30) s+='<rect x="'+w0+'" y="'+padT+'" width="'+(padL+iw-w0)+'" height="'+ih+'" fill="var(--surface-2)" opacity=".7"/>'+
+     '<text x="'+(w0+4)+'" y="'+(padT-6)+'" font-size="10.5" fill="var(--ink-3)" font-family="Inter">ultimele 30 de zile</text>';
+  s+='<rect x="'+w0+'" y="'+yThr+'" width="'+(padL+iw-w0)+'" height="'+(padT+ih-yThr)+'" fill="var(--red-zone)"/>';
+  s+='<line x1="'+w0+'" x2="'+(padL+iw)+'" y1="'+yThr+'" y2="'+yThr+'" stroke="var(--red-ink)" stroke-width="1" stroke-dasharray="1 3" opacity=".8"/>';
+  // aria + linia
+  s+='<path d="'+area+'" fill="var(--chart-area)"/>';
+  s+='<path d="'+d+'" fill="none" stroke="var(--chart-line)" stroke-width="2.2" stroke-linejoin="round"/>';
+  // mediana
+  s+='<line x1="'+w0+'" x2="'+(padL+iw)+'" y1="'+yMed+'" y2="'+yMed+'" stroke="var(--ink-2)" stroke-width="1.6" stroke-dasharray="5 4"/>';
+  // etichete dreapta
+  var rx=padL+iw+6;
+  s+='<text x="'+rx+'" y="'+(yMed-2)+'" font-size="10.5" fill="var(--ink-3)" font-family="Inter">mediana</text><text x="'+rx+'" y="'+(yMed+11)+'" font-size="11.5" font-weight="700" fill="var(--ink)" font-family="Inter">'+fmtNum(m.median)+'</text>';
+  var yT=Y(m.today), ty=Math.abs(yT-yMed)<26?(yT>yMed?yMed+30:yMed-22):yT+4;
+  s+='<text x="'+rx+'" y="'+ty+'" font-size="11.5" font-weight="800" fill="'+(m.verdict==='norm'?'var(--ink)':m.verdict==='real'?'var(--red-ink)':'var(--amber-ink)')+'" font-family="Inter">azi '+fmtNum(m.today)+'</text>';
+  // punctul de azi
+  s+='<circle cx="'+X(n-1)+'" cy="'+yT+'" r="9" fill="'+col+'" opacity=".2"/><circle cx="'+X(n-1)+'" cy="'+yT+'" r="4.5" fill="'+col+'" stroke="var(--surface)" stroke-width="2"/>';
+  // axa x
+  var ticks=this.range===90?[0,30,60,89]:[0,10,20,29];
+  ticks.forEach(function(t,k){var anchor=k===0?'start':k===ticks.length-1?'end':'middle';s+='<text x="'+X(t)+'" y="'+(H-6)+'" font-size="10.5" fill="var(--ink-3)" text-anchor="'+anchor+'" font-family="Inter">'+(t===n-1?'azi':fmtDate(dayDate(t,n)))+'</text>'});
+  // cursor (ascuns)
+  s+='<g class="cur" style="display:none"><line y1="'+padT+'" y2="'+(padT+ih)+'" stroke="var(--ink)" stroke-width="1"/><circle r="5" fill="var(--surface)" stroke="var(--ink)" stroke-width="2.5"/></g>';
+  this.svg.setAttribute('viewBox','0 0 '+W+' '+H);
+  this.svg.innerHTML=s;
+  this.cur=this.svg.querySelector('.cur');
+  this.tip.style.opacity=0;
+};
+Chart.prototype.hover=function(clientX){
+  if(clientX==null){this.cur.style.display='none';this.tip.style.opacity=0;return}
+  var r=this.svg.getBoundingClientRect();
+  var vx=(clientX-r.left)/r.width*this.W;
+  var n=this.data.length, i=Math.round((vx-this.padL)/this.iw*(n-1)); i=Math.max(0,Math.min(n-1,i));
+  var v=this.data[i], cx=this.X(i), cy=this.Y(v);
+  this.cur.style.display=''; this.cur.querySelector('line').setAttribute('x1',cx); this.cur.querySelector('line').setAttribute('x2',cx);
+  var c=this.cur.querySelector('circle'); c.setAttribute('cx',cx); c.setAttribute('cy',cy);
+  var d=(v/this.m.median-1)*100;
+  var rel = i>=n-30 ? ((d<0?'−':'+')+pctInt(d)+'% față de mediana de azi') : 'înainte de fereastra de 30 de zile';
+  this.tip.innerHTML='<em>'+(i===n-1?'Azi, ':'')+fmtDate(dayDate(i,n))+' 2026</em><b class="num">'+lei(v)+'</b><em>'+rel+'</em>';
+  var px=cx/this.W*r.width, hr=this.host.getBoundingClientRect();
+  var left=px+(r.left-hr.left);
+  left=Math.max(70,Math.min(hr.width-70,left));
+  this.tip.style.left=left+'px'; this.tip.style.opacity=1;
+};
+
+var charts=[];
+document.querySelectorAll('[data-chart]').forEach(function(el){
+  var c=new Chart(el, el.getAttribute('data-chart')==='desk'); charts.push(c);
+  var tabs=el.parentNode.querySelectorAll('[data-range]');
+  tabs.forEach(function(b){b.addEventListener('click',function(){
+    tabs.forEach(function(x){x.setAttribute('aria-pressed',x===b)}); c.range=+b.getAttribute('data-range'); c.draw();
+  })});
+});
+
+
+/* ====== „Pe scurt despre preț” (stil C) — fraze generate DOAR din date ====== */
+var TRACK_FROM='6 iulie 2026';
+function psHTML(m){
+  var s=m.series, n=s.length, today=m.today, low=Math.min.apply(null,s);
+  var f1 = today<=low
+    ? 'Prețul de azi, <b class="num">'+lei(today)+'</b>, e cel mai mic de la '+TRACK_FROM+', de când urmărim produsul.'
+    : 'Cel mai mic preț de la '+TRACK_FROM+' (de când urmărim produsul): <b class="num">'+lei(low)+'</b>. Azi: <b class="num">'+lei(today)+'</b>.';
+  var k=n-1; while(k>0 && s[k-1]===s[k]) k--;
+  var f2;
+  if(k===0) f2='Prețul nu s-a schimbat de la '+TRACK_FROM+'.';
+  else { var days=(n-1)-k, prev=s[k-1];
+    f2=(s[k]<prev?'A scăzut':'A crescut')+(days===0?' azi':days===1?' ieri':' acum '+days+' zile')+', de la <span class="num">'+lei(prev)+'</span>.'; }
+  var prices=OFFSETS.map(function(o){return today+o}), diff=Math.max.apply(null,prices)-Math.min.apply(null,prices);
+  var f3='Diferența dintre cel mai ieftin și cel mai scump magazin: <b class="num">'+lei(diff)+'</b>.';
+  return '<li><svg aria-hidden="true"><use href="#i-chart"/></svg><span>'+f1+'</span></li>'+
+         '<li><svg aria-hidden="true"><use href="#i-clock"/></svg><span>'+f2+'</span></li>'+
+         '<li><svg aria-hidden="true"><use href="#i-store"/></svg><span>'+f3+'</span></li>';
+}
+
+/* ====== Prag editabil: clientul scrie orice sumă ====== */
+function fmtInt(n){return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,'.')}
+function parseLei(v){ // „1.938”, „1938”, „1 938,50” -> număr
+  v=String(v).replace(/\s|lei/gi,'');
+  if(!v) return NaN;
+  v=v.replace(/\.(?=\d{3}(?:\D|$))/g,'').replace(',','.');
+  return /^\d+(\.\d{1,2})?$/.test(v)?parseFloat(v):NaN;
+}
+var CUR={};
+function checkAlert(box){
+  var inp=box.querySelector('[data-alert-input]'), msg=box.querySelector('[data-alert-msg]');
+  var v=parseLei(inp.value); msg.className='ac-msg'; inp.removeAttribute('aria-invalid');
+  if(isNaN(v)||v<=0){ msg.classList.add('err'); inp.setAttribute('aria-invalid','true');
+    msg.innerHTML='Scrie o sumă în lei, de exemplu '+fmtInt(CUR.alert)+'.'; return; }
+  var back=Math.round(v)!==Math.round(CUR.alert)?' <button type="button" data-alert-reset>Folosește pragul propus</button>':'';
+  if(v>=CUR.today){ msg.classList.add('warn');
+    msg.innerHTML='Pragul e peste prețul de azi ('+lei(CUR.today)+'): te-am anunța imediat.'+back; return; }
+  var pct=Math.round((1-v/CUR.today)*100);
+  msg.innerHTML='Te anunțăm la '+lei(v)+' sau mai jos'+(pct>=1?' ('+pct+'% sub prețul de azi)':'')+'.'+back;
+}
+document.querySelectorAll('[data-alert]').forEach(function(box){
+  var inp=box.querySelector('[data-alert-input]');
+  inp.addEventListener('input',function(){checkAlert(box)});
+  inp.addEventListener('blur',function(){var v=parseLei(inp.value); if(!isNaN(v)&&v>0) inp.value=v%1?fmtNum(v):fmtInt(v); checkAlert(box)});
+  box.addEventListener('click',function(e){ if(e.target.closest('[data-alert-reset]')){ inp.value=fmtInt(CUR.alert); checkAlert(box); inp.focus(); } });
+});
+function renderAlert(m){
+  CUR=m;
+  document.querySelectorAll('[data-alert]').forEach(function(box){
+    box.querySelector('[data-alert-input]').value=fmtInt(m.alert);
+    box.querySelector('[data-alert-hint]').textContent='propus: '+fmtInt(m.alert)+' lei';
+    checkAlert(box);
+  });
+  document.querySelectorAll('[data-ps]').forEach(function(el){el.innerHTML=psHTML(m)});
+}
+
+function render(state){
+  var m=model(state);
+  document.querySelectorAll('[data-vcard]').forEach(function(el){el.innerHTML=verdictCard(m)});
+  document.querySelectorAll('[data-offers]').forEach(function(el){el.innerHTML=offersHTML(m)});
+  document.querySelectorAll('[data-facts]').forEach(function(el){el.innerHTML=factsHTML(m)});
+  document.querySelectorAll('[data-summary]').forEach(function(el){el.textContent=summary(m)});
+  document.querySelectorAll('[data-sticky]').forEach(function(el){el.innerHTML=stickyHTML(m)});
+  document.querySelectorAll('[data-k="alert"]').forEach(function(el){el.textContent=lei(m.alert)});
+  charts.forEach(function(c){c.set(m)});
+  renderAlert(m);
+}
+render('real');
+document.querySelectorAll('#simSeg button').forEach(function(b){b.addEventListener('click',function(){
+  document.querySelectorAll('#simSeg button').forEach(function(x){x.setAttribute('aria-pressed',x===b)});
+  render(b.getAttribute('data-s'));
+})});
+
+/* ============================== carduri și rânduri ============================== */
+// [nume, magazin, preț azi, mediana 30z, min30, max30, nr. magazine, silueta]
+var P={
+  poco:['Telefon mobil Poco X8 Pro, 8GB RAM, 256GB, 5G, Black','eMAG',2040.00,2479.99,2040.00,2499.99,4,'phone'],
+  a56:['Telefon mobil Samsung Galaxy A56, 8GB RAM, 256GB, 5G, Awesome Graphite','evomag',1649.99,1899.00,1649.99,1949.00,5,'phone'],
+  nothing:['Telefon mobil Nothing Phone (4a) Pro, 256GB, 12GB RAM, 5G, Black','eMAG',3349.99,3755.27,3349.99,3899.00,3,'phone'],
+  redmi:['Telefon mobil Xiaomi Redmi Note 15 Pro 5G, 8GB RAM, 256GB, Midnight Black','ITGalaxy',1399.99,1469.00,1379.00,1529.00,4,'phone'],
+  s25fe:['Telefon mobil Samsung Galaxy S25 FE, 8GB RAM, 256GB, 5G, Navy','Vexio',3299.99,3049.00,2949.00,3299.99,5,'phone'],
+  ip16:['Telefon mobil Apple iPhone 16, 128GB, 5G, Black','eMAG',3999.99,4049.00,3949.00,4199.00,6,'phone'],
+  philips:['Televizor Philips AMBILIGHT QLED 50PUS8510, 126 cm, Smart TV, 4K Ultra HD, Clasa F','eMAG',1799.99,2753.57,1799.99,2899.99,3,'tv'],
+  tcl43:['Televizor TCL LED 43P6K, 108 cm, Smart Google TV, 4K Ultra HD, Clasa F','eMAG',1099.99,1420.82,1099.99,1499.99,2,'tv'],
+  lenovo:['Laptop Lenovo IdeaPad Slim 3 15IRH10, Intel Core i5-13420H, 15.3", 16GB, 512GB SSD','ITGalaxy',2499.99,2789.00,2499.99,2899.00,4,'laptop'],
+  rc:['Hrană uscată pentru câini Royal Canin Maxi Adult, 15 kg','Petmart',329.99,369.90,329.99,379.90,2,'bag'],
+  tcl55:['Televizor TCL QLED 55P7L, 139 cm, Smart Google TV, 4K Ultra HD, Clasa F (Model 2026)','eMAG',1899.99,2199.99,1899.99,2299.99,3,'tv']
+};
+function verdictOf(p){var r=p[2]/p[3];return r<0.95?'real':(r<=1.05?'norm':'high')}
+function badge(p){
+  var v=verdictOf(p), d=pctInt((1-p[2]/p[3])*100);
+  if(v==='real')return '<span class="vb real"><svg><use href="#i-down"/></svg>Reducere reală −'+d+'%</span>';
+  if(v==='high')return '<span class="vb high"><svg><use href="#i-up"/></svg>Peste obișnuit +'+d+'%</span>';
+  return '<span class="vb norm"><svg><use href="#i-eq"/></svg>Preț obișnuit</span>';
+}
+function miniTh(p){
+  var lo=p[4],hi=p[5],pad=(hi-lo)*0.1||1;lo-=pad;hi+=pad;
+  function x(v){return Math.max(0,Math.min(100,(v-lo)/(hi-lo)*100))}
+  return '<div class="mini-th '+verdictOf(p)+'" title="Prețul de azi (punct) față de mediană (liniuță), pe intervalul minim–maxim 30 de zile"><s style="width:'+x(p[3]*0.95)+'%"></s><u style="left:'+x(p[3])+'%"></u><i style="left:'+x(p[2])+'%"></i></div>';
+}
+function card(p){
+  return '<a class="pc" href="#"><div class="pc-img"><svg class="ph"><use href="#ph-'+p[7]+'"/></svg>'+badge(p)+'</div>'+
+    '<div class="pc-body"><div class="pc-name">'+p[0]+'</div><div class="pc-price num">'+lei(p[2])+'</div>'+
+    '<div class="pc-med num">mediana 30 z: '+fmtNum(p[3])+'</div>'+miniTh(p)+
+    '<div class="pc-shop">la <b>'+p[1]+'</b> · '+p[6]+' magazine</div></div></a>';
+}
+function row(p){
+  return '<a class="row" href="#"><div class="thumb"><svg><use href="#ph-'+p[7]+'"/></svg></div><div class="row-main">'+badge(p)+
+    '<div class="row-name">'+p[0]+'</div><div class="row-pr"><b class="num">'+lei(p[2])+'</b><span class="num">mediana '+fmtNum(p[3])+'</span></div>'+
+    '<div class="row-meta"><span>la <b>'+p[1]+'</b> · încă '+(p[6]-1)+' magazine</span>'+miniTh(p)+'</div></div></a>';
+}
+var sets={home:['philips','tcl43','poco','a56','lenovo','rc'],similar:['a56','nothing','tcl55'],ds:['poco','redmi','s25fe']};
+document.querySelectorAll('[data-cards]').forEach(function(el){el.innerHTML=sets[el.getAttribute('data-cards')].map(function(k){return card(P[k])}).join('')});
+document.querySelector('[data-rows]').innerHTML=['poco','a56','nothing','redmi','ip16','s25fe'].map(function(k){return row(P[k])}).join('');
+
+/* Foaia de filtre */
+var sheet=document.getElementById('sheet');
+document.querySelectorAll('[data-open-sheet]').forEach(function(b){b.addEventListener('click',function(){sheet.classList.toggle('open')})});
+sheet.querySelectorAll('[data-close-sheet]').forEach(function(b){b.addEventListener('click',function(){sheet.classList.remove('open')})});
+
+/* Acordeonul din meniu: un singur părinte deschis */
+document.querySelectorAll('.acc>button').forEach(function(b){b.addEventListener('click',function(){
+  var me=b.parentNode, open=me.getAttribute('data-open')==='true';
+  document.querySelectorAll('.acc').forEach(function(a){a.setAttribute('data-open','false');a.firstElementChild.setAttribute('aria-expanded','false')});
+  me.setAttribute('data-open',String(!open)); b.setAttribute('aria-expanded',String(!open));
+})});
+
+/* Desktop scalat la lățimea disponibilă */
+function fitDesk(){var w=document.getElementById('deskWrap').clientWidth;document.getElementById('desk').style.setProperty('--z',Math.min(1,w/1240))}
+window.addEventListener('resize',fitDesk); fitDesk();
+
+/* ============================== tema ============================== */
+var seg=document.getElementById('themeSeg');
+function setTheme(t){
+  if(t==='auto')document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme',t);
+  try{localStorage.setItem('dirB-theme',t)}catch(e){}
+  seg.querySelectorAll('button').forEach(function(b){b.setAttribute('aria-pressed',b.getAttribute('data-t')===t)});
+  setTimeout(buildDS,0);
+}
+seg.querySelectorAll('button').forEach(function(b){b.addEventListener('click',function(){setTheme(b.getAttribute('data-t'))})});
+var cur=document.documentElement.getAttribute('data-theme')||'auto';
+seg.querySelectorAll('button').forEach(function(b){b.setAttribute('aria-pressed',b.getAttribute('data-t')===cur)});
+if(window.matchMedia)matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(){setTimeout(buildDS,0)});
+
+/* ============================== sistem de design: paletă + contrast live ============================== */
+function cssVar(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()}
+function rgb(c){var d=document.createElement('div');d.style.color=c;document.body.appendChild(d);var v=getComputedStyle(d).color;d.remove();var m=v.match(/[\d.]+/g).map(Number);return m.slice(0,3)}
+function lum(c){return c.map(function(v){v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4)}).reduce(function(a,v,i){return a+v*[.2126,.7152,.0722][i]},0)}
+function ratio(a,b){var x=lum(rgb(a)),y=lum(rgb(b));return (Math.max(x,y)+.05)/(Math.min(x,y)+.05)}
+function buildDS(){
+  var sw=[['--red','Roșu (buton, insignă)'],['--red-ink','Roșu text'],['--red-tint','Roșu fundal'],['--head','Antet cărbune'],['--ink','Text'],['--ink-2','Text secundar'],['--ink-3','Text discret'],['--bg','Fundal pagină'],['--surface','Card'],['--surface-2','Zonă secundară'],['--line','Linii'],['--amber-ink','Peste obișnuit (text)'],['--amber-tint','Peste obișnuit (fundal)'],['--neutral-tint','Obișnuit (fundal)']];
+  document.getElementById('swatches').innerHTML=sw.map(function(s){return '<div class="sw"><div class="c" style="background:var('+s[0]+')"></div><div class="t"><b>'+s[1]+'</b><code>'+s[0]+' '+cssVar(s[0])+'</code></div></div>'}).join('');
+  var pairs=[
+    ['Text pe card','--ink','--surface',4.5],['Text secundar pe card','--ink-2','--surface',4.5],['Text discret pe card','--ink-3','--surface',4.5],['Text discret pe fundal','--ink-3','--bg',4.5],
+    ['Alb pe roșu (buton „Vezi oferta”)','#FFFFFF','--red',4.5],['Roșu text pe card','--red-ink','--surface',4.5],['Roșu text pe roșu fundal','--red-ink','--red-tint',4.5],
+    ['Ambră pe ambră fundal (insignă)','--amber-ink','--amber-tint',4.5],['Text secundar pe gri (insignă „obișnuit”)','--ink-2','--neutral-tint',4.5],
+    ['Alb pe antet','#FFFFFF','--head',4.5],['Gri pe antet','--head-ink-2','--head',4.5],['Roșu pe antet („.ro”, hero)','--red-on-head','--head',4.5],['Linia graficului pe card','--chart-line','--surface',3]
+  ];
+  var h='<tr><th>Pereche</th><th>Exemplu</th><th>Raport</th><th>AA</th></tr>';
+  pairs.forEach(function(p){
+    var fg=p[1].startsWith('--')?cssVar(p[1]):p[1], bg=cssVar(p[2]), r=ratio(fg,bg);
+    h+='<tr><td>'+p[0]+'<br><code style="font-size:11px;color:var(--ink-3)">'+p[1]+' / '+p[2]+'</code></td><td><span class="sample" style="color:'+fg+';background:'+bg+';box-shadow:inset 0 0 0 1px var(--line)">Aa 1.799</span></td><td class="num">'+r.toFixed(2).replace('.',',')+':1</td><td class="'+(r>=p[3]?'pill-ok':'pill-bad')+'">'+(r>=p[3]?'trece':'pică')+'</td></tr>';
+  });
+  document.getElementById('contrast').innerHTML=h;
+}
+buildDS();
+</script>

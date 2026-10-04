@@ -6,7 +6,7 @@
 
 import { redirect } from 'next/navigation'
 import { alertTokenSecret, signAlertToken, verifyAlertToken } from '@/lib/alert-token'
-import { parseTargetPrice, targetBelowCurrent } from '@/lib/email-alerts'
+import { parseTargetPrice } from '@/lib/email-alerts'
 import {
   confirmEmailAlert, deleteSubscriber, deleteSubscriberAlert, getAlertProduct,
   getAlertProductIdForSubscriber, updateAlertTarget,
@@ -39,7 +39,7 @@ export async function updateTargetAction(formData: FormData) {
   const productId = await getAlertProductIdForSubscriber(sub.id, alertId)
   const product = productId != null ? await getAlertProduct(productId) : null
   if (!product) redirect(manageUrl(sub.token, 'eroare=alerta'))
-  if (!targetBelowCurrent(target, product.bestPrice)) redirect(manageUrl(sub.token, 'eroare=peste-pret'))
+  // Orice prag pozitiv e acceptat (si peste pretul de azi — alerta pleaca la urmatoarea verificare)
   const ok = await updateAlertTarget(sub.id, alertId, target)
   redirect(manageUrl(sub.token, ok ? 'mesaj=prag' : 'eroare=alerta'))
 }

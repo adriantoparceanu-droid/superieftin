@@ -170,7 +170,7 @@ export async function listSubscriberAlerts(subscriberId: number): Promise<Subscr
 
 export async function updateAlertTarget(subscriberId: number, alertId: number, target: number): Promise<boolean> {
   const r = await pool.query(
-    // Un prag nou = alerta ARMATA din nou (pragul e validat sub pretul de acum)
+    // Un prag nou = alerta ARMATA din nou (orice prag pozitiv; peste pretul de acum pleaca la urmatoarea verificare)
     `UPDATE price_alerts SET target_price = $3, triggered_at = NULL, updated_at = now()
      WHERE id = $2 AND email_subscriber_id = $1 AND is_active = true AND confirmed_at IS NOT NULL`,
     [subscriberId, alertId, target],

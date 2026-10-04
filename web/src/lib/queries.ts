@@ -17,7 +17,15 @@ export interface ProductWithDiscount {
   retailer_name: string
   retailer_slug: string
   median_price: number | null
-  discount_pct: number | null
+  discount_pct: number | null   // DOAR pentru reducerile reale (SQL); celelalte stări le calculează
+                                // lib/listing-product.ts din preț + mediană (aceleași praguri)
+  // Minimul / maximul pe 30 de zile ale ofertei (offer_price_stats, migrația 032) — mini-termometrul
+  // din liste. NULL până la prima recalculare → fără termometru.
+  min_30d?: number | null
+  max_30d?: number | null
+  // Câte oferte disponibile are produsul (toate magazinele) — „încă N magazine”. Un al doilea
+  // query mic, doar pentru produsele afișate (attachStoreCounts); lipsește = nu afișăm nimic.
+  store_count?: number
 }
 
 export interface ProductDetail {
@@ -50,6 +58,10 @@ export interface OfferRow {
   retailer_slug: string
   median_price: number | null
   discount_pct: number | null
+  // Minimul / maximul pe 30 de zile ale ofertei (offer_price_stats, migratia 032) — termometrul
+  // de pe /p/. Completate doar de getProductDetail; NULL pana la prima recalculare.
+  min_30d?: number | null
+  max_30d?: number | null
 }
 
 export interface PricePoint {
@@ -57,6 +69,7 @@ export interface PricePoint {
   recorded_at: string
   retailer_id: number
   retailer_name: string
+  offer_id: string   // seria „cel mai mic pret pe zi” foloseste doar ofertele disponibile azi
 }
 
 export interface CategoryInfo {
@@ -85,6 +98,24 @@ function categoryFilter(includeSub: boolean): string {
   return includeSub ? CATEGORY_FILTER_SQL : CATEGORY_FILTER_DIRECT
 }
 
+// „încă N magazine” în liste: numărul de oferte disponibile per produs, DOAR pentru rândurile
+// afișate (max. PAGE_SIZE id-uri, index pe offers.product_id) — un query separat, ca listele să
+// nu-și schimbe ordinea/plan-ul. Aceeași regulă de disponibilitate ca restul listei.
+async function attachStoreCounts<T extends ProductWithDiscount>(rows: T[]): Promise<T[]> {
+  const ids = [...new Set(rows.map((r) => r.id))]
+  if (ids.length === 0) return rows
+  const { rows: counts } = await pool.query<{ id: string; n: number }>(`
+    SELECT o.product_id::text AS id, COUNT(*)::int AS n
+    FROM offers o
+    WHERE o.product_id = ANY($1::bigint[])
+      AND o.current_price IS NOT NULL
+      AND ${OFFER_AVAILABLE_SQL}
+    GROUP BY o.product_id
+  `, [ids])
+  const byId = new Map(counts.map((c) => [c.id, c.n]))
+  return rows.map((r) => ({ ...r, store_count: byId.get(r.id) ?? 1 }))
+}
+
 // Top reduceri reale: produse cu pret curent sub mediana ultimelor 30 de zile
 export const getTopDiscounts = unstable_cache(
   async (limit = 24): Promise<ProductWithDiscount[]> => {
@@ -103,11 +134,12 @@ export const getTopDiscounts = unstable_cache(
         r.name AS retailer_name,
         r.slug AS retailer_slug,
         mp.median_price::float AS median_price,
+        mp.min_30d::float AS min_30d, mp.max_30d::float AS max_30d,
         ROUND(((mp.median_price - o.current_price) / mp.median_price * 100)::numeric, 1)::float AS discount_pct
       FROM products p
       JOIN offers o ON o.product_id = p.id
       JOIN retailers r ON r.id = o.retailer_id
-      JOIN (SELECT offer_id, median_30d AS median_price FROM offer_price_stats WHERE points_30d >= 2) mp ON mp.offer_id = o.id
+      JOIN (SELECT offer_id, median_30d AS median_price, min_30d, max_30d FROM offer_price_stats WHERE points_30d >= 2) mp ON mp.offer_id = o.id
       WHERE o.current_price IS NOT NULL
         AND ${OFFER_AVAILABLE_SQL}
         AND o.current_price < mp.median_price * 0.95
@@ -116,9 +148,9 @@ export const getTopDiscounts = unstable_cache(
       ORDER BY discount_pct DESC
       LIMIT $1
     `, [limit])
-    return rows
+    return attachStoreCounts(rows)
   },
-  ['top-discounts'],
+  ['top-discounts-v2'],
   { revalidate: 900, tags: ['discounts'] }
 )
 
@@ -142,11 +174,12 @@ export const getLandingProducts = unstable_cache(
           o.affiliate_url, o.in_stock, o.last_checked,
           r.name AS retailer_name, r.slug AS retailer_slug,
           mp.median_price::float AS median_price,
+        mp.min_30d::float AS min_30d, mp.max_30d::float AS max_30d,
           o.current_price / mp.median_price AS ratio
         FROM products p
         JOIN offers o ON o.product_id = p.id
         JOIN retailers r ON r.id = o.retailer_id
-        JOIN (SELECT offer_id, median_30d AS median_price FROM offer_price_stats WHERE points_30d >= 2) mp ON mp.offer_id = o.id
+        JOIN (SELECT offer_id, median_30d AS median_price, min_30d, max_30d FROM offer_price_stats WHERE points_30d >= 2) mp ON mp.offer_id = o.id
         WHERE ${CATEGORY_FILTER_SQL}
           AND o.current_price IS NOT NULL
           AND ${OFFER_AVAILABLE_SQL}
@@ -164,9 +197,9 @@ export const getLandingProducts = unstable_cache(
       ORDER BY ratio ASC
       LIMIT $2
     `, [category, limit])
-    return rows
+    return attachStoreCounts(rows)
   },
-  ['landing-products'],
+  ['landing-products-v2'],
   { revalidate: 900, tags: ['discounts', 'products'] }
 )
 
@@ -188,19 +221,22 @@ export const getCheapestProducts = unstable_cache(
         r.name AS retailer_name,
         r.slug AS retailer_slug,
         lh.median_price::float AS median_price,
+        lh.min_30d::float AS min_30d, lh.max_30d::float AS max_30d,
         NULL::float AS discount_pct
       FROM products p
       JOIN offers o ON o.product_id = p.id
       JOIN retailers r ON r.id = o.retailer_id
-      LEFT JOIN (SELECT offer_id, latest_price AS median_price FROM offer_price_stats) lh ON lh.offer_id = o.id
+      -- Mediana REALĂ pe 30 de zile (înainte: latest_price, afișat nicăieri). Cardul arată acum
+      -- „mediana 30 z” și verdictul, deci trebuie să fie chiar mediana.
+      LEFT JOIN (SELECT offer_id, median_30d AS median_price, min_30d, max_30d FROM offer_price_stats) lh ON lh.offer_id = o.id
       WHERE o.current_price IS NOT NULL
         AND ${OFFER_AVAILABLE_SQL}
       ORDER BY o.current_price ASC
       LIMIT $1
     `, [limit])
-    return rows
+    return attachStoreCounts(rows)
   },
-  ['cheapest-products'],
+  ['cheapest-products-v2'],
   { revalidate: 3600, tags: ['products'] }
 )
 
@@ -222,6 +258,7 @@ const SEARCH_SQL = `
     r.name AS retailer_name,
     r.slug AS retailer_slug,
     mp.median_price::float AS median_price,
+        mp.min_30d::float AS min_30d, mp.max_30d::float AS max_30d,
     CASE
       WHEN mp.median_price IS NOT NULL AND o.current_price < mp.median_price * 0.95
       THEN ROUND(((mp.median_price - o.current_price) / mp.median_price * 100)::numeric, 1)::float
@@ -230,7 +267,7 @@ const SEARCH_SQL = `
   FROM products p
   JOIN offers o ON o.product_id = p.id
   JOIN retailers r ON r.id = o.retailer_id
-  LEFT JOIN (SELECT offer_id, median_30d AS median_price FROM offer_price_stats) mp ON mp.offer_id = o.id
+  LEFT JOIN (SELECT offer_id, median_30d AS median_price, min_30d, max_30d FROM offer_price_stats) mp ON mp.offer_id = o.id
   WHERE o.current_price IS NOT NULL
     AND ${OFFER_AVAILABLE_SQL}
     AND (
@@ -246,9 +283,9 @@ export const searchProducts = unstable_cache(
       `${SEARCH_SQL} ORDER BY current_price ASC NULLS LAST LIMIT $2 OFFSET $3`,
       [query.trim(), PAGE_SIZE, offset]
     )
-    return rows
+    return attachStoreCounts(rows)
   },
-  ['search-products'],
+  ['search-products-v2'],
   { revalidate: 300, tags: ['products'] }
 )
 
@@ -300,6 +337,7 @@ export const getCategoryProducts = unstable_cache(
         r.name AS retailer_name,
         r.slug AS retailer_slug,
         mp.median_price::float AS median_price,
+        mp.min_30d::float AS min_30d, mp.max_30d::float AS max_30d,
         CASE
           WHEN mp.median_price IS NOT NULL AND o.current_price < mp.median_price * 0.95
           THEN ROUND(((mp.median_price - o.current_price) / mp.median_price * 100)::numeric, 1)::float
@@ -308,7 +346,7 @@ export const getCategoryProducts = unstable_cache(
       FROM products p
       JOIN offers o ON o.product_id = p.id
       JOIN retailers r ON r.id = o.retailer_id
-      LEFT JOIN (SELECT offer_id, median_30d AS median_price FROM offer_price_stats) mp ON mp.offer_id = o.id
+      LEFT JOIN (SELECT offer_id, median_30d AS median_price, min_30d, max_30d FROM offer_price_stats) mp ON mp.offer_id = o.id
       WHERE ${categoryFilter(includeSub)}
         AND o.current_price IS NOT NULL
         AND ${OFFER_AVAILABLE_SQL}
@@ -316,9 +354,9 @@ export const getCategoryProducts = unstable_cache(
       ORDER BY ${orderBy}
       LIMIT $2 OFFSET $3
     `, [category, PAGE_SIZE, offset, brands])
-    return rows
+    return attachStoreCounts(rows)
   },
-  ['category-products'],
+  ['category-products-v2'],
   { revalidate: 3600, tags: ['products'] }
 )
 
@@ -385,6 +423,7 @@ export const getRandomCategoryProducts = unstable_cache(
         r.name AS retailer_name,
         r.slug AS retailer_slug,
         mp.median_price::float AS median_price,
+        mp.min_30d::float AS min_30d, mp.max_30d::float AS max_30d,
         CASE
           WHEN mp.median_price IS NOT NULL AND o.current_price < mp.median_price * 0.95
           THEN ROUND(((mp.median_price - o.current_price) / mp.median_price * 100)::numeric, 1)::float
@@ -393,16 +432,16 @@ export const getRandomCategoryProducts = unstable_cache(
       FROM products p
       JOIN offers o ON o.product_id = p.id
       JOIN retailers r ON r.id = o.retailer_id
-      LEFT JOIN (SELECT offer_id, median_30d AS median_price FROM offer_price_stats) mp ON mp.offer_id = o.id
+      LEFT JOIN (SELECT offer_id, median_30d AS median_price, min_30d, max_30d FROM offer_price_stats) mp ON mp.offer_id = o.id
       WHERE ${CATEGORY_FILTER_SQL}
         AND o.current_price IS NOT NULL
         AND ${OFFER_AVAILABLE_SQL}
       ORDER BY random()
       LIMIT $2
     `, [category, limit])
-    return rows
+    return attachStoreCounts(rows)
   },
-  ['category-random-products'],
+  ['category-random-products-v2'],
   { revalidate: 3600, tags: ['products'] }
 )
 
@@ -463,6 +502,8 @@ export const getProductDetail = unstable_cache(
         r.name AS retailer_name,
         r.slug AS retailer_slug,
         mp.median_price::float AS median_price,
+        mp.min_30d::float AS min_30d,
+        mp.max_30d::float AS max_30d,
         CASE
           WHEN mp.median_price IS NOT NULL AND o.current_price < mp.median_price * 0.95
           THEN ROUND(((mp.median_price - o.current_price) / mp.median_price * 100)::numeric, 1)::float
@@ -471,7 +512,7 @@ export const getProductDetail = unstable_cache(
         ${OFFER_AVAILABLE_SQL} AS available
       FROM offers o
       JOIN retailers r ON r.id = o.retailer_id
-      LEFT JOIN (SELECT offer_id, median_30d AS median_price FROM offer_price_stats) mp ON mp.offer_id = o.id
+      LEFT JOIN (SELECT offer_id, median_30d AS median_price, min_30d, max_30d FROM offer_price_stats) mp ON mp.offer_id = o.id
       WHERE o.product_id = $1
       ORDER BY o.current_price ASC NULLS LAST
     `, [product.id])
@@ -488,7 +529,7 @@ export const getProductDetail = unstable_cache(
       last_seen: byRecent[0]?.last_checked ?? null,
     }
   },
-  ['product-detail-v2'],
+  ['product-detail-v3'],
   { revalidate: 3600, tags: ['products'] }
 )
 
@@ -500,7 +541,8 @@ export const getPriceHistory = unstable_cache(
         ph.price::float AS price,
         ph.recorded_at::text AS recorded_at,
         o.retailer_id,
-        r.name AS retailer_name
+        r.name AS retailer_name,
+        o.id::text AS offer_id
       FROM price_history ph
       JOIN offers o ON o.id = ph.offer_id
       JOIN retailers r ON r.id = o.retailer_id
@@ -510,7 +552,7 @@ export const getPriceHistory = unstable_cache(
     `, [productId])
     return rows
   },
-  ['price-history'],
+  ['price-history-v2'],
   { revalidate: 3600, tags: ['price-history'] }
 )
 
@@ -695,6 +737,19 @@ export const getTagBySlug = unstable_cache(
   { revalidate: 3600, tags: ['categories'] }
 )
 
+// Tag-urile transversale (Refurbished, Second Hand…) pentru meniul mobil — jetoane spre /t/<slug>.
+// Tabel mic (câteva rânduri), cache 1 h ca meniul; nu le scriem de mână în componentă.
+export const getMenuTags = unstable_cache(
+  async (): Promise<{ slug: string; name: string }[]> => {
+    const { rows } = await pool.query<{ slug: string; name: string }>(
+      'SELECT slug, name FROM tags ORDER BY id'
+    )
+    return rows
+  },
+  ['menu-tags'],
+  { revalidate: 3600, tags: ['categories', 'menu'] }
+)
+
 export const getTagProducts = unstable_cache(
   async (slug: string, page = 1): Promise<ProductWithDiscount[]> => {
     const offset = (page - 1) * PAGE_SIZE
@@ -705,6 +760,7 @@ export const getTagProducts = unstable_cache(
         o.affiliate_url, o.in_stock,
         r.name AS retailer_name, r.slug AS retailer_slug,
         mp.median_price::float AS median_price,
+        mp.min_30d::float AS min_30d, mp.max_30d::float AS max_30d,
         CASE
           WHEN mp.median_price IS NOT NULL AND o.current_price < mp.median_price * 0.95
           THEN ROUND(((mp.median_price - o.current_price) / mp.median_price * 100)::numeric, 1)::float
@@ -715,14 +771,14 @@ export const getTagProducts = unstable_cache(
       JOIN tags t ON t.id = pt.tag_id AND t.slug = $1
       JOIN offers o ON o.product_id = p.id
       JOIN retailers r ON r.id = o.retailer_id
-      LEFT JOIN (SELECT offer_id, median_30d AS median_price FROM offer_price_stats) mp ON mp.offer_id = o.id
+      LEFT JOIN (SELECT offer_id, median_30d AS median_price, min_30d, max_30d FROM offer_price_stats) mp ON mp.offer_id = o.id
       WHERE o.current_price IS NOT NULL AND ${OFFER_AVAILABLE_SQL}
       ORDER BY current_price ASC NULLS LAST
       LIMIT $2 OFFSET $3
     `, [slug, PAGE_SIZE, offset])
-    return rows
+    return attachStoreCounts(rows)
   },
-  ['tag-products'],
+  ['tag-products-v2'],
   { revalidate: 3600, tags: ['products'] }
 )
 

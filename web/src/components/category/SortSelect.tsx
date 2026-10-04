@@ -21,12 +21,15 @@ export function SortSelect({ basePath, sort, brands, tot }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
+  // „.tb-btn.grow” din machetă: pe mobil ocupă restul barei lipicioase, lângă „Filtre”.
+  // Eticheta „Sortare:” stă în chenar, înaintea valorii; tot chenarul e <select>-ul (atingerea
+  // oriunde deschide selectorul sistemului).
   return (
-    <form method="get" action={basePath} className="flex items-center gap-1.5" aria-busy={isPending}>
+    <form method="get" action={basePath} className="flex min-w-0 flex-1 items-center gap-1.5 lg:flex-none" aria-busy={isPending}>
       {brands.map(b => <input key={b} type="hidden" name="brand" value={b} />)}
       {tot && <input type="hidden" name="tot" value="1" />}
-      <label htmlFor="sortare-lista" className="text-sm text-muted">Sortare:</label>
-      <div className="relative">
+      <div className={`relative flex h-10 min-w-0 flex-1 items-center rounded-[10px] bg-surface ring-[1.5px] ring-inset ring-line-2 transition-shadow hover:ring-ink has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ink ${isPending ? 'opacity-60' : ''}`}>
+        <label htmlFor="sortare-lista" className="pointer-events-none shrink-0 pl-3 text-sm font-semibold text-ink-3">Sortare:</label>
         <select
           id="sortare-lista"
           name="sort"
@@ -35,15 +38,15 @@ export function SortSelect({ basePath, sort, brands, tot }: Props) {
             const url = buildListingUrl(basePath, { sort: e.target.value as ListingSort, brands, tot })
             startTransition(() => router.push(url, { scroll: false }))
           }}
-          className={`appearance-none rounded-lg border border-line bg-surface py-1.5 pl-3 pr-8 text-sm font-medium text-[var(--color-text)] cursor-pointer hover:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${isPending ? 'opacity-60' : ''}`}
+          className="h-full min-w-0 flex-1 cursor-pointer appearance-none truncate bg-transparent pl-1.5 pr-9 text-sm font-semibold text-ink focus-visible:outline-none"
         >
           {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
-        {/* sageata ▾ (select-ul are appearance-none ca sa arate la fel in toate browserele) */}
-        <ChevronDown size={16} aria-hidden="true" className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-muted" />
+        {/* săgeata ▾ (select-ul are appearance-none ca să arate la fel în toate browserele) */}
+        <ChevronDown size={17} aria-hidden="true" className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-ink-2" />
       </div>
       <noscript>
-        <button type="submit" className="rounded-lg border border-line bg-surface px-2.5 py-1.5 text-sm">OK</button>
+        <button type="submit" className="h-10 rounded-[10px] bg-surface px-3 text-sm font-bold text-ink ring-[1.5px] ring-inset ring-line-2">OK</button>
       </noscript>
     </form>
   )

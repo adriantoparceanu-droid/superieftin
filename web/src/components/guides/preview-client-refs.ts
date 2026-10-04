@@ -4,7 +4,8 @@
 // adica daca pagina le importa. Paginile de editor (admin/ghiduri/nou si [id]) importa acest
 // fisier; fara el, previzualizarea da eroarea „Could not find the module … in the React Client
 // Manifest”. Orice componenta client noua folosita in GuideBody se adauga si aici.
-import { PriceHistoryChart } from '@/components/PriceHistoryChart'
+import { PriceStepChart } from '@/components/product/PriceStepChart'
+import { VerifiedAt } from '@/components/product/VerifiedAt'
 import { AffiliateLink } from '@/components/analytics/AffiliateLink'
 
-export const PREVIEW_CLIENT_REFS = [PriceHistoryChart, AffiliateLink]
+export const PREVIEW_CLIENT_REFS = [PriceStepChart, VerifiedAt, AffiliateLink]

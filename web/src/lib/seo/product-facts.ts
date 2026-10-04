@@ -1,9 +1,9 @@
 // Text factual despre pretul unui produs, generat din aceleasi date ca graficul de pe /p/
-// (istoricul pe cel mult 90 de zile + mediana 30 de zile a celei mai bune oferte). Pure — testat.
+// (cel mai mic pret pe zi, cel mult 90 de zile — lib/price-series.ts). Pure — testat.
 //
 // De ce: asistentii AI si motoarele de cautare citeaza fraze, nu grafice. Blocul spune doar
-// FAPTE (minim, maxim, mediana, data verificarii) — fara verdict si fara promisiuni de
-// reducere (REGULI.md, regula 9: o afirmatie de reducere poate deveni falsa a doua zi).
+// FAPTE (minim, maxim, ultima schimbare, diferenta dintre magazine) — fara verdict si fara
+// promisiuni de reducere (REGULI.md, regula 9: o afirmatie de reducere poate deveni falsa a doua zi).
 //
 // Fereastra istoricului: graficul arata ultimele HISTORY_WINDOW_DAYS zile, dar un produs urmarit
 // de curand are mai putine. Atunci NU scriem „90 de zile” (ar sugera date pe care nu le avem —
@@ -11,10 +11,9 @@
 
 import { formatPrice } from '../discount'
 import { formatRoDate } from './site'
+import { daysBetween, roDay, type DayPrice } from '../price-series'
 
 export const HISTORY_WINDOW_DAYS = 90
-
-export interface PricePointLite { price: number; recorded_at: string }
 
 // Data de la care afisam istoricul, daca e mai noua decat fereastra de 90 de zile; altfel null
 // (= avem istoric pe toata fereastra, textele raman „90 de zile”).
@@ -46,48 +45,80 @@ export function historyChartPhrase(partialSince: string | null): string {
     : `Grafic cu istoricul prețului pe ${HISTORY_WINDOW_DAYS} de zile, comparat cu mediana de 30 de zile.`
 }
 
+// --- „Pe scurt despre preț” (redesign, cardul cu 3 rânduri) -----------------------------------
+//
+// Trei rânduri, generate STRICT din date (aceeași serie ca graficul — lib/price-series.ts):
+//   (a) unde e prețul de azi în perioada urmărită (minim / maxim);
+//   (b) ultima schimbare a prețului;
+//   (c) diferența dintre cel mai ieftin și cel mai scump magazin (doar cu ≥ 2 oferte).
+// Fără verdict, fără procente, fără „reducere” — regula 9 (o afirmație de reducere poate deveni
+// falsă a doua zi), iar ads:validate citește doar cardul de verdict.
+// Bucățile `{ b }` se afișează îngroșat (prețurile).
+
+export type FactPart = string | { b: string }
+export interface PriceFactRow { icon: 'chart' | 'clock' | 'store'; parts: FactPart[] }
+
 export interface PriceFactsInput {
-  history: PricePointLite[]          // ultimele 90 de zile, toate ofertele (ca graficul)
-  median30: number | null            // mediana 30 de zile a celei mai bune oferte disponibile
-  lastChecked: string | null         // ultima verificare a celei mai bune oferte
-  retailer: string | null            // magazinul celei mai bune oferte
-  // Prima inregistrare din istoric pentru produs (oricand). Lipsa → prima din `history`.
+  series: DayPrice[]                 // cel mai mic preț pe zi (ultimele 90 de zile), ultima = azi
+  todayPrice: number | null          // cel mai mic preț disponibil acum (null = indisponibil)
+  offerPrices: number[]              // prețurile ofertelor disponibile acum
+  // Prima înregistrare din istoric pentru produs (oricând). Lipsa → prima zi din serie.
   trackedSince?: string | null
   now?: Date                         // pentru teste
 }
 
-export function priceFacts(i: PriceFactsInput): string[] {
-  const out: string[] = []
-  const pts = i.history.filter((p) => Number.isFinite(p.price) && p.price > 0)
-  const since = historyPartialSince(i.trackedSince ?? pts[0]?.recorded_at, i.now)
-  const period = since
-    ? `De la ${formatRoDate(since)}, de când urmărim produsul,`
-    : `În ultimele ${HISTORY_WINDOW_DAYS} de zile,`
-  if (pts.length >= 2) {
-    // La egalitate alegem cea mai recenta data (istoricul e sortat crescator dupa data)
-    let min = pts[0], max = pts[0]
-    for (const p of pts) {
-      if (p.price <= min.price) min = p
-      if (p.price >= max.price) max = p
-    }
-    if (min.price === max.price) {
-      out.push(`${period} prețul înregistrat a fost constant: ${formatPrice(min.price)}.`)
+export function priceFactRows(i: PriceFactsInput): PriceFactRow[] {
+  const rows: PriceFactRow[] = []
+  const s = i.series.filter((p) => Number.isFinite(p.price) && p.price > 0)
+  const since = historyPartialSince(i.trackedSince ?? (s[0] ? `${s[0].day}T12:00:00Z` : null), i.now)
+  // „de la 6 iulie 2026, de când urmărim produsul” / „din ultimele 90 de zile”
+  const within = since ? `de la ${formatRoDate(since)}, de când urmărim produsul` : `din ultimele ${HISTORY_WINDOW_DAYS} de zile`
+  const lead = since ? `De la ${formatRoDate(since)}, de când urmărim produsul,` : `În ultimele ${HISTORY_WINDOW_DAYS} de zile,`
+
+  // (a) poziția prețului de azi
+  if (s.length >= 2) {
+    const min = Math.min(...s.map((p) => p.price))
+    const max = Math.max(...s.map((p) => p.price))
+    const today = i.todayPrice
+    if (min === max) {
+      rows.push({ icon: 'chart', parts: [`${lead} prețul înregistrat a fost constant: `, { b: formatPrice(min) }, '.'] })
+    } else if (today != null && today <= min) {
+      rows.push({ icon: 'chart', parts: ['Prețul de azi, ', { b: formatPrice(today) }, `, e cel mai mic ${within} (maximul perioadei: `, { b: formatPrice(max) }, ').'] })
     } else {
-      out.push(
-        `${period} cel mai mic preț înregistrat a fost ${formatPrice(min.price)} ` +
-        `(${formatRoDate(min.recorded_at)}), iar cel mai mare ${formatPrice(max.price)} (${formatRoDate(max.recorded_at)}).`
-      )
+      rows.push({
+        icon: 'chart',
+        parts: [`${lead} prețul a variat între `, { b: formatPrice(min) }, ' și ', { b: formatPrice(max) },
+          ...(today != null ? ['; azi: ', { b: formatPrice(today) }, '.'] : ['.'])],
+      })
     }
-  } else if (pts.length === 1) {
-    out.push(`Urmărim prețul din ${formatRoDate(pts[0].recorded_at)}; avem încă prea puține înregistrări pentru un istoric.`)
+  } else if (s.length === 1) {
+    rows.push({ icon: 'chart', parts: [`Urmărim prețul din ${formatRoDate(`${s[0].day}T12:00:00Z`)}; avem încă prea puține înregistrări pentru un istoric.`] })
   }
-  if (i.median30 != null && i.median30 > 0) {
-    out.push(`Mediana prețurilor din ultimele 30 de zile: ${formatPrice(i.median30)}.`)
+
+  // (b) ultima schimbare (la pret constant, randul (a) spune deja tot)
+  if (s.length >= 2 && s.some((p) => p.price !== s[0].price)) {
+    let k = s.length - 1
+    while (k > 0 && s[k - 1].price === s[k].price) k--
+    const subject = i.offerPrices.length > 1 ? 'Cel mai mic preț' : 'Prețul'
+    const ago = daysBetween(s[k].day, roDay(i.now ?? new Date()))
+    const when = ago <= 0 ? 'azi' : ago === 1 ? 'ieri' : `acum ${ago}${ago >= 20 ? ' de' : ''} zile`
+    rows.push({ icon: 'clock', parts: [`${subject} a ${s[k].price < s[k - 1].price ? 'scăzut' : 'crescut'} ${when}, de la `, { b: formatPrice(s[k - 1].price) }, '.'] })
   }
-  if (i.lastChecked) {
-    out.push(`Ultima verificare: ${formatRoDate(i.lastChecked)}${i.retailer ? `, la ${i.retailer}` : ''}.`)
+
+  // (c) diferența dintre magazine
+  const prices = i.offerPrices.filter((p) => Number.isFinite(p) && p > 0)
+  if (prices.length >= 2) {
+    const diff = Math.round((Math.max(...prices) - Math.min(...prices)) * 100) / 100
+    rows.push(diff === 0
+      ? { icon: 'store', parts: [prices.length === 2 ? 'Ambele magazine au azi același preț: ' : `Toate cele ${prices.length} magazine au azi același preț: `, { b: formatPrice(prices[0]) }, '.'] }
+      : { icon: 'store', parts: [`Diferența de azi dintre cel mai ieftin și cel mai scump dintre cele ${prices.length} magazine: `, { b: formatPrice(diff) }, '.'] })
   }
-  return out
+  return rows
+}
+
+// Textul simplu al unui rând (teste, meta)
+export function factText(r: PriceFactRow): string {
+  return r.parts.map((p) => (typeof p === 'string' ? p : p.b)).join('')
 }
 
 // --- Variante (culori / configuratii ale aceluiasi model) ------------------------------------

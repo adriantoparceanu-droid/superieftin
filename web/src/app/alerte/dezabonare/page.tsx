@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { LegalPage } from '@/components/LegalPage'
+import { INK_BUTTON } from '@/components/article'
 import { alertTokenSecret, verifyAlertToken } from '@/lib/alert-token'
 
 // Dezabonarea din linkul aflat in corpul emailurilor. Stergerea se face la apasarea butonului
@@ -54,7 +55,7 @@ export default async function DezabonarePage({ searchParams }: Props) {
       <form method="post" action={`/api/alerte-email/dezabonare?t=${encodeURIComponent(token)}`}>
         <button
           type="submit"
-          className="bg-brand hover:bg-brand-dark text-white font-semibold px-5 py-2.5 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+          className={INK_BUTTON}
         >
           Dezabonează-mă de la toate alertele
         </button>

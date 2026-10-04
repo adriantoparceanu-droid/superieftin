@@ -37,15 +37,22 @@ export function renderInterstitial(d: InterstitialData): string {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>Spre magazin — superieftin.ro</title>
+<meta name="color-scheme" content="light dark">
 <style>
-  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:#F7FAFC;color:#1A202C}
-  main{max-width:28rem;margin:12vh auto 0;padding:2rem 1.5rem;background:#fff;border:1px solid #E2E8F0;border-radius:12px;text-align:center}
-  h1{font-size:1.15rem;margin:0 0 .5rem}
-  p{color:#718096;margin:.5rem 0 1.25rem;line-height:1.5}
-  .note{color:#C53030}
-  button{font:inherit;font-weight:600;background:#E53E3E;color:#fff;border:0;border-radius:8px;padding:.8rem 1.5rem;cursor:pointer;width:100%}
-  button:hover{background:#C53030}
-  a{color:#718096;font-size:.9rem}
+  /* Culorile = tokenii site-ului (web/src/app/globals.css), copiate aici: pagina nu încarcă CSS-ul site-ului */
+  :root{--bg:#F4F5F7;--surface:#FFFFFF;--ink:#14161A;--ink-2:#424854;--ink-3:#6A707C;--line:#E1E4E9;--red:#D42B2B;--red-hover:#B91C22;--red-ink:#B91C22}
+  @media (prefers-color-scheme: dark){:root{--bg:#0E0F12;--surface:#17191E;--ink:#F2F3F5;--ink-2:#C3C8D0;--ink-3:#9AA1AD;--line:#2A2E36;--red-hover:#E0322F;--red-ink:#FF6B61}}
+  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+  main{max-width:28rem;margin:12vh auto 0;padding:2rem 1.5rem;background:var(--surface);border:1px solid var(--line);border-radius:16px;text-align:center;box-shadow:0 1px 2px rgba(16,18,24,.06),0 4px 16px rgba(16,18,24,.06)}
+  @media (max-width:30rem){main{margin:8vh 1rem 0}}
+  h1{font-size:1.2rem;line-height:1.3;margin:0 0 .5rem;font-weight:800;letter-spacing:-.01em}
+  p{color:var(--ink-2);margin:.5rem 0 1.25rem;line-height:1.5}
+  .note{color:var(--red-ink);font-weight:600}
+  button{font:inherit;font-weight:800;font-size:1.05rem;background:var(--red);color:#fff;border:0;border-radius:12px;min-height:48px;padding:.8rem 1.5rem;cursor:pointer;width:100%;box-shadow:0 1px 0 rgba(0,0,0,.12),0 6px 16px -6px rgba(212,43,43,.6)}
+  button:hover{background:var(--red-hover)}
+  button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+  a{color:var(--ink-3);font-size:.9rem;text-underline-offset:2px}
+  a:hover{color:var(--ink)}
 </style>
 </head>
 <body>

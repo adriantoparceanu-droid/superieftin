@@ -6,6 +6,7 @@ import { landingCategories } from '@/lib/seo/categories'
 import { breadcrumbLd, itemListLd, ldScript } from '@/lib/seo/jsonld'
 import { withOg } from '@/lib/seo/og'
 import { absUrl, roCount } from '@/lib/seo/site'
+import { ListingHeader } from '@/components/listing/ListingParts'
 
 // Hub /reduceri-reale (raport SEO 2026-10-04, A8): legatura interna spre toate landing-urile
 // /reduceri-reale/<categorie>, care erau „orfane” (doar sitemap + llms.txt). Fara Sanatate &
@@ -51,46 +52,40 @@ export default async function RealDiscountsHub() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldScript(listLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldScript(crumbsLd) }} />
 
-      <nav aria-label="Breadcrumb" className="text-xs text-muted mb-3">
-        <Link href="/" className="hover:underline">Acasă</Link>
-        {' / '}
-        <span>Reduceri reale</span>
-      </nav>
-
-      <header className="mb-6">
-        <h1 className="font-archivo text-2xl sm:text-3xl text-[var(--color-text)]">{TITLE}</h1>
-        <p className="mt-2 text-sm sm:text-base text-muted max-w-3xl">
+      <ListingHeader crumbs={[{ label: 'Acasă', href: '/' }, { label: 'Reduceri reale' }]} title={TITLE} />
+      <div className="mb-6">
+        <p className="max-w-3xl text-sm text-ink-2 sm:text-[15px]">
           Un preț e „reducere reală” doar dacă azi e cu cel puțin {REAL_DISCOUNT_PCT}% sub mediana prețurilor
           aceluiași produs din ultimele 30 de zile — nu față de „prețul vechi” afișat de magazin. Mediana ignoră
           scumpirile de o zi făcute înainte de o „ofertă”. Numărul de reduceri se schimbă zilnic, odată cu prețurile.{' '}
-          <Link href="/ghiduri/metodologie" className="underline underline-offset-2">Metodologia completă</Link>
+          <Link href="/ghiduri/metodologie" className="font-semibold text-ink underline underline-offset-2 hover:text-red-ink">Metodologia completă</Link>
         </p>
-      </header>
+      </div>
 
       {groups.length === 0 ? (
-        <p className="text-sm text-muted">Momentan nu avem categorii cu produse disponibile.</p>
+        <p className="text-sm text-ink-3">Momentan nu avem categorii cu produse disponibile.</p>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-4">
           {groups.map(({ root, subs }) => (
-            <section key={root?.slug ?? 'altele'} className="rounded-xl border border-line bg-surface p-5">
-              <h2 className="font-semibold text-lg text-[var(--color-text)]">
+            <section key={root?.slug ?? 'altele'} className="rounded-2xl bg-surface p-4 shadow-card ring-1 ring-inset ring-line/60 lg:p-5">
+              <h2 className="text-lg font-extrabold text-ink">
                 {root ? (
-                  <Link href={`/reduceri-reale/${root.slug}`} className="hover:text-brand">
+                  <Link href={`/reduceri-reale/${root.slug}`} className="hover:text-red-ink hover:underline underline-offset-2">
                     Reduceri reale la {root.name}
                   </Link>
                 ) : 'Alte categorii'}
               </h2>
-              {root && <p className="text-sm text-muted mt-0.5">{countText(root.slug)}</p>}
+              {root && <p className={`mt-0.5 text-sm tabular-nums ${(counts[root.slug] ?? 0) > 0 ? 'font-semibold text-red-ink' : 'text-ink-3'}`}>{countText(root.slug)}</p>}
               {subs.length > 0 && (
                 <ul className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                   {subs.map((c) => (
                     <li key={c.slug}>
                       <Link
                         href={`/reduceri-reale/${c.slug}`}
-                        className="flex items-baseline justify-between gap-3 rounded-lg border border-line px-3 py-2 hover:border-brand hover:text-brand transition-colors"
+                        className="flex min-h-11 items-center justify-between gap-3 rounded-[10px] bg-surface px-3 py-2 ring-1 ring-inset ring-line-2 transition-shadow hover:ring-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink"
                       >
-                        <span className="text-sm font-medium">{c.name}</span>
-                        <span className="text-xs text-muted whitespace-nowrap">{countText(c.slug)}</span>
+                        <span className="text-sm font-semibold text-ink">{c.name}</span>
+                        <span className={`whitespace-nowrap text-xs tabular-nums ${(counts[c.slug] ?? 0) > 0 ? 'font-bold text-red-ink' : 'text-ink-3'}`}>{countText(c.slug)}</span>
                       </Link>
                     </li>
                   ))}
