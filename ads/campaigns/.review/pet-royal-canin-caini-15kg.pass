@@ -1,0 +1,6 @@
+verdict: PASS
+date: 2026-10-04T07:30:43Z
+sha256: 88ea3efa008a35d1449d90024a49aa2d4c52ff8902ac7e662f96387b61a52a86
+reviewer: policy-reviewer
+file: ads/campaigns/pet-royal-canin-caini-15kg.yaml
+notes: "Reverificare dupa FAIL regula 9 (commit 5864cd2, site d95cf86). Fara '90 de zile'/'evolutie' in texte; cele 9 pagini /p/ live 200, indexabile, titlul 'Istoricul pretului (de la 3 oct. 2026)', min/max/mediana 30 zile, 'Verificat acum 3 ore', o oferta petmart.ro, 'Pret in intervalul obisnuit', alerta Telegram/email fara cont, declaratie afiliere, footer complet, consent default denied inainte de gtag. Limite caractere OK, PAUSED, 15 lei/zi, CPC 1,20 (guardrails 50/3,00), 71 negative, fara secrete. Decizii proprietar 4.10.2026: mediana 30 zile pe istoric scurt si petmart/2Performant pe Search = risc asumat. ads:validate 0 erori. sha256 fisier 5f3ccb5a."
