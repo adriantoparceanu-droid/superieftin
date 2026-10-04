@@ -66,7 +66,7 @@ function methodologyLines(): string[] {
     '',
     '- prețul de azi la fiecare magazin cu ofertă disponibilă și data ultimei verificări;',
     '- mediana ultimelor 30 de zile și diferența față de ea (verdict: reducere reală / preț în intervalul obișnuit / peste mediană);',
-    '- graficul de preț pe 90 de zile, cu minimul și maximul perioadei, și un rezumat în cuvinte („Pe scurt despre preț”);',
+    '- graficul de preț pe ultimele 90 de zile (sau de la prima înregistrare, pentru produsele urmărite de mai puțin timp), cu minimul și maximul perioadei, și un rezumat în cuvinte („Pe scurt despre preț”);',
     '- alerta de preț (Telegram / email): te anunță când prețul ajunge la pragul ales.',
     '',
   ]
