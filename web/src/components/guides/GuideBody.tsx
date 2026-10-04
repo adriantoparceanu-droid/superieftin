@@ -3,7 +3,8 @@ import { splitGuideBody, collectRefs, type GuideSegment } from '@/lib/guides/mar
 import { renderMarkdown } from '@/lib/guides/markdown'
 import { highlightUnverified } from '@/lib/guides/review'
 import { loadLiveProducts, refsKey, type LiveProduct, type LiveOffer } from '@/lib/guides/queries'
-import { getPriceHistory } from '@/lib/queries'
+import { getPriceHistory, getHistoryStart } from '@/lib/queries'
+import { historyPartialSince, historyTitle } from '@/lib/seo/product-facts'
 import { calculateDiscount, formatPrice, formatPct, formatVerified, medianDeltaText, FRESH_HOURS } from '@/lib/discount'
 import { AffiliateLink } from '@/components/analytics/AffiliateLink'
 import { PriceHistoryChart } from '@/components/PriceHistoryChart'
@@ -164,11 +165,13 @@ function DiscountBlock({ p }: { p: LiveProduct }) {
 }
 
 async function HistoryBlock({ p }: { p: LiveProduct }) {
-  const history = await getPriceHistory(p.id)
+  const [history, trackedSince] = await Promise.all([getPriceHistory(p.id), getHistoryStart(p.id).catch(() => null)])
   const best = p.offers[0]
+  // Ca pe /p/: produs urmarit de mai putin de 90 de zile → „de la <data>”, nu „90 de zile”
+  const title = historyTitle(historyPartialSince(trackedSince ?? history[0]?.recorded_at))
   return (
     <div className={boxClass}>
-      <p className="mb-2"><ProductTitle p={p} /> <span className="text-sm text-muted">— istoricul prețului (90 de zile)</span></p>
+      <p className="mb-2"><ProductTitle p={p} /> <span className="text-sm text-muted">— {title.charAt(0).toLocaleLowerCase('ro-RO') + title.slice(1)}</span></p>
       <PriceHistoryChart data={history} currentPrice={best?.current_price ?? null} medianPrice={best?.median_price ?? null} />
       {best?.median_price != null && (
         <p className="mt-2 text-xs text-muted tabular-nums">

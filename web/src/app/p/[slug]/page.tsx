@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { getProductDetail, getPriceHistory, getAllProductSlugs } from '@/lib/queries'
+import { getProductDetail, getPriceHistory, getHistoryStart, getAllProductSlugs } from '@/lib/queries'
 import { calculateDiscount, formatPrice, formatPct, formatVerified, medianDeltaText } from '@/lib/discount'
 import { PriceHistoryChart } from '@/components/PriceHistoryChart'
 import { PriceTag } from '@/components/PriceTag'
@@ -16,7 +16,7 @@ import { PriceAlertButton, MobileActionBar } from '@/components/PriceAlert'
 import { EmailAlertForm } from '@/components/EmailAlertForm'
 import { emailAlertsEnabled } from '@/lib/email-alerts'
 import { breadcrumbLd, ldScript, productLd } from '@/lib/seo/jsonld'
-import { priceFacts, variantBase } from '@/lib/seo/product-facts'
+import { priceFacts, variantBase, historyPartialSince, historyTitle, historyChartPhrase } from '@/lib/seo/product-facts'
 import { getProductVariants, getSimilarProducts, type ProductLink } from '@/lib/seo/queries'
 import { withOg } from '@/lib/seo/og'
 import { absUrl } from '@/lib/seo/site'
@@ -50,9 +50,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const title = `${product.name}${titlePrice}`
   // Un fapt verificabil in descriere (mediana), fara cuvantul „reducere” (raport SEO, A4)
   const median = bestOffer?.median_price
+  // Produs urmarit de mai putin de 90 de zile → „istoricul prețului de la <data>”, nu „pe 90 de zile”
+  const partialSince = historyPartialSince(await getHistoryStart(product.id).catch(() => null))
   const description = `Prețul curent pentru ${product.name} la ${bestOffer?.retailer_name || 'magazine online'}` +
     (median ? `; mediana ultimelor 30 de zile: ${formatPrice(median)}` : '') +
-    '. Grafic cu istoricul prețului pe 90 de zile, comparat cu mediana de 30 de zile.'
+    '. ' + historyChartPhrase(partialSince)
 
   return {
     title,
@@ -97,7 +99,9 @@ function ProductLinks({ title, items }: { title: string; items: ProductLink[] })
 export default async function ProductPage({ params }: Props) {
   const { slug } = await params
   const product = await getProductDetail(slug)
-  const history = product ? await getPriceHistory(product.id) : []
+  const [history, trackedSince] = product
+    ? await Promise.all([getPriceHistory(product.id), getHistoryStart(product.id).catch(() => null)])
+    : [[], null]
 
   if (!product) notFound()
   const bestOffer = product.offers[0]
@@ -169,9 +173,12 @@ export default async function ProductPage({ params }: Props) {
     { name: product.name, path: `/p/${slug}` },
   ])
 
-  // „Pe scurt despre preț”: aceleasi valori ca graficul (istoric 90 de zile + mediana ofertei afisate)
+  // „Pe scurt despre preț”: aceleasi valori ca graficul (istoric 90 de zile + mediana ofertei afisate).
+  // Urmarit de mai putin de 90 de zile → titlul si frazele pleaca de la prima inregistrare.
+  const historyStart = trackedSince ?? history[0]?.recorded_at ?? null
   const facts = priceFacts({
     history,
+    trackedSince: historyStart,
     median30: bestOffer?.median_price ?? null,
     lastChecked: bestOffer?.last_checked ?? null,
     retailer: bestOffer?.retailer_name ?? null,
@@ -407,7 +414,7 @@ export default async function ProductPage({ params }: Props) {
           {/* Grafic istoric pret */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h2 className="font-semibold text-[var(--color-text)]">Istoricul prețului (90 de zile)</h2>
+              <h2 className="font-semibold text-[var(--color-text)]">{historyTitle(historyPartialSince(historyStart))}</h2>
               {history.length >= 2 && (
                 <Sparkline
                   points={Object.values(

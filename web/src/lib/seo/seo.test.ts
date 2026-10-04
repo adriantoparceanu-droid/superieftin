@@ -9,7 +9,7 @@ import {
   latestLastmod, PRODUCTS_PER_SITEMAP,
 } from './sitemap'
 import { robotsRules, AI_BOTS } from './robots'
-import { priceFacts, variantBase } from './product-facts'
+import { priceFacts, variantBase, historyPartialSince, historyTitle, historyChartPhrase } from './product-facts'
 import { indexableCategories, landingCategories, isExcludedFromAds } from './categories'
 import { buildLlmsTxt, buildLlmsFull, stripGuideMarkers } from './llms'
 import { roCount, absUrl, lowerFirst, SITE_URL, ORGANIZATION_ID } from './site'
@@ -261,8 +261,11 @@ test('priceFacts: minim/maxim 90 zile cu date, mediana, ultima verificare — fa
     median30: 138.99,
     lastChecked: '2026-10-03T08:00:00Z',
     retailer: 'evomag.ro',
+    trackedSince: '2026-01-10T08:00:00Z',
+    now: new Date('2026-10-04T12:00:00Z'),
   })
   const text = facts.join(' ')
+  assert.match(text, /^În ultimele 90 de zile, /)
   assert.match(text, /cel mai mic preț înregistrat a fost 129,99\s?RON \(12 august 2026\), iar cel mai mare 149,99\s?RON \(1 august 2026\)/)
   assert.match(text, /Mediana prețurilor din ultimele 30 de zile: 138,99/)
   assert.match(text, /Ultima verificare: 3 octombrie 2026, la evomag\.ro\./)
@@ -274,6 +277,44 @@ test('priceFacts: istoric scurt / pret constant / fara date', () => {
   assert.match(priceFacts({ history: [{ price: 10, recorded_at: '2026-10-01T10:00:00Z' }], median30: null, lastChecked: null, retailer: null })[0], /^Urmărim prețul din 1 octombrie 2026/)
   assert.match(priceFacts({ history: [{ price: 10, recorded_at: '2026-10-01T10:00:00Z' }, { price: 10, recorded_at: '2026-10-02T10:00:00Z' }], median30: null, lastChecked: null, retailer: null })[0], /constant/)
   assert.deepEqual(priceFacts({ history: [], median30: null, lastChecked: null, retailer: null }), [])
+})
+
+test('priceFacts: produs urmarit de mai putin de 90 de zile — fraza pleaca de la prima inregistrare', () => {
+  const now = new Date('2026-10-04T12:00:00Z')
+  // petmart: prima inregistrare pe 3.10.2026, pret constant
+  const constant = priceFacts({
+    history: [{ price: 361.12, recorded_at: '2026-10-03 09:00:00+03' }, { price: 361.12, recorded_at: '2026-10-04 09:00:00+03' }],
+    trackedSince: '2026-10-03 09:00:00+03', median30: null, lastChecked: null, retailer: null, now,
+  })
+  assert.match(constant[0], /^De la 3 octombrie 2026, de când urmărim produsul, prețul înregistrat a fost constant: 361,12\s?RON\.$/)
+  // minim / maxim, cu trackedSince dedus din istoric (fara query)
+  const range = priceFacts({
+    history: [{ price: 120, recorded_at: '2026-09-20T08:00:00Z' }, { price: 100, recorded_at: '2026-09-25T08:00:00Z' }],
+    median30: 110, lastChecked: null, retailer: null, now,
+  })
+  assert.match(range[0], /^De la 20 septembrie 2026, de când urmărim produsul, cel mai mic preț înregistrat a fost 100\s?RON \(25 septembrie 2026\)/)
+  for (const f of [...constant, ...range]) assert.doesNotMatch(f, /90 de zile/)
+  // urmarit de mult: chiar daca fereastra de 90 de zile incepe mai tarziu, raman „ultimele 90 de zile”
+  const old = priceFacts({
+    history: [{ price: 10, recorded_at: '2026-09-01T08:00:00Z' }, { price: 10, recorded_at: '2026-10-01T08:00:00Z' }],
+    trackedSince: '2025-01-15T08:00:00Z', median30: null, lastChecked: null, retailer: null, now,
+  })
+  assert.match(old[0], /^În ultimele 90 de zile, prețul înregistrat a fost constant/)
+})
+
+test('historyPartialSince / historyTitle / historyChartPhrase: 90 de zile doar cu 90+ zile de date', () => {
+  const now = new Date('2026-10-04T12:00:00Z')
+  assert.equal(historyPartialSince('2026-10-03T08:00:00Z', now), '2026-10-03T08:00:00Z')
+  assert.equal(historyPartialSince('2026-07-06T13:00:00Z', now), '2026-07-06T13:00:00Z') // 89,96 zile
+  assert.equal(historyPartialSince('2026-07-06T11:00:00Z', now), null)                    // 90+ zile
+  assert.equal(historyPartialSince(null, now), null)
+  assert.equal(historyPartialSince('nu e data', now), null)
+  assert.equal(historyTitle(null), 'Istoricul prețului (90 de zile)')
+  assert.equal(historyTitle('2026-10-03T08:00:00Z'), 'Istoricul prețului (de la 3 oct. 2026)')
+  // ora Romaniei: 2 oct. 22:30 UTC = 3 oct. in Romania
+  assert.equal(historyTitle('2026-10-02T22:30:00Z'), 'Istoricul prețului (de la 3 oct. 2026)')
+  assert.match(historyChartPhrase(null), /pe 90 de zile/)
+  assert.equal(historyChartPhrase('2026-10-03T08:00:00Z'), 'Grafic cu istoricul prețului de la 3 octombrie 2026, comparat cu mediana de 30 de zile.')
 })
 
 test('variantBase: taie culoarea de dupa ultimul cuvant cu cifre', () => {

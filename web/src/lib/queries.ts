@@ -507,6 +507,23 @@ export const getPriceHistory = unstable_cache(
   { revalidate: 3600, tags: ['price-history'] }
 )
 
+// Prima inregistrare din istoric pentru produs (oricand, nu doar in fereastra de 90 de zile).
+// Daca e mai noua de 90 de zile, /p/ nu scrie „90 de zile” (lib/seo/product-facts.ts).
+// Ieftin: PK (offer_id, recorded_at) pe fiecare partitie.
+export const getHistoryStart = unstable_cache(
+  async (productId: string): Promise<string | null> => {
+    const { rows } = await pool.query<{ first: string | null }>(`
+      SELECT MIN(ph.recorded_at)::text AS first
+      FROM price_history ph
+      JOIN offers o ON o.id = ph.offer_id
+      WHERE o.product_id = $1
+    `, [productId])
+    return rows[0]?.first ?? null
+  },
+  ['history-start'],
+  { revalidate: 3600, tags: ['price-history'] }
+)
+
 // Categoriile vizibile (administrate in /admin), cu numarul de produse (inclusiv subcategorii)
 export const getCategories = unstable_cache(
   async (): Promise<CategoryInfo[]> => {
