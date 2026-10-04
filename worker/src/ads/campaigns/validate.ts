@@ -410,6 +410,21 @@ export const defaultFetcher: Fetcher = async (url) => {
   return { status: res.status, location: res.headers.get('location') ?? undefined, body: res.status === 200 ? await res.text() : '' }
 }
 
+// Reducerea afisata pe /p/. Doua formulari recunoscute (web/src/lib/verdict.ts):
+//  - vechea fraza „Reducere reală: 16,8% sub mediana de 30 de zile”;
+//  - cardul de verdict din redesign (oct. 2026): titlul „Reducere reală” + fraza „Prețul de azi e
+//    cu 16,8% sub mediana pe 30 de zile”. Cerem AMBELE bucati: fraza singura nu ajunge (o alta
+//    stare n-ar trebui sa o foloseasca, dar daca ar face-o, fara titlu nu e „reducere reala”).
+// Stările „Preț obișnuit” / „Peste prețul obișnuit” nu folosesc niciuna dintre formulari.
+export function parseDiscountPct(text: string): number | null {
+  const legacy = text.match(/Reducere reală:\s*(\d+(?:[.,]\d+)?)\s*%\s*sub mediana/i)
+  const card = /Reducere reală/.test(text)
+    ? text.match(/Prețul de azi e cu\s*(\d+(?:[.,]\d+)?)\s*%\s*sub mediana/)
+    : null
+  const m = legacy ?? card
+  return m ? Number(m[1].replace(',', '.')) : null
+}
+
 export function parsePage(url: string, status: number, body: string, location?: string): PageFacts {
   const text = body
     .replace(/<script[\s\S]*?<\/script>/gi, ' ').replace(/<style[\s\S]*?<\/style>/gi, ' ')
@@ -417,8 +432,7 @@ export function parsePage(url: string, status: number, body: string, location?: 
     .replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ').replace(/&quot;/g, '"').replace(/&#x27;|&#39;/g, "'")
     .replace(/\s+/g, ' ')
   const noindex = /<meta[^>]+name="robots"[^>]+content="[^"]*noindex/i.test(body)
-  const m = text.match(/Reducere reală:\s*(\d+(?:[.,]\d+)?)\s*%\s*sub mediana/i)
-  const discountPct = m ? Number(m[1].replace(',', '.')) : null
+  const discountPct = parseDiscountPct(text)
   let inStock: boolean | null = null
   const categories = new Set<string>()
   for (const s of body.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)) {

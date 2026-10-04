@@ -50,6 +50,10 @@ export interface OfferRow {
   retailer_slug: string
   median_price: number | null
   discount_pct: number | null
+  // Minimul / maximul pe 30 de zile ale ofertei (offer_price_stats, migratia 032) — termometrul
+  // de pe /p/. Completate doar de getProductDetail; NULL pana la prima recalculare.
+  min_30d?: number | null
+  max_30d?: number | null
 }
 
 export interface PricePoint {
@@ -57,6 +61,7 @@ export interface PricePoint {
   recorded_at: string
   retailer_id: number
   retailer_name: string
+  offer_id: string   // seria „cel mai mic pret pe zi” foloseste doar ofertele disponibile azi
 }
 
 export interface CategoryInfo {
@@ -463,6 +468,8 @@ export const getProductDetail = unstable_cache(
         r.name AS retailer_name,
         r.slug AS retailer_slug,
         mp.median_price::float AS median_price,
+        mp.min_30d::float AS min_30d,
+        mp.max_30d::float AS max_30d,
         CASE
           WHEN mp.median_price IS NOT NULL AND o.current_price < mp.median_price * 0.95
           THEN ROUND(((mp.median_price - o.current_price) / mp.median_price * 100)::numeric, 1)::float
@@ -471,7 +478,7 @@ export const getProductDetail = unstable_cache(
         ${OFFER_AVAILABLE_SQL} AS available
       FROM offers o
       JOIN retailers r ON r.id = o.retailer_id
-      LEFT JOIN (SELECT offer_id, median_30d AS median_price FROM offer_price_stats) mp ON mp.offer_id = o.id
+      LEFT JOIN (SELECT offer_id, median_30d AS median_price, min_30d, max_30d FROM offer_price_stats) mp ON mp.offer_id = o.id
       WHERE o.product_id = $1
       ORDER BY o.current_price ASC NULLS LAST
     `, [product.id])
@@ -488,7 +495,7 @@ export const getProductDetail = unstable_cache(
       last_seen: byRecent[0]?.last_checked ?? null,
     }
   },
-  ['product-detail-v2'],
+  ['product-detail-v3'],
   { revalidate: 3600, tags: ['products'] }
 )
 
@@ -500,7 +507,8 @@ export const getPriceHistory = unstable_cache(
         ph.price::float AS price,
         ph.recorded_at::text AS recorded_at,
         o.retailer_id,
-        r.name AS retailer_name
+        r.name AS retailer_name,
+        o.id::text AS offer_id
       FROM price_history ph
       JOIN offers o ON o.id = ph.offer_id
       JOIN retailers r ON r.id = o.retailer_id
@@ -510,7 +518,7 @@ export const getPriceHistory = unstable_cache(
     `, [productId])
     return rows
   },
-  ['price-history'],
+  ['price-history-v2'],
   { revalidate: 3600, tags: ['price-history'] }
 )
 

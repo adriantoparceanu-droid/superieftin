@@ -28,7 +28,6 @@ const MESAJE: Record<string, string> = {
 }
 const ERORI: Record<string, string> = {
   prag: 'Scrie pragul în lei, de exemplu 1610.',
-  'peste-pret': 'Pragul trebuie să fie sub prețul de acum, altfel alerta ar pleca imediat.',
   alerta: 'Alerta nu mai există.',
 }
 

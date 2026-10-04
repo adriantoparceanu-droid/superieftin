@@ -111,7 +111,7 @@ async function handleStart(chatId: number, param: string | null, username?: stri
   } else {
     const name = firstName ? `, ${firstName}` : ''
     await sendMsg(chatId,
-      `👋 Salut${name}!\n\nSunt botul <b>superieftin.ro</b> — te anunț când prețul unui produs scade sub pragul tău.\n\n📌 <b>Cum funcționează:</b>\n1. Mergi pe <a href="${SITE_URL}">${SITE_URL}</a>\n2. Deschide pagina unui produs\n3. Apasă butonul <b>🔔 Anunță-mă când scade prețul</b>\n\n<b>Comenzi:</b>\n/alertele_mele — alertele active\n/sterge &lt;id&gt; — șterge o alertă`
+      `👋 Salut${name}!\n\nSunt botul <b>superieftin.ro</b> — te anunț când prețul unui produs scade sub pragul tău.\n\n📌 <b>Cum funcționează:</b>\n1. Mergi pe <a href="${SITE_URL}">${SITE_URL}</a>\n2. Deschide pagina unui produs\n3. În cardul <b>🔔 Alertă de preț</b> alege pragul și apasă <b>Telegram</b>\n\n<b>Comenzi:</b>\n/alertele_mele — alertele active\n/sterge &lt;id&gt; — șterge o alertă`
     )
   }
 }
@@ -131,7 +131,7 @@ async function handleAlerteleMele(chatId: number) {
 
   if (!rows.length) {
     await sendMsg(chatId,
-      `📋 Nu ai alerte active.\n\nMergi pe <a href="${SITE_URL}">${SITE_URL}</a> și apasă <b>🔔 Anunță-mă când scade prețul</b> pe un produs.`
+      `📋 Nu ai alerte active.\n\nMergi pe <a href="${SITE_URL}">${SITE_URL}</a> și, pe pagina unui produs, apasă <b>Telegram</b> în cardul <b>🔔 Alertă de preț</b>.`
     )
     return
   }

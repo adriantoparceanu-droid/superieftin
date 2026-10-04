@@ -4,10 +4,9 @@ import { clientIp } from '@/lib/rate-limit'
 import { checkRateLimit } from '@/lib/go-rate-limit'
 import { alertTokenSecret } from '@/lib/alert-token'
 import {
-  SUBSCRIBE_OK_MESSAGE, emailAlertRateLimits, emailAlertsEnabled, normalizeEmail, parseTargetPrice, targetBelowCurrent,
+  SUBSCRIBE_OK_MESSAGE, emailAlertRateLimits, emailAlertsEnabled, normalizeEmail, parseTargetPrice,
 } from '@/lib/email-alerts'
 import { createPendingAlert, enqueueEmailJob, getAlertProduct } from '@/lib/email-alerts-db'
-import { formatPrice } from '@/lib/discount'
 
 // POST /api/alerte-email  { productId, email, target, offerId?, website }  →  { ok, message } | { error }
 //
@@ -53,9 +52,8 @@ export async function POST(req: NextRequest) {
 
   const product = await getAlertProduct(productId)
   if (!product) return fail('Produsul nu a fost găsit.', 404)
-  if (!targetBelowCurrent(target, product.bestPrice)) {
-    return fail(`Pragul trebuie să fie sub prețul de acum (${formatPrice(product.bestPrice)}), altfel alerta ar pleca imediat.`)
-  }
+  // Pragul poate fi si la/peste pretul de azi (decizia proprietarului, 5 oct. 2026): pagina il
+  // avertizeaza pe vizitator („te-am anunța imediat”), iar alerta pleaca la urmatoarea verificare.
 
   try {
     const alertId = await createPendingAlert(email, product.id, offerId, target)

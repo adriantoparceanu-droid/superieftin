@@ -233,6 +233,20 @@ test('parsePage extrage reducerea, stocul și categoriile din HTML-ul real', () 
   assert.equal(p2.discountPct, null)
 })
 
+test('parsePage: cardul de verdict din redesign („Reducere reală” + „Prețul de azi e cu X% sub mediana”)', () => {
+  const card = `<section><span>Reducere reală</span><span>−18,1%</span>
+    <p>Prețul de azi e cu <b>18,1<!-- -->% sub mediana</b> pe 30 de zile (2.489,99 RON).</p></section>`
+  assert.equal(parsePage(URL_P, 200, card).discountPct, 18.1)
+  // fraza fara titlul „Reducere reală” nu e o reducere
+  assert.equal(parsePage(URL_P, 200, '<p>Prețul de azi e cu <b>18,1% sub mediana</b> pe 30 de zile.</p>').discountPct, null)
+  // celelalte stari ale cardului: fara reducere
+  for (const html of [
+    '<span>Preț obișnuit</span><p>Prețul de azi e la <b>2% sub mediană</b> (mediana pe 30 de zile: 2.449,99 RON), în intervalul obișnuit. Nu e o reducere reală.</p>',
+    '<span>Peste prețul obișnuit</span><p>Prețul de azi e cu <b>8,2% peste mediana</b> pe 30 de zile (2.449,99 RON).</p>',
+    '<span>Monitorizăm prețul</span><p>Avem încă prea puține prețuri înregistrate pentru o mediană pe 30 de zile, deci nu putem spune dacă e o reducere reală.</p>',
+  ]) assert.equal(parsePage(URL_P, 200, html).discountPct, null, html)
+})
+
 test('hash-ul pentru policy-reviewer ignoră id-urile, nu și conținutul', () => {
   const raw = stringify({ campaign: camp() })
   const withIds = writeIds(raw, [{ path: ['campaign', 'id'], value: '123' }, { path: ['campaign', 'ad_groups', 0, 'ads', 0, 'id'], value: '456' }])

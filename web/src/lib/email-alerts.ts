@@ -10,6 +10,7 @@
 //      headerul List-Unsubscribe → POST /api/alerte-email/dezabonare).
 
 import { alertTokenSecret } from './alert-token'
+import { parseLeiAmount } from './alert-threshold'
 
 type Env = Partial<Record<string, string>>
 
@@ -29,23 +30,13 @@ export function normalizeEmail(raw: unknown): string | null {
   return e
 }
 
-export const MAX_TARGET_PRICE = 100000
-
-// Pragul: suma pozitiva, in lei; „1.299,90”, „1299.9”, „1 299” sunt acceptate.
+// Pragul: suma pozitiva, in lei; „1.299,90”, „1299.9”, „1 299” sunt acceptate. Aceeasi parsare
+// ca in browser (lib/alert-threshold.ts — cardul „Alertă de preț” de pe /p/).
+// Pragul poate fi ORICE suma pozitiva (decizia proprietarului, 5 oct. 2026): la sau peste pretul
+// de azi alerta e acceptata si pleaca la urmatoarea verificare (pagina avertizeaza inainte).
+export { MAX_TARGET_PRICE } from './alert-threshold'
 export function parseTargetPrice(raw: unknown): number | null {
-  let t = typeof raw === 'number' ? String(raw) : typeof raw === 'string' ? raw : ''
-  t = t.trim().replace(/\s/g, '')
-  if (/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(t)) t = t.replace(/\./g, '')
-  t = t.replace(',', '.')
-  if (!/^\d+(\.\d{1,2})?$/.test(t)) return null
-  const n = parseFloat(t)
-  return n >= 1 && n <= MAX_TARGET_PRICE ? Math.round(n * 100) / 100 : null
-}
-
-// Pragul trebuie sa fie SUB cel mai mic pret disponibil acum: altfel alerta ar pleca imediat,
-// fara ca pretul sa fi scazut. Produs indisponibil (fara pret) → orice prag valid.
-export function targetBelowCurrent(target: number, bestPrice: number | null): boolean {
-  return bestPrice == null || target < bestPrice
+  return parseLeiAmount(raw)
 }
 
 // Anti-abuz per adresa (cineva care trimite cereri cu adresa altcuiva): cel mult atatea emailuri de
