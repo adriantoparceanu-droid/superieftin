@@ -68,6 +68,7 @@ cd worker && npm run ads:guard      # garda: verifică landing-urile grupurilor 
 ## Taxonomie & mapare produse
 
 - **Meniul e pe 2 niveluri**, condus de arborele din `categories` (părinte → subcategorii); `menu_items` oglindește categoriile. Trei părinți: Telefoane & Accesorii, Laptopuri & Calculatoare, TV & Audio.
+- **Petmart** (migrația 031): 10 subcategorii sub Animale de Companie (farmacie veterinară, igienă, zgărzi, culcușuri, castroane, acvaristică, reptile, rozătoare, păsări, fermă) + reguli `feed_category_map` pentru cele ~275 de categorii din feed. Categorii noi apărute în feed → Admin → Mapare. `farmacie-veterinara` = afirmații de sănătate → nu intră în reclame (regula 8).
 - **Condiția produsului (Refurbished / Second Hand) e TAG, nu categorie** — filtrabilă transversal în orice categorie.
 - **Mapare după denumire** (`name_category_rules`, migrația 020; Admin → Mapare → „Vezi ce conține”): pentru feed-uri fără categorie sau amestecate — „denumirea conține X (cuvânt întreg, fără diacritice) → categoria Y” sau „ignoră” (nu se mai importă). Aplicată la import DUPĂ `feed_category_map`, în `loadFeedRules` (`worker/src/lib/nameRules.ts`; aceeași potrivire în `web/src/lib/admin/nameMatch.ts` — modifică-le împreună). La salvare se aplică imediat pe produsele nemapate existente.
 - Maparea feed → categorie: `feed_category_map` (regula specifică retailerului bate regula globală cu `retailer_id NULL`), aplicată la ingest prin `loadFeedRules`.
