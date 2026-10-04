@@ -9,7 +9,7 @@ import { roCount } from './site'
 //   urmatoare se descopera greu, iar canonical spre pagina 1 e un semnal contradictoriu);
 // - sortarea (?sort=) si „vezi tot” (?tot=1) sunt doar alte ordonari ale aceleiasi liste →
 //   canonical spre pagina de baza;
-// - filtrul de marca (?brand=) → noindex, follow (pana la decizia D5 despre pagini de marca);
+// - filtrul de marca (?brand=, una sau mai multe marci) → noindex, follow (pana la decizia D5 despre pagini de marca);
 // - lista goala (0 produse disponibile) → noindex, follow (altfel e „soft 404” in Search Console);
 // - ?page= peste ultima pagina → 404 adevarat, nu „Niciun produs gasit” cu 200.
 
@@ -18,7 +18,7 @@ export interface ListingInput {
   page: number              // pagina ceruta (1 = prima)
   totalPages: number        // pentru vederea curenta (cu filtrele aplicate)
   hasReorder: boolean       // ?sort= diferit de implicit sau ?tot=1
-  brand: string | null      // ?brand=
+  brand: string | readonly string[] | null   // ?brand= (una sau mai multe marci bifate)
   empty: boolean            // lista nu are niciun produs disponibil (nici in subcategorii)
 }
 
@@ -36,9 +36,11 @@ export function parsePageParam(raw: string | undefined): number {
 
 export function listingSeo(i: ListingInput): ListingSeo {
   const notFound = i.page > 1 && i.page > i.totalPages
-  const filtered = i.hasReorder || !!i.brand
+  // Orice marca bifata (una sau mai multe) = vedere filtrata
+  const hasBrand = Array.isArray(i.brand) ? i.brand.length > 0 : !!i.brand
+  const filtered = i.hasReorder || hasBrand
   const canonical = !filtered && i.page > 1 ? `${i.basePath}?page=${i.page}` : i.basePath
-  const robots = i.brand || i.empty ? { index: false as const, follow: true as const } : null
+  const robots = hasBrand || i.empty ? { index: false as const, follow: true as const } : null
   return { notFound, canonical, robots, titleSuffix: i.page > 1 ? ` — pagina ${i.page}` : '' }
 }
 

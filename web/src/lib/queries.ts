@@ -274,7 +274,8 @@ export const getCategoryProducts = unstable_cache(
     category: string,
     page = 1,
     sort: 'discount' | 'price' | 'name' = 'price',
-    brand: string | null = null,
+    // Marcile bifate (?brand= repetat); null = toate. Vezi brandsForQuery (lib/listing-filters.ts).
+    brands: string[] | null = null,
     includeSub = false
   ): Promise<ProductWithDiscount[]> => {
     const offset = (page - 1) * PAGE_SIZE
@@ -311,10 +312,10 @@ export const getCategoryProducts = unstable_cache(
       WHERE ${categoryFilter(includeSub)}
         AND o.current_price IS NOT NULL
         AND ${OFFER_AVAILABLE_SQL}
-        AND ($4::text IS NULL OR p.brand = $4)
+        AND ($4::text[] IS NULL OR p.brand = ANY($4::text[]))
       ORDER BY ${orderBy}
       LIMIT $2 OFFSET $3
-    `, [category, PAGE_SIZE, offset, brand])
+    `, [category, PAGE_SIZE, offset, brands])
     return rows
   },
   ['category-products'],
@@ -322,7 +323,7 @@ export const getCategoryProducts = unstable_cache(
 )
 
 export const getCategoryProductCount = unstable_cache(
-  async (category: string, brand: string | null = null, includeSub = false): Promise<number> => {
+  async (category: string, brands: string[] | null = null, includeSub = false): Promise<number> => {
     const { rows } = await pool.query(`
       SELECT COUNT(DISTINCT p.id)::int AS count
       FROM products p
@@ -330,18 +331,23 @@ export const getCategoryProductCount = unstable_cache(
       WHERE ${categoryFilter(includeSub)}
         AND o.current_price IS NOT NULL
         AND ${OFFER_AVAILABLE_SQL}
-        AND ($2::text IS NULL OR p.brand = $2)
-    `, [category, brand])
+        AND ($2::text[] IS NULL OR p.brand = ANY($2::text[]))
+    `, [category, brands])
     return rows[0]?.count ?? 0
   },
   ['category-count'],
   { revalidate: 3600, tags: ['products'] }
 )
 
+// Marcile din categorie cu numarul de produse DISPONIBILE (aceeasi regula ca lista:
+// OFFER_AVAILABLE_SQL + pret), pentru coloana de filtre. Independent de marcile bifate —
+// coloana arata mereu toate optiunile. Ordine: cele mai multe produse intai.
+// Cheia de cache e noua („-v2”): inainte functia intorcea string[], iar o intrare veche din
+// cache cu forma veche ar strica pagina pana la expirare.
 export const getCategoryBrands = unstable_cache(
-  async (category: string, includeSub = false): Promise<string[]> => {
+  async (category: string, includeSub = false): Promise<{ brand: string; count: number }[]> => {
     const { rows } = await pool.query(`
-      SELECT DISTINCT p.brand
+      SELECT p.brand, COUNT(DISTINCT p.id)::int AS count
       FROM products p
       JOIN offers o ON o.product_id = p.id
       WHERE ${categoryFilter(includeSub)}
@@ -349,11 +355,12 @@ export const getCategoryBrands = unstable_cache(
         AND p.brand != ''
         AND o.current_price IS NOT NULL
         AND ${OFFER_AVAILABLE_SQL}
-      ORDER BY p.brand ASC
+      GROUP BY p.brand
+      ORDER BY count DESC, p.brand ASC
     `, [category])
-    return rows.map(r => r.brand as string)
+    return rows.map(r => ({ brand: r.brand as string, count: r.count as number }))
   },
-  ['category-brands'],
+  ['category-brands-v2'],
   { revalidate: 3600, tags: ['products'] }
 )
 

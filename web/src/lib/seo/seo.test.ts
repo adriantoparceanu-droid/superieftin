@@ -47,6 +47,15 @@ test('listing: ?brand= → noindex, follow si canonical de baza', () => {
   assert.equal(s.canonical, '/c/telefoane-mobile')
 })
 
+test('listing: mai multe marci → noindex, follow; lista goala de marci = fara filtru', () => {
+  const s = listingSeo({ ...base, page: 2, brand: ['Samsung', 'Apple'] })
+  assert.deepEqual(s.robots, { index: false, follow: true })
+  assert.equal(s.canonical, '/c/telefoane-mobile')
+  const none = listingSeo({ ...base, page: 2, brand: [] })
+  assert.equal(none.robots, null)
+  assert.equal(none.canonical, '/c/telefoane-mobile?page=2')
+})
+
 test('listing: categorie fara produse disponibile → noindex, follow', () => {
   assert.deepEqual(listingSeo({ ...base, page: 1, totalPages: 0, empty: true }).robots, { index: false, follow: true })
 })
