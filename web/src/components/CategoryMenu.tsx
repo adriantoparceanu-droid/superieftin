@@ -8,6 +8,8 @@ const MAX_TOP = 10
 // Meniul vertical de categorii din stanga homepage-ului (stil Porto): la mouseover pe o
 // categorie cu subcategorii, apare un flyout la dreapta cu ele (mega-menu). 100% CSS (group-hover),
 // fara JS. Ascuns pe mobil — acolo ramane meniul din header (flyout-urile hover nu merg la touch).
+// Redesign (etapa 2): culorile pe tokeni (bandoul de sus cărbune, ca antetul); structura o
+// revizuim odată cu homepage-ul (etapa 5) — bara de categorii din antet acoperă deja desktopul.
 export function CategoryMenu({ menu }: { menu: MenuItem[] }) {
   if (!menu.length) return null
   const items = menu.slice(0, MAX_TOP)
@@ -15,7 +17,7 @@ export function CategoryMenu({ menu }: { menu: MenuItem[] }) {
 
   return (
     <nav className="hidden lg:flex flex-col bg-surface border border-line rounded-2xl" aria-label="Categorii">
-      <div className="bg-brand text-white font-bold text-sm px-4 py-3 rounded-t-2xl flex items-center gap-2 shrink-0">
+      <div className="bg-head text-head-ink font-bold text-sm px-4 py-3 rounded-t-2xl flex items-center gap-2 shrink-0">
         <span className="text-base leading-none">☰</span> Toate categoriile
       </div>
 
@@ -26,7 +28,7 @@ export function CategoryMenu({ menu }: { menu: MenuItem[] }) {
             <li key={item.id} className="relative group/cat">
               <Link
                 href={item.href}
-                className="flex items-center gap-2.5 px-4 py-2 text-sm text-[var(--color-text)] hover:bg-brand/5 hover:text-red-ink transition-colors"
+                className="flex items-center gap-2.5 px-4 py-2 text-sm text-ink hover:bg-surface-2 hover:text-red-ink transition-colors"
               >
                 <CategoryIcon name={item.icon} className="w-5 h-5 text-muted group-hover/cat:text-red-ink shrink-0 transition-colors" />
                 <span className="flex-1 truncate">{item.label}</span>
@@ -36,8 +38,8 @@ export function CategoryMenu({ menu }: { menu: MenuItem[] }) {
               {/* Flyout la dreapta cu subcategoriile (pl-2 = punte de hover ca sa nu se inchida) */}
               {kids.length > 0 && (
                 <div className="absolute left-full top-0 pl-2 hidden group-hover/cat:block group-focus-within/cat:block z-40 w-[440px] max-w-[calc(100vw-280px)]">
-                  <div className="bg-surface border border-line rounded-xl shadow-xl p-4">
-                    <Link href={item.href} className="flex items-center gap-2 text-sm font-bold text-[var(--color-text)] mb-3 hover:text-red-ink">
+                  <div className="bg-surface border border-line rounded-xl shadow-pop p-4">
+                    <Link href={item.href} className="flex items-center gap-2 text-sm font-bold text-ink mb-3 hover:text-red-ink">
                       <CategoryIcon name={item.icon} className="w-5 h-5 text-red-ink" />
                       {item.label} — vezi tot →
                     </Link>
@@ -62,7 +64,7 @@ export function CategoryMenu({ menu }: { menu: MenuItem[] }) {
       </ul>
 
       {rest > 0 && (
-        <a href="#toate-categoriile" className="block px-4 py-2.5 text-sm font-semibold text-red-ink border-t border-line hover:bg-brand/5 rounded-b-2xl shrink-0">
+        <a href="#toate-categoriile" className="block px-4 py-2.5 text-sm font-semibold text-red-ink border-t border-line hover:bg-surface-2 rounded-b-2xl shrink-0">
           + încă {rest} categorii →
         </a>
       )}

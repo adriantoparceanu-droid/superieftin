@@ -695,6 +695,19 @@ export const getTagBySlug = unstable_cache(
   { revalidate: 3600, tags: ['categories'] }
 )
 
+// Tag-urile transversale (Refurbished, Second Hand…) pentru meniul mobil — jetoane spre /t/<slug>.
+// Tabel mic (câteva rânduri), cache 1 h ca meniul; nu le scriem de mână în componentă.
+export const getMenuTags = unstable_cache(
+  async (): Promise<{ slug: string; name: string }[]> => {
+    const { rows } = await pool.query<{ slug: string; name: string }>(
+      'SELECT slug, name FROM tags ORDER BY id'
+    )
+    return rows
+  },
+  ['menu-tags'],
+  { revalidate: 3600, tags: ['categories', 'menu'] }
+)
+
 export const getTagProducts = unstable_cache(
   async (slug: string, page = 1): Promise<ProductWithDiscount[]> => {
     const offset = (page - 1) * PAGE_SIZE
