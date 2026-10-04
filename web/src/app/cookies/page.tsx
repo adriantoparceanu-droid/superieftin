@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { LegalPage } from '@/components/LegalPage'
+import { INK_BUTTON } from '@/components/article'
 import { CookieSettingsButton } from '@/components/consent/CookieSettingsButton'
 
 export const metadata: Metadata = {
@@ -21,7 +22,7 @@ export default function CookiesPage() {
       </p>
 
       <p>
-        <CookieSettingsButton className="px-4 py-2 rounded-lg text-sm font-semibold bg-brand hover:bg-brand-dark text-white transition-colors" />
+        <CookieSettingsButton className={INK_BUTTON} />
       </p>
 
       <h2>Cookie-uri folosite</h2>

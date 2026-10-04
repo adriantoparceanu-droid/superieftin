@@ -6,6 +6,9 @@ import { alertTokenSecret, verifyAlertToken } from '@/lib/alert-token'
 import { alertRearmPct, emailAlertsEnabled, rearmThreshold } from '@/lib/email-alerts'
 import { getSubscriber, listSubscriberAlerts } from '@/lib/email-alerts-db'
 import { formatPrice } from '@/lib/discount'
+import { formatLeiInput, MAX_TARGET_PRICE } from '@/lib/alert-threshold'
+import { OUTLINE_BUTTON } from '@/components/article'
+import { ThresholdForm } from './ThresholdForm'
 import { deleteAlertAction, unsubscribeAllAction, updateTargetAction } from '../actions'
 
 // „Alertele mele” — fara cont: accesul vine din linkul semnat din emailuri (valabil 60 de zile).
@@ -27,14 +30,13 @@ const MESAJE: Record<string, string> = {
   stearsa: 'Alerta a fost oprită și ștearsă.',
 }
 const ERORI: Record<string, string> = {
-  prag: 'Scrie pragul în lei, de exemplu 1610.',
+  // Același format ca mesajele câmpului (lib/alert-threshold.ts): orice sumă între 1 și plafon
+  prag: `Scrie o sumă în lei (între 1 și ${formatLeiInput(MAX_TARGET_PRICE)}), de exemplu 1.610.`,
   alerta: 'Alerta nu mai există.',
 }
 
 const fmtDate = (iso: string) =>
   new Intl.DateTimeFormat('ro-RO', { day: 'numeric', month: 'long', timeZone: 'Europe/Bucharest' }).format(new Date(iso))
-
-const btn = 'text-sm font-semibold px-3 py-1.5 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2'
 
 export default async function GestionarePage({ searchParams }: Props) {
   const sp = await searchParams
@@ -62,53 +64,48 @@ export default async function GestionarePage({ searchParams }: Props) {
 
   return (
     <LegalPage title="Alertele mele de preț">
-      <p className="text-sm text-muted">Adresa: <strong className="text-[var(--color-text)]">{subscriber.email}</strong></p>
-      {mesaj && <p role="status" className="rounded-lg bg-success-tint border border-success-ink/30 text-success-ink px-3 py-2 text-sm">{mesaj}</p>}
-      {eroare && <p role="alert" className="rounded-lg bg-red-tint border border-red-ink/30 text-red-ink px-3 py-2 text-sm">{eroare}</p>}
+      <p className="text-sm text-ink-3">Adresa: <strong className="text-ink">{subscriber.email}</strong></p>
+      {mesaj && <p role="status" className="rounded-xl border border-success-ink/30 bg-success-tint px-3.5 py-2.5 text-sm font-semibold text-success-ink">{mesaj}</p>}
+      {eroare && <p role="alert" className="rounded-xl border border-red-ink/30 bg-red-tint px-3.5 py-2.5 text-sm font-semibold text-red-ink">{eroare}</p>}
 
       {alerts.length === 0 ? (
         <p>Nu ai nicio alertă activă. Poți seta una de pe pagina oricărui produs.</p>
       ) : (
-        <ul className="!list-none !pl-0 space-y-3">
+        <ul className="!list-none !space-y-3 !pl-0">
           {alerts.map((a) => (
-            <li key={a.id} className="rounded-lg border border-line p-3 sm:p-4">
-              <Link href={`/p/${a.productSlug}`} className="font-semibold !no-underline !text-[var(--color-text)] hover:!underline">{a.productName}</Link>
-              <p className="text-sm text-muted mt-1">
-                Cel mai mic preț acum: {a.bestPrice != null ? formatPrice(a.bestPrice) : 'indisponibil'}
+            <li key={a.id} className="!pl-0 rounded-2xl border border-line bg-surface p-3.5 text-[15px] sm:p-4">
+              <Link href={`/p/${a.productSlug}`} className="font-display text-[17px] font-extrabold leading-snug !text-ink !no-underline hover:!text-red-ink">{a.productName}</Link>
+              <p className="mt-1 text-sm text-ink-3">
+                Cel mai mic preț acum:{' '}
+                {a.bestPrice != null ? <strong className="font-display font-extrabold tabular-nums">{formatPrice(a.bestPrice)}</strong> : 'indisponibil'}
               </p>
               {/* Starea (re-armare): activa = asteapta scaderea; trimisa = asteapta ca pretul sa urce
                   peste prag + marja, apoi anuntam din nou la urmatoarea scadere */}
-              <p className="text-sm mt-1">
+              <p className="mt-1.5 text-sm">
                 {a.armed ? (
-                  <span className="text-success-ink">● Activă — te anunțăm când prețul ajunge la prag.</span>
+                  <span className="inline-flex items-start gap-1.5 text-success-ink">
+                    <i aria-hidden="true" className="mt-[7px] h-2 w-2 shrink-0 rounded-full bg-current" />
+                    <span>Activă — te anunțăm când prețul ajunge la prag.</span>
+                  </span>
                 ) : (
-                  <span className="text-[var(--color-text)]">
-                    ● Trimisă{a.triggerPrice != null ? `: ${formatPrice(a.triggerPrice)}` : ''}
-                    {a.triggerRetailer ? ` la ${a.triggerRetailer}` : ''}{a.triggeredAt ? `, pe ${fmtDate(a.triggeredAt)}` : ''}.
-                    {' '}Te anunțăm din nou după ce prețul urcă peste {formatPrice(rearmThreshold(a.targetPrice, rearmPct))} și scade iar la prag.
+                  <span className="inline-flex items-start gap-1.5 text-ink-2">
+                    <i aria-hidden="true" className="mt-[7px] h-2 w-2 shrink-0 rounded-full bg-ink-3" />
+                    <span>
+                      Trimisă{a.triggerPrice != null ? `: ${formatPrice(a.triggerPrice)}` : ''}
+                      {a.triggerRetailer ? ` la ${a.triggerRetailer}` : ''}{a.triggeredAt ? `, pe ${fmtDate(a.triggeredAt)}` : ''}.
+                      {' '}Te anunțăm din nou după ce prețul urcă peste {formatPrice(rearmThreshold(a.targetPrice, rearmPct))} și scade iar la prag.
+                    </span>
                   </span>
                 )}
               </p>
-              <div className="mt-2 flex flex-wrap items-end gap-2">
-                <form action={updateTargetAction} className="flex items-end gap-2">
-                  <input type="hidden" name="t" value={token} />
-                  <input type="hidden" name="alertId" value={a.id} />
-                  <label className="text-sm">
-                    <span className="block text-xs text-muted">Prag (lei)</span>
-                    <input
-                      name="target"
-                      inputMode="decimal"
-                      defaultValue={String(a.targetPrice).replace('.', ',')}
-                      className="w-28 border border-line rounded-lg px-2 py-1.5 text-sm tabular-nums"
-                      required
-                    />
-                  </label>
-                  <button type="submit" className={`${btn} border border-line hover:border-brand hover:text-red-ink`}>Salvează</button>
-                </form>
+              <div className="mt-3 flex flex-wrap items-start justify-between gap-x-3 gap-y-2 border-t border-line pt-3">
+                <ThresholdForm action={updateTargetAction} token={token} alertId={a.id} target={a.targetPrice} today={a.bestPrice} />
                 <form action={deleteAlertAction}>
                   <input type="hidden" name="t" value={token} />
                   <input type="hidden" name="alertId" value={a.id} />
-                  <button type="submit" className={`${btn} text-muted hover:text-red-ink`}>Oprește alerta</button>
+                  <button type="submit" className="min-h-10 rounded-[10px] px-2 text-[14px] font-semibold text-ink-3 underline-offset-2 hover:text-red-ink hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink">
+                    Oprește alerta
+                  </button>
                 </form>
               </div>
             </li>
@@ -122,7 +119,7 @@ export default async function GestionarePage({ searchParams }: Props) {
       </p>
       <form action={unsubscribeAllAction}>
         <input type="hidden" name="t" value={token} />
-        <button type="submit" className={`${btn} border border-brand text-red-ink hover:bg-brand-light`}>
+        <button type="submit" className={`${OUTLINE_BUTTON} !text-red-ink`}>
           Dezabonează-mă de la toate alertele
         </button>
       </form>

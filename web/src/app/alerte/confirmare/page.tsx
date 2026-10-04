@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { LegalPage } from '@/components/LegalPage'
+import { INK_BUTTON } from '@/components/article'
 import { alertTokenSecret, verifyAlertToken } from '@/lib/alert-token'
 import { getEmailAlert } from '@/lib/email-alerts-db'
 import { formatPrice } from '@/lib/discount'
@@ -61,12 +62,12 @@ export default async function ConfirmarePage({ searchParams }: Props) {
         <input type="hidden" name="t" value={token} />
         <button
           type="submit"
-          className="bg-brand hover:bg-brand-dark text-white font-semibold px-5 py-2.5 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+          className={INK_BUTTON}
         >
           Confirmă alerta
         </button>
       </form>
-      <p className="text-sm text-muted">
+      <p className="text-sm text-ink-3">
         Primești cel mult un email de alerte pe zi, cu toate produsele care au ajuns la prag. După
         anunț, alerta rămâne activă: te anunțăm din nou la fiecare scădere nouă sub prag, până o
         oprești. Te poți dezabona oricând, dintr-un link aflat în fiecare email. Detalii în{' '}
