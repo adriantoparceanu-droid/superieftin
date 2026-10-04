@@ -4,7 +4,7 @@ import { ensurePriceHistoryPartitions } from '../lib/partitions.js'
 import { upsertProduct, upsertRetailerByDomain } from '../lib/upsert.js'
 import { loadFeedRules, IGNORE } from '../lib/feedRules.js'
 import { resolver, syncAffiliateAdvertisers } from '../lib/affiliate/index.js'
-import { findLinkConfig, buildDeepLink, type LinkConfigResult } from '../lib/affiliate/profitshare-deeplink.js'
+import { findLinkConfig, buildDeepLink, officialLinkBase, buildOfficialLink, type LinkConfigResult } from '../lib/affiliate/profitshare-deeplink.js'
 import { EmagScraper } from './emag.js'
 import type { Scraper } from './types.js'
 
@@ -49,10 +49,27 @@ export async function ingestScraper(scraper: Scraper): Promise<{ imported: numbe
   let psFallback: LinkConfigResult | undefined
   let unaffiliated = 0, linkErrors = 0
 
+  // Link oficial Profitshare fix (ex. PROFITSHARE_EMAG_LINK) → are prioritate fata de codul din
+  // API, care se schimba zilnic si nu e mereu numarat (vezi profitshare-deeplink.ts). Setat gresit
+  // → eroare acum, inainte de scanare.
+  const officialBase = officialLinkBase(scraper.domain)
+  if (officialBase) log.info({ officialBase }, 'Folosesc linkul oficial Profitshare (fix) pentru toate produsele')
+  else log.warn('Fara link oficial Profitshare in .env — linkurile vor folosi codul din API (risc: cod nenumarat)')
+
   let imported = 0, errors = 0, affiliated = 0
   for await (const product of scraper.run()) {
-    const aff = resolver.resolve(product.url)
-    if (aff) {
+    const aff = officialBase ? null : resolver.resolve(product.url)
+    if (officialBase) {
+      try {
+        product.affiliateUrl = buildOfficialLink(product.url, officialBase, scraper.domain)
+        product.affiliateNetwork = 'profitshare'
+        affiliated++
+      } catch (err) {
+        linkErrors++
+        unaffiliated++
+        if (linkErrors <= 5) log.error({ url: product.url, err: (err as Error).message }, 'Link Profitshare imposibil pentru produs')
+      }
+    } else if (aff) {
       product.affiliateUrl = aff.affiliateUrl
       product.affiliateNetwork = aff.network
       affiliated++

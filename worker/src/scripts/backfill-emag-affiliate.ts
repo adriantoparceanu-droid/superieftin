@@ -17,10 +17,13 @@
 //   valida (eMAG neaprobat/inactiv, API cazut) → iese cu cod 1, nu scrie nimic.
 // - Idempotent: atinge DOAR ofertele eMAG cu affiliate_url NULL (re-verificat in UPDATE);
 //   a doua rulare gaseste 0. Linkurile existente nu se modifica.
+// - EXCEPTIE: cu linkul oficial fix in .env (PROFITSHARE_EMAG_LINK, 2026-10-04) rescrie TOATE
+//   ofertele eMAG al caror link nu e deja linkul oficial (ex. vechile /lps/9/Vk0/ cu cod nenumarat).
+//   Idempotent si asa: a doua rulare gaseste 0.
 // - DATABASE_URL vine din mediu (local: --env-file=../.env; prod: env-ul containerului).
 
 import pool from '../lib/db.js'
-import { findLinkConfig, buildDeepLink } from '../lib/affiliate/profitshare-deeplink.js'
+import { findLinkConfig, buildDeepLink, officialLinkBase, buildOfficialLink } from '../lib/affiliate/profitshare-deeplink.js'
 
 const RETAILER_SLUG = 'emag'
 const DOMAIN = 'emag.ro'
@@ -35,38 +38,48 @@ async function main(): Promise<number> {
   const confirm = argv.includes('--confirm')
   console.log(confirm ? '==> Mod SCRIERE (--confirm)' : '==> Mod DRY-RUN (nu scrie nimic; adauga --confirm pentru scriere)')
 
+  const officialBase = officialLinkBase(DOMAIN)
+  // Prefixul linkului oficial: tot ce nu incepe asa se rescrie. Fara link oficial → doar NULL-urile.
+  const officialPrefix = officialBase ? `${officialBase}?redirect=` : null
+  if (officialBase) console.log(`Link oficial Profitshare: ${officialBase} (rescriu tot ce nu il foloseste)`)
   const { rows: offers } = await pool.query<{ id: string; url: string }>(`
     SELECT o.id::text, o.url
     FROM offers o JOIN retailers r ON r.id = o.retailer_id
-    WHERE r.slug = $1 AND o.affiliate_url IS NULL
+    WHERE r.slug = $1
+      AND (o.affiliate_url IS NULL OR ($2::text IS NOT NULL AND left(o.affiliate_url, length($2)) <> $2))
     ORDER BY o.id
-  `, [RETAILER_SLUG])
+  `, [RETAILER_SLUG, officialPrefix])
   const { rows: [totals] } = await pool.query<{ total: number; affiliated: number }>(`
     SELECT count(*)::int AS total, count(o.affiliate_url)::int AS affiliated
     FROM offers o JOIN retailers r ON r.id = o.retailer_id WHERE r.slug = $1
   `, [RETAILER_SLUG])
-  console.log(`Oferte eMAG: ${totals.total} (cu link afiliat: ${totals.affiliated}, fara: ${offers.length})`)
+  console.log(`Oferte eMAG: ${totals.total} (cu link afiliat: ${totals.affiliated}, de completat/rescris: ${offers.length})`)
   if (!offers.length) {
     console.log('Nimic de completat.')
     return 0
   }
 
-  const { config, attempts, reason } = await findLinkConfig(DOMAIN)
-  if (!config) {
+  // Cu link oficial nu mai avem nevoie de codurile din API.
+  const { config, attempts, reason } = officialBase
+    ? { config: null, attempts: 0, reason: undefined }
+    : await findLinkConfig(DOMAIN)
+  if (!officialBase && !config) {
     console.error(`EROARE: nu pot construi linkul Profitshare pentru ${DOMAIN} dupa ${attempts} apeluri API: ${reason}`)
     console.error('Nu s-a scris nimic.')
     return 1
   }
   // Codurile apar oricum in fiecare link public — nu sunt secrete (cheia API nu se afiseaza).
-  console.log(`Profitshare: ${config.advertiserName} (id ${config.advertiserId}), `
-    + `lps/${config.advertiserHash}/${config.affiliateHash}/ (gasit la apelul ${attempts})`)
+  if (config) {
+    console.log(`Profitshare: ${config.advertiserName} (id ${config.advertiserId}), `
+      + `lps/${config.advertiserHash}/${config.affiliateHash}/ (gasit la apelul ${attempts})`)
+  }
 
   const ids: string[] = []
   const links: string[] = []
   const invalid: string[] = []
   for (const o of offers) {
     try {
-      links.push(buildDeepLink(o.url, config, DOMAIN))
+      links.push(officialBase ? buildOfficialLink(o.url, officialBase, DOMAIN) : buildDeepLink(o.url, config!, DOMAIN))
       ids.push(o.id)
     } catch (err) {
       invalid.push(`${o.id}: ${(err as Error).message}`)
@@ -84,13 +97,14 @@ async function main(): Promise<number> {
     return 0
   }
 
-  // O singura instructiune (atomica). `affiliate_url IS NULL` re-verificat: daca intre timp
-  // o oferta a primit link (ex. un scrape), nu o suprascriem.
+  // O singura instructiune (atomica). Conditia re-verificata: daca intre timp o oferta a primit
+  // link (ex. un scrape), nu o suprascriem (fara link oficial: doar NULL-urile).
   const res = await pool.query(`
     UPDATE offers o SET affiliate_url = v.link, affiliate_network = 'profitshare'
     FROM unnest($1::bigint[], $2::text[]) AS v(id, link)
-    WHERE o.id = v.id AND o.affiliate_url IS NULL
-  `, [ids, links])
+    WHERE o.id = v.id
+      AND (o.affiliate_url IS NULL OR ($3::text IS NOT NULL AND left(o.affiliate_url, length($3)) <> $3))
+  `, [ids, links, officialPrefix])
   console.log(`Actualizate: ${res.rowCount}`)
   return 0
 }

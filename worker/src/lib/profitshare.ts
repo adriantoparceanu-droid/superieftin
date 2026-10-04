@@ -125,6 +125,63 @@ export async function psRequest<T>(path: string, params: Record<string, string |
   })
 }
 
+// Creeaza un link OFICIAL in contul Profitshare (POST affiliate-links) → l.profitshare.ro/l/{id}.
+// E o SCRIERE in cont (apare in panou) — se foloseste rar, manual (scripts/create-profitshare-link.ts).
+// Semnatura: ca la GET, dar cu verbul POST si query string gol; corpul e form-urlencoded
+// `0[name]=…&0[url]=…` (verificat live 2026-10-04).
+export interface PsCreatedLink {
+  name: string
+  url: string
+  ps_url: string             // https://l.profitshare.ro/l/<id>
+  final_url?: string
+  tracking_template?: string
+  [k: string]: unknown
+}
+
+export async function createAffiliateLink(name: string, url: string): Promise<PsCreatedLink> {
+  const user = process.env.PROFITSHARE_API_USER
+  const key = process.env.PROFITSHARE_API_KEY
+  if (!user || !key) throw new Error('PROFITSHARE_API_USER / PROFITSHARE_API_KEY lipsesc din .env')
+
+  await throttle()
+  const path = 'affiliate-links'
+  const date = new Date().toUTCString().replace('GMT', 'UTC')
+  const sig = crypto.createHmac('sha1', key).update(buildSignatureString('POST', path, '', user, date)).digest('hex')
+  const body = `0[name]=${encodeURIComponent(name)}&0[url]=${encodeURIComponent(url)}`
+
+  return new Promise((resolve, reject) => {
+    const req = https.request({
+      method: 'POST',
+      hostname: API_HOST,
+      path: '/' + path + '/?',
+      headers: {
+        'Date': date, 'X-PS-Client': user, 'X-PS-Auth': sig, 'X-PS-Accept': 'json',
+        'Content-Type': 'application/x-www-form-urlencoded', 'Content-Length': Buffer.byteLength(body),
+      },
+      timeout: 30000,
+    }, (res) => {
+      let data = ''
+      res.on('data', (d) => (data += d))
+      res.on('end', () => {
+        let parsed: any
+        try { parsed = JSON.parse(data) } catch {
+          return reject(new PsApiError('InvalidJSON', data.slice(0, 200), res.statusCode))
+        }
+        if (parsed?.error) {
+          return reject(new PsApiError(parsed.error.code || 'Unknown', parsed.error.message || '', res.statusCode))
+        }
+        // Raspunsul: { result: [ { name, url, ps_url, ... } ] } (sau obiect cu cheia „0”)
+        const first = Array.isArray(parsed?.result) ? parsed.result[0] : parsed?.result?.[0] ?? parsed?.result?.['0']
+        if (!first?.ps_url) return reject(new PsApiError('NoLink', JSON.stringify(parsed).slice(0, 300), res.statusCode))
+        resolve(first as PsCreatedLink)
+      })
+    })
+    req.on('timeout', () => req.destroy(new Error('Profitshare API timeout')))
+    req.on('error', reject)
+    req.end(body)
+  })
+}
+
 // Construieste stringul semnaturii — exportat pentru teste.
 export function buildSignatureString(verb: string, path: string, qs: string, user: string, date: string): string {
   return verb + path + '/?' + qs + '/' + user + date
