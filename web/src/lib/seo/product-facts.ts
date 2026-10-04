@@ -101,7 +101,7 @@ export function priceFactRows(i: PriceFactsInput): PriceFactRow[] {
     while (k > 0 && s[k - 1].price === s[k].price) k--
     const subject = i.offerPrices.length > 1 ? 'Cel mai mic preț' : 'Prețul'
     const ago = daysBetween(s[k].day, roDay(i.now ?? new Date()))
-    const when = ago <= 0 ? 'azi' : ago === 1 ? 'ieri' : `acum ${ago} zile`
+    const when = ago <= 0 ? 'azi' : ago === 1 ? 'ieri' : `acum ${ago}${ago >= 20 ? ' de' : ''} zile`
     rows.push({ icon: 'clock', parts: [`${subject} a ${s[k].price < s[k - 1].price ? 'scăzut' : 'crescut'} ${when}, de la `, { b: formatPrice(s[k - 1].price) }, '.'] })
   }
 

@@ -2,7 +2,7 @@
 // testată în alert-threshold.test.ts. Fără importuri de server: rulează și în browser.
 //
 // Decizia proprietarului (5 oct. 2026): pragul e un câmp editabil, ORICE sumă pozitivă. Un prag
-// la sau peste prețul de azi e acceptat — atunci afișăm un avertisment („te-am anunța imediat”),
+// la sau peste prețul de azi e acceptat — atunci afișăm un avertisment („alerta pleacă la următoarea verificare”),
 // iar alerta pleacă la următoarea verificare. Aceeași parsare o folosește serverul
 // (lib/email-alerts.ts → parseTargetPrice), ca browserul și API-ul să accepte exact aceleași sume.
 
@@ -65,7 +65,7 @@ export function thresholdStatus(raw: string, today: number | null, suggested: nu
     return { kind: 'ok', value: v, message: `Te anunțăm când produsul ajunge la ${formatPrice(v)} sau mai jos, la oricare magazin.`, showReset }
   }
   if (v >= today) {
-    return { kind: 'warn', value: v, message: `Pragul e peste prețul de azi (${formatPrice(today)}): te-am anunța imediat.`, showReset }
+    return { kind: 'warn', value: v, message: `Pragul e la sau peste prețul de azi (${formatPrice(today)}): alerta pleacă la următoarea verificare a prețurilor.`, showReset }
   }
   const pct = Math.round((1 - v / today) * 100)
   return {

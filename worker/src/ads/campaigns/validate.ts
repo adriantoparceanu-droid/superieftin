@@ -412,17 +412,20 @@ export const defaultFetcher: Fetcher = async (url) => {
 
 // Reducerea afisata pe /p/. Doua formulari recunoscute (web/src/lib/verdict.ts):
 //  - vechea fraza „Reducere reală: 16,8% sub mediana de 30 de zile”;
-//  - cardul de verdict din redesign (oct. 2026): titlul „Reducere reală” + fraza „Prețul de azi e
-//    cu 16,8% sub mediana pe 30 de zile”. Cerem AMBELE bucati: fraza singura nu ajunge (o alta
-//    stare n-ar trebui sa o foloseasca, dar daca ar face-o, fara titlu nu e „reducere reala”).
+//  - cardul de verdict din redesign (oct. 2026): titlul „Reducere reală −16,8%” urmat IMEDIAT de
+//    fraza „Prețul de azi e cu 16,8% sub mediana pe 30 de zile”, cu ACELAȘI procent. Titlul trebuie
+//    lipit de fraza: „Reducere reală” apare oricum pe orice pagină (subsolul: „Reducere reală =
+//    minimum 5% sub mediană”), deci o simpla prezenta a cuvintelor nu dovedeste nimic (policy-reviewer,
+//    5 oct. 2026).
 // Stările „Preț obișnuit” / „Peste prețul obișnuit” nu folosesc niciuna dintre formulari.
 export function parseDiscountPct(text: string): number | null {
   const legacy = text.match(/Reducere reală:\s*(\d+(?:[.,]\d+)?)\s*%\s*sub mediana/i)
-  const card = /Reducere reală/.test(text)
-    ? text.match(/Prețul de azi e cu\s*(\d+(?:[.,]\d+)?)\s*%\s*sub mediana/)
-    : null
-  const m = legacy ?? card
-  return m ? Number(m[1].replace(',', '.')) : null
+  if (legacy) return Number(legacy[1].replace(',', '.'))
+  const card = text.match(/Reducere reală\s*[−–-]\s*(\d+(?:[.,]\d+)?)\s*%\s*Prețul de azi e cu\s*(\d+(?:[.,]\d+)?)\s*%\s*sub mediana/)
+  if (!card) return null
+  const title = Number(card[1].replace(',', '.')), phrase = Number(card[2].replace(',', '.'))
+  // Titlul si fraza trebuie sa spuna acelasi lucru; altfel nu confirmam reducerea.
+  return Math.abs(title - phrase) < 0.05 ? phrase : null
 }
 
 export function parsePage(url: string, status: number, body: string, location?: string): PageFacts {

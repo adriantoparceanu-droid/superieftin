@@ -50,7 +50,7 @@ test('mesaj: prag la/peste prețul de azi → avertisment, dar acceptat (decizia
     const s = thresholdStatus(raw, 2040, 1938)
     assert.equal(s.kind, 'warn')
     assert.ok(s.value != null)
-    assert.match(s.message, /^Pragul e peste prețul de azi \(2\.040\s?RON\): te-am anunța imediat\.$/)
+    assert.match(s.message, /^Pragul e la sau peste prețul de azi \(2\.040\s?RON\): alerta pleacă la următoarea verificare a prețurilor\.$/)
   }
 })
 

@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
   const product = await getAlertProduct(productId)
   if (!product) return fail('Produsul nu a fost găsit.', 404)
   // Pragul poate fi si la/peste pretul de azi (decizia proprietarului, 5 oct. 2026): pagina il
-  // avertizeaza pe vizitator („te-am anunța imediat”), iar alerta pleaca la urmatoarea verificare.
+  // avertizeaza pe vizitator („alerta pleacă la următoarea verificare”), iar alerta pleaca la urmatoarea verificare.
 
   try {
     const alertId = await createPendingAlert(email, product.id, offerId, target)
