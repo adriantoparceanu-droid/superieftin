@@ -6,9 +6,10 @@ import {
   getActiveRetailersPublic, getMenu, getBanners,
   type Banner as BannerData,
 } from '@/lib/queries'
+import { cookies } from 'next/headers'
 import { ProductCard } from '@/components/ProductCard'
-import { Banner } from '@/components/Banner'
-import { AdConsentGate } from '@/components/consent/AdConsentGate'
+import { HomeBanners } from '@/components/home/HomeBanners'
+import { CONSENT_COOKIE, parseConsentCookie } from '@/lib/consent'
 import { RetailerStrip } from '@/components/RetailerStrip'
 import { HomeHero } from '@/components/home/HomeHero'
 import { VerdictLegend } from '@/components/home/VerdictLegend'
@@ -45,19 +46,23 @@ const TOP_PRODUCTS = 12
 const TOP_PRODUCTS_MOBILE = 8
 
 // Homepage-ul redesignului (design §4 „Homepage”, macheta direcției B, secțiunea 3):
-// hero cărbune cu metoda și cifre live → bannerele din admin (dacă există) → legenda verdictelor
-// → reducerile reale de azi → categorii → ghiduri → magazinele urmărite.
+// bannerele din admin (doar desktop, dacă există) → bandă cărbune cu metoda și cifre live →
+// legenda verdictelor → reducerile reale de azi → categorii → ghiduri → magazinele urmărite.
 // JSON-LD WebSite (+ SearchAction) si Organization sunt in layout, pe toate paginile
 // (lib/seo/jsonld.ts), cu @id comun.
 export default async function HomePage() {
-  const [facts, discounts, categories, retailers, menu, banners] = await Promise.all([
+  const [facts, discounts, categories, retailers, menu, banners, cookieStore] = await Promise.all([
     getSiteFacts().catch(() => null),
     getTopDiscounts(TOP_PRODUCTS * 2).catch(() => []),
     getCategories().catch(() => []),
     getActiveRetailersPublic().catch(() => []),
     getMenu().catch(() => []),
     getBanners().catch(() => ({} as Record<string, BannerData>)),
+    cookies(),
   ])
+  // Acordul „Publicitate” citit pe server: doar ca indiciu pentru rezervarea casetelor bannerelor
+  // HTML (fără salt de pagină); scripturile se încarcă tot după verificarea din browser.
+  const adConsentHint = parseConsentCookie(cookieStore.get(CONSENT_COOKIE)?.value)?.ads === true
 
   // getTopDiscounts întoarce oferte, nu produse: același produs poate apărea de două ori (la
   // două magazine). Păstrăm prima apariție (cea cu procentul cel mai mare — lista e sortată).
@@ -73,8 +78,8 @@ export default async function HomePage() {
 
   return (
     <>
+      <HomeBanners banners={banners} adConsentHint={adConsentHint} />
       <HomeHero facts={facts} />
-      <HomeBanners banners={banners} />
       <VerdictLegend />
 
       <section aria-labelledby="reduceri-azi">
@@ -147,30 +152,5 @@ function GuideLink({ href, icon, title, text }: { href: string; icon: React.Reac
         <span className="text-xs text-ink-3 lg:text-sm">{text}</span>
       </span>
     </Link>
-  )
-}
-
-// Bannerele administrate din /admin/bannere (un banner mare + două mici), sub hero.
-// Toate tipurile erau deja doar pentru desktop (imaginile au format 970 px; bannerele HTML de
-// afiliere cer acord „Publicitate” + ecran lat — AdConsentGate), deci tot blocul e ascuns sub lg.
-// Fără bannere active nu se afișează nimic.
-function HomeBanners({ banners }: { banners: Record<string, BannerData> }) {
-  const main = banners['main'] ?? null
-  const smalls = (['small_left', 'small_right'] as const).filter((slot) => banners[slot])
-  if (!main && smalls.length === 0) return null
-
-  // Banner HTML de afiliere (scripturi Profitshare → cookie): doar cu acord „Publicitate”
-  const render = (b: BannerData) =>
-    b.type === 'html' ? <AdConsentGate><Banner banner={b} /></AdConsentGate> : <Banner banner={b} />
-
-  return (
-    <div className="hidden lg:flex flex-col gap-4 w-full max-w-[970px] mx-auto pt-6">
-      {main && render(main)}
-      {smalls.length > 0 && (
-        <div className="grid grid-cols-2 gap-4">
-          {smalls.map((slot) => <div key={slot}>{render(banners[slot])}</div>)}
-        </div>
-      )}
-    </div>
   )
 }
