@@ -137,11 +137,11 @@ test('garda: landing bun → nicio pauză, nicio alertă', async () => {
   assert.equal(s.paused.length + s.notified.length, 0)
 })
 
-test('garda: landing invalid (404 / fără stoc / noindex) → pauză DOAR pentru grup + alertă', async () => {
+test('garda: landing invalid (404 / fără stoc / noindex fără stoc) → pauză DOAR pentru grup + alertă', async () => {
   for (const [status, body, re] of [
     [404, '', /404/],
     [200, productHtml({ inStock: false }), /nicio ofertă în stoc/],
-    [200, productHtml({ noindex: true }), /noindex/],
+    [200, productHtml({ noindex: true, inStock: false }), /noindex/],
   ] as const) {
     const { s, pause, notify } = spies()
     const acc: GuardTarget[] = [{ source: 'cont', campaignName: 'SE | Search | Test', adGroupId: '123', adGroupName: 'Grup test', urls: [URL_P], texts: ['Samsung Galaxy Test'] }]
@@ -157,6 +157,27 @@ test('garda: landing invalid (404 / fără stoc / noindex) → pauză DOAR pentr
     assert.ok(f.calls >= 2, 'pagina care pică se re-verifică o dată')
   }
 })
+// Decizia SEO din 5 oct. 2026: /p/ e noindex si pentru produsele urmarite de sub 30 de zile
+// (ex. Petmart, campania PET). Pagina 200 + JSON-LD InStock = landing valid pentru reclama.
+test('garda: produs noindex dar în stoc (istoric < 30 de zile) → nicio pauză, nicio alertă', async () => {
+  const { s, pause, notify } = spies()
+  const acc: GuardTarget[] = [{ source: 'cont', campaignName: 'SE | Search | Test', adGroupId: '123', adGroupName: 'Grup test', urls: [URL_P], texts: ['Samsung Galaxy Test'] }]
+  const r = await runAdsGuard({ files: [], guardrails: G, cfg: CFG, readAccount: async () => acc, fetcher: fetcherFor(200, productHtml({ noindex: true })), pause, notify, retryDelayMs: 0, log: () => {} })
+  assert.equal(r.checked, 1)
+  assert.equal(r.failing, 0)
+  assert.equal(s.paused.length + s.notified.length, 0)
+})
+
+test('garda: produs noindex fără nicio ofertă (fără JSON-LD Product) → pauză', async () => {
+  const { s, pause, notify } = spies()
+  const acc: GuardTarget[] = [{ source: 'cont', campaignName: 'SE | Search | Test', adGroupId: '123', adGroupName: 'Grup test', urls: [URL_P], texts: ['Samsung Galaxy Test'] }]
+  const body = '<html><head><meta name="robots" content="noindex, follow"></head><body><h1>Samsung Galaxy Test</h1></body></html>'
+  const r = await runAdsGuard({ files: [], guardrails: G, cfg: CFG, readAccount: async () => acc, fetcher: fetcherFor(200, body), pause, notify, retryDelayMs: 0, log: () => {} })
+  assert.equal(r.failing, 1)
+  assert.equal(s.paused.length, 1)
+  assert.match(s.notified[0], /noindex/)
+})
+
 const pause_ = (rn: string) => ({ adGroupOperation: { update: { resourceName: rn, status: 'PAUSED' }, updateMask: 'status' } })
 
 test('garda: text care vorbește de reducere + insigna dispărută → pauză; cu insignă → OK', async () => {

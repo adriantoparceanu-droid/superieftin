@@ -5,7 +5,8 @@
 //     (fara broad, fara branduri de retaileri, fara duplicate, neblocate de propriile negative),
 //     negativele de baza prezente, URL-uri pe www.superieftin.ro, fara /go/, fara categorii excluse;
 //  2. live (pe site-ul de productie): fiecare URL raspunde 200 direct (fara redirect), pagina nu e
-//     noindex, produsul e in stoc, categoria nu e exclusa, iar afirmatiile din anunturi sunt
+//     noindex (exceptie: pagina de produs in stoc — vezi landingProblems), produsul e in stoc,
+//     categoria nu e exclusa, iar afirmatiile din anunturi sunt
 //     adevarate pe pagina ACUM (regula 9): „reducere / sub mediana” cere insigna „Reducere reala”,
 //     orice procent trebuie sa coincida cu procentul afisat, marcile din text apar pe pagina.
 
@@ -488,14 +489,23 @@ export function createPageLoader(fetcher: Fetcher = defaultFetcher) {
 }
 export type PageLoader = ReturnType<typeof createPageLoader>
 
-// Verificarea unei pagini de destinatie: 200 direct (fara redirect), indexabila, cu oferta in
-// stoc, in afara categoriilor excluse. Intoarce motivele de respingere (gol = pagina e buna).
+// Verificarea unei pagini de destinatie: 200 direct (fara redirect), indexabila (sau pagina de
+// produs in stoc), cu oferta in stoc, in afara categoriilor excluse. Intoarce motivele de
+// respingere (gol = pagina e buna).
 // strictStock = pagina de produs FARA JSON-LD Product (deci fara oferta) e respinsa (garda).
 export async function landingProblems(url: string, loader: PageLoader, g: Guardrails, opts: { strictStock?: boolean } = {}): Promise<string[]> {
   const out: string[] = []
   const p = await loader.get(url)
   if (p.status !== 200) return [`${url} răspunde ${p.status || 'eroare de rețea'}${p.location ? ` (→ ${p.location})` : ''}; trebuie 200 direct`]
-  if (p.noindex) out.push(`${url} e noindex (produs indisponibil?)`)
+  // noindex SINGUR nu mai e motiv de respingere cand pagina e de produs si JSON-LD spune InStock.
+  // De ce (decizia SEO din 5 oct. 2026, web/src/lib/seo/product-index.ts): /p/ e noindex si pentru
+  // produsele urmarite de sub 30 de zile, nemapate sau din Sanatate & Naturale — pagina e complet
+  // functionala (pret, oferte, linkuri), doar ca Google nu o indexeaza. Altfel garda ar pune pe
+  // pauza campaniile cu produse noi (ex. PET Royal Canin, Petmart urmarit din 3 oct.).
+  // Reclama nu are nevoie de index: conteaza ca pagina raspunde 200 si are oferta in stoc.
+  // Produsul indisponibil (OutOfStock / fara JSON-LD Product) ramane esec, ca inainte; la fel
+  // noindex pe /c/ sau /reduceri-reale/ (lista goala). Categoria exclusa e verificata separat, mai jos.
+  if (p.noindex && p.inStock !== true) out.push(`${url} e noindex (produs indisponibil?)`)
   if (p.inStock === false) out.push(`${url}: nicio ofertă în stoc`)
   else if (opts.strictStock && p.inStock == null && /^\/p\//.test(new URL(url).pathname)) out.push(`${url}: pagina de produs nu are nicio ofertă disponibilă`)
   // Categoria: din pagina (breadcrumb / JSON-LD) + din URL pentru /c/<slug> si /reduceri-reale/<slug>

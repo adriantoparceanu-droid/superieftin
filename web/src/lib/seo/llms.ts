@@ -10,6 +10,7 @@
 
 import { ABOVE_MEDIAN_PCT, FRESH_HOURS, REAL_DISCOUNT_PCT } from '../discount'
 import { OFFER_STALE_DAYS } from '../availability'
+import { PRODUCT_INDEX_MIN_HISTORY_DAYS } from './product-index'
 import { COMPANY } from '../company'
 import { SITE_URL, formatRoDate, roCount } from './site'
 import type { SiteFacts } from './site-facts'
@@ -57,7 +58,7 @@ function methodologyLines(): string[] {
     `- Reducere reală = preț curent cu cel puțin ${REAL_DISCOUNT_PCT}% sub mediana ultimelor 30 de zile (nu față de „prețul vechi” afișat de magazin).`,
     `- Între ${REAL_DISCOUNT_PCT}% sub și ${ABOVE_MEDIAN_PCT}% peste mediană: „preț în intervalul obișnuit”; peste ${ABOVE_MEDIAN_PCT}%: mai scump decât de obicei.`,
     `- Pe paginile /reduceri-reale/ și pe homepage, o reducere reală apare doar pentru prețuri verificate în ultimele ${FRESH_HOURS} de ore.`,
-    `- Ofertele neconfirmate de ${OFFER_STALE_DAYS} zile sunt ascunse; produsele fără nicio ofertă disponibilă nu se indexează.`,
+    `- Ofertele neconfirmate de ${OFFER_STALE_DAYS} zile sunt ascunse. O pagină de produs se indexează doar dacă are o ofertă disponibilă, o categorie (în afara Sănătate & Naturale) și cel puțin ${PRODUCT_INDEX_MIN_HISTORY_DAYS} de zile de istoric de preț; celelalte rămân accesibile, dar nu sunt indexate.`,
     '- Majoritatea produselor au o singură ofertă monitorizată; valoarea principală a site-ului e istoricul de preț și comparația cu mediana, nu numărul de magazine.',
     '- Linkurile spre magazine sunt de afiliere (Profitshare, 2Performant); comisionul nu influențează ordinea ofertelor (ordonate după preț) și nici verdictul.',
     '- Prețurile din ghiduri se completează automat din date, nu sunt scrise de mână.',

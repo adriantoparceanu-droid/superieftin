@@ -8,7 +8,7 @@ import path from 'node:path'
 import { stringify } from 'yaml'
 import type { Campaign, CampaignFile, Guardrails } from './schema.js'
 import { contentHash, writeIds, parseNegative, loadAllCampaigns, loadGuardrails } from './schema.js'
-import { validateCampaign, validateAll, negativeBlocks, styleProblems, claimIssues, parsePage, expiringClaims, BASE_NEGATIVES, RETAILER_BRANDS, type PageFacts } from './validate.js'
+import { validateCampaign, validateAll, negativeBlocks, styleProblems, claimIssues, parsePage, expiringClaims, BASE_NEGATIVES, RETAILER_BRANDS, createPageLoader, landingProblems, type PageFacts, type Fetcher } from './validate.js'
 import { checkReview } from './review.js'
 import { buildPlan, planOps, findCustomGoal } from './plan.js'
 import { emptySnapshot, type AccountSnapshot } from './account.js'
@@ -231,6 +231,30 @@ test('parsePage extrage reducerea, stocul și categoriile din HTML-ul real', () 
   const p2 = parsePage(URL_P, 200, '<meta name="robots" content="noindex, follow"/>')
   assert.equal(p2.noindex, true)
   assert.equal(p2.discountPct, null)
+})
+
+// Decizia SEO din 5 oct. 2026: /p/ e noindex si pentru produsele urmarite de sub 30 de zile,
+// nemapate sau din Sanatate & Naturale. noindex SINGUR nu mai respinge un landing de produs in stoc.
+const ldProduct = (avail: 'InStock' | 'OutOfStock') =>
+  `<script type="application/ld+json">{"@type":"Product","offers":{"@type":"AggregateOffer","availability":"https://schema.org/${avail}"}}</script>`
+const pageFetcher = (body: string): Fetcher => async () => ({ status: 200, body })
+
+test('landing: noindex + InStock (produs urmărit de < 30 de zile) → OK', async () => {
+  const html = `<head><meta name="robots" content="noindex, follow"/></head>${ldProduct('InStock')}`
+  assert.deepEqual(await landingProblems(URL_P, createPageLoader(pageFetcher(html)), G, { strictStock: true }), [])
+})
+
+test('landing: noindex + OutOfStock / fără ofertă → eșec, ca înainte', async () => {
+  const out = `<head><meta name="robots" content="noindex, follow"/></head>${ldProduct('OutOfStock')}`
+  const p1 = await landingProblems(URL_P, createPageLoader(pageFetcher(out)), G)
+  assert.ok(p1.some((m) => /noindex/.test(m)))
+  assert.ok(p1.some((m) => /nicio ofertă în stoc/.test(m)))
+  // fara JSON-LD Product (produs indisponibil) → tot noindex = esec
+  const none = '<head><meta name="robots" content="noindex, follow"/></head><h1>Telefon</h1>'
+  assert.ok((await landingProblems(URL_P, createPageLoader(pageFetcher(none)), G)).some((m) => /noindex/.test(m)))
+  // noindex pe o lista (/reduceri-reale/, fara JSON-LD Product) ramane esec
+  const lst = 'https://www.superieftin.ro/reduceri-reale/telefoane-mobile'
+  assert.ok((await landingProblems(lst, createPageLoader(pageFetcher(none)), G)).some((m) => /noindex/.test(m)))
 })
 
 test('parsePage: cardul de verdict din redesign („Reducere reală” + „Prețul de azi e cu X% sub mediana”)', () => {
