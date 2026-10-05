@@ -30,7 +30,7 @@ campaign:
   daily_budget: 15 # lei/zi — test de 14 zile (~210 lei în total)
   bidding:
     strategy: MANUAL_CPC
-    max_cpc: 1.20 # lei — egal cu limita de JOS a intervalului top-of-page din Keyword Planner (1,2–3,4)
+    max_cpc: 2.00 # lei — 5.10.2026, decizia proprietarului: la 1,20 lei = 0 afișări (>90% licitații pierdute pe rang; Keyword Planner top-of-page minim 1,29–1,66 lei pe cuvintele cu volum). Plafon guardrails 3,00.
   exact_only: true # ads:validate refuză orice cuvânt care nu e exact
   conversion_goal:
     name: Comision afiliere # Profitshare + 2Performant (petmart e pe 2Performant)
