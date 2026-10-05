@@ -1,7 +1,7 @@
 // Garda zilnica a campaniilor (job BullMQ `ads-guard`, manual: npm run ads:guard).
 //
 // De ce exista: un anunt aprobat azi poate deveni fals peste cateva zile fara ca cineva sa-l
-// atinga — produsul iese din stoc, pagina devine noindex / 404, iar daca textul ar vorbi de
+// atinga — produsul iese din stoc, pagina devine 404 / noindex fara oferta, iar daca textul ar vorbi de
 // reducere, insigna „Reducere reala” dispare cand mediana pe 30 de zile prinde pretul din urma
 // (verdictul policy-reviewer B1, 2026-09-27). Regula 9 cere ca afirmatiile sa fie adevarate pe
 // landing; garda verifica asta in fiecare dimineata si opreste grupul care nu mai corespunde.
@@ -11,7 +11,8 @@
 //     GAQL) si din YAML (grupurile care au deja `id`, scris de ads:apply). Fara ID-uri in YAML si
 //     fara grupuri active in cont → nu face nimic (nici macar nu descarca pagini);
 //  2. pentru fiecare grup verifica pagina de destinatie cu aceleasi reguli ca ads:validate
-//     (200 direct, indexabila, oferta in stoc, categorie permisa) + afirmatiile din texte
+//     (200 direct, oferta in stoc, indexabila — noindex e permis pe /p/ in stoc, decizia SEO din
+//     5 oct. 2026 —, categorie permisa) + afirmatiile din texte
 //     (reducere / procent → „Reducere reala” vizibila; marci prezente pe pagina);
 //  3. o pagina care pica se re-verifica o data dupa un minut (o sughitare a site-ului nu
 //     opreste reclamele);

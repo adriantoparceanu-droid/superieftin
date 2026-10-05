@@ -21,6 +21,7 @@ import { StickyBuyBar } from '@/components/product/StickyBuyBar'
 import { getProductVariants, getSimilarProducts, type ProductLink } from '@/lib/seo/queries'
 import { withOg } from '@/lib/seo/og'
 import { absUrl } from '@/lib/seo/site'
+import { productIndexDecision } from '@/lib/seo/product-index'
 
 export const revalidate = 3600
 
@@ -52,18 +53,33 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   // Un fapt verificabil in descriere (mediana), fara cuvantul „reducere” (raport SEO, A4)
   const median = bestOffer?.median_price
   // Produs urmarit de mai putin de 90 de zile → „istoricul prețului de la <data>”, nu „pe 90 de zile”
-  const partialSince = historyPartialSince(await getHistoryStart(product.id).catch(() => null))
+  const historyStart = await getHistoryStart(product.id).catch(() => null)
+  const partialSince = historyPartialSince(historyStart)
   const description = `Prețul curent pentru ${product.name} la ${bestOffer?.retailer_name || 'magazine online'}` +
     (median ? `; mediana ultimelor 30 de zile: ${formatPrice(median)}` : '') +
     '. ' + historyChartPhrase(partialSince)
+
+  // Regula de indexare (decizia SEO din 5 oct. 2026, lib/seo/product-index.ts): oferta disponibila
+  // + urmarit de cel putin 30 de zile + categorie mapata si vizibila + nu Sanatate & Naturale.
+  // Altfel pagina ramane pentru vizitatori (pret, oferte, alerta), dar cu noindex, follow.
+  // Fara nicio oferta disponibila, dupa PRODUCT_GONE_DAYS raspunde 410 (src/proxy.ts) — neschimbat.
+  // Daca istoricul nu se poate citi (DB), historyStart = null → noindex: mai bine o zi fara
+  // index decat o pagina subtire indexata.
+  const { indexable } = productIndexDecision({
+    availableOffers: product.offers.length,
+    historyStart,
+    categoryId: product.category_id,
+    categorySlug: product.category_slug,
+    categoryVisible: product.category_visible,
+    parentSlug: product.parent_slug,
+    parentVisible: product.parent_visible,
+  })
 
   return {
     title,
     description,
     alternates: { canonical: `/p/${slug}` },
-    // Fara nicio oferta disponibila: pagina ramane pentru vizitatori, dar nu se indexeaza
-    // (iar dupa PRODUCT_GONE_DAYS raspunde 410 — src/proxy.ts)
-    ...(product.offers.length === 0 ? { robots: { index: false, follow: true } } : {}),
+    ...(indexable ? {} : { robots: { index: false, follow: true } }),
     openGraph: withOg({
       title,
       description,

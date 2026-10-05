@@ -2,6 +2,7 @@ import { unstable_cache } from 'next/cache'
 import pool from './db'
 import { maskPII } from './pii'
 import { OFFER_AVAILABLE_SQL } from './availability'
+import { PRODUCT_INDEXABLE_SQL } from './seo/product-index'
 
 export interface ProductWithDiscount {
   id: string
@@ -41,6 +42,9 @@ export interface ProductDetail {
   category_name: string | null    // numele categoriei (breadcrumb JSON-LD)
   parent_slug: string | null      // parintele categoriei, daca exista
   parent_name: string | null
+  category_slug: string | null    // slug-ul categoriei mapate (regula de indexare — lib/seo/product-index.ts)
+  category_visible: boolean | null
+  parent_visible: boolean | null  // null = categoria nu are parinte
   tags: string[]                  // slug-urile tag-urilor (refurbished, second-hand → itemCondition)
   offers: OfferRow[]              // DOAR ofertele disponibile (lib/availability.ts)
   alert_offer_id: string | null   // oferta pentru alerta de pret (si cand nu e nimic disponibil)
@@ -480,6 +484,7 @@ export const getProductDetail = unstable_cache(
     const productRes = await pool.query(`
       SELECT p.id::text, p.name, p.slug, p.category, p.brand, p.image_url, p.updated_at::text,
              p.part_no, p.category_id, c.name AS category_name, pc.slug AS parent_slug, pc.name AS parent_name,
+             c.slug AS category_slug, c.is_visible AS category_visible, pc.is_visible AS parent_visible,
              COALESCE((SELECT array_agg(t.slug ORDER BY t.slug) FROM product_tags pt JOIN tags t ON t.id = pt.tag_id
                        WHERE pt.product_id = p.id), '{}') AS tags
       FROM products p
@@ -529,7 +534,7 @@ export const getProductDetail = unstable_cache(
       last_seen: byRecent[0]?.last_checked ?? null,
     }
   },
-  ['product-detail-v3'],
+  ['product-detail-v4'],
   { revalidate: 3600, tags: ['products'] }
 )
 
@@ -812,6 +817,11 @@ export const getAllProductSlugs = unstable_cache(
     const { rows } = await pool.query(`
       SELECT p.slug, max(lc.changed_at) AS lastmod
       FROM products p
+      -- Regula de indexare a paginilor de produs (decizia SEO din 5 oct. 2026,
+      -- lib/seo/product-index.ts): categorie mapata + vizibila, fara Sanatate & Naturale,
+      -- urmarit de cel putin 30 de zile. Restul raman pe site cu noindex si NU intra in sitemap.
+      JOIN categories c ON c.id = p.category_id
+      LEFT JOIN categories pc ON pc.id = c.parent_id
       JOIN offers o ON o.product_id = p.id AND ${OFFER_AVAILABLE_SQL}
       LEFT JOIN LATERAL (
         SELECT max(ph2.recorded_at) AS last_diff
@@ -829,12 +839,13 @@ export const getAllProductSlugs = unstable_cache(
           AND (d.last_diff IS NOT NULL OR o.created_at >= now() - INTERVAL '90 days')
       ) lc ON true
       -- doar produsele cu cel putin o oferta disponibila (cele „indisponibile” nu se indexeaza)
+      WHERE ${PRODUCT_INDEXABLE_SQL}
       GROUP BY p.id, p.slug
       ORDER BY p.id
     `)
     return rows.map((r) => ({ slug: r.slug as string, lastmod: r.lastmod ? new Date(r.lastmod).toISOString() : null }))
   },
-  ['all-slugs-v2'],
+  ['all-slugs-v3'],
   { revalidate: 86400, tags: ['products'] }
 )
 
