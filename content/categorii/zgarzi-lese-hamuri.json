@@ -1,0 +1,66 @@
+{
+  "slug": "zgarzi-lese-hamuri",
+  "intro_md": "Aici sunt {{cat:produse|produs|produse}} pentru plimbare și dresaj, disponibile acum la {{cat:lista-magazine}}: zgărzi, lese clasice și retractabile, hamuri, botnițe, clickere și fluiere, pentru câini și pentru pisici. Prețul median al unui produs este {{cat:pret-median}}, iar 8 din 10 costă între {{cat:pret-p10}} și {{cat:pret-p90}}. Pentru fiecare produs păstrăm istoricul prețului și îl comparăm cu mediana pe 30 de zile; la ultima actualizare, {{cat:reduceri|produs îndeplinea|produse îndeplineau}} condiția de „Reducere reală”.\n\n### Cum alegi\n\n- **Zgarda:** măsoară gâtul acolo unde va sta zgarda, cu un metru de croitorie. Între zgardă și gât trebuie să încapă două degete. Mărimea apare în denumire, de obicei ca interval în centimetri sau ca număr de mărime.\n- **Hamul:** se alege după circumferința pieptului, măsurată în partea cea mai lată, la câțiva centimetri în spatele picioarelor din față. Compară măsura cu tabelul de mărimi al producătorului; dacă te afli la granița dintre două mărimi, verifică tabelul modelului exact.\n- **Lesa:** contează lungimea, lățimea și materialul (nailon, piele, frânghie, lanț). La lesele retractabile, denumirea spune lungimea și dacă au bandă sau cablu, iar producătorul indică greutatea maximă a câinelui.\n- **Botnița:** se alege după lungimea și circumferința botului, din tabelul de mărimi al modelului.\n- **Pentru pisici:** zgărzile, hamurile și lesele dedicate sunt mai mici și mai ușoare; le găsești căutând „pisici” în denumire.\n\nPentru plimbările lungi și călătorii, vezi și [culcușuri și transport](/c/culcusuri-transport); restul produselor pentru câini și pisici sunt în [Animale de companie](/c/animale-de-companie), de la [jucării](/c/jucarii-pet) la [hrană uscată](/c/hrana-uscata).\n\n### Prețuri și istoric\n\nUrmărim prețurile din această categorie din {{cat:istoric-de-la}}. Pe pagina fiecărui produs vezi prețul de azi, graficul și, când există destule înregistrări, comparația cu mediana pe 30 de zile. Cum calculăm verdictul afli din [metodologie](/ghiduri/metodologie), iar cum recunoști o reducere falsă, din ghidul [Black Friday 2026: cum verifici dacă o reducere e reală](/ghiduri/reduceri-reale-black-friday-cum-verifici).",
+  "faq": [
+    {
+      "q": "Cum aleg mărimea hamului pentru câine?",
+      "a": "Măsoară circumferința pieptului în partea cea mai lată, la câțiva centimetri în spatele picioarelor din față, cu un metru moale. Compară rezultatul cu tabelul de mărimi al producătorului, pentru modelul exact pe care îl cumperi, pentru că intervalele diferă de la o marcă la alta."
+    },
+    {
+      "q": "Cât de strânsă trebuie să fie zgarda?",
+      "a": "Între zgardă și gâtul câinelui trebuie să încapă două degete. Dacă nu încap, zgarda e prea strânsă; dacă alunecă ușor peste cap, e prea largă."
+    },
+    {
+      "q": "Lesă retractabilă sau lesă clasică?",
+      "a": "Lesa retractabilă îi lasă câinelui mai multă libertate în spații deschise, iar lungimea și greutatea maximă suportată sunt trecute de producător. Lesa clasică, cu lungime fixă, e mai ușor de ținut scurt în oraș. Mulți proprietari le au pe amândouă."
+    },
+    {
+      "q": "Cum aflu dacă prețul unei lese sau al unui ham e bun?",
+      "a": "Pe pagina produsului vezi graficul prețului din {{cat:istoric-de-la}} încoace și mediana pe 30 de zile, când există cel puțin două prețuri în acest interval. „Reducere reală” apare doar când prețul de azi e cu cel puțin {{cat:prag}} sub mediană."
+    }
+  ],
+  "review": {
+    "facts": [
+      {
+        "claim": "Categoria conține zgărzi, lese, hamuri pentru câini și pisici, botnițe, echipamente de dresaj, fluiere și clickere",
+        "source_type": "db",
+        "source": "products.feed_category pentru zgarzi-lese-hamuri: Zgarzi Caini 310, Lese Caini 279, Hamuri Caini 189, Botnite 51, Zgarzi Pisici 27, Echipamente Dresaj 22, Lese Pisici 17, Fluiere/Clickere 10, Hamuri Pisici 6 (SELECT 10.10.2026)",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Lese retractabile (Flexi) cu bandă sau cablu; materiale nailon, piele, frânghie (coardă), lanț",
+        "source_type": "db",
+        "source": "frecvența cuvintelor în products.name: flexi 83, banda 62, nylon 138, piele 86, coarda 33, lant 26",
+        "status": "confirmat"
+      },
+      {
+        "claim": "La lesele retractabile, denumirea spune lungimea, banda/cablul (șnur) și greutatea maximă a câinelui",
+        "source_type": "db",
+        "source": "products.name: „Lesa Flexi Black Design Snur XS: 3m/8kg”, „Lesa Pentru Caini Flexi Classic S Banda 5 M-15 Kg”, „Lesa Flexi Banda Classic M 5 m 25 kg”",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Hamul se alege după circumferința pieptului, măsurată în partea cea mai lată, la câțiva centimetri în spatele picioarelor din față",
+        "source_type": "web",
+        "source": "https://julius-k9.co.uk/blog/how%20to%20measure%20your%20dog%20for%20a%20harness",
+        "status": "confirmat"
+      },
+      {
+        "claim": "La zgardă trebuie să încapă două degete între zgardă și gât; se măsoară gâtul acolo unde stă zgarda",
+        "source_type": "web",
+        "source": "https://www.akc.org/expert-advice/lifestyle/measure-dog-gear/",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Botnița se alege după lungimea și circumferința botului, din tabelul de mărimi al modelului",
+        "source_type": "web",
+        "source": "https://www.chewy.com/baskerville-wide-fit-basket-muzzle/dp/1110734 (tabel Baskerville: lungime nas + circumferință)",
+        "status": "confirmat"
+      }
+    ],
+    "warnings": [
+      "Un singur magazin (petmart.ro); products.brand NULL → {{cat:branduri-top}} nefolosit.",
+      "Istoricul începe pe 3 oct. 2026."
+    ]
+  }
+}

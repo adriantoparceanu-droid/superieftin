@@ -1,0 +1,55 @@
+{
+  "slug": "ferma",
+  "intro_md": "La Fermă sunt {{cat:produse|produs|produse}} pentru gospodărie și animalele de curte, disponibile acum la {{cat:lista-magazine}}: adăpători și hrănitori, tetine, suzete și găleți pentru alăptat, cuiburi pentru găini, unelte de tuns și de îngrijit copitele, accesorii pentru bovine, ovine și porcine, capcane, precum și hrană și furaje pentru cai, viței și oi. Prețul median al unui produs este {{cat:pret-median}}, iar 8 din 10 costă între {{cat:pret-p10}} și {{cat:pret-p90}}. Pentru fiecare produs păstrăm istoricul prețului și îl comparăm cu mediana pe 30 de zile; la ultima actualizare, {{cat:reduceri|produs îndeplinea|produse îndeplineau}} condiția de „Reducere reală”.\n\n### Cum alegi\n\n- **Adăpători și hrănitori:** compară capacitatea în litri și numărul de locuri (găuri) cu numărul de animale; există și modele dedicate porumbeilor. La adăpătorile care se leagă la instalația de apă, verifică diametrul racordului (de exemplu 1/2 țol), trecut în denumire.\n- **Tetine, suzete și găleți pentru alăptat:** se aleg după specie (miei, viței, purcei) și după diametrul indicat de producător; găleata cu mai multe tetine e gândită pentru mai multe animale deodată.\n- **Unelte:** foarfeci de tuns oi, mașini de tuns pentru cabaline cu lame de schimb, discuri abrazive pentru copite. Compară și prețul lamelor sau al discurilor de schimb, nu doar al aparatului.\n- **Hrană și furaje:** se vând mai ales în saci de 20–25 kg. Ca să compari doi saci, împarte prețul la numărul de kilograme și alege după specie și vârstă (starter pentru viței, hrană pentru cai sau pentru oi).\n- **Marcare și accesorii:** creioane de marcare, inele nazale, dispozitive de contenție, mănuși și protecții pentru încălțăminte.\n\nPrintre mărcile care apar des în denumiri sunt Albert Kerbl, Gaun și Versele-Laga. Pentru păsări de colivie vezi [Păsări](/c/pasari), iar pentru iepuri și alte rozătoare, [Rozătoare](/c/rozatoare). Toate categoriile sunt în [Animale de companie](/c/animale-de-companie).\n\n### Prețuri și istoric\n\nUrmărim prețurile din această categorie din {{cat:istoric-de-la}}. Pe pagina fiecărui produs vezi prețul de azi, graficul și, când există destule înregistrări, comparația cu mediana pe 30 de zile. Cum calculăm verdictul afli din [metodologie](/ghiduri/metodologie).",
+  "faq": [
+    {
+      "q": "Cum compar prețul a doi saci de furaje?",
+      "a": "Împarte prețul sacului la greutatea lui în kilograme, trecută în denumire (de obicei 20 sau 25 kg). Compară apoi doar furaje pentru aceeași specie și aceeași etapă (de exemplu starter pentru viței)."
+    },
+    {
+      "q": "Ce adăpătoare aleg pentru găini?",
+      "a": "Uită-te la capacitate și la numărul de păsări: în categorie sunt adăpători de la 1 litru până la modele de 10 litri. La hrănitorii lungi, numărul de locuri e trecut în denumire."
+    },
+    {
+      "q": "Cum aflu dacă prețul unui produs pentru fermă e bun?",
+      "a": "Pe pagina produsului vezi graficul prețului din {{cat:istoric-de-la}} încoace și mediana pe 30 de zile, când există cel puțin două prețuri în acest interval. „Reducere reală” apare doar când prețul de azi e cu cel puțin {{cat:prag}} sub mediană."
+    },
+    {
+      "q": "De unde vin prețurile din această categorie?",
+      "a": "Din ofertele publicate de {{cat:lista-magazine}}, preluate automat în fiecare zi. Butonul „Vezi oferta” te duce pe site-ul magazinului, unde verifici prețul final, livrarea și stocul înainte de comandă."
+    }
+  ],
+  "review": {
+    "facts": [
+      {
+        "claim": "Categoria conține accesorii de fermă, pentru bovine/ovine/suine, capcane, furaje și hrană pentru cai/bovine/ovine, îngrijire cai",
+        "source_type": "db",
+        "source": "products.feed_category ferma: Accesorii ferma 134, Accesorii Bovine 73, Capcane 52, Furaje 40, Accesorii suine 16, Accesorii ovine 10, Ingrijire Cai 9, Hrana Cai 5, Hrana Bovine 4, Hrana Ovine 1 (SELECT pe DB-ul de producție, 10.10.2026)",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Produse concrete: adăpători (10 l, 2,8 l cu racord 1/2\"), hrănitor Gaun cu 12 găuri, tetine/suzete pentru miei și purcei, găleată miei cu 6 tetine, foarfecă de tuns oi, mașină de tuns cabaline, discuri abrazive pentru copite, cuib Gaun pentru găini, creion de marcare, inel nazal, dispozitiv de contenție",
+        "source_type": "db",
+        "source": "products.name: „Adapatoare 10l Industriala”, „Adapatoare Plastic 2.8 L 1/2\", Albert Kerbl”, „Adapatoare/ hranitoare Gaun 50 cm, 12 Gauri”, „Galeata miei 6 tetine cu supapa”, „Suzeta Purcei 72 mm”, „Foarfeca profesionala de tuns oi”, „Masina Tuns Cabaline Set Lame Premium”, „Disc Abraziv Copite”, „Cuib din Plastic Gaun pentru Gaini Ouatoare”, „Creion marcare”, „Inel nazal pentru taur” (SELECT pe DB-ul de producție, 10.10.2026)",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Furajele se vând în saci de 20–25 kg (Versele-Laga 20 kg, lapte praf 25 kg); adăpători dedicate porumbeilor (1–8 l)",
+        "source_type": "db",
+        "source": "products.name: „Versele Laga, Furaj pentru Cai, Endurix, 20 kg”, „Versele Laga, Furaj Starter Vitei Pelet, 20 kg”, „Lapte praf Eurolac, 25 kg”, „Adapator/ Hranitor Pentru Porumbei Gaun 8l”, „Adapatoare Gaun Mini Drinker pentru Porumbei 1 L” (SELECT pe DB-ul de producție, 10.10.2026)",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Mărci frecvente în denumiri: Albert Kerbl, Gaun, Versele-Laga",
+        "source_type": "db",
+        "source": "frecvența cuvintelor în products.name: kerbl 152, gaun 24, versele/laga 10 (SELECT pe DB-ul de producție, 10.10.2026)",
+        "status": "confirmat"
+      }
+    ],
+    "warnings": [
+      "Categoria conține multe produse cu caracter medical, biocid sau fitosanitar: suplimente (Bio-Vita E/Se, VitaBis E-Seleniu în „Furaje”), dezinfectanți (Virkon S, Dezinfex), Diagnotest, Mastitest, seringi automate, aparat de castrat purcei, mănuși veterinare, insecticide (K-Othrine, Ectocid, Perme Plus), fungicide, moluscocide, cremă după mușcături. Textul NU le menționează (regula 8). Recomand mutarea suplimentelor/dezinfectanților/instrumentarului în farmacie-veterinara sau ignorarea lor din Admin → Mapare, iar a insecticidelor/fungicidelor pentru plante în afara categoriei pet.",
+      "Un singur magazin (petmart.ro); products.brand NULL pe toată categoria → {{cat:branduri-top}} nefolosit (ar afișa „diverse mărci”), mărcile sunt luate din denumiri.",
+      "Istoricul începe pe 3 oct. 2026: paginile de produs sunt noindex până la 30 de zile de istoric."
+    ]
+  }
+}

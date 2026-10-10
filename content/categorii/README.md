@@ -106,3 +106,12 @@ Cerințe pe prod: imaginea **worker** cu scriptul și imaginea **web** cu ruta
 `SITE_URL` + `REVALIDATE_SECRET` (le folosește și importul de ghiduri). Slug-urile se validează
 față de baza în care imporți — o categorie care există pe prod poate lipsi local (ex. subcategoriile
 Petmart din migrația 031).
+
+## Texte în așteptare — `in-asteptare/`
+
+Importul citește doar fișierele `.json` direct din directorul dat (nu intră în subdirectoare).
+`in-asteptare/` ține textele gata scrise care NU trebuie încă publicate — ex. `monitoare.json`
+(10 oct. 2026): categoria avea workstation-uri și calculatoare în loc de monitoare (reparat de
+migrația 034); textul se publică după ce monitoarele reale sunt mapate în categorie (Admin → Mapare:
+„microsoft refurbished” CITGrup, monitoarele evomag din desktop-uri). Mută fișierul înapoi în
+`content/categorii/` și rulează importul.

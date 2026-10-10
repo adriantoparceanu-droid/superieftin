@@ -1,0 +1,73 @@
+{
+  "slug": "laptopuri",
+  "intro_md": "Pe superieftin.ro sunt acum {{cat:produse|laptop|laptopuri}} cu ofertă disponibilă la {{cat:lista-magazine}}, cel mai des de la {{cat:branduri-top}}. Prețul median este {{cat:pret-median}}, iar 8 din 10 laptopuri costă între {{cat:pret-p10}} și {{cat:pret-p90}}. Spre deosebire de lista unui magazin, aici fiecare laptop are istoricul prețului (îl înregistrăm zilnic din {{cat:istoric-de-la}}) și un verdict față de mediana ultimelor 30 de zile: la momentul actualizării, {{cat:reduceri|laptop are|laptopuri au}} un preț cu cel puțin {{cat:prag}} sub mediană.\n\n### Cum alegi un laptop\n\n**Pornește de la ce faci pe el.** Pentru birou, studiu și navigare contează un procesor de generație recentă, cel puțin 16 GB RAM și un SSD. Pentru jocuri, editare video sau modelare 3D contează placa video dedicată și răcirea. Detalii pe profiluri de utilizare găsești în ghidul [Laptopuri pentru studenți și birou: cum alegi](/ghiduri/laptopuri-pentru-studenti-si-birou).\n\n**Memoria și stocarea.** Verifică în specificații dacă memoria RAM și SSD-ul se pot schimba sau extinde mai târziu. Dacă nu se pot, alege de la început varianta cu memoria de care vei avea nevoie peste câțiva ani.\n\n**Ecranul, greutatea și bateria.** Uită-te la diagonală, rezoluție, rata de reîmprospătare (Hz) și luminozitate. Dacă îl cari zilnic, greutatea și autonomia contează adesea mai mult decât un procesor mai rapid.\n\n**Placa video, la gaming.** Diferențele dintre RTX 5050, 5060 și 5070 pe laptop și explicația pentru prețurile mai mari din acest an sunt în ghidul [Laptop de gaming de Black Friday 2026](/ghiduri/laptop-gaming-black-friday-rtx-5050-5060-5070).\n\n**Variantele aproape identice.** Același model apare cu alt cod de produs: cu sau fără Windows, cu altă tastatură, culoare sau capacitate de SSD — fiecare cu prețul și istoricul lui. Compară denumirea completă înainte să decizi.\n\n### Laptopuri noi și refurbished\n\nO parte din listă sunt laptopuri refurbished (recondiționate) de la CITGrup.ro, marcate cu eticheta „Refurbished”; toate produsele recondiționate sunt adunate și pe pagina [Refurbished](/t/refurbished). La un refurbished, uită-te la generația procesorului, la starea bateriei și la garanție (multe au durata garanției scrisă în denumire). Dacă ai nevoie de Windows 11, procesorul trebuie să fie pe lista Microsoft de procesoare compatibile.\n\n### Black Friday 2026: cum verifici o reducere la un laptop\n\nPrețul tăiat afișat de magazin nu spune cât a costat laptopul în ultimele săptămâni. Pe pagina fiecărui laptop ai graficul prețului și verdictul față de mediana pe 30 de zile; „Reducere reală” apare doar la cel puțin {{cat:prag}} sub mediană. Lista de acum e la [Reduceri reale la laptopuri](/reduceri-reale/laptopuri), pașii de verificare sunt în [Black Friday 2026: cum verifici dacă o reducere e reală](/ghiduri/reduceri-reale-black-friday-cum-verifici), iar calculul complet în [metodologia](/ghiduri/metodologie).",
+  "faq": [
+    {
+      "q": "Cât costă un laptop bun?",
+      "a": "Depinde de utilizare. Prețul median al laptopurilor listate acum este {{cat:pret-median}}, iar 8 din 10 costă între {{cat:pret-p10}} și {{cat:pret-p90}}. Laptopurile de gaming și cele pentru lucru profesional, cu placă video dedicată, stau de obicei în jumătatea de sus a intervalului; pentru birou, navigare și studiu găsești configurații potrivite și în jumătatea de jos."
+    },
+    {
+      "q": "Ce laptop să iau pentru facultate sau birou?",
+      "a": "Pentru documente, browser, videoconferințe și programe de birou caută un procesor de generație recentă, cel puțin 16 GB RAM și un SSD, plus o greutate și o autonomie potrivite dacă îl cari zilnic. Placa video dedicată nu e necesară pentru astfel de activități. Criteriile pe larg sunt în ghidul [Laptopuri pentru studenți și birou](/ghiduri/laptopuri-pentru-studenti-si-birou)."
+    },
+    {
+      "q": "Ce înseamnă „reducere reală” la un laptop?",
+      "a": "Un preț cu cel puțin {{cat:prag}} sub mediana prețurilor pe care le-am înregistrat pentru acel laptop în ultimele 30 de zile. Nu folosim prețul tăiat afișat de magazin, ci prețurile observate zilnic. Dacă un laptop are prea puține înregistrări în ultima lună, nu îi dăm un verdict până nu se adună date."
+    },
+    {
+      "q": "De ce găsesc același laptop de mai multe ori?",
+      "a": "Producătorii lansează același model în mai multe configurații, fiecare cu alt cod de produs: procesor, memorie, SSD, tastatură, sistem de operare sau culoare diferite. Le listăm separat pentru că și prețul, și istoricul lor sunt separate. Compară denumirea completă și codul înainte să decizi."
+    },
+    {
+      "q": "Merită un laptop refurbished?",
+      "a": "Un laptop refurbished e un model folosit, verificat și recondiționat de vânzător, vândut cu garanție. Merită comparat cu un laptop nou de configurație apropiată din aceeași listă: uită-te la generația procesorului, la starea bateriei și la durata garanției. Pentru Windows 11, procesorul trebuie să fie pe lista Microsoft — la Intel Core, de la generația a 8-a în sus."
+    },
+    {
+      "q": "Merită să aștept Black Friday ca să cumpăr un laptop?",
+      "a": "Nu putem ști dacă prețul va scădea. Poți vedea însă cât a variat prețul laptopului pe graficul din pagina lui și poți seta o alertă de preț: te anunțăm când oricare dintre oferte ajunge la pragul ales. Pentru laptopuri avem istoric din {{cat:istoric-de-la}}."
+    }
+  ],
+  "review": {
+    "facts": [
+      {
+        "claim": "Laptopurile listate vin de la evomag.ro, CITGrup.ro (refurbished) și eMAG",
+        "source_type": "db",
+        "source": "SELECT pe offers disponibile, categoria laptopuri, 10.10.2026: evomag 1.087, CITGrup 810 (toate cu tag refurbished), eMAG 166 produse",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Eticheta „Refurbished” / „Second Hand” e tag filtrabil, cu pagini /t/refurbished și /t/second-hand",
+        "source_type": "db",
+        "source": "tabela tags (refurbished, second-hand) + ruta web/src/app/t/[slug]; ambele răspund 200 pe producție (10.10.2026)",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Windows 11 cere TPM 2.0, Secure Boot (UEFI) și un procesor de pe lista Microsoft; la Intel Core lista începe cu generația a 8-a",
+        "source_type": "web",
+        "source": "https://www.microsoft.com/en-us/windows/windows-11-specifications ; https://learn.microsoft.com/en-us/windows-hardware/design/minimum/supported/windows-11-supported-intel-processors",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Verdictul „Reducere reală” = preț cu cel puțin pragul (marcaj {{cat:prag}}) sub mediana pe 30 de zile; prețul tăiat al magazinului nu intră în calcul",
+        "source_type": "db",
+        "source": "web/src/lib/discount.ts (REAL_DISCOUNT_PCT), lib/verdict.ts, /ghiduri/metodologie",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Alerta de preț pleacă atunci când oricare ofertă disponibilă a produsului ajunge la pragul ales",
+        "source_type": "db",
+        "source": "CLAUDE.md „Alerta de preț” (migrația 029, pickTriggerOffer)",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Ghidurile legate sunt publicate",
+        "source_type": "db",
+        "source": "SELECT slug FROM guides WHERE status='published' (laptopuri-pentru-studenti-si-birou, laptop-gaming-black-friday-rtx-5050-5060-5070, reduceri-reale-black-friday-cum-verifici)",
+        "status": "confirmat"
+      }
+    ],
+    "warnings": [
+      "Păstrat din textul din 3 oct.: primul FAQ, „reducere reală”, „același laptop de mai multe ori” (ușor reformulat). Adăugate: secțiunile Cum alegi / refurbished / Black Friday, FAQ facultate + refurbished."
+    ]
+  }
+}

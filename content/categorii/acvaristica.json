@@ -1,0 +1,56 @@
+{
+  "slug": "acvaristica",
+  "intro_md": "La Acvaristică sunt {{cat:produse|produs|produse}} pentru acvarii și iazuri, disponibile acum la {{cat:lista-magazine}}: acvarii, filtre și materiale filtrante, pompe de aer și de recirculare, încălzitoare, iluminat LED, decoruri, nisip și pietriș, hrană pentru pești și unelte de întreținere. Prețul median al unui produs este {{cat:pret-median}}, iar 8 din 10 costă între {{cat:pret-p10}} și {{cat:pret-p90}}. Pentru fiecare produs păstrăm istoricul prețului și îl comparăm cu mediana pe 30 de zile; la ultima actualizare, {{cat:reduceri|produs îndeplinea|produse îndeplineau}} condiția de „Reducere reală”.\n\n### Cum alegi\n\n- **Acvariul:** pornește de la locul în care îl pui. În denumire găsești volumul în litri și dimensiunile (lungime × lățime × înălțime, în centimetri); unele modele vin cu iluminat LED inclus, altele doar ca vas de sticlă.\n- **Filtrul:** producătorii trec în denumire volumul de acvariu pentru care e gândit filtrul (de exemplu „60–80 L” sau „80L”). Alege un model care acoperă volumul acvariului tău și verifică dacă e intern (stă în apă) sau extern (stă sub acvariu, legat cu furtunuri).\n- **Consumabilele filtrului:** buretele, vata și masa filtrantă se schimbă periodic, așa că merită să compari și prețul rezervelor pentru modelul tău, nu doar al filtrului.\n- **Iluminat și încălzire:** la lămpile LED compară lungimea cu cea a acvariului și puterea în wați; la încălzitoare, volumul de apă indicat de producător.\n- **Hrana pentru pești:** vine sub formă de fulgi, granule, pelete, tablete sau batoane, în gramaje diferite. Ca să compari două cutii, calculează prețul pe gram și alege forma potrivită peștilor pe care îi ai.\n- **Întreținere:** magneți și răzuitoare pentru geam, sifoane, plase, pensete și foarfeci pentru plante.\n\nPrintre mărcile care apar în denumiri sunt JBL, ISTA, Hailea, Diversa și Prodac. Dacă ai și alte animale, vezi restul categoriilor din [Animale de companie](/c/animale-de-companie), de exemplu [Reptile](/c/reptile) pentru terarii și lămpi de terariu.\n\n### Prețuri și istoric\n\nUrmărim prețurile din această categorie din {{cat:istoric-de-la}}. Pe pagina fiecărui produs vezi prețul de azi, graficul și, după ce se adună destule zile, comparația cu mediana pe 30 de zile. Cum calculăm verdictul afli din [metodologie](/ghiduri/metodologie).",
+  "faq": [
+    {
+      "q": "Ce filtru îmi trebuie pentru un acvariu de 60 de litri?",
+      "a": "Caută un filtru la care producătorul trece în denumire un interval de volum care include 60 de litri, de exemplu „60–80 L”. Verifică apoi dacă e intern sau extern și ce rezerve folosește. Detaliile de montaj le găsești în descrierea de pe site-ul magazinului."
+    },
+    {
+      "q": "Cum compar prețul a două hrane pentru pești?",
+      "a": "Împarte prețul la gramaj (trecut în denumire, uneori alături de volumul în mililitri) ca să obții prețul pe gram. Compară apoi doar produse de același tip — fulgi cu fulgi, granule cu granule."
+    },
+    {
+      "q": "Cum aflu dacă prețul unui acvariu sau al unui filtru e bun?",
+      "a": "Pe pagina produsului vezi graficul prețului din {{cat:istoric-de-la}} încoace și mediana pe 30 de zile, când există cel puțin două prețuri în acest interval. „Reducere reală” apare doar când prețul de azi e cu cel puțin {{cat:prag}} sub mediană."
+    },
+    {
+      "q": "De unde vin prețurile la produsele de acvaristică?",
+      "a": "Din ofertele publicate de {{cat:lista-magazine}}, preluate automat în fiecare zi. Butonul „Vezi oferta” te duce pe site-ul magazinului, unde verifici prețul final, livrarea și stocul înainte de comandă."
+    }
+  ],
+  "review": {
+    "facts": [
+      {
+        "claim": "Categoria conține acvarii, filtre interne/externe, materiale filtrante, pompe de aer și de recirculare, încălzitoare, lămpi LED, decoruri, nisip/pietriș, hrană pentru pești (fulgi, granule, pelete, tablete, stick), magneți/răzuitoare, plase, pensete și foarfeci, produse pentru iaz",
+        "source_type": "db",
+        "source": "products.feed_category pentru acvaristica (SELECT 10.10.2026): Acvarii Pesti, Filtre Interne, Filtre Externe, Materiale filtrante universale, Pompe aer, Pompe recirculare, Incalzitoare Interne/Externe, Lampi LED, Decoruri, Nisip si pietris acvariu, Hrana Fulgi/Granule/peleti/tablete/Stick, Magneti Curatare, Razuitoare, Plase si Minciog, Pensete si Foarfeci, Intretinere Iazuri",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Volumul de acvariu pentru care e gândit filtrul apare în denumire",
+        "source_type": "db",
+        "source": "products.name: „Diversa Filtru Claro 600 (80L)”, „Filtru intern acvariu JBL CRISTAL PROFI i60 greenline 60-80 L”, „Filtru extern acvariu JBL CRISTAL PROFI e1902 greenline 300-800 l”",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Acvariile au volumul/dimensiunile în denumire, unele cu LED inclus",
+        "source_type": "db",
+        "source": "products.name: „Acvariu din sticla Diversa LED 80 Negru, 80x35x40 cm”, „Acvariu Diversa Junior Pirat 10 L”, „Acvariu Hailea QUBIQ 30 LED”",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Mărci frecvente în denumiri: JBL, ISTA, Hailea, Diversa, Prodac",
+        "source_type": "db",
+        "source": "frecvența cuvintelor în products.name: jbl 406, ista 139, hailea 88, prodac 21, diversa (exemple multiple); products.brand e NULL",
+        "status": "confirmat"
+      }
+    ],
+    "warnings": [
+      "Maparea pune în acvaristica ~57 de castroane ceramice pentru câini/pisici (feed_category „Castroane Ceramice”, ex. „Castron Ceramic Pisica 0.2 l”, „Trixie Bol Ceramic Be Nordic”) — ar trebui mutate în castroane-hranitoare din Admin → Mapare.",
+      "Categoria conține produse pentru tratarea apei, bacterii, anti-alge, teste de apă și „Remediere Iazuri” — textul nu le descrie (regula 8, prudență); nu sunt afirmații despre animale, dar evit formulările de tip „tratament”.",
+      "Un singur magazin (petmart.ro); products.brand NULL → {{cat:branduri-top}} nefolosit, mărcile sunt scrise din denumiri (stabile, nu cifre).",
+      "Istoricul începe pe 3 oct. 2026."
+    ]
+  }
+}

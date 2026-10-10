@@ -1,0 +1,56 @@
+{
+  "slug": "culcusuri-transport",
+  "intro_md": "La Culcușuri & transport sunt {{cat:produse|produs|produse}} pentru câini și pisici, disponibile acum la {{cat:lista-magazine}}: culcușuri, saltele, perne, coșuri și paturi, ansambluri de joacă și stâlpi de sisal pentru pisici, cuști, genți și rucsacuri de transport, accesorii pentru mașină și hăinuțe pentru câini. Prețul median al unui produs este {{cat:pret-median}}, iar 8 din 10 costă între {{cat:pret-p10}} și {{cat:pret-p90}}. Pentru fiecare produs păstrăm istoricul prețului și îl comparăm cu mediana pe 30 de zile; la ultima actualizare, {{cat:reduceri|produs îndeplinea|produse îndeplineau}} condiția de „Reducere reală”.\n\n### Cum alegi\n\n- **Culcușul:** dimensiunile sunt trecute în denumire, în centimetri; compară-le cu locul în care doarme animalul și cu felul în care stă (întins sau strâns ghem). Husa detașabilă, care se spală la mașină, și baza impermeabilă sunt utile mai ales la câinii mari și la pui.\n- **Ansamblul pentru pisici:** contează înălțimea, stabilitatea (o bază largă pentru modelele înalte) și câte platforme sau căsuțe are. Stâlpii și covorașele de sisal se cumpără și separat.\n- **Cușca de transport:** dimensiunile (lungime × lățime × înălțime) și greutatea maximă a animalului sunt în denumire. Animalul trebuie să poată sta în picioare, să se așeze, să se întindă și să se întoarcă înăuntru. Unele cuști au în denumire „IATA”: producătorul le declară conforme cu regulile asociației companiilor aeriene, dar IATA nu certifică modele, iar acceptarea la zbor o decide compania aeriană, așa că verifică întâi cu ea.\n- **Genți și rucsacuri:** pentru pisici și câini mici; uită-te la greutatea maximă indicată și la ventilație.\n- **Accesorii auto și hăinuțe:** huse de banchetă, centuri și grilaje pentru mașină; la hăinuțe, alege mărimea din tabelul fiecărui model.\n\nPentru plimbări vezi [zgărzi, lese și hamuri](/c/zgarzi-lese-hamuri), iar pentru masă [castroane și hrănitoare](/c/castroane-hranitoare). Restul produselor sunt în [Animale de companie](/c/animale-de-companie).\n\n### Prețuri și istoric\n\nUrmărim prețurile din această categorie din {{cat:istoric-de-la}}. Pe pagina fiecărui produs vezi prețul de azi, graficul și, când există destule înregistrări, comparația cu mediana pe 30 de zile. Cum calculăm verdictul afli din [metodologie](/ghiduri/metodologie), iar cum recunoști o reducere falsă, din ghidul [Black Friday 2026: cum verifici dacă o reducere e reală](/ghiduri/reduceri-reale-black-friday-cum-verifici).",
+  "faq": [
+    {
+      "q": "Ce mărime de culcuș îmi trebuie pentru câine?",
+      "a": "Uită-te la dimensiunile din denumire și compară-le cu locul în care doarme câinele de obicei și cu felul în care stă: întins pe o parte sau strâns ghem. Pentru câinii care dorm întinși, o saltea sau un pat dreptunghiular e mai potrivit decât un culcuș rotund."
+    },
+    {
+      "q": "Cum aleg o cușcă de transport pentru avion?",
+      "a": "Cușca trebuie să-i permită animalului să stea în picioare, să se așeze, să se întindă și să se întoarcă. Mențiunea „IATA” din denumire e declarația producătorului; IATA nu certifică modele, iar personalul companiei aeriene verifică la check-in dacă cușca respectă cerințele, așa că întreab-o înainte de zbor."
+    },
+    {
+      "q": "Ce ansamblu de joacă aleg pentru o pisică?",
+      "a": "Pornește de la spațiul din casă și de la înălțimea dorită, apoi caută o bază largă și stâlpi de sisal. Pentru mai multe pisici sunt utile modelele cu mai multe platforme și căsuțe."
+    },
+    {
+      "q": "Cum aflu dacă prețul unui culcuș sau al unei cuști e bun?",
+      "a": "Pe pagina produsului vezi graficul prețului din {{cat:istoric-de-la}} încoace și mediana pe 30 de zile, când există cel puțin două prețuri în acest interval. „Reducere reală” apare doar când prețul de azi e cu cel puțin {{cat:prag}} sub mediană. Ofertele vin de la {{cat:lista-magazine}}."
+    }
+  ],
+  "review": {
+    "facts": [
+      {
+        "claim": "Categoria conține culcușuri și saltele, perne, coșuri, paturi, ansambluri de joacă/sisal, cuști și genți de transport, rucsacuri, accesorii auto, accesorii de curte, hăinuțe",
+        "source_type": "db",
+        "source": "products.feed_category: Centre de joaca, sisaluri 153, Fashion, Hainute-Caini 145, Culcusuri si saltele - Pisici 145, Custi Transport 54, Perne 43, Cosuri 36, Genti Transport 30, Accesorii Auto Caini 29, Paturi 7 (SELECT 10.10.2026)",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Dimensiunile și greutatea maximă apar în denumirea cuștilor/rucsacurilor; unele cuști au „IATA” în denumire",
+        "source_type": "db",
+        "source": "products.name: „Cusca Gulliver 7 Iata 73x75x104 >50 kg”, „Cusca Capri 3 Open Top 40x38x61 cm/2.5 kg”, „Rucsac Ava 32x42x22 cm/42 cm pana la 10 kg”",
+        "status": "confirmat"
+      },
+      {
+        "claim": "IATA nu certifică/aprobă niciun model de cușcă; personalul de check-in verifică dacă cușca respectă cerințele LAR (IATA LAR ed. 52, pag. 303)",
+        "source_type": "web",
+        "source": "https://www.iata.org/contentassets/b0016da92c86449f850fe9560827bbea/pet-container-requirements.pdf",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Cușca de transport aerian trebuie să permită animalului să stea în picioare, să se așeze, să se întindă și să se întoarcă (IATA LAR, Container Requirement 1, Size)",
+        "source_type": "web",
+        "source": "https://www.iata.org/contentassets/b0016da92c86449f850fe9560827bbea/pet-container-requirements.pdf",
+        "status": "confirmat"
+      }
+    ],
+    "warnings": [
+      "Categoria conține 6 hrănitoare automate (feed_category „Hranitoare Automate”) care ar trebui mapate în castroane-hranitoare.",
+      "Hăinuțele (145) și ansamblurile de joacă pentru pisici (153) sunt aici prin maparea migrației 031; textul le menționează ca să descrie corect conținutul.",
+      "Un singur magazin (petmart.ro); products.brand NULL → {{cat:branduri-top}} nefolosit.",
+      "Istoricul începe pe 3 oct. 2026."
+    ]
+  }
+}

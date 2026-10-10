@@ -1,0 +1,75 @@
+{
+  "slug": "desktop-uri",
+  "intro_md": "Lista cuprinde {{cat:produse|calculator desktop|calculatoare desktop}} disponibile acum la {{cat:lista-magazine}}, cele mai multe de la {{cat:branduri-top}}: sisteme de birou în carcase compacte, PC-uri de gaming și stații de lucru, multe dintre ele refurbished. Prețul median este {{cat:pret-median}}, iar 8 din 10 au prețul între {{cat:pret-p10}} și {{cat:pret-p90}}. Urmărim prețurile zilnic din {{cat:istoric-de-la}}; {{cat:cu-mediana|calculator are|calculatoare au}} deja o mediană pe 30 de zile, iar la momentul actualizării {{cat:reduceri|calculator are|calculatoare au}} prețul cu cel puțin {{cat:prag}} sub ea.\n\n### Ce găsești aici\n\n**Refurbished.** Cea mai mare parte a listei sunt calculatoare recondiționate de la CITGrup.ro — Dell OptiPlex, Precision și Alienware, HP, Lenovo — marcate cu eticheta „Refurbished” (toate sunt și pe pagina [Refurbished](/t/refurbished)). Denumirea spune de obicei garanția oferită de magazin și dacă SSD-ul sau placa video sunt noi („NOU”).\n\n**Open Box.** Sistemele „Nou Open Box” sunt produse noi, cu cutia deschisă; verifică pe site-ul magazinului ce garanție au.\n\n**Noi.** Calculatoarele noi vin în principal de la evomag.ro.\n\n### Cum alegi un calculator\n\n**Ce primești în pachet.** Unele sisteme vin cu Windows instalat și cu tastatură și mouse, altele „Fara Windows”, iar diferența se vede în preț. Monitorul se cumpără aproape mereu separat.\n\n**Procesorul și Windows 11.** La procesor contează generația, nu doar seria — un Core i5 de acum câțiva ani e mult mai lent decât unul recent. Dacă vrei Windows 11, procesorul trebuie să fie pe lista Microsoft (la Intel Core, de la generația a 8-a în sus), iar placa de bază să aibă TPM 2.0 și Secure Boot.\n\n**Carcasa.** Tower are loc pentru o placă video și pentru upgrade-uri; Micro ocupă foarte puțin loc pe birou sau sub el.\n\n**Placa video.** Pentru jocuri, placa video dedicată contează mai mult decât procesorul. Pentru birou, grafica integrată e de obicei suficientă.\n\n### Black Friday 2026: cum verifici o reducere\n\nPe pagina fiecărui sistem ai graficul prețului și verdictul față de mediana pe 30 de zile; „Reducere reală” apare doar la cel puțin {{cat:prag}} sub mediană. Lista de acum e la [Reduceri reale la desktop-uri](/reduceri-reale/desktop-uri), pașii sunt în [Black Friday 2026: cum verifici dacă o reducere e reală](/ghiduri/reduceri-reale-black-friday-cum-verifici), iar calculul în [metodologia](/ghiduri/metodologie).",
+  "faq": [
+    {
+      "q": "Ce înseamnă „Fara Windows” sau „no OS” la un calculator?",
+      "a": "Calculatorul vine fără Windows (sau alt sistem de operare) instalat și licențiat. E mai ieftin, dar dacă ai nevoie de Windows, adaugă la comparație și costul unei licențe. Sistemele care au „Windows 11 Pro” sau „Windows 11 Home” în denumire includ licența."
+    },
+    {
+      "q": "Merită un calculator refurbished pentru birou?",
+      "a": "Pentru birou, un calculator refurbished cu procesor de generație nu prea veche, SSD și cel puțin 16 GB RAM e o alternativă de comparat cu unul nou. Verifică generația procesorului (ca să poți rula Windows 11), ce componente sunt noi și durata garanției, scrisă de obicei în denumire. Compară apoi prețul cu un sistem nou de configurație apropiată."
+    },
+    {
+      "q": "Pot instala Windows 11 pe un calculator refurbished?",
+      "a": "Da, dacă îndeplinește cerințele Microsoft: procesor de pe lista de procesoare compatibile (la Intel Core, de la generația a 8-a în sus), TPM 2.0, Secure Boot, minimum 4 GB RAM și 64 GB spațiu de stocare. Sistemele care au „Windows 11” în denumire vin deja cu el instalat."
+    },
+    {
+      "q": "Ce înseamnă Tower, SFF sau Micro la un calculator?",
+      "a": "Sunt formate de carcasă. Tower e carcasa mare, cu loc pentru placă video și componente adăugate ulterior. SFF (Small Form Factor) și Micro sunt carcase compacte, folosite des în birouri; ocupă puțin loc, dar au mai puțin spațiu pentru o placă video dedicată sau pentru upgrade-uri."
+    },
+    {
+      "q": "Desktop sau laptop pentru birou?",
+      "a": "La același preț, un desktop oferă de obicei performanță mai bună și se repară sau se extinde mai ușor (memorie, SSD), dar ai nevoie separat de monitor, tastatură și mouse. Laptopul se potrivește dacă lucrezi și în afara biroului — vezi [laptopurile](/c/laptopuri)."
+    },
+    {
+      "q": "Cum știu dacă prețul unui calculator e bun acum?",
+      "a": "Pe pagina lui vezi verdictul față de mediana ultimelor 30 de zile și graficul prețului. „Preț obișnuit” înseamnă că prețul de azi e aproape de mediană; „Reducere reală” înseamnă cel puțin {{cat:prag}} sub ea. Dacă vrei să aștepți, setează o alertă de preț cu suma dorită."
+    }
+  ],
+  "review": {
+    "facts": [
+      {
+        "claim": "Majoritatea listei = calculatoare refurbished CITGrup.ro (Dell, HP, Lenovo), restul de la evomag.ro",
+        "source_type": "db",
+        "source": "SELECT 10.10.2026: CITGrup 11.088 produse disponibile (toate cu tag refurbished), evomag 835; mărci Dell 7.363, HP 2.842, Lenovo 882",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Denumirile CITGrup conțin garanția („3 Ani Garantie”), „NOU” la SSD/placă video, „Nou Open Box”, „Fara Windows”, formatele Tower/Micro",
+        "source_type": "db",
+        "source": "SELECT pe products.name: ~10.835 cu „3 Ani Garantie”, 1.361 „Open Box”, 3.407 „Fara Windows”, 9.612 Tower, 738 Micro",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Windows 11 cere TPM 2.0, Secure Boot (UEFI) și un procesor de pe lista Microsoft; la Intel Core lista începe cu generația a 8-a",
+        "source_type": "web",
+        "source": "https://www.microsoft.com/en-us/windows/windows-11-specifications ; https://learn.microsoft.com/en-us/windows-hardware/design/minimum/supported/windows-11-supported-intel-processors",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Eticheta „Refurbished” / „Second Hand” e tag filtrabil, cu pagini /t/refurbished și /t/second-hand",
+        "source_type": "db",
+        "source": "tabela tags (refurbished, second-hand) + ruta web/src/app/t/[slug]; ambele răspund 200 pe producție (10.10.2026)",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Verdictul „Reducere reală” = preț cu cel puțin pragul (marcaj {{cat:prag}}) sub mediana pe 30 de zile; prețul tăiat al magazinului nu intră în calcul",
+        "source_type": "db",
+        "source": "web/src/lib/discount.ts (REAL_DISCOUNT_PCT), lib/verdict.ts, /ghiduri/metodologie",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Alerta de preț pleacă atunci când oricare ofertă disponibilă a produsului ajunge la pragul ales",
+        "source_type": "db",
+        "source": "CLAUDE.md „Alerta de preț” (migrația 029, pickTriggerOffer)",
+        "status": "confirmat"
+      }
+    ],
+    "warnings": [
+      "Istoricul în categorie pornește din septembrie 2026 (CITGrup repornit pe 26 sep.) — de aceea textul folosește {{cat:cu-mediana}} și nu promite „90 de zile”.",
+      "Maparea: în desktop-uri apar ~99 de monitoare evomag, câteva servere, plus produse străine (espressoare, roboți, HDD-uri) — de reparat în Admin → Mapare; textul nu le menționează.",
+      "Scoasă fraza „Micro nu primește o placă video obișnuită” (fără sursă web; decizia proprietarului 10.10)"
+    ]
+  }
+}

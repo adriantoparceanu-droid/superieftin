@@ -1,0 +1,62 @@
+{
+  "slug": "igiena-ingrijire-pet",
+  "intro_md": "În categoria Igienă & îngrijire sunt {{cat:produse|produs|produse}} pentru câini și pisici, disponibile acum la {{cat:lista-magazine}}: șampoane și balsamuri, perii și piepteni, nisip și litiere, covorașe absorbante, pungi și șervețele umede. Prețul median al unui produs este {{cat:pret-median}}, iar 8 din 10 costă între {{cat:pret-p10}} și {{cat:pret-p90}}. Pentru fiecare produs păstrăm istoricul prețului și îl comparăm cu mediana pe 30 de zile; la ultima actualizare, {{cat:reduceri|produs îndeplinea|produse îndeplineau}} condiția de „Reducere reală”.\n\n### Cum alegi\n\n- **Șampon și balsam:** verifică în denumire pentru ce specie e (câini, pisici sau ambele) și pentru ce tip de blană (lungă, scurtă, pui). Flacoanele au gramaje foarte diferite, așa că împarte prețul la mililitri ca să compari corect două produse.\n- **Nisip pentru litieră:** găsești nisip din silicat, nisip aglomerant din bentonită și așternut din lemn sau din tofu. Cel aglomerant face bulgări pe care îi scoți cu lopățica, iar cel din silicat absoarbe lichidul și se schimbă integral. Alege tipul pe care pisica îl acceptă și compară prețul pe kilogram sau pe litru, după cum e vândut.\n- **Litiere și accesorii:** măsoară locul în care stă litiera înainte să alegi una închisă; dimensiunile apar de obicei în denumire. Lopățelele, covorașele de litieră și pungile sunt pe aceeași pagină.\n- **Perii și piepteni:** pentru blana lungă caută piepteni și perii de descâlcit, pentru blana scurtă mănuși sau perii cu peri scurți. Forfecuțele și cleștii de unghii au mărimi diferite pentru câini mici și mari.\n- **Covorașe absorbante, pungi, șervețele:** compară numărul de bucăți din pachet și dimensiunea covorașului (de exemplu 60 × 60 cm).\n\nRestul produselor pentru câini și pisici sunt în [Animale de companie](/c/animale-de-companie): [hrană uscată](/c/hrana-uscata), [hrană umedă](/c/hrana-umeda), [jucării](/c/jucarii-pet), [castroane și hrănitoare](/c/castroane-hranitoare) sau [culcușuri și transport](/c/culcusuri-transport).\n\n### Prețuri și istoric\n\nUrmărim prețurile din această categorie din {{cat:istoric-de-la}}. Pe pagina fiecărui produs vezi prețul de azi, graficul și, când există destule înregistrări, comparația cu mediana pe 30 de zile. Cum calculăm verdictul afli din [metodologie](/ghiduri/metodologie), iar cum recunoști o reducere falsă, din ghidul [Black Friday 2026: cum verifici dacă o reducere e reală](/ghiduri/reduceri-reale-black-friday-cum-verifici).",
+  "faq": [
+    {
+      "q": "Ce nisip de litieră aleg: silicat, bentonită sau lemn?",
+      "a": "Nisipul aglomerant din bentonită formează bulgări care se scot cu lopățica, așa că doar completezi ce lipsește. Cel din silicat absoarbe lichidul în granule și se schimbă tot odată, iar cel din lemn sau tofu e făcut din materiale vegetale. Contează mai ales ce acceptă pisica ta, apoi prețul pe kilogram sau pe litru."
+    },
+    {
+      "q": "Cum compar prețul a două șampoane pentru câini?",
+      "a": "Împarte prețul la cantitatea din flacon, trecută în denumire (de exemplu 200 ml sau 250 ml), ca să obții prețul pe mililitru. Compară apoi doar produse pentru aceeași specie și același tip de blană."
+    },
+    {
+      "q": "Cum aflu dacă prețul unui produs de îngrijire e bun?",
+      "a": "Pe pagina produsului vezi graficul prețului din {{cat:istoric-de-la}} încoace și mediana pe 30 de zile, când există cel puțin două prețuri în acest interval. „Reducere reală” apare doar când prețul de azi e cu cel puțin {{cat:prag}} sub mediană."
+    },
+    {
+      "q": "De unde vin prețurile din această categorie?",
+      "a": "Din ofertele publicate de {{cat:lista-magazine}}, preluate automat în fiecare zi. Butonul „Vezi oferta” te duce pe site-ul magazinului, unde verifici prețul final, livrarea și stocul înainte de comandă."
+    }
+  ],
+  "review": {
+    "facts": [
+      {
+        "claim": "Categoria conține șampoane, balsamuri, perii/piepteni, nisip igienic, litiere și accesorii, covorașe absorbante, pungi, șervețele, forfecuțe/clești",
+        "source_type": "db",
+        "source": "products.feed_category pentru categoria igiena-ingrijire-pet (Sampoane 311, Nisip Igienic 143, Articole Periaj 136+11, Covoare absorbante 79, Litiere 50, Accesorii Litiere 39, Forfecute/Clesti 29, Balsamuri 22), SELECT 10.10.2026",
+        "status": "confirmat"
+      },
+      {
+        "claim": "În nisipul igienic există variante din silicat, bentonită/aglomerant, lemn și tofu",
+        "source_type": "db",
+        "source": "products.name în feed_category 'Nisip Igienic': silicat 38, bentonit/aglomerant 14, lemn/pin 15, tofu 7 (SELECT 10.10.2026)",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Nisipul aglomerant din bentonită formează bulgări care se scot; cel din silicat absoarbe lichidul fără bulgări și se schimbă integral",
+        "source_type": "web",
+        "source": "https://www.zooplus.co.uk/magazine/cat/cat-adoption/cat-litter-clumping-or-silica",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Gramajul flacoanelor apare în denumire (ex. 200 ml, 250 ml); covorașe 60 × 60 cm",
+        "source_type": "db",
+        "source": "products.name (ex. „Sampon Maradog Classic, 250 ml”, „Covorase igienice, Camon, 60/60 10 buc/ set”)",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Toate ofertele vin acum de la un singur magazin (petmart.ro); urmărite din octombrie 2026",
+        "source_type": "db",
+        "source": "offers JOIN retailers: 1282/1282 produse petmart.ro; min(offers.created_at) disponibile = 2026-10-03",
+        "status": "confirmat"
+      }
+    ],
+    "warnings": [
+      "Categoria conține și produse cu caracter medical/dermatologic din feed-ul Petmart (ex. „Dermoscent Pyoclean”, „Biozoo Sampon Dermatologic”, „Bandaje Ingrijirea Plagilor”, „Guler Protector”, „OptiCan”, produse din „Igiena Ochi si Urechi”). Textul nu le menționează; merită mutate în farmacie-veterinara (regula 8) din Admin → Mapare.",
+      "Un singur magazin (petmart.ro) — textul folosește {{cat:lista-magazine}} și nu promite comparație între magazine.",
+      "products.brand e NULL pe toată categoria, deci {{cat:branduri-top}} ar afișa „diverse mărci” — marcajul nu e folosit.",
+      "Istoricul începe pe 3 oct. 2026: paginile de produs sunt noindex până la 30 de zile de istoric (regula SEO din 5 oct.)."
+    ]
+  }
+}
