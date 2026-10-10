@@ -10,6 +10,8 @@ import { OFFER_AVAILABLE_SQL } from './availability'
 import { REAL_DISCOUNT_PCT, FRESH_HOURS } from './discount'
 import { parseFaq, type CategoryFaqItem, type CategoryStats } from './category-markers'
 
+export const CATEGORY_CONTENT_TAG = 'category-content'
+
 export interface CategoryContent {
   intro_md: string | null
   faq: CategoryFaqItem[]
@@ -27,7 +29,9 @@ export const getCategoryContent = unstable_cache(
     return { intro_md: r.intro_md, faq: parseFaq(r.faq), content_updated_at: r.content_updated_at }
   },
   ['category-content'],
-  { revalidate: 3600, tags: ['categories'] }
+  // 'category-content' = tag-ul doar al textului: importul din worker (categorii:import) il
+  // expira imediat prin POST /api/revalidate/categorii, fara sa atinga restul cache-ului
+  { revalidate: 3600, tags: ['categories', CATEGORY_CONTENT_TAG] }
 )
 
 // Cifrele pentru marcaje, intr-o singura interogare. Aceleasi reguli ca restul site-ului:
