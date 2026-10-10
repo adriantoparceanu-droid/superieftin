@@ -63,9 +63,8 @@
       }
     ],
     "warnings": [
-      "BLOCANT — NU IMPORTA ÎNCĂ: pe 10.10.2026 categoria monitoare NU conține monitoare. Cele 5.923 de produse disponibile sunt 4.677 „Workstation …” (aceleași nume ca în /c/workstations, ~3.119 duplicate de nume) + 1.242 „Calculator All in One … Monitor 22 inch” — toate CITGrup. Cauza: regula feed_category_map id 751 (6 oct. 2026, retailer CITGrup) mapează feed_category „touchscreen second hand” (cu spații) → monitoare; acel catch-all conține workstation-uri, iar reclassify_catchall_products() tratează doar varianta „touchscreen-second-hand” cu cratimă.",
-      "Monitoarele reale sunt în altă parte: ~258 CITGrup nemapate și ~99 evomag în desktop-uri. Textul e scris pentru o categorie de monitoare reparată (noi + refurbished/second hand); cu datele de azi {{cat:produse|monitor|monitoare}} ar afișa „5.923 de monitoare”, fals (regula 9).",
-      "Istoric-de-la și lista de magazine nu sunt folosite în primul paragraf ca să nu depindă de produsele mapate greșit; după reparare se poate adăuga {{cat:istoric-de-la}}."
+      "Istoric-de-la și lista de magazine nu sunt folosite în primul paragraf ca să nu depindă de produsele mapate greșit; după reparare se poate adăuga {{cat:istoric-de-la}}.",
+      "Categoria reparată pe 10.10.2026: migrația 034 a scos workstation-urile și calculatoarele All in One; regula feed CITGrup „microsoft refurbished” → monitoare (267, noi, fără tag); 99 de monitoare evomag mutate din desktop-uri (din regula după denumire nr. 1 s-a scos termenul „monitor”). Azi: 372 de monitoare în stoc."
     ]
   }
 }

@@ -110,8 +110,7 @@ Petmart din migrația 031).
 ## Texte în așteptare — `in-asteptare/`
 
 Importul citește doar fișierele `.json` direct din directorul dat (nu intră în subdirectoare).
-`in-asteptare/` ține textele gata scrise care NU trebuie încă publicate — ex. `monitoare.json`
-(10 oct. 2026): categoria avea workstation-uri și calculatoare în loc de monitoare (reparat de
-migrația 034); textul se publică după ce monitoarele reale sunt mapate în categorie (Admin → Mapare:
-„microsoft refurbished” CITGrup, monitoarele evomag din desktop-uri). Mută fișierul înapoi în
-`content/categorii/` și rulează importul.
+Un text gata scris care NU trebuie încă publicat (ex. categoria conține produse greșite) se ține
+în `content/categorii/in-asteptare/`; când categoria e reparată, mută-l înapoi și rulează importul.
+Precedent: `monitoare.json` a stat acolo pe 10 oct. 2026 până la migrația 034 + maparea
+monitoarelor reale (CITGrup „microsoft refurbished”, evomag).
