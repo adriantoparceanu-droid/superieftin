@@ -1,0 +1,68 @@
+{
+  "slug": "rozatoare",
+  "intro_md": "La Rozătoare sunt {{cat:produse|produs|produse}} pentru iepuri, hamsteri, porcușori de Guineea, chinchilla și alte animale mici, disponibile acum la {{cat:lista-magazine}}: cuști, căsuțe și tuneluri, hrană și meniuri, fân, batoane și recompense, așternut, adăpători și castroane. Prețul median al unui produs este {{cat:pret-median}}, iar 8 din 10 costă între {{cat:pret-p10}} și {{cat:pret-p90}}. Pentru fiecare produs păstrăm istoricul prețului și îl comparăm cu mediana pe 30 de zile; la ultima actualizare, {{cat:reduceri|produs îndeplinea|produse îndeplineau}} condiția de „Reducere reală”.\n\n### Cum alegi\n\n- **Cușca:** dimensiunile (lungime × lățime × înălțime, în centimetri) sunt în denumire, iar multe modele spun și pentru ce animal sunt gândite: hamsteri, porcușori de Guineea sau iepuri. Alege după animalul cel mai mare pe care îl ai și verifică dacă tava de jos se scoate ușor la curățat.\n- **Hrana:** meniurile sunt făcute pentru o anumită specie (iepure, porcușor de Guineea, hamster, chinchilla, dihor), așa că citește întâi specia din denumire. Ca să compari două pachete, împarte prețul la gramaj.\n- **Fân, batoane și recompense:** se vând în gramaje mici; compară tot pe kilogram sau pe gram.\n- **Așternut:** găsești așternut din cânepă, din hârtie, talaș și așternut din porumb, plus nisip de baie pentru chinchilla. Compară prețul pe kilogram sau pe litru, după cum e vândut.\n- **Accesorii:** căsuțe și castele din lemn, tuneluri, adăpători de diverse capacități, castroane din ceramică și litiere pentru iepuri.\n\nPrintre mărcile din denumiri sunt Vitakraft, Padovan, Versele-Laga și Cunipic. Pentru păsări vezi [Păsări](/c/pasari), iar pentru celelalte animale, [Animale de companie](/c/animale-de-companie).\n\n### Prețuri și istoric\n\nUrmărim prețurile din această categorie din {{cat:istoric-de-la}}. Pe pagina fiecărui produs vezi prețul de azi, graficul și, când există destule înregistrări, comparația cu mediana pe 30 de zile. Cum calculăm verdictul afli din [metodologie](/ghiduri/metodologie).",
+  "faq": [
+    {
+      "q": "Ce cușcă aleg pentru un hamster sau un porcușor de Guineea?",
+      "a": "Pornește de la animal: multe cuști au specia trecută în denumire, iar porcușorii de Guineea și iepurii au nevoie de cuști mai lungi decât hamsterii. Dimensiunile sunt în denumire, în centimetri, așa că le poți compara cu locul din casă."
+    },
+    {
+      "q": "Pot da aceeași hrană la iepure și la porcușor de Guineea?",
+      "a": "Meniurile sunt formulate pentru o anumită specie, iar specia e trecută în denumire. Alege hrana făcută pentru animalul tău; dacă ai întrebări despre dietă, întreabă medicul veterinar."
+    },
+    {
+      "q": "Cum aflu dacă prețul hranei pentru rozătoare e bun?",
+      "a": "Pe pagina produsului vezi graficul prețului din {{cat:istoric-de-la}} încoace și mediana pe 30 de zile, când există cel puțin două prețuri în acest interval. „Reducere reală” apare doar când prețul de azi e cu cel puțin {{cat:prag}} sub mediană."
+    },
+    {
+      "q": "De unde vin prețurile din această categorie?",
+      "a": "Din ofertele publicate de {{cat:lista-magazine}}, preluate automat în fiecare zi. Butonul „Vezi oferta” te duce pe site-ul magazinului, unde verifici prețul final, livrarea și stocul înainte de comandă."
+    }
+  ],
+  "review": {
+    "facts": [
+      {
+        "claim": "Categoria conține cuști, căsuțe, hrană, meniuri, așternuturi",
+        "source_type": "db",
+        "source": "products.feed_category rozatoare: Hrana Diverse Rozatoare 109, Custi Rozatoare 76, Casute Rozatoare 56, Meniuri Rozatoare 47, Asternuturi Rozatoare 14 (SELECT pe DB-ul de producție, 10.10.2026)",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Specii în denumiri: iepuri, hamsteri, porcușori de Guineea, chinchilla, dihori; fân, batoane, tuneluri",
+        "source_type": "db",
+        "source": "frecvența cuvintelor în products.name: iepuri 32, hamsteri 29, porcusori 13, guineea 13, chinchilla 8, fan 24, tunel 10; „Ferret Food Hrana Dihori, Padovan”, „Batoane Porcusori de Guineea Vitakraft” (SELECT pe DB-ul de producție, 10.10.2026)",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Cuștile au dimensiuni și specia în denumire",
+        "source_type": "db",
+        "source": "products.name: „Cusca Cavia 100 Easy, 100x54,5x45 cm”, „Cusca pentru Hamsteri, Cody, 75x47x89 cm”, „Cusca rozatoare Agena Nest, 49 x 29 x 40 cm” (SELECT pe DB-ul de producție, 10.10.2026)",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Așternut din cânepă, nisip pentru chinchilla, adăpător 50 ml, castroane ceramice",
+        "source_type": "db",
+        "source": "products.name: „Asternut Canepa, Padovan Hemp Bed, 3 kg”, „NISIP CHINCHILLA 900G”, „Adapator Drinki 50 ml”, „Castron Ceramic Rozatoare 500 ml/16 cm” (SELECT pe DB-ul de producție, 10.10.2026)",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Mărci frecvente în denumiri: Vitakraft, Padovan, Versele-Laga, Cunipic",
+        "source_type": "db",
+        "source": "frecvența cuvintelor în products.name: vitakraft 23, padovan 22, cunipic 16, versele/laga 11 (SELECT pe DB-ul de producție, 10.10.2026)",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Așternut din cânepă, hârtie, talaș, porumb; nisip chinchilla; litiere pentru iepuri",
+        "source_type": "db",
+        "source": "products.name: „Cunipic Asternut Igienic Hartie, 10 L”, „Asternut din hartie pentru rozatoare, Enjoy”, „Talas Lemonchips, Padovan”, „Talas din Porumb pentru Animale Mici, Flamingo”, „Asternut Canepa, Padovan Hemp Bed”, „OLA Nisip Chincilla”, „Litiera Iepuri 36x21x30/30 cm” (SELECT 10.10.2026)",
+        "status": "confirmat"
+      }
+    ],
+    "warnings": [
+      "Categoria conține ~67 de produse pentru COMBATEREA rozătoarelor (raticide: Zagor, Rodexion, Prodiorat; capcane Ratimor, Albert Kerbl) — feed_category „Combatere Rozatoare”, mapat greșit lângă produsele pentru rozătoarele de companie. Textul nu le menționează; recomand mutarea lor (ex. în ferma) sau ignorarea din Admin → Mapare — e și o problemă de experiență (otravă pentru șoareci afișată lângă hrana pentru hamsteri).",
+      "Categoria conține și produse cu caracter medical (ex. „Pelet iepuri cu coccidiostatic”, „Beaphar Lapte Inlocuitor Animale Mici”) — nemenționate.",
+      "Un singur magazin (petmart.ro); products.brand NULL pe toată categoria → {{cat:branduri-top}} nefolosit (ar afișa „diverse mărci”), mărcile sunt luate din denumiri.",
+      "Istoricul începe pe 3 oct. 2026: paginile de produs sunt noindex până la 30 de zile de istoric."
+    ]
+  }
+}

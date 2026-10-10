@@ -1,0 +1,76 @@
+{
+  "slug": "incarcatoare-cabluri",
+  "intro_md": "Găsești aici {{cat:produse|produs|produse}} — încărcătoare de priză, auto și wireless, cabluri USB-C, Lightning sau micro-USB — disponibile acum la {{cat:lista-magazine}}. Cele mai multe sunt de la {{cat:branduri-top}}. Prețul median este {{cat:pret-median}}, iar 8 din 10 produse costă între {{cat:pret-p10}} și {{cat:pret-p90}}. Urmărim prețurile zilnic din {{cat:istoric-de-la}}; la momentul actualizării, {{cat:reduceri|produs are|produse au}} prețul cu cel puțin {{cat:prag}} sub mediana pe 30 de zile.\n\n### Cum alegi un încărcător\n\n**Puterea și standardul.** Uită-te la puterea maximă (în wați) și la standardul de încărcare rapidă suportat de dispozitiv: de obicei USB Power Delivery (PD) la dispozitivele cu USB-C, iar la unele telefoane și PPS, o extensie a PD. Puterea se negociază între încărcător și dispozitiv, așa că un încărcător mai puternic decât suportă telefonul nu îl încarcă mai repede — dar îl poți folosi și pentru tabletă sau laptop. Pe larg, cu exemple de puteri: [Încărcător USB-C: ce putere îți trebuie și ce înseamnă GaN](/ghiduri/incarcator-usb-c-gan-ce-putere).\n\n**Câte porturi.** Un încărcător cu mai multe porturi împarte puterea între ele când încarci mai multe dispozitive deodată — verifică în specificații cât primește fiecare port.\n\n**GaN.** Încărcătoarele GaN sunt mai mici la aceeași putere; viteza de încărcare depinde însă tot de putere și de standard.\n\n### Cum alegi un cablu\n\nContează conectorii de la capete, lungimea și puterea suportată. Un cablu USB-C obișnuit duce cel puțin 60 W; pentru laptopurile care cer 100 W sau 240 W îți trebuie un cablu marcat pentru acea putere (cu cip e-marker). USB Power Delivery ajunge, de la versiunea 3.1, până la 240 W.\n\n### Black Friday 2026: cum verifici o reducere la accesorii\n\nLa accesoriile ieftine, o diferență mică în lei poate trece pragul de {{cat:prag}}, așa că uită-te și la graficul prețului: vezi dacă prețul de azi e mai mic decât tot ce a fost în ultimele luni sau doar puțin sub nivelul obișnuit. Lista de acum e la [Reduceri reale la încărcătoare și cabluri](/reduceri-reale/incarcatoare-cabluri), pașii sunt în [Black Friday 2026: cum verifici dacă o reducere e reală](/ghiduri/reduceri-reale-black-friday-cum-verifici), iar calculul în [metodologia](/ghiduri/metodologie).",
+  "faq": [
+    {
+      "q": "Ce putere trebuie să aibă încărcătorul pentru telefonul meu?",
+      "a": "Verifică în specificațiile telefonului puterea maximă de încărcare și standardul suportat (de exemplu USB PD sau PPS). Un încărcător cu aceeași putere sau mai mare și cu același standard încarcă telefonul la viteza lui maximă — puterea se negociază între încărcător și telefon. Dacă vrei un singur încărcător și pentru laptop, alege-l după puterea cerută de laptop."
+    },
+    {
+      "q": "Ce înseamnă GaN la un încărcător?",
+      "a": "GaN (nitrură de galiu) este un material semiconductor folosit în locul siliciului. Permite încărcătoare mai mici și mai eficiente la aceeași putere. Nu schimbă viteza de încărcare a telefonului — aceasta depinde de putere și de standardul suportat."
+    },
+    {
+      "q": "Contează cablul la încărcarea rapidă?",
+      "a": "Da. Un cablu USB-C obișnuit duce cel puțin 60 W. Pentru 100 W sau 240 W (de obicei laptopuri) ai nevoie de un cablu marcat pentru acea putere, cu cip e-marker. Pentru telefoane, un cablu de 60 W este de regulă suficient."
+    },
+    {
+      "q": "Ce înseamnă PD și PPS pe un încărcător?",
+      "a": "PD (USB Power Delivery) este standardul de încărcare rapidă prin USB-C; de la versiunea 3.1 ajunge până la 240 W. PPS (Programmable Power Supply) este o extensie opțională definită în PD 3.0, în care tensiunea și curentul se ajustează în pași mici în timpul încărcării, ceea ce poate reduce încălzirea. Verifică în specificațiile telefonului dacă folosește PPS pentru încărcarea rapidă maximă."
+    },
+    {
+      "q": "Cum verific dacă un încărcător are o reducere reală?",
+      "a": "Pe pagina produsului, verdictul compară prețul de azi cu mediana prețurilor din ultimele 30 de zile; „Reducere reală” înseamnă cel puțin {{cat:prag}} sub mediană. La accesoriile ieftine, o diferență mică în lei poate trece pragul, așa că uită-te și la grafic înainte să decizi."
+    }
+  ],
+  "review": {
+    "facts": [
+      {
+        "claim": "USB Power Delivery ajunge până la 240 W de la PD 3.1 (înainte 100 W)",
+        "source_type": "web",
+        "source": "https://www.usb.org/usb-charger-pd",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Un cablu USB-C standard duce cel puțin 60 W; peste 3 A (60 W) e nevoie de cablu cu e-marker de 5 A, peste 100 W de cablu EPR cu e-marker",
+        "source_type": "web",
+        "source": "https://en.wikipedia.org/wiki/USB_hardware (citit 10.10.2026)",
+        "status": "confirmat"
+      },
+      {
+        "claim": "PPS = protocol opțional definit în USB PD 3.0; tensiune 3,3–21 V în pași de 20 mV, curent în pași de 50 mA; poate reduce încălzirea încărcătorului și a dispozitivului",
+        "source_type": "web",
+        "source": "https://en.wikipedia.org/wiki/USB_hardware (secțiunea Power Delivery / PPS, citită 10.10.2026)",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Produsele vin de la ITGalaxy.ro (majoritatea), evomag.ro și Vexio.ro",
+        "source_type": "db",
+        "source": "SELECT 10.10.2026: ITGalaxy 1.369, evomag 29, Vexio 8 produse disponibile",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Verdictul „Reducere reală” = preț cu cel puțin pragul (marcaj {{cat:prag}}) sub mediana pe 30 de zile; prețul tăiat al magazinului nu intră în calcul",
+        "source_type": "db",
+        "source": "web/src/lib/discount.ts (REAL_DISCOUNT_PCT), lib/verdict.ts, /ghiduri/metodologie",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Curenții mai mari se negociază între sursă și dispozitiv (USB-C / PD)",
+        "source_type": "web",
+        "source": "https://en.wikipedia.org/wiki/USB_Power_Delivery („These higher currents can be negotiated through the configuration line”)",
+        "status": "confirmat"
+      },
+      {
+        "claim": "GaN permite încărcătoare mai mici și mai eficiente (mai puțină energie pierdută ca căldură) decât siliciul",
+        "source_type": "web",
+        "source": "https://en.wikipedia.org/wiki/Gallium_nitride (citit 10.10.2026)",
+        "status": "confirmat"
+      }
+    ],
+    "warnings": [
+      "Corecție după verificarea surselor: scoase „PPS la multe telefoane Samsung” și „majoritatea telefoanelor și laptopurilor” (nesusținute de sursele citite); PPS descris strict după Wikipedia; „telefonul cere doar cât poate primi” → „puterea se negociază”.",
+      "Am schimbat „transportă până la 60 W” în „duce cel puțin 60 W” — formularea sursei."
+    ]
+  }
+}

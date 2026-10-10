@@ -1,0 +1,72 @@
+{
+  "slug": "workstations",
+  "intro_md": "Aici sunt {{cat:produse|workstation|workstation-uri}} disponibile acum la {{cat:lista-magazine}}, cele mai multe de la {{cat:branduri-top}}: stații de lucru second hand și recondiționate (HP Z, Dell Precision, Lenovo ThinkStation), configurate pentru proiectare, randare, editare video sau calcul. Prețul median este {{cat:pret-median}}, iar 8 din 10 costă între {{cat:pret-p10}} și {{cat:pret-p90}}. Pentru fiecare configurație înregistrăm prețul zilnic din {{cat:istoric-de-la}} și îl comparăm cu mediana pe 30 de zile; la momentul actualizării, {{cat:reduceri|configurație are|configurații au}} prețul cu cel puțin {{cat:prag}} sub mediană.\n\n### Ce e un workstation\n\nUn workstation e un calculator construit pentru lucru greu și susținut: procesoare cu multe nuclee (Intel Xeon, Core i7/i9 sau AMD Threadripper PRO), multă memorie — la unele modele memorie ECC — și plăci video profesionale. Diferența față de un PC de birou se vede la programele de proiectare, randare și calcul, nu la navigare sau documente.\n\n### Cum alegi un workstation second hand\n\n**Programele pe care le folosești.** Pornește de la cerințele lor: unele folosesc multe nuclee (randare, simulări), altele depind de frecvența unui singur nucleu sau de placa video. Verifică ce plăci video recomandă producătorul programului.\n\n**Memoria.** Uită-te la cantitate și la tip: memoria ECC detectează și corectează automat erorile de un bit, util la calcule lungi unde o eroare ar strica rezultatul. Denumirea spune dacă memoria e ECC.\n\n**Stocarea.** Multe configurații sunt vândute „Fara Hard Disk” sau cu SSD nou; verifică ce intră în preț.\n\n**Placa video.** Plăcile profesionale (Quadro, NVIDIA RTX pentru stații) au drivere certificate de producătorii de aplicații profesionale (certificare ISV); GeForce sunt plăci de consum, fără această certificare. Alege după cerințele programului, nu după preț.\n\n**Garanția și sistemul de operare.** Durata garanției e scrisă de obicei în denumire; multe configurații sunt „Fara Windows”, iar licența se adaugă separat.\n\nToate produsele second hand sunt și pe pagina [Second Hand](/t/second-hand). Calculatoare mai simple, pentru birou, găsești la [desktop-uri](/c/desktop-uri).\n\n### Cum verifici o reducere\n\nPe pagina fiecărei configurații ai graficul prețului și verdictul față de mediana pe 30 de zile. La workstation-uri, aceeași carcasă apare în zeci de configurații, deci compară prețul configurației exacte, nu al modelului. Lista de acum: [Reduceri reale la workstation-uri](/reduceri-reale/workstations); calculul: [metodologia](/ghiduri/metodologie).",
+  "faq": [
+    {
+      "q": "Care e diferența dintre un workstation și un PC obișnuit?",
+      "a": "Un workstation e făcut pentru lucru greu și susținut: procesoare cu multe nuclee (Xeon, Threadripper PRO sau Core i7/i9), multă memorie, la unele modele ECC, și plăci video profesionale cu drivere certificate. Pentru birou, navigare și documente nu aduce un avantaj față de un PC obișnuit; diferența apare la proiectare, randare, editare video sau calcul."
+    },
+    {
+      "q": "Merită un workstation second hand?",
+      "a": "Pentru proiectare, randare sau editare, un workstation second hand oferă multe nuclee și multă memorie la prețul unui sistem nou mai modest. Verifică generația procesorului, tipul și cantitatea memoriei, ce stocare e inclusă și durata garanției. Compară apoi prețul cu un sistem nou care rulează aceleași programe."
+    },
+    {
+      "q": "Ce înseamnă memorie ECC și am nevoie de ea?",
+      "a": "ECC (Error Correction Code) este memorie care detectează și corectează automat erorile de un bit. E utilă la servere și la calcule sau simulări lungi, unde o eroare de memorie ar strica rezultatul. Pentru birou sau jocuri nu e necesară. Denumirea configurației spune dacă memoria e ECC."
+    },
+    {
+      "q": "Placă video Quadro sau GeForce pentru proiectare?",
+      "a": "Plăcile profesionale NVIDIA (seria Quadro, apoi RTX pentru stații de lucru) folosesc drivere certificate pentru aplicații profesionale de proiectare și randare. Plăcile GeForce sunt plăci de consum, iar driverele lor nu au certificare ISV. Verifică lista de plăci recomandate de producătorul programului pe care îl folosești."
+    },
+    {
+      "q": "Cum știu dacă prețul unui workstation e bun?",
+      "a": "Pe pagina configurației vezi verdictul față de mediana ultimelor 30 de zile și graficul prețului. „Reducere reală” înseamnă cel puțin {{cat:prag}} sub mediană. Pentru că același model apare în multe configurații, compară întotdeauna configurația exactă: procesor, memorie, stocare și placă video."
+    }
+  ],
+  "review": {
+    "facts": [
+      {
+        "claim": "Lista = stații second hand CITGrup.ro (HP Z1/Z8, Dell Precision 3680 Open Box, Lenovo ThinkStation P620 cu Threadripper PRO)",
+        "source_type": "db",
+        "source": "SELECT 10.10.2026: CITGrup 4.677 disponibile (tag second-hand), evomag 46; mărci HP 2.652, Dell 1.297, Lenovo 720",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Denumirile conțin „DDR4 ECC” (~720), Quadro/RTX A (~732), Xeon (~115), „Fara Windows” (~1.232), „Fara Hard Disk”, garanția în ani",
+        "source_type": "db",
+        "source": "SELECT pe products.name, categoria workstations, 10.10.2026",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Memoria ECC detectează și corectează erorile de un bit (SECDED); folosită la servere și calcul științific",
+        "source_type": "web",
+        "source": "https://en.wikipedia.org/wiki/ECC_memory",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Driverele NVIDIA RTX Enterprise (pentru plăcile profesionale) au certificare ISV; Studio / Game Ready nu",
+        "source_type": "web",
+        "source": "https://valuehub.hp.com/static/nvidia/docs/Info%20-%20NVIDIA%20Consumer%20-%20Positioning%20Sales%20Sheet%202024.pdf (fișa NVIDIA, citită 10.10.2026: „NVIDIA RTX Enterprise drivers are the only ISV certified drivers”; GPU support: NVIDIA RTX / Quadro; Studio/Game Ready: ISV certification No)",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Eticheta „Refurbished” / „Second Hand” e tag filtrabil, cu pagini /t/refurbished și /t/second-hand",
+        "source_type": "db",
+        "source": "tabela tags (refurbished, second-hand) + ruta web/src/app/t/[slug]; ambele răspund 200 pe producție (10.10.2026)",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Verdictul „Reducere reală” = preț cu cel puțin pragul (marcaj {{cat:prag}}) sub mediana pe 30 de zile; prețul tăiat al magazinului nu intră în calcul",
+        "source_type": "db",
+        "source": "web/src/lib/discount.ts (REAL_DISCOUNT_PCT), lib/verdict.ts, /ghiduri/metodologie",
+        "status": "confirmat"
+      }
+    ],
+    "warnings": [
+      "Maparea: ~45 de „Procesor” (procesoare de server evomag, feed_category „Procesoare Server”) și câteva produse Konica Minolta / APC apar în workstations (Konica Minolta și APC intră chiar în branduri-top) — de mutat în Admin → Mapare.",
+      "Aceleași ~4.677 de workstation-uri apar și în /c/monitoare (vezi avertismentul de la monitoare) — după reparare cifrele de aici nu se schimbă, dar duplicatele din monitoare dispar.",
+      "Reduceri reale acum: 0 (calcul local 10.10) — textul folosește marcajul, nu scrie „nicio reducere”. Secțiunea se numește „Cum verifici o reducere” (nu Black Friday) — public B2B.",
+      "Corecție după verificarea surselor: scoase „GeForce … mai ieftine la aceeași putere de calcul” și „producătorii CAD publică liste” (nesusținute de sursa citită)."
+    ]
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "slug": "televizoare",
+  "intro_md": "Aici sunt {{cat:produse|televizor|televizoare}} cu ofertă disponibilă acum la {{cat:lista-magazine}}, cel mai des de la {{cat:branduri-top}}. Prețul median este {{cat:pret-median}}, iar 8 din 10 televizoare costă între {{cat:pret-p10}} și {{cat:pret-p90}} — intervalul e larg pentru că lista merge de la modele mici, HD, până la OLED-uri de diagonală mare. Înregistrăm prețul fiecărui televizor zilnic din {{cat:istoric-de-la}}; la momentul actualizării, {{cat:reduceri|televizor are|televizoare au}} prețul cu cel puțin {{cat:prag}} sub mediana pe 30 de zile.\n\n### Cum alegi un televizor\n\n**Diagonala.** Se alege după distanța de la canapea la ecran și după rezoluție: la un televizor 4K poți sta mai aproape fără să distingi pixelii decât la unul Full HD. În denumire, diagonala apare de obicei în centimetri și în inch (139 cm = 55 inch). Calculul pe diagonale și prețurile pe fiecare mărime sunt în ghidul [Ce televizor să cumperi: 43, 50, 55 sau 65 inch](/ghiduri/televizor-43-50-55-65-inch-ce-diagonala).\n\n**Tipul panoului.** LED, QLED, Mini LED sau OLED se vede mai ales în contrast, în negrul afișat și în culori. O comparație directă între două OLED-uri de 55 inch: [LG OLED evo C6 vs Samsung OLED S90F](/ghiduri/lg-oled-c6-vs-samsung-oled-s90f-55).\n\n**Pentru console și jocuri.** Dacă ai o consolă de generație nouă, verifică dacă televizorul are porturi HDMI 2.1 și câte: standardul permite 4K la 120 Hz și rată de reîmprospătare variabilă (VRR).\n\n**Montajul.** Verifică dimensiunile picioarelor față de lățimea comodei sau, pentru perete, compatibilitatea VESA cu [suporturile TV](/c/suport-tv).\n\n### Black Friday 2026: cum verifici o reducere la televizor\n\nPrețul tăiat de pe site-ul magazinului nu arată cât a costat televizorul înainte. Pe pagina fiecărui model ai graficul prețului și verdictul față de mediana pe 30 de zile: un preț „redus” care e doar la nivelul medianei apare ca „Preț obișnuit”. Lista de acum e la [Reduceri reale la televizoare](/reduceri-reale/televizoare), pașii de verificare sunt în [Black Friday 2026: cum verifici dacă o reducere e reală](/ghiduri/reduceri-reale-black-friday-cum-verifici), iar calculul complet în [metodologia](/ghiduri/metodologie).",
+  "faq": [
+    {
+      "q": "Ce diagonală de televizor să aleg pentru sufragerie?",
+      "a": "Ca reper, recomandarea ITU pentru televizoarele 4K este o distanță de vizionare de aproximativ 1,6 ori înălțimea ecranului — cam 0,8 ori diagonala, adică circa 1,1 metri pentru un 55 inch. La Full HD distanța recomandată e dublă, pentru că pixelii se văd de mai aproape. E o distanță minimă orientativă, nu o regulă strictă: ia în calcul și spațiul real, lățimea comodei sau a peretelui și cât de mare vrei să pară imaginea."
+    },
+    {
+      "q": "Cât costă un televizor acum?",
+      "a": "Prețul median al televizoarelor listate este {{cat:pret-median}}, iar 8 din 10 costă între {{cat:pret-p10}} și {{cat:pret-p90}}. Prețul crește repede cu diagonala și cu tipul panoului, așa că pentru o comparație corectă pune față în față modele cu aceeași diagonală și același tip de panou."
+    },
+    {
+      "q": "Care e diferența dintre LED, QLED, Mini LED și OLED?",
+      "a": "LED și QLED sunt televizoare LCD luminate din spate cu LED-uri; QLED adaugă un strat de puncte cuantice, pentru o gamă de culori mai largă și o luminozitate mai bună. Mini LED folosește mii de LED-uri miniaturale în sute sau mii de zone de iluminare, de aici un contrast mai bun și un negru mai profund decât la un LED obișnuit. La OLED fiecare pixel produce propria lumină, iar un pixel stins nu emite deloc lumină — de aici negrul complet."
+    },
+    {
+      "q": "Ce televizor să iau pentru PlayStation 5 sau Xbox?",
+      "a": "Caută porturi HDMI 2.1: standardul permite 4K la 120 Hz și rată de reîmprospătare variabilă (VRR), pe care consolele noi le pot folosi în jocurile compatibile. Verifică în specificații câte porturi HDMI 2.1 are televizorul, mai ales dacă legi și o soundbară. Pentru 4K la 120 Hz poate fi nevoie de un cablu HDMI Ultra High Speed."
+    },
+    {
+      "q": "Scad prețurile la televizoare de Black Friday?",
+      "a": "Nu facem astfel de promisiuni. Ce poți verifica: graficul modelului care te interesează și verdictul față de mediana pe 30 de zile. Dacă un preț „redus” de Black Friday e doar la nivelul medianei, pagina produsului îl arată ca „Preț obișnuit”. Poți seta și o alertă de preț, ca să fii anunțat când modelul ajunge la suma dorită."
+    }
+  ],
+  "review": {
+    "facts": [
+      {
+        "claim": "Recomandarea ITU: distanța optimă 4K ≈ 1,6 × înălțimea imaginii, 1080p ≈ 3,2 × înălțimea; pentru 16:9, înălțimea ≈ 0,49 × diagonala → 55 inch ≈ 68,5 cm înălțime → ~1,1 m",
+        "source_type": "web",
+        "source": "https://en.wikipedia.org/wiki/Optimum_HDTV_viewing_distance (ITU-R: 1080p 3,2 H, 4K UHD 1,6 H) + calcul geometric",
+        "status": "confirmat"
+      },
+      {
+        "claim": "139 cm ≈ 55 inch (1 inch = 2,54 cm)",
+        "source_type": "db",
+        "source": "calcul: 55 × 2,54 = 139,7 cm",
+        "status": "confirmat"
+      },
+      {
+        "claim": "HDMI 2.1 permite 4K la 120 Hz și VRR; 4K 120 Hz poate cere cablu Ultra High Speed",
+        "source_type": "web",
+        "source": "https://en.wikipedia.org/wiki/HDMI ; https://www.hdmi.org/spec/hdmi2_1 (cablul Ultra High Speed introdus în HDMI 2.1)",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Televizoarele listate vin de la evomag.ro și eMAG",
+        "source_type": "db",
+        "source": "SELECT pe offers disponibile, categoria televizoare, 10.10.2026: evomag 556, eMAG 162",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Verdictul „Reducere reală” = preț cu cel puțin pragul (marcaj {{cat:prag}}) sub mediana pe 30 de zile; prețul tăiat al magazinului nu intră în calcul",
+        "source_type": "db",
+        "source": "web/src/lib/discount.ts (REAL_DISCOUNT_PCT), lib/verdict.ts, /ghiduri/metodologie",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Alerta de preț pleacă atunci când oricare ofertă disponibilă a produsului ajunge la pragul ales",
+        "source_type": "db",
+        "source": "CLAUDE.md „Alerta de preț” (migrația 029, pickTriggerOffer)",
+        "status": "confirmat"
+      },
+      {
+        "claim": "QLED = LCD cu LED în spate + strat de puncte cuantice (gamă de culori și luminozitate mai bune); Mini LED = mii de LED-uri, sute–mii de zone de iluminare, contrast mai bun și negru mai profund decât LED-LCD; OLED = pixeli care emit propria lumină, pixelul inactiv nu emite lumină (negru complet)",
+        "source_type": "web",
+        "source": "https://en.wikipedia.org/wiki/Quantum_dot_display ; https://en.wikipedia.org/wiki/Mini_LED ; https://en.wikipedia.org/wiki/OLED (toate deschise și citite 10.10.2026)",
+        "status": "confirmat"
+      }
+    ],
+    "warnings": [
+      "Printre „branduri-top” apare „Google” (probabil dispozitive Google TV mapate la televizoare) — de verificat maparea, nu afectează textul.",
+      "Corecție după verificarea surselor: scoase „unghiurile largi de vizionare” și „luminozitatea maximă mai mică” la OLED, plus „contează mai mult decât câțiva inch” (nesusținute de sursele citite); regula „1–1,5 × diagonala” înlocuită cu recomandarea ITU (1,6 × înălțimea la 4K), singura găsită într-o sursă deschisă."
+    ]
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "slug": "pasari",
+  "intro_md": "La Păsări sunt {{cat:produse|produs|produse}} pentru păsări de colivie și de curte, disponibile acum la {{cat:lista-magazine}}: colivii, cuiburi și căsuțe de cuibărit, hrănitori și adăpători, meniuri pentru peruși, canari, nimfe și papagali, batoane, crenguțe și stinghii, plus hrană pentru porumbei. Prețul median al unui produs este {{cat:pret-median}}, iar 8 din 10 costă între {{cat:pret-p10}} și {{cat:pret-p90}}. Pentru fiecare produs păstrăm istoricul prețului și îl comparăm cu mediana pe 30 de zile; la ultima actualizare, {{cat:reduceri|produs îndeplinea|produse îndeplineau}} condiția de „Reducere reală”.\n\n### Cum alegi\n\n- **Colivia:** dimensiunile (lungime × lățime × înălțime, în centimetri) sunt în denumire. Alege după numărul și mărimea păsărilor: un papagal mare are nevoie de o colivie mult mai mare decât o pereche de canari. Verifică și dacă tava de jos se scoate ușor.\n- **Hrana:** amestecurile sunt făcute pentru o anumită specie (peruși, canari, nimfe, papagali mari, porumbei), trecută în denumire. Ca să compari două pachete, împarte prețul la gramaj.\n- **Hrănitori și adăpători:** găsești modele care se prind de colivie și hrănitori de exterior pentru grădină; compară capacitatea în mililitri și materialul (plastic, inox, lemn, metal).\n- **Accesorii:** cuiburi și căsuțe de cuibărit, crenguțe și stinghii, batoane abrazive, stinghii din calciu, cădițe de baie care se prind de colivie.\n\nPrintre mărcile din denumiri sunt Padovan, Vitakraft, Versele-Laga (inclusiv gama Ola) și Duvoplus. Pentru păsările de curte vezi și [Fermă](/c/ferma) (adăpători și hrănitori mari), iar pentru celelalte animale, [Animale de companie](/c/animale-de-companie).\n\n### Prețuri și istoric\n\nUrmărim prețurile din această categorie din {{cat:istoric-de-la}}. Pe pagina fiecărui produs vezi prețul de azi, graficul și, când există destule înregistrări, comparația cu mediana pe 30 de zile. Cum calculăm verdictul afli din [metodologie](/ghiduri/metodologie).",
+  "faq": [
+    {
+      "q": "Ce hrană cumpăr pentru peruși?",
+      "a": "Alege un amestec pe a cărui denumire scrie „peruși” — meniurile sunt făcute pentru o anumită specie. Compară apoi prețul pe kilogram între pachete de gramaje diferite; batoanele sunt recompense, pe lângă hrana de zi cu zi."
+    },
+    {
+      "q": "Ce mărime de colivie îmi trebuie?",
+      "a": "Depinde de câte păsări ai și cât de mari sunt: canarii și perușii se descurcă în colivii mai mici decât nimfele sau papagalii mari. Dimensiunile sunt trecute în denumire, așa că le poți compara cu locul din casă."
+    },
+    {
+      "q": "Cum aflu dacă prețul unei colivii sau al hranei pentru păsări e bun?",
+      "a": "Pe pagina produsului vezi graficul prețului din {{cat:istoric-de-la}} încoace și mediana pe 30 de zile, când există cel puțin două prețuri în acest interval. „Reducere reală” apare doar când prețul de azi e cu cel puțin {{cat:prag}} sub mediană."
+    },
+    {
+      "q": "De unde vin prețurile din această categorie?",
+      "a": "Din ofertele publicate de {{cat:lista-magazine}}, preluate automat în fiecare zi. Butonul „Vezi oferta” te duce pe site-ul magazinului, unde verifici prețul final, livrarea și stocul înainte de comandă."
+    }
+  ],
+  "review": {
+    "facts": [
+      {
+        "claim": "Categoria conține colivii, hrănitori, meniuri, hrană, batoane, cuiburi, accesorii, adăpători, hrană pentru porumbei",
+        "source_type": "db",
+        "source": "products.feed_category pasari: Colivii Pasari 63, Hranitoare Pasari 55, Meniuri Pasari 46, Hrana Diverse Pasari 37, Batoane Pasari 29, Cuiburi Pasari 24, Accesorii Diverse 23, Adapatoare 14, Hrana Pasari Ferma 9 (SELECT pe DB-ul de producție, 10.10.2026)",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Specii în denumiri: peruși, canari, nimfe, papagali, porumbei; hrănitori de exterior; crenguțe, stinghii, cădițe",
+        "source_type": "db",
+        "source": "frecvența cuvintelor în products.name: perusi 34, canari 14, nimfe 13, papagali 12, porumbei 8, exterior 16, creanga 6, stinghie 4, cadita 7; „Hrana completa OLA pentru Papagali Mari”, „Versele Laga, Hrana porumbei, Start Plus IC+, 20 kg” (SELECT pe DB-ul de producție, 10.10.2026)",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Coliviile au dimensiunile în denumire",
+        "source_type": "db",
+        "source": "products.name: „Colivie Pasari 610, Blue, 44x33x70 cm”, „Colivie simpla, 33x23x36 cm” (SELECT pe DB-ul de producție, 10.10.2026)",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Mărci frecvente în denumiri: Padovan, Vitakraft, Versele-Laga (Ola), Duvoplus",
+        "source_type": "db",
+        "source": "frecvența cuvintelor în products.name: padovan 40, vitakraft 30, versele/laga 10, ola 15, duvoplus 8 (SELECT pe DB-ul de producție, 10.10.2026)",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Cădițe de baie (inclusiv externe pentru colivie), stinghii din calciu",
+        "source_type": "db",
+        "source": "products.name: „Cadita Externa Pentru Colivii Rotunde”, „Cadita Reglabila Acoperita pentru Papagali”, „Stinghie Din Calciu M 30,5x8,5x4,3 cm” (SELECT 10.10.2026)",
+        "status": "confirmat"
+      }
+    ],
+    "warnings": [
+      "Blocurile cu iod/săruri minerale și stinghiile din calciu sunt în categorie — textul le numește doar ca obiecte (stinghii din calciu), fără niciun efect.",
+      "Un singur magazin (petmart.ro); products.brand NULL pe toată categoria → {{cat:branduri-top}} nefolosit (ar afișa „diverse mărci”), mărcile sunt luate din denumiri.",
+      "Istoricul începe pe 3 oct. 2026: paginile de produs sunt noindex până la 30 de zile de istoric."
+    ]
+  }
+}

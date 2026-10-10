@@ -1,0 +1,56 @@
+{
+  "slug": "reptile",
+  "intro_md": "La Reptile sunt {{cat:produse|produs|produse}} pentru terarii și acvaterarii, disponibile acum la {{cat:lista-magazine}}: terarii și bazine pentru țestoase, becuri, spoturi și încălzitoare, covorașe și cabluri de încălzire, substrat din cocos, nisip și scoarță, decoruri, ascunzători, castroane, cuști de transport și hrană pentru reptile și țestoase. Prețul median al unui produs este {{cat:pret-median}}, iar 8 din 10 costă între {{cat:pret-p10}} și {{cat:pret-p90}}. Pentru fiecare produs păstrăm istoricul prețului și îl comparăm cu mediana pe 30 de zile; la ultima actualizare, {{cat:reduceri|produs îndeplinea|produse îndeplineau}} condiția de „Reducere reală”.\n\n### Cum alegi\n\n- **Terariul sau bazinul:** dimensiunile sunt în denumire. Pornește de la animal și de la cât va crește; pentru țestoasele de apă găsești bazine separate de terarii.\n- **Iluminat și încălzire:** găsești becuri (inclusiv de noapte), spoturi, becuri cu halogen, încălzitoare ceramice, covorașe și cabluri de încălzire. Puterea în wați e trecută în denumire; verifică și dacă fasungul sau aparătoarea becului se cumpără separat.\n- **Substrat și decor:** cocos, nisip, scoarță de pin (în mai multe granulații), ascunzători din coajă de cocos și plante artificiale. Compară prețul pe litru sau pe kilogram.\n- **Hrana:** găsești hrană de bază pentru țestoase și reptile, inclusiv gammarus și inimă liofilizată, în cutii de diferite volume — compară prețul pe gram.\n- **Accesorii:** umidificatoare, pompe de recirculare pentru acvaterarii, cuști mici de transport.\n\nPrintre mărcile din denumiri sunt JBL, Exo Terra, Happet, Trixie și Padovan. Pentru acvarii cu pești vezi [Acvaristică](/c/acvaristica), iar pentru celelalte animale, [Animale de companie](/c/animale-de-companie).\n\n### Prețuri și istoric\n\nUrmărim prețurile din această categorie din {{cat:istoric-de-la}}. Pe pagina fiecărui produs vezi prețul de azi, graficul și, când există destule înregistrări, comparația cu mediana pe 30 de zile. Cum calculăm verdictul afli din [metodologie](/ghiduri/metodologie).",
+  "faq": [
+    {
+      "q": "Ce bec îmi trebuie pentru terariu?",
+      "a": "Depinde de animal și de mărimea terariului: în categorie găsești becuri (inclusiv de noapte), spoturi și încălzitoare ceramice, cu puterea trecută în denumire. Pentru ce îi trebuie speciei tale, întreabă crescătorul de la care ai animalul sau medicul veterinar, apoi compară aici prețul modelului ales."
+    },
+    {
+      "q": "Ce substrat aleg pentru terariu?",
+      "a": "Cocosul, nisipul și scoarța de pin sunt cele mai des întâlnite în categorie. Alegerea ține de specie și de umiditatea de care are nevoie terariul; compară apoi prețul pe litru sau pe kilogram."
+    },
+    {
+      "q": "Cum aflu dacă prețul unui produs pentru terariu e bun?",
+      "a": "Pe pagina produsului vezi graficul prețului din {{cat:istoric-de-la}} încoace și mediana pe 30 de zile, când există cel puțin două prețuri în acest interval. „Reducere reală” apare doar când prețul de azi e cu cel puțin {{cat:prag}} sub mediană."
+    },
+    {
+      "q": "De unde vin prețurile din această categorie?",
+      "a": "Din ofertele publicate de {{cat:lista-magazine}}, preluate automat în fiecare zi. Butonul „Vezi oferta” te duce pe site-ul magazinului, unde verifici prețul final, livrarea și stocul înainte de comandă."
+    }
+  ],
+  "review": {
+    "facts": [
+      {
+        "claim": "Categoria conține iluminat și încălzire, decoruri, terarii, hrană, substrat (pământ, nisip, lemn/pin, cocos), hrănitoare, accesorii, pompe de recirculare",
+        "source_type": "db",
+        "source": "products.feed_category reptile: Iluminat si Incalzire Reptile 58, Decoruri 25, Modele Terarii si Acvarii 21, Hrana de Baza 18, Pamant si Nisip 9, Lemn si Pin 8, Cocos 6, Hranitoare 6, Pompe Recirculare Terarii 3 (SELECT pe DB-ul de producție, 10.10.2026)",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Produse concrete: spot ceramic, bec cu halogen, lampă de noapte, încălzitor ceramic cu infraroșu, pad și cablu de încălzire, bazin pentru țestoase, cuști de transport reptile, umidificator, gammarus și inimă liofilizată",
+        "source_type": "db",
+        "source": "products.name: „Spot ceramic incalzire JBL ReptilHeat 150 W”, „Happet, Bec cu Halogen pentru Terariu, 100W”, „Incalzitor Terariu Ceramica cu Infrarosu 100W”, „Pad incalzire JBL TerraTemp heatmat 25W”, „Cablu de Incalzire, 3.5 m 15W”, „Happet, Bazin pentru Testoase, 5.5 L”, „Cusca Transport Reptile 38x14x24 cm”, „Umidificator pentru Terariu”, „Exo Gammarus 400 ml/ 50 g”, „Aparator Bec Terariu”; cuvinte: nocturna 6 (SELECT pe DB-ul de producție, 10.10.2026)",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Mărci frecvente în denumiri: JBL, Exo Terra, Happet, Trixie, Padovan",
+        "source_type": "db",
+        "source": "frecvența cuvintelor în products.name: jbl 43, exo 13, happet 13, padovan 6, trixie (ex. „Lampa Spot pentru Terariu, Trixie”) (SELECT pe DB-ul de producție, 10.10.2026)",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Scoarță de pin în mai multe granulații, substrat din pin, plante artificiale Exo Terra, ascunzători din cocos",
+        "source_type": "db",
+        "source": "products.name: „JBL TerraBark (2-10 mm) 5L / (10-20 mm) / (20-30 mm) 20 L”, „Substrat Terariu Din Pin 10 l”, „EXO TERRA PLANTA FICUS SMALL, 45 cm”, „JBL Cocos Cava 3/4 L” (SELECT 10.10.2026)",
+        "status": "confirmat"
+      }
+    ],
+    "warnings": [
+      "Categoria conține „Calciu reptile” (4) și becuri UV/UV-C — textul nu menționează calciul și nu leagă iluminatul de vreun efect asupra animalului (regula 8).",
+      "FAQ 1 trimite la medicul veterinar pentru nevoile speciei — formulare neutră, fără sfat medical.",
+      "Un singur magazin (petmart.ro); products.brand NULL pe toată categoria → {{cat:branduri-top}} nefolosit (ar afișa „diverse mărci”), mărcile sunt luate din denumiri.",
+      "Istoricul începe pe 3 oct. 2026: paginile de produs sunt noindex până la 30 de zile de istoric."
+    ]
+  }
+}

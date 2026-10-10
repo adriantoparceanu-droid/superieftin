@@ -1,0 +1,62 @@
+{
+  "slug": "telefoane-mobile",
+  "intro_md": "Pe superieftin.ro găsești acum {{cat:produse|telefon mobil|telefoane mobile}} cu ofertă disponibilă la {{cat:lista-magazine}}; cele mai multe modele sunt de la {{cat:branduri-top}}. Prețul median al unui telefon din listă este {{cat:pret-median}}, iar 8 din 10 telefoane costă între {{cat:pret-p10}} și {{cat:pret-p90}}. Pentru fiecare telefon înregistrăm prețul zilnic din {{cat:istoric-de-la}} și îl comparăm cu mediana ultimelor 30 de zile: la momentul actualizării, {{cat:reduceri|telefon are|telefoane au}} prețul cu cel puțin {{cat:prag}} sub mediană.\n\n### Cum alegi un telefon\n\n**Memoria, întâi.** Alege spațiul de stocare de care ai nevoie înainte de model: la multe telefoane memoria nu se poate extinde cu card, iar diferența de preț dintre două capacități se vede în istoric.\n\n**Variantele aceluiași model.** Același telefon apare în mai multe variante de memorie, culoare sau Dual SIM, fiecare cu prețul și istoricul ei. Compară variantele între ele: uneori diferența dintre două culori e mai mare decât o reducere.\n\n**Actualizările de software.** Dacă vrei să păstrezi telefonul mulți ani, verifică pe site-ul producătorului câți ani de actualizări de sistem și de securitate promite pentru modelul respectiv.\n\n**Încărcătorul.** Verifică dacă în cutie e inclus și încărcătorul. Dacă nu, vezi [încărcătoarele și cablurile](/c/incarcatoare-cabluri) și ghidul [Încărcător USB-C: ce putere îți trebuie](/ghiduri/incarcator-usb-c-gan-ce-putere).\n\n### Ghiduri pe modele\n\n- Samsung din seria A: [Galaxy A07, A17, A37 sau A57: care merită](/ghiduri/samsung-galaxy-a17-a37-a57-care-merita)\n- iPhone mai ieftin: [iPhone 17 vs 17e vs 16e](/ghiduri/iphone-17-vs-17e-vs-16e-ce-iphone-ieftin)\n- Vârf de gamă: [Galaxy S26 Ultra 256GB](/ghiduri/samsung-galaxy-s26-ultra-256gb-ghid), [iPhone 17 Pro Max 256GB după iPhone 18](/ghiduri/iphone-17-pro-max-256gb-dupa-iphone-18) și [Galaxy Z Fold7 în 2026](/ghiduri/merita-samsung-galaxy-z-fold7)\n\n### Black Friday 2026: cum verifici o reducere la un telefon\n\nDeschide pagina telefonului și uită-te la graficul prețului și la verdictul de lângă preț. Un preț „redus” care e doar la nivelul medianei apare ca „Preț obișnuit”; „Reducere reală” înseamnă cel puțin {{cat:prag}} sub mediana pe 30 de zile. Lista de acum e la [Reduceri reale la telefoane mobile](/reduceri-reale/telefoane-mobile), pașii sunt în [Black Friday 2026: cum verifici dacă o reducere e reală](/ghiduri/reduceri-reale-black-friday-cum-verifici), iar calculul complet în [metodologia](/ghiduri/metodologie).",
+  "faq": [
+    {
+      "q": "Cât costă un telefon mobil acum?",
+      "a": "Prețul median al telefoanelor listate acum este {{cat:pret-median}}: jumătate costă mai puțin, jumătate mai mult. 8 din 10 telefoane au prețul între {{cat:pret-p10}} și {{cat:pret-p90}}. Cifrele se recalculează automat din ofertele disponibile și numără separat fiecare variantă de memorie și culoare."
+    },
+    {
+      "q": "Cum îmi dau seama dacă prețul unui telefon e bun acum?",
+      "a": "Deschide pagina telefonului și uită-te la verdictul de lângă preț și la graficul prețului. Verdictul compară prețul de azi cu mediana ultimelor 30 de zile: „Reducere reală” înseamnă cel puțin {{cat:prag}} sub mediană, „Preț obișnuit” înseamnă aproape de mediană, iar „Mai scump” înseamnă peste ea. Prețul tăiat afișat de magazin nu intră în calcul."
+    },
+    {
+      "q": "De ce variantele de culoare ale aceluiași telefon au prețuri diferite?",
+      "a": "Magazinele stabilesc prețul separat pentru fiecare variantă (culoare, memorie, Dual SIM), iar stocul diferă de la o culoare la alta. De aceea le urmărim separat, fiecare cu istoricul ei. Dacă nu ții la o anumită culoare, verifică și celelalte variante ale modelului înainte să cumperi."
+    },
+    {
+      "q": "Ce iPhone mai ieftin merită luat?",
+      "a": "Depinde de cât contează pentru tine camera, ecranul și anul de lansare. Comparația dintre iPhone 17, 17e și 16e, cu prețurile actualizate automat, e în ghidul [iPhone 17 vs 17e vs 16e](/ghiduri/iphone-17-vs-17e-vs-16e-ce-iphone-ieftin). Pentru Android în aceeași zonă de preț, vezi și [Samsung Galaxy A17, A37 sau A57](/ghiduri/samsung-galaxy-a17-a37-a57-care-merita)."
+    },
+    {
+      "q": "Când e cel mai bun moment să cumpăr un telefon, inclusiv de Black Friday?",
+      "a": "Nu putem prezice prețurile și nu promitem scăderi. Poți urmări graficul modelului dorit și seta o alertă de preț de pe pagina produsului — primești un mesaj când oricare dintre oferte ajunge la suma aleasă. Prețurile telefoanelor le înregistrăm din {{cat:istoric-de-la}}."
+    },
+    {
+      "q": "Pot cumpăra telefonul direct de pe superieftin.ro?",
+      "a": "Nu. superieftin.ro este un comparator de prețuri: butonul „Vezi oferta” te duce pe site-ul magazinului, unde verifici prețul final, livrarea și garanția și plasezi comanda. Multe linkuri sunt de afiliere — magazinul ne plătește un comision, fără niciun cost în plus pentru tine."
+    }
+  ],
+  "review": {
+    "facts": [
+      {
+        "claim": "Telefoanele listate vin de la ITGalaxy.ro, evomag.ro, eMAG și Vexio.ro",
+        "source_type": "db",
+        "source": "SELECT pe offers disponibile, categoria telefoane-mobile, 10.10.2026: ITGalaxy 457, evomag 182, eMAG 176, Vexio 2",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Verdictul „Reducere reală” = preț cu cel puțin pragul (marcaj {{cat:prag}}) sub mediana pe 30 de zile; prețul tăiat al magazinului nu intră în calcul",
+        "source_type": "db",
+        "source": "web/src/lib/discount.ts (REAL_DISCOUNT_PCT), lib/verdict.ts, /ghiduri/metodologie",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Alerta de preț pleacă atunci când oricare ofertă disponibilă a produsului ajunge la pragul ales",
+        "source_type": "db",
+        "source": "CLAUDE.md „Alerta de preț” (migrația 029, pickTriggerOffer)",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Ghidurile de modele legate sunt publicate",
+        "source_type": "db",
+        "source": "SELECT slug FROM guides WHERE status='published' (samsung-galaxy-a17-a37-a57-care-merita, iphone-17-vs-17e-vs-16e-ce-iphone-ieftin, samsung-galaxy-s26-ultra-256gb-ghid, iphone-17-pro-max-256gb-dupa-iphone-18, merita-samsung-galaxy-z-fold7, incarcator-usb-c-gan-ce-putere)",
+        "status": "confirmat"
+      }
+    ],
+    "warnings": [
+      "Nu am scris câți ani de actualizări promite fiecare producător — sursele găsite se contrazic (ex. Galaxy A17: 4 vs 6 versiuni de Android); textul trimite la site-ul producătorului.",
+      "Păstrat din textul din 3 oct.: FAQ preț, verificare, variante de culoare, cumpărare directă; „Când e cel mai bun moment” extins cu Black Friday."
+    ]
+  }
+}
