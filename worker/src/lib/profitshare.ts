@@ -45,6 +45,19 @@ export function advertiserStatus(adv: PsAdvertiser): string {
   return st?.approved === 'yes' && st?.active === 'yes' ? 'active' : 'inactive'
 }
 
+// Statusul din API NU e stabil: serverele Profitshare raspund diferit pentru `affiliate_statuses`
+// (vezi lib/affiliate/profitshare-deeplink.ts). Un singur apel a marcat eMAG „inactive” pe
+// 10 oct. 2026 → alerta falsa „Nu mai esti aprobat” pe Telegram, desi 6 apeluri imediat dupa
+// spuneau „aprobat + activ”. De aceea citim lista de mai multe ori si e suficient UN raspuns
+// „aprobat + activ” ca advertiserul sa fie activ. Functie pura (testata): ID-urile active.
+export function activeAdvertiserIds(reads: PsAdvertiser[][]): Set<string> {
+  const ids = new Set<string>()
+  for (const list of reads) {
+    for (const adv of list) if (advertiserStatus(adv) === 'active') ids.add(String(adv.id))
+  }
+  return ids
+}
+
 export interface PsFeed {
   link: string
   type: string  // 'csv' | 'xml'

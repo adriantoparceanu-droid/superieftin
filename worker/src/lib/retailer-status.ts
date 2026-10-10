@@ -26,7 +26,7 @@ export const STATE_LABELS: Record<SourceState, string> = {
   feed_missing: 'Feed dezactivat',
   feed_error: 'Feed neimportat',
   program_inactive: 'Program inactiv',
-  scan_failed: 'Scanare eșuată',
+  scan_failed: 'Nescanat',
   manual_only: 'Doar import manual',
   stale: 'Neactualizat',
 }
@@ -72,8 +72,10 @@ export function decideState(f: RetailerFacts, input: StatusInput, advertiserActi
   if (advertiserActive === false) {
     return { state: 'program_inactive', reason: 'Nu mai ești aprobat în programul de afiliere al magazinului' }
   }
+  // Scanarea eMAG ruleaza DOAR manual, local (din 2026-10-01) — cea mai probabila cauza e ca nu
+  // a fost pornita, nu un blocaj. Mesajul spune ce e de facut si ce se intampla daca nu.
   if (sources.has('scraper')) {
-    return { state: 'scan_failed', reason: 'Scanarea nu mai aduce produse (captcha / blocaj WAF?)' }
+    return { state: 'scan_failed', reason: 'Nescanat de peste 48 de ore — scanarea e manuală: rulează local ./emag-scrape-sync.sh (ofertele devin fără stoc după 3 zile; dacă rulează și nu aduce produse, verifică logul pentru captcha / blocaj WAF)' }
   }
   if (sources.has('2performant')) {
     return { state: 'feed_error', reason: 'Feed-ul 2Performant nu a mai fost importat' }

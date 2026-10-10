@@ -14,7 +14,7 @@ const STATE: Record<string, { label: string; cls: string }> = {
   feed_missing: { label: 'Feed dezactivat', cls: 'bg-red-100 text-red-800' },
   feed_error: { label: 'Feed neimportat', cls: 'bg-red-100 text-red-800' },
   program_inactive: { label: 'Program inactiv', cls: 'bg-amber-100 text-amber-800' },
-  scan_failed: { label: 'Scanare eșuată', cls: 'bg-red-100 text-red-800' },
+  scan_failed: { label: 'Nescanat', cls: 'bg-red-100 text-red-800' },
   manual_only: { label: 'Doar import manual', cls: 'bg-amber-100 text-amber-800' },
   stale: { label: 'Neactualizat', cls: 'bg-amber-100 text-amber-800' },
 }

@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import crypto from 'crypto'
-import { buildSignatureString, buildAffiliateUrl, advertiserCommission, advertiserStatus, type PsAdvertiser } from './profitshare.js'
+import { buildSignatureString, buildAffiliateUrl, advertiserCommission, advertiserStatus, activeAdvertiserIds, type PsAdvertiser } from './profitshare.js'
 
 // Vector de test cu valorile din documentatia oficiala (sectiunea Authentication).
 test('semnatura HMAC — constructia stringului conform documentatiei', () => {
@@ -45,4 +45,12 @@ test('advertiserStatus — active doar daca esti aprobat in program', () => {
   assert.equal(advertiserStatus(emagAdv), 'active')
   assert.equal(advertiserStatus({ ...emagAdv, commissions: { affiliate_statuses: { active: 'yes', approved: 'no' } } }), 'inactive')
   assert.equal(advertiserStatus({ ...emagAdv, commissions: {} }), 'inactive')
+})
+
+test('activeAdvertiserIds — un singur raspuns „aprobat + activ” ajunge (API instabil, 10 oct. 2026)', () => {
+  const inactive = { ...emagAdv, commissions: { affiliate_statuses: { active: 'no', approved: 'yes' } } }
+  const fara = { ...emagAdv, commissions: {} }   // un server omite uneori complet campul
+  assert.deepEqual([...activeAdvertiserIds([[inactive], [fara], [emagAdv]])], [String(emagAdv.id)])
+  assert.equal(activeAdvertiserIds([[inactive], [fara]]).size, 0)
+  assert.equal(activeAdvertiserIds([]).size, 0)
 })
