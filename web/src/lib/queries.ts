@@ -2,7 +2,7 @@ import { unstable_cache } from 'next/cache'
 import pool from './db'
 import { maskPII } from './pii'
 import { OFFER_AVAILABLE_SQL } from './availability'
-import { PRODUCT_INDEXABLE_SQL } from './seo/product-index'
+import { PRODUCT_INDEXABLE_SQL, CANONICAL_TARGET_INDEXABLE_SQL } from './seo/product-index'
 
 export interface ProductWithDiscount {
   id: string
@@ -46,6 +46,7 @@ export interface ProductDetail {
   category_visible: boolean | null
   parent_visible: boolean | null  // null = categoria nu are parinte
   tags: string[]                  // slug-urile tag-urilor (refurbished, second-hand → itemCondition)
+  canonical_product_id: string | null  // principala grupului de variante (migratia 035, scris de worker); null = pagina proprie
   offers: OfferRow[]              // DOAR ofertele disponibile (lib/availability.ts)
   alert_offer_id: string | null   // oferta pentru alerta de pret (si cand nu e nimic disponibil)
   last_seen: string | null        // ultima confirmare a oricarei oferte (pentru „indisponibil”)
@@ -66,6 +67,9 @@ export interface OfferRow {
   // de pe /p/. Completate doar de getProductDetail; NULL pana la prima recalculare.
   min_30d?: number | null
   max_30d?: number | null
+  // Schimbarile de pret pe 60 de zile (offer_price_stats, migratia 035) — conditia „are poveste”
+  // a indexarii (lib/seo/product-index.ts). Completat doar de getProductDetail.
+  price_changes_60d?: number
 }
 
 export interface PricePoint {
@@ -271,7 +275,7 @@ const SEARCH_SQL = `
   FROM products p
   JOIN offers o ON o.product_id = p.id
   JOIN retailers r ON r.id = o.retailer_id
-  LEFT JOIN (SELECT offer_id, median_30d AS median_price, min_30d, max_30d FROM offer_price_stats) mp ON mp.offer_id = o.id
+  LEFT JOIN (SELECT offer_id, median_30d AS median_price, min_30d, max_30d, price_changes_60d FROM offer_price_stats) mp ON mp.offer_id = o.id
   WHERE o.current_price IS NOT NULL
     AND ${OFFER_AVAILABLE_SQL}
     AND (
@@ -350,7 +354,7 @@ export const getCategoryProducts = unstable_cache(
       FROM products p
       JOIN offers o ON o.product_id = p.id
       JOIN retailers r ON r.id = o.retailer_id
-      LEFT JOIN (SELECT offer_id, median_30d AS median_price, min_30d, max_30d FROM offer_price_stats) mp ON mp.offer_id = o.id
+      LEFT JOIN (SELECT offer_id, median_30d AS median_price, min_30d, max_30d, price_changes_60d FROM offer_price_stats) mp ON mp.offer_id = o.id
       WHERE ${categoryFilter(includeSub)}
         AND o.current_price IS NOT NULL
         AND ${OFFER_AVAILABLE_SQL}
@@ -436,7 +440,7 @@ export const getRandomCategoryProducts = unstable_cache(
       FROM products p
       JOIN offers o ON o.product_id = p.id
       JOIN retailers r ON r.id = o.retailer_id
-      LEFT JOIN (SELECT offer_id, median_30d AS median_price, min_30d, max_30d FROM offer_price_stats) mp ON mp.offer_id = o.id
+      LEFT JOIN (SELECT offer_id, median_30d AS median_price, min_30d, max_30d, price_changes_60d FROM offer_price_stats) mp ON mp.offer_id = o.id
       WHERE ${CATEGORY_FILTER_SQL}
         AND o.current_price IS NOT NULL
         AND ${OFFER_AVAILABLE_SQL}
@@ -483,7 +487,7 @@ export const getProductDetail = unstable_cache(
   async (slug: string): Promise<ProductDetail | null> => {
     const productRes = await pool.query(`
       SELECT p.id::text, p.name, p.slug, p.category, p.brand, p.image_url, p.updated_at::text,
-             p.part_no, p.category_id, c.name AS category_name, pc.slug AS parent_slug, pc.name AS parent_name,
+             p.part_no, p.category_id, p.canonical_product_id::text, c.name AS category_name, pc.slug AS parent_slug, pc.name AS parent_name,
              c.slug AS category_slug, c.is_visible AS category_visible, pc.is_visible AS parent_visible,
              COALESCE((SELECT array_agg(t.slug ORDER BY t.slug) FROM product_tags pt JOIN tags t ON t.id = pt.tag_id
                        WHERE pt.product_id = p.id), '{}') AS tags
@@ -509,6 +513,7 @@ export const getProductDetail = unstable_cache(
         mp.median_price::float AS median_price,
         mp.min_30d::float AS min_30d,
         mp.max_30d::float AS max_30d,
+        COALESCE(mp.price_changes_60d, 0)::int AS price_changes_60d,
         CASE
           WHEN mp.median_price IS NOT NULL AND o.current_price < mp.median_price * 0.95
           THEN ROUND(((mp.median_price - o.current_price) / mp.median_price * 100)::numeric, 1)::float
@@ -517,7 +522,7 @@ export const getProductDetail = unstable_cache(
         ${OFFER_AVAILABLE_SQL} AS available
       FROM offers o
       JOIN retailers r ON r.id = o.retailer_id
-      LEFT JOIN (SELECT offer_id, median_30d AS median_price, min_30d, max_30d FROM offer_price_stats) mp ON mp.offer_id = o.id
+      LEFT JOIN (SELECT offer_id, median_30d AS median_price, min_30d, max_30d, price_changes_60d FROM offer_price_stats) mp ON mp.offer_id = o.id
       WHERE o.product_id = $1
       ORDER BY o.current_price ASC NULLS LAST
     `, [product.id])
@@ -534,7 +539,7 @@ export const getProductDetail = unstable_cache(
       last_seen: byRecent[0]?.last_checked ?? null,
     }
   },
-  ['product-detail-v4'],
+  ['product-detail-v5'],
   { revalidate: 3600, tags: ['products'] }
 )
 
@@ -576,6 +581,23 @@ export const getHistoryStart = unstable_cache(
   },
   ['history-start'],
   { revalidate: 3600, tags: ['price-history'] }
+)
+
+// Canonical pe variante (migratia 035): slug-ul paginii principale a grupului, DOAR daca principala
+// e ea insasi indexabila acum (aceeasi regula ca sitemap-ul — CANONICAL_TARGET_INDEXABLE_SQL).
+// null = varianta isi pastreaza canonical-ul propriu. Un singur produs, pe cheia primara.
+export const getCanonicalTargetSlug = unstable_cache(
+  async (productId: string): Promise<string | null> => {
+    const { rows } = await pool.query<{ slug: string }>(`
+      SELECT cp.slug
+      FROM products p
+      JOIN products cp ON cp.id = p.canonical_product_id
+      WHERE p.id = $1 AND ${CANONICAL_TARGET_INDEXABLE_SQL}
+    `, [productId])
+    return rows[0]?.slug ?? null
+  },
+  ['canonical-target'],
+  { revalidate: 3600, tags: ['products'] }
 )
 
 // Categoriile vizibile (administrate in /admin), cu numarul de produse (inclusiv subcategorii)
@@ -776,7 +798,7 @@ export const getTagProducts = unstable_cache(
       JOIN tags t ON t.id = pt.tag_id AND t.slug = $1
       JOIN offers o ON o.product_id = p.id
       JOIN retailers r ON r.id = o.retailer_id
-      LEFT JOIN (SELECT offer_id, median_30d AS median_price, min_30d, max_30d FROM offer_price_stats) mp ON mp.offer_id = o.id
+      LEFT JOIN (SELECT offer_id, median_30d AS median_price, min_30d, max_30d, price_changes_60d FROM offer_price_stats) mp ON mp.offer_id = o.id
       WHERE o.current_price IS NOT NULL AND ${OFFER_AVAILABLE_SQL}
       ORDER BY current_price ASC NULLS LAST
       LIMIT $2 OFFSET $3
@@ -819,7 +841,8 @@ export const getAllProductSlugs = unstable_cache(
       FROM products p
       -- Regula de indexare a paginilor de produs (decizia SEO din 5 oct. 2026,
       -- lib/seo/product-index.ts): categorie mapata + vizibila, fara Sanatate & Naturale,
-      -- urmarit de cel putin 30 de zile. Restul raman pe site cu noindex si NU intra in sitemap.
+      -- urmarit de cel putin 30 de zile; din 21 oct. 2026 si „are poveste” (≥ 2 magazine sau ≥ 3
+      -- schimbari de pret in 60 de zile). Restul raman pe site cu noindex si NU intra in sitemap.
       JOIN categories c ON c.id = p.category_id
       LEFT JOIN categories pc ON pc.id = c.parent_id
       JOIN offers o ON o.product_id = p.id AND ${OFFER_AVAILABLE_SQL}
@@ -840,12 +863,15 @@ export const getAllProductSlugs = unstable_cache(
       ) lc ON true
       -- doar produsele cu cel putin o oferta disponibila (cele „indisponibile” nu se indexeaza)
       WHERE ${PRODUCT_INDEXABLE_SQL}
+        -- variantele (alte culori) cu canonical spre o principala indexabila nu intra in sitemap
+        -- (migratia 035; principala intra singura, prin aceeasi regula)
+        AND NOT ${CANONICAL_TARGET_INDEXABLE_SQL}
       GROUP BY p.id, p.slug
       ORDER BY p.id
     `)
     return rows.map((r) => ({ slug: r.slug as string, lastmod: r.lastmod ? new Date(r.lastmod).toISOString() : null }))
   },
-  ['all-slugs-v3'],
+  ['all-slugs-v4'],
   { revalidate: 86400, tags: ['products'] }
 )
 

@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { getProductDetail, getPriceHistory, getHistoryStart, getAllProductSlugs } from '@/lib/queries'
+import { getProductDetail, getPriceHistory, getHistoryStart, getAllProductSlugs, getCanonicalTargetSlug } from '@/lib/queries'
 import { calculateDiscount, formatPrice, formatVerified } from '@/lib/discount'
 import { TrackViewItem } from '@/components/analytics/TrackViewItem'
 import { getGuidesForProduct } from '@/lib/guides/queries'
@@ -60,7 +60,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     '. ' + historyChartPhrase(partialSince)
 
   // Regula de indexare (decizia SEO din 5 oct. 2026, lib/seo/product-index.ts): oferta disponibila
-  // + urmarit de cel putin 30 de zile + categorie mapata si vizibila + nu Sanatate & Naturale.
+  // + urmarit de cel putin 30 de zile + categorie mapata si vizibila + nu Sanatate & Naturale
+  // + „are poveste” (21 oct. 2026: ≥ 2 magazine SAU ≥ 3 schimbari de pret in 60 de zile, pe
+  // ofertele disponibile — product.offers contine doar ofertele disponibile).
   // Altfel pagina ramane pentru vizitatori (pret, oferte, alerta), dar cu noindex, follow.
   // Fara nicio oferta disponibila, dupa PRODUCT_GONE_DAYS raspunde 410 (src/proxy.ts) — neschimbat.
   // Daca istoricul nu se poate citi (DB), historyStart = null → noindex: mai bine o zi fara
@@ -73,12 +75,24 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     categoryVisible: product.category_visible,
     parentSlug: product.parent_slug,
     parentVisible: product.parent_visible,
+    availableStores: new Set(product.offers.map((o) => o.retailer_slug)).size,
+    priceChanges60d: product.offers.reduce((sum, o) => sum + (o.price_changes_60d ?? 0), 0),
   })
+
+  // Canonical pe variante (migratia 035, worker/src/lib/product-variants.ts): o varianta de
+  // culoare INDEXABILA trimite canonical-ul spre pagina principala a grupului, daca principala e
+  // si ea indexabila (verificat in SQL). Variantele neindexabile raman cu noindex + canonical
+  // propriu: Google recomanda sa nu combini noindex cu un canonical spre alta pagina (semnale
+  // contradictorii, care pot trece noindex-ul pe principala).
+  const canonicalSlug = indexable && product.canonical_product_id
+    ? await getCanonicalTargetSlug(product.id).catch(() => null)
+    : null
+  const canonicalPath = `/p/${canonicalSlug ?? slug}`
 
   return {
     title,
     description,
-    alternates: { canonical: `/p/${slug}` },
+    alternates: { canonical: canonicalPath },
     ...(indexable ? {} : { robots: { index: false, follow: true } }),
     openGraph: withOg({
       title,
