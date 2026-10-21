@@ -4,9 +4,9 @@ import { LegalPage, Todo } from '@/components/LegalPage'
 import { COMPANY } from '@/lib/company'
 
 export const metadata: Metadata = {
-  title: 'Despre noi — cum verificăm reducerile',
+  title: 'Despre noi — observatorul reducerilor reale',
   description:
-    'Cum funcționează superieftin.ro: urmărim zilnic prețurile, calculăm mediana ultimelor 30 de zile și marcăm doar reducerile reale.',
+    'Cum funcționează superieftin.ro, observatorul reducerilor reale din România: urmărim zilnic prețurile, calculăm mediana ultimelor 30 de zile, marcăm doar reducerile reale și publicăm lunar indicele prețurilor.',
   alternates: { canonical: '/despre' },
 }
 
@@ -14,8 +14,9 @@ export default function DesprePage() {
   return (
     <LegalPage title="Despre superieftin.ro">
       <p>
-        superieftin.ro este un comparator de prețuri pentru magazinele online din România.
-        Scopul lui e simplu: să vezi dacă o „reducere” e reală sau doar un preț vechi umflat.
+        superieftin.ro este observatorul reducerilor reale din România: măsurăm zilnic prețurile din
+        magazinele online și spunem, cu date, dacă o „reducere” e reală sau doar un preț vechi umflat.
+        Comparatorul de prețuri și linkurile spre magazine pornesc de la această analiză.
       </p>
 
       <h2>Cum verificăm o reducere</h2>
@@ -32,6 +33,34 @@ export default function DesprePage() {
         </li>
         <li>Pe pagina fiecărui produs vezi graficul de preț și mediana, ca să verifici singur.</li>
       </ul>
+
+      {/* Secțiunea observatorului (repoziționarea din 21 oct. 2026). Rezumată și în lib/seo/llms.ts
+          (buildLlmsFull) — dacă schimbi textul aici, actualizează-l și acolo. */}
+      <h2>Observatorul reducerilor reale</h2>
+      <p>
+        Pe lângă pagina fiecărui produs, publicăm ce arată datele adunate la nivel de categorie. Toate
+        cifrele sunt calculate automat din prețurile înregistrate, cu aceeași metodă pentru toate magazinele;
+        nu scriem prețuri sau procente de mână.
+      </p>
+      <ul>
+        <li>
+          <Link href="/indice">Indicele prețurilor</Link>: în fiecare lună, cum s-a schimbat prețul tipic al
+          acelorași produse (un coș stabil) față de luna anterioară, pe categorii. O ediție publicată nu se mai
+          modifică; eventualele corecții apar ca notă.
+        </li>
+        <li>
+          <Link href="/cand-sa-cumperi">Când să cumperi</Link>: pentru categoriile cu destule produse urmărite, cât
+          de des au apărut reduceri reale și cât au durat. Descriem doar perioada urmărită — nu estimăm prețurile
+          viitoare și nu vorbim de tipare anuale înainte să avem un an de date.
+        </li>
+        <li>
+          <Link href="/black-friday-2026">Black Friday 2026</Link>: din 1 noiembrie măsurăm zilnic câte dintre
+          reducerile din perioada Black Friday sunt reale, față de mediana prețurilor de dinainte de 1 noiembrie.
+        </li>
+      </ul>
+      <p>
+        Categoria Sănătate & Naturale nu intră în paginile observatorului.
+      </p>
 
       <h2>Cum câștigăm bani</h2>
       <p>

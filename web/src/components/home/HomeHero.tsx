@@ -27,6 +27,10 @@ export function HomeHero({ facts }: { facts: SiteFacts | null }) {
       className="-mt-6 bg-head text-head-ink [box-shadow:0_0_0_100vmax_var(--head)] [clip-path:inset(0_-100vmax)] pt-1.5 pb-[18px] lg:mt-0 lg:flex lg:items-center lg:justify-between lg:gap-8 lg:rounded-2xl lg:px-7 lg:py-5 lg:[box-shadow:none] lg:[clip-path:none]"
     >
       <div className="min-w-0">
+        {/* Identitatea site-ului (repoziționarea din 21 oct. 2026) — o linie mică, deasupra întrebării */}
+        <p className="text-[11.5px] font-bold uppercase tracking-[.08em] text-head-ink-2 lg:text-xs">
+          Observatorul reducerilor reale din România
+        </p>
         <h1
           id="home-titlu"
           className="text-[27px] leading-[1.06] font-black [font-stretch:82%] tracking-[-0.015em] sm:text-[32px] lg:text-[26px] xl:text-[31px]"

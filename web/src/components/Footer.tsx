@@ -7,6 +7,9 @@ import { CookieSettingsButton } from '@/components/consent/CookieSettingsButton'
 // + legaturi interne spre hubul de reduceri reale si metodologie (raport SEO 2026-10-04, A8)
 const FOOTER_LINKS: [string, string][] = [
   ['/reduceri-reale', 'Reduceri reale'],
+  // Observatorul reducerilor reale (repoziționarea din 21 oct. 2026)
+  ['/indice', 'Indicele prețurilor'],
+  ['/cand-sa-cumperi', 'Când să cumperi'],
   ['/ghiduri', 'Ghiduri'],
   ['/ghiduri/metodologie', 'Cum calculăm'],
   ['/alerte/gestionare', 'Alertele mele'],
@@ -46,7 +49,7 @@ export function Footer() {
           Prețurile și reducerile sunt verificate independent.
         </p>
         <p className="mt-2.5 text-xs">
-          © {new Date().getFullYear()} superieftin.ro — Comparator de prețuri pentru România
+          © {new Date().getFullYear()} superieftin.ro — Observatorul reducerilor reale din România
         </p>
       </div>
     </footer>

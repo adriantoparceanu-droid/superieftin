@@ -18,6 +18,7 @@ import { BrandFilter } from '@/components/category/BrandFilter'
 import { MobileFilters } from '@/components/category/MobileFilters'
 import { SortSelect } from '@/components/category/SortSelect'
 import { absUrl, lowerFirst, roCount } from '@/lib/seo/site'
+import { getTimingEligible } from '@/lib/observator/queries'
 
 export const dynamic = 'force-dynamic'
 
@@ -167,7 +168,12 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   // de sub listă (getCategoryStats, cache 1 h) — „M cu reducere reală” = exact regula de pe
   // /reduceri-reale/. Fără Sănătate & Naturale (regula 8: fără landing de reduceri acolo).
   const excludedFromAds = isExcludedFromAds(category.slug, category.parent_slug)
-  const stats = await getCategoryStats(categorie).catch(() => null)
+  const [stats, timingCats] = await Promise.all([
+    getCategoryStats(categorie).catch(() => null),
+    // Legăturile spre observator (fără Sănătate & Naturale): „Când să cumperi” doar dacă pagina există
+    excludedFromAds ? Promise.resolve([]) : getTimingEligible().catch(() => []),
+  ])
+  const hasTiming = timingCats.some((c) => c.slug === categorie)
   const headerCount = stats?.produse ?? unfilteredCount
   const realCount = !excludedFromAds ? stats?.reduceri ?? null : null
 
@@ -211,6 +217,18 @@ export default async function CategoryPage({ params, searchParams }: Props) {
           <Link href={`/reduceri-reale/${categorie}`} className="mt-1 inline-block font-semibold text-red-ink hover:underline underline-offset-2">
             Vezi doar reducerile reale la {lowerFirst(label)} →
           </Link>
+        )}
+        {!excludedFromAds && (
+          <p className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5">
+            {hasTiming && (
+              <Link href={`/cand-sa-cumperi/${categorie}`} className="font-semibold text-ink-2 underline underline-offset-2 hover:text-red-ink">
+                Când să cumperi {lowerFirst(label)}
+              </Link>
+            )}
+            <Link href="/indice" className="font-semibold text-ink-2 underline underline-offset-2 hover:text-red-ink">
+              Indicele prețurilor
+            </Link>
+          </p>
         )}
       </ListingHeader>
 

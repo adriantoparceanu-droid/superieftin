@@ -14,6 +14,7 @@ import { PRODUCT_INDEX_MIN_HISTORY_DAYS } from './product-index'
 import { COMPANY } from '../company'
 import { SITE_URL, formatRoDate, roCount } from './site'
 import type { SiteFacts } from './site-facts'
+import { editionFact, monthLabel, monthSlug, type Edition } from '../observator/observator'
 
 export interface LlmsCategory { slug: string; name: string; parent_slug: string | null; products: number }
 export interface LlmsGuide { slug: string; title: string; meta_description: string | null }
@@ -24,7 +25,15 @@ export interface LlmsGuideFull extends LlmsGuide {
   updated_at: string
 }
 
+// Observatorul reducerilor reale (/indice, /cand-sa-cumperi, /black-friday-2026) — opțional: fără
+// date (tabelele lipsă, nicio ediție) secțiunea are doar linkurile și metodologia.
+export interface LlmsObservator {
+  latestEdition: Edition | null
+  timing: { slug: string; name: string }[]   // categoriile cu pagină „Când să cumperi”
+}
+
 export interface LlmsData {
+  observator?: LlmsObservator
   facts: SiteFacts | null
   guides: LlmsGuide[]
   categories: LlmsCategory[]     // indexabile (vizibile, cu produse disponibile)
@@ -73,6 +82,24 @@ function methodologyLines(): string[] {
   ]
 }
 
+function observatorLines(o: LlmsObservator | undefined): string[] {
+  const out = [
+    '## Observatorul reducerilor reale',
+    '',
+    `- [Black Friday 2026](${SITE_URL}/black-friday-2026): câte dintre reducerile din perioada Black Friday sunt reale, măsurat zilnic din 1 noiembrie 2026 față de mediana prețurilor de dinainte de 1 noiembrie`,
+    `- [Indicele prețurilor](${SITE_URL}/indice): lunar, variația prețului tipic pe categorii, pe un coș stabil de produse (produse cu preț în stoc în ambele luni comparate); variația = mediana variațiilor pe produs; edițiile publicate nu se modifică`,
+    `- [Când să cumperi](${SITE_URL}/cand-sa-cumperi): pe categorii, cât de des au apărut reduceri reale și cât au durat, doar pentru perioada urmărită (fără afirmații despre tipare anuale sub 12 luni de date)`,
+    `- [Metodologie](${SITE_URL}/ghiduri/metodologie): cum calculăm mediana și reducerea reală`,
+  ]
+  const e = o?.latestEdition
+  if (e) out.push(`- Ultima ediție a indicelui ([${monthLabel(e.month)}](${SITE_URL}/indice/${monthSlug(e.month)})): ${editionFact(e)}`)
+  if (o?.timing.length) {
+    out.push(`- Categorii cu pagină „Când să cumperi”: ${o.timing.map((c) => `[${c.name}](${SITE_URL}/cand-sa-cumperi/${c.slug})`).join(', ')}`)
+  }
+  out.push('')
+  return out
+}
+
 function contactLines(): string[] {
   const out = ['## Operator', '']
   if (COMPANY.name) out.push(`- Firma: ${COMPANY.name}${COMPANY.cui ? `, CUI ${COMPANY.cui}` : ''}${COMPANY.regCom ? `, ${COMPANY.regCom}` : ''}`)
@@ -97,10 +124,12 @@ export function buildLlmsTxt(d: LlmsData): string {
   const lines: string[] = [
     '# superieftin.ro',
     '',
-    '> Comparator de prețuri cu istoric pentru magazinele online din România. Urmărim zilnic prețurile și ' +
-      `marcăm ca „reducere reală” doar prețurile cu minim ${REAL_DISCOUNT_PCT}% sub mediana ultimelor 30 de zile.`,
+    '> Observatorul reducerilor reale din România: urmărim zilnic prețurile magazinelor online, păstrăm istoricul și ' +
+      `marcăm ca „reducere reală” doar prețurile cu minim ${REAL_DISCOUNT_PCT}% sub mediana ultimelor 30 de zile. ` +
+      'Publicăm lunar indicele prețurilor pe categorii; comparatorul de prețuri pornește de la această analiză.',
     '',
     ...factsLines(d.facts),
+    ...observatorLines(d.observator),
     ...methodologyLines(),
     '## Pagini principale',
     '',
@@ -163,9 +192,14 @@ export function stripGuideMarkers(md: string, guideUrl: string): string {
 // „Despre” de mai jos rezuma app/despre/page.tsx — daca schimbi textul acolo, actualizeaza-l si aici.
 export function buildLlmsFull(d: LlmsData, guides: LlmsGuideFull[]): string {
   const parts: string[] = [buildLlmsTxt(d), '---', '', '# Despre superieftin.ro', '',
-    'superieftin.ro este un comparator de prețuri pentru magazinele online din România. Scopul lui e simplu: ' +
-      'să vezi dacă o „reducere” e reală sau doar un preț vechi umflat. Preluăm zilnic prețurile produselor de la ' +
+    'superieftin.ro este observatorul reducerilor reale din România: măsurăm zilnic prețurile din magazinele online și ' +
+      'spunem, cu date, dacă o „reducere” e reală sau doar un preț vechi umflat. Preluăm zilnic prețurile produselor de la ' +
       'magazinele partenere și le păstrăm istoricul; pe pagina fiecărui produs vezi graficul de preț și mediana, ca să verifici singur.',
+    '',
+    'Pe lângă paginile de produs publicăm, calculate automat din aceleași prețuri: indicele lunar al prețurilor (/indice, ' +
+      'pe un coș stabil de produse; o ediție publicată nu se mai modifică), paginile „Când să cumperi” pe categorii ' +
+      '(/cand-sa-cumperi — doar perioada urmărită, fără estimări de preț) și măsurătorile zilnice de Black Friday 2026 ' +
+      '(/black-friday-2026, din 1 noiembrie, față de mediana de dinainte de 1 noiembrie). Sănătate & Naturale nu intră în aceste pagini.',
     '',
     'Prețurile se actualizează periodic, nu în timp real. Prețul final și stocul sunt cele afișate de magazin în momentul comenzii.',
     '',
