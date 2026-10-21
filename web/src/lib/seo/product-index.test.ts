@@ -3,7 +3,8 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
-  productIndexDecision, hasHistoryDays, PRODUCT_INDEX_MIN_HISTORY_DAYS, PRODUCT_INDEXABLE_SQL,
+  productIndexDecision, hasHistoryDays, hasStory, PRODUCT_INDEX_MIN_HISTORY_DAYS, PRODUCT_INDEXABLE_SQL,
+  PRODUCT_INDEX_MIN_STORES, PRODUCT_INDEX_MIN_PRICE_CHANGES, CANONICAL_TARGET_INDEXABLE_SQL,
   type ProductIndexInput,
 } from './product-index'
 
@@ -19,6 +20,8 @@ const ok: ProductIndexInput = {
   categoryVisible: true,
   parentSlug: 'laptopuri-calculatoare',
   parentVisible: true,
+  availableStores: 2,
+  priceChanges60d: 0,
 }
 
 test('produs-index: toate conditiile → indexabil, fara motive', () => {
@@ -26,7 +29,8 @@ test('produs-index: toate conditiile → indexabil, fara motive', () => {
 })
 
 test('produs-index: 1. fara oferta disponibila → noindex', () => {
-  assert.deepEqual(productIndexDecision({ ...ok, availableOffers: 0 }, NOW), { indexable: false, reasons: ['fara-oferta'] })
+  // Fara oferta nu adaugam si 'fara-poveste' (motivul real e lipsa ofertei)
+  assert.deepEqual(productIndexDecision({ ...ok, availableOffers: 0, availableStores: 0 }, NOW), { indexable: false, reasons: ['fara-oferta'] })
 })
 
 test('produs-index: 2. istoric sub 30 de zile → noindex; exact 30 de zile → indexabil', () => {
@@ -66,7 +70,7 @@ test('produs-index: 4. Sanatate & Naturale (radacina sau subcategorie) → noind
 
 test('produs-index: combinatii → toate motivele, in ordine', () => {
   const d = productIndexDecision({
-    ...ok, availableOffers: 0, historyStart: daysAgo(3),
+    ...ok, availableOffers: 0, availableStores: 0, historyStart: daysAgo(3),
     categorySlug: 'ceaiuri-infuzii', parentSlug: 'sanatate-naturale', parentVisible: false,
   }, NOW)
   assert.deepEqual(d, { indexable: false, reasons: ['fara-oferta', 'istoric-scurt', 'categorie-ascunsa', 'sanatate'] })
@@ -77,6 +81,26 @@ test('produs-index: combinatii → toate motivele, in ordine', () => {
   )
 })
 
+test('produs-index: 5. „are poveste” — 2 magazine SAU 3 schimbari de pret pe 60 de zile', () => {
+  assert.equal(PRODUCT_INDEX_MIN_STORES, 2)
+  assert.equal(PRODUCT_INDEX_MIN_PRICE_CHANGES, 3)
+  // un singur magazin, pret neschimbat → noindex cu motivul nou
+  assert.deepEqual(productIndexDecision({ ...ok, availableStores: 1, priceChanges60d: 0 }, NOW), { indexable: false, reasons: ['fara-poveste'] })
+  assert.deepEqual(productIndexDecision({ ...ok, availableStores: 1, priceChanges60d: 2 }, NOW).reasons, ['fara-poveste'])
+  // un singur magazin, dar pretul s-a miscat de 3 ori → indexabil
+  assert.equal(productIndexDecision({ ...ok, availableStores: 1, priceChanges60d: 3 }, NOW).indexable, true)
+  // doua magazine, pret neschimbat → indexabil
+  assert.equal(productIndexDecision({ ...ok, availableStores: 2, priceChanges60d: 0 }, NOW).indexable, true)
+  assert.equal(hasStory(0, 0), false)
+  assert.equal(hasStory(3, 0), true)
+  assert.equal(hasStory(1, 10), true)
+})
+
+test('produs-index: 5. „fara-poveste” se cumuleaza cu celelalte motive, la final', () => {
+  const d = productIndexDecision({ ...ok, historyStart: daysAgo(5), availableStores: 1, priceChanges60d: 1 }, NOW)
+  assert.deepEqual(d.reasons, ['istoric-scurt', 'fara-poveste'])
+})
+
 test('produs-index: varianta SQL contine aceleasi conditii (sitemap)', () => {
   assert.match(PRODUCT_INDEXABLE_SQL, /c\.is_visible/)
   assert.match(PRODUCT_INDEXABLE_SQL, /pc\.id IS NULL OR pc\.is_visible/)
@@ -84,4 +108,17 @@ test('produs-index: varianta SQL contine aceleasi conditii (sitemap)', () => {
   assert.match(PRODUCT_INDEXABLE_SQL, /first_recorded_at/)
   assert.match(PRODUCT_INDEXABLE_SQL, /INTERVAL '30 days'/)
   assert.doesNotMatch(PRODUCT_INDEXABLE_SQL, /price_history/)   // regula CPU: fara agregare pe istoric
+  // conditia 5: magazine distincte + suma schimbarilor, doar pe ofertele disponibile
+  assert.match(PRODUCT_INDEXABLE_SQL, /count\(DISTINCT o\.retailer_id\) >= 2/)
+  assert.match(PRODUCT_INDEXABLE_SQL, /sum\(s5\.price_changes_60d\), 0\) >= 3/)
+  assert.match(PRODUCT_INDEXABLE_SQL, /o\.in_stock = true/)
+})
+
+test('produs-index: canonical spre principala doar daca principala e indexabila (SQL)', () => {
+  assert.match(CANONICAL_TARGET_INDEXABLE_SQL, /p\.canonical_product_id IS NOT NULL/)
+  // aceeasi regula aplicata pe alias-urile principalei
+  assert.match(CANONICAL_TARGET_INDEXABLE_SQL, /cc\.is_visible AND \(cpc\.id IS NULL OR cpc\.is_visible\)/)
+  assert.match(CANONICAL_TARGET_INDEXABLE_SQL, /o2\.product_id = cp\.id/)
+  assert.match(CANONICAL_TARGET_INDEXABLE_SQL, /o\.product_id = cp\.id AND \(o\.in_stock = true/)
+  assert.doesNotMatch(CANONICAL_TARGET_INDEXABLE_SQL, /price_history/)
 })

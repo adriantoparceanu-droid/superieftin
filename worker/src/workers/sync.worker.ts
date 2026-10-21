@@ -8,6 +8,7 @@ import { ensurePriceHistoryPartitions } from '../lib/partitions.js'
 import { markStaleOffers } from '../lib/stale.js'
 import { updateRetailerStatuses } from '../lib/retailer-status.js'
 import { refreshOfferPriceStats } from '../lib/price-stats.js'
+import { refreshProductCanonicals } from '../lib/product-canonicals.js'
 import { connection } from '../lib/queue.js'
 import { getAdvertisers, getFeeds, getProductsByPartNo, PsApiError, type PsAdvertiser, type PsFeed } from '../lib/profitshare.js'
 import { downloadFeed, parseFeedFile, mapFeedRow } from '../importers/feed.js'
@@ -110,6 +111,16 @@ async function refreshPriceStats(log: pino.Logger): Promise<void> {
     log.info({ rows, ms: Date.now() - t }, 'Statistici pret recalculate')
   } catch (err) {
     log.error({ err }, 'Recalculare statistici pret esuata')
+  }
+  // Canonical pe variante (migratia 035): principala grupului depinde de ofertele disponibile si
+  // de first_recorded_at proaspat recalculate mai sus. Separat, ca o eroare aici sa nu ascunda
+  // statisticile (si invers); fara recalculare, site-ul foloseste gruparea anterioara.
+  try {
+    const t = Date.now()
+    const r = await refreshProductCanonicals()
+    log.info({ ...r, ms: Date.now() - t }, 'Canonical variante recalculat')
+  } catch (err) {
+    log.error({ err }, 'Recalculare canonical variante esuata')
   }
 }
 
