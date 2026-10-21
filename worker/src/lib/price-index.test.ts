@@ -2,7 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
   addDays, weekStart, monthBounds, previousMonth, parseMonth, median, offerRealDays, streaks,
-  productMonthEntry, buildCategoryIndex, eligibleCategories, ancestorChain, productTiming, finalizeWeeks,
+  productMonthEntry, buildCategoryIndex, variantKey, leafCount, eligibleCategories, ancestorChain, productTiming, finalizeWeeks,
   type DayPoint, type ProductSeries, type ProductMonth, type WeekAcc,
 } from './price-index.js'
 
@@ -113,6 +113,19 @@ test('buildCategoryIndex: coș stabil, mediana variațiilor, magazinul cel mai i
   assert.equal(tie.cheapest, null)
   // prea puține produse comparabile
   assert.equal(buildCategoryIndex([mk(1, 1, 1, [[1, 1], [2, 2]])]).cheapest, null)
+})
+
+test('variante de culoare și numărul de categorii', () => {
+  assert.equal(variantKey('Telefon mobil HONOR 600, Dual SIM, Orange'), variantKey('Telefon mobil HONOR 600, Dual SIM, Black'))
+  assert.equal(variantKey('Șezlong Ăla'), 'sezlong ala')
+  const mk = (id: number, name: string, prev: number, cur: number): ProductMonth => ({ productId: id, slug: `p${id}`, name, prev, cur, real: false, retailerPrices: [] })
+  const idx = buildCategoryIndex([
+    mk(1, 'Telefon mobil HONOR 600 Orange', 100, 80), mk(2, 'Telefon mobil HONOR 600 Black', 100, 80), mk(3, 'Telefon mobil Xiaomi 14T', 100, 90),
+  ])
+  assert.deepEqual(idx.topDrops.map((d) => d.product_id), [1, 3])
+  // părinte + o subcategorie = 1; părinte + 2 subcategorii = 2; categorie fără părinte în ediție = 1
+  assert.equal(leafCount([{ id: 1, parentId: null }, { id: 2, parentId: 1 }]), 1)
+  assert.equal(leafCount([{ id: 1, parentId: null }, { id: 2, parentId: 1 }, { id: 3, parentId: 1 }, { id: 9, parentId: 8 }]), 3)
 })
 
 test('eligibleCategories: fără Sănătate & Naturale și farmacie veterinară (cu subcategorii)', () => {

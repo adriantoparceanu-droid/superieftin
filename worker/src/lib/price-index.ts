@@ -181,6 +181,18 @@ export function changePct(prev: number, cur: number): number {
   return (cur / prev - 1) * 100
 }
 
+// Începutul numelui (primele 4 cuvinte, fără diacritice/majuscule): „Telefon mobil HONOR 600”
+export function variantKey(name: string): string {
+  return name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().split(/[^a-z0-9]+/).filter(Boolean).slice(0, 4).join(' ')
+}
+
+// Câte categorii distincte are o ediție: doar „frunzele” ediției (rândurile fără subcategorie în
+// ediție), ca un părinte și subcategoria lui să nu fie numărate de două ori.
+export function leafCount(rows: { id: number; parentId: number | null }[]): number {
+  const parents = new Set(rows.map((r) => r.parentId).filter((p): p is number => p != null))
+  return rows.filter((r) => !parents.has(r.id)).length
+}
+
 export interface CategoryIndex {
   basketSize: number
   medianChangePct: number | null
@@ -219,9 +231,18 @@ export function buildCategoryIndex(entries: ProductMonth[]): CategoryIndex {
     ? { retailerId: ranked[0][0], retailerName: ranked[0][1].name, wins: ranked[0][1].wins }
     : null
 
+  // Variantele de culoare ale aceluiași model au de obicei exact aceeași scădere („HONOR 600 …
+  // Orange / Black / Golden White”) → păstrăm doar prima (aceeași variație + același început de nume)
+  const seenDrop = new Set<string>()
   const topDrops = changes
     .filter((c) => c.pct < 0 && Math.abs(c.pct) <= MAX_PLAUSIBLE_CHANGE_PCT)
     .sort((a, b) => a.pct - b.pct || a.e.productId - b.e.productId)
+    .filter((c) => {
+      const key = `${round2(c.pct)}|${variantKey(c.e.name)}`
+      if (seenDrop.has(key)) return false
+      seenDrop.add(key)
+      return true
+    })
     .slice(0, TOP_DROPS)
     .map((c) => ({ product_id: c.e.productId, slug: c.e.slug, name: c.e.name, pct: round2(c.pct) }))
 
@@ -499,7 +520,8 @@ export async function computeMonthlyIndex(month: string, opts: { retro?: boolean
     await client.query(`
       INSERT INTO price_index_editions (month, basket_size, median_change_pct, categories, retailers, real_discounts, retroactive, published, computed_at)
       VALUES ($1,$2,$3,$4,$5,$6,$7,$8, now())
-    `, [start, overall.basketSize, overall.medianChangePct, rows.length, overall.retailers, overall.realDiscounts, retro, published])
+    `, [start, overall.basketSize, overall.medianChangePct, leafCount(rows.map((r) => ({ id: r.cat.id, parentId: r.cat.parent_id }))),
+        overall.retailers, overall.realDiscounts, retro, published])
     await client.query('COMMIT')
   } catch (err) {
     await client.query('ROLLBACK').catch(() => {})
@@ -507,7 +529,7 @@ export async function computeMonthlyIndex(month: string, opts: { retro?: boolean
   } finally {
     client.release()
   }
-  log(`Indice ${month}: ${rows.length} categorii, coș total ${overall.basketSize}, mediana ${overall.medianChangePct ?? '—'}%${retro ? ' (retroactiv)' : ''}${published ? '' : ' (ciornă)'}`)
+  log(`Indice ${month}: ${rows.length} rânduri pe categorii, coș total ${overall.basketSize}, mediana ${overall.medianChangePct ?? '—'}%${retro ? ' (retroactiv)' : ''}${published ? '' : ' (ciornă)'}`)
   return { month, status: 'computed', categories: rows.length, basketSize: overall.basketSize, medianChangePct: overall.medianChangePct }
 }
 
