@@ -65,6 +65,10 @@ export interface PriceFactsInput {
   // Prima înregistrare din istoric pentru produs (oricând). Lipsa → prima zi din serie.
   trackedSince?: string | null
   now?: Date                         // pentru teste
+  // Doar în fereastra unui eveniment (Black Friday), când oferta cea mai ieftină e „umflată”
+  // (lib/event-tracker.ts → inflationFact, din tabelele precalculate de worker). Fraza gata
+  // formulată: „În cele 14 zile dinaintea reducerii, prețul a urcat cu X% peste mediana din …”
+  eventInflation?: string | null
 }
 
 export function priceFactRows(i: PriceFactsInput): PriceFactRow[] {
@@ -94,6 +98,10 @@ export function priceFactRows(i: PriceFactsInput): PriceFactRow[] {
   } else if (s.length === 1) {
     rows.push({ icon: 'chart', parts: [`Urmărim prețul din ${formatRoDate(`${s[0].day}T12:00:00Z`)}; avem încă prea puține înregistrări pentru un istoric.`] })
   }
+
+  // (a2) faptul din trackerul de evenimente: un FAPT despre istoricul ofertei (procentul e calculat
+  // de worker din maximul pe 14 zile și referința înghețată), nu o afirmație de reducere.
+  if (i.eventInflation) rows.push({ icon: 'chart', parts: [i.eventInflation] })
 
   // (b) ultima schimbare (la pret constant, randul (a) spune deja tot)
   if (s.length >= 2 && s.some((p) => p.price !== s[0].price)) {

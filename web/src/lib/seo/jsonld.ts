@@ -68,6 +68,48 @@ export function itemListLd(name: string, items: { name: string; path: string }[]
   }
 }
 
+// FAQPage din perechi întrebare/răspuns în text simplu (aceleași texte ca pe pagină)
+export function faqPageLd(items: { q: string; a: string }[]) {
+  const list = items.filter((f) => f.q.trim() && f.a.trim())
+  if (!list.length) return null
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: list.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+  }
+}
+
+// Dataset (paginile observatorului: trackerul de evenimente, indicele): datele NOASTRE, măsurate
+// zilnic. `dateModified` = momentul real al ultimului calcul (nu data randării paginii).
+export interface DatasetLdInput {
+  name: string
+  description: string
+  path: string
+  temporalCoverage: string          // ISO 8601: „2026-11-01/2026-12-02”
+  dateModified?: string | null
+  variableMeasured: string[]
+  keywords?: string[]
+}
+
+export function datasetLd(d: DatasetLdInput) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Dataset',
+    name: d.name,
+    description: d.description,
+    url: absUrl(d.path),
+    inLanguage: 'ro-RO',
+    isAccessibleForFree: true,
+    creator: { '@id': ORGANIZATION_ID },
+    publisher: { '@id': ORGANIZATION_ID },
+    spatialCoverage: { '@type': 'Place', name: 'România' },
+    temporalCoverage: d.temporalCoverage,
+    ...(d.dateModified ? { dateModified: d.dateModified } : {}),
+    variableMeasured: d.variableMeasured,
+    ...(d.keywords?.length ? { keywords: d.keywords } : {}),
+  }
+}
+
 // --- Product --------------------------------------------------------------------------------
 
 export interface ProductLdInput {
