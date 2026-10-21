@@ -22,6 +22,8 @@ import { getProductVariants, getSimilarProducts, type ProductLink } from '@/lib/
 import { withOg } from '@/lib/seo/og'
 import { absUrl } from '@/lib/seo/site'
 import { productIndexDecision } from '@/lib/seo/product-index'
+import { getActiveEvent, getOfferEventStatus } from '@/lib/event-tracker-queries'
+import { inflationFact, inflationSentence } from '@/lib/event-tracker'
 
 export const revalidate = 3600
 
@@ -149,7 +151,7 @@ export default async function ProductPage({ params }: Props) {
   // categorie si, la „similare”, cu un pret de azi.
   const base = variantBase(product.name)
   // Ghidurile publicate care leaga produsul (legatura interna produs ↔ ghid)
-  const [guides, variants, similar] = await Promise.all([
+  const [guides, variants, similar, eventStatus, activeEvent] = await Promise.all([
     getGuidesForProduct(product.id),
     product.category_id && base
       ? getProductVariants(product.id, product.category_id, base).catch(() => [] as ProductLink[])
@@ -157,6 +159,11 @@ export default async function ProductPage({ params }: Props) {
     product.category_id && bestOffer?.current_price
       ? getSimilarProducts(product.id, product.category_id, product.brand, bestOffer.current_price, base).catch(() => [] as ProductLink[])
       : Promise.resolve([] as ProductLink[]),
+    // Trackerul de evenimente (Black Friday, migratia 036): starea precalculata a ofertei celei mai
+    // ieftine + evenimentul activ (linkul mic spre tracker). Citiri pe cheie, cu cache de o ora;
+    // in afara ferestrei intorc null. O eroare (ex. migratia lipsa) nu strica pagina.
+    bestOffer ? getOfferEventStatus(bestOffer.offer_id).catch(() => null) : Promise.resolve(null),
+    getActiveEvent().catch(() => null),
   ])
 
   const discountInfo = bestOffer ? calculateDiscount(bestOffer.current_price, bestOffer.median_price) : null
@@ -210,11 +217,15 @@ export default async function ProductPage({ params }: Props) {
     && (!historyStart0 || seriesStart > addDays(roDay(historyStart0), 1))
     ? `${seriesStart}T12:00:00Z`
     : historyStart0
+  // „În cele 14 zile dinaintea reducerii, prețul a urcat cu X% peste mediana din octombrie.” —
+  // doar in fereastra evenimentului, calcul de azi/ieri si acelasi pret ca la calcul (inflationFact)
+  const inflation = inflationFact(eventStatus, bestOffer?.current_price ?? null, roDay(new Date()))
   const facts = priceFactRows({
     series,
     todayPrice: bestOffer?.current_price ?? null,
     offerPrices: product.offers.map((o) => o.current_price).filter((p): p is number => p != null),
     trackedSince: historyStart,
+    eventInflation: inflation ? inflationSentence(inflation, product.offers.length > 1) : null,
   })
 
   const condition = product.tags.map((t) => CONDITION_LABEL[t]).find(Boolean)
@@ -393,6 +404,13 @@ export default async function ProductPage({ params }: Props) {
             <section aria-labelledby="pe-scurt-titlu" className={`order-6 ${card} lg:px-5 lg:py-[18px]`}>
               <h2 id="pe-scurt-titlu" className="text-lg font-extrabold text-ink lg:text-xl">Pe scurt despre preț</h2>
               <PriceFacts rows={facts} />
+              {activeEvent && (
+                <p className="mt-3 border-t border-line pt-2.5 text-[13px]">
+                  <Link href={`/${activeEvent.slug}`} className="font-semibold text-ink underline underline-offset-2 hover:text-red-ink">
+                    {activeEvent.name}: cât de reale sunt reducerile, pe categorii
+                  </Link>
+                </p>
+              )}
             </section>
           )}
         </div>

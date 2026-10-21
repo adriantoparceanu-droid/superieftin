@@ -9,6 +9,7 @@ import { markStaleOffers } from '../lib/stale.js'
 import { updateRetailerStatuses } from '../lib/retailer-status.js'
 import { refreshOfferPriceStats } from '../lib/price-stats.js'
 import { refreshProductCanonicals } from '../lib/product-canonicals.js'
+import { runEventTracker } from '../lib/event-tracker.js'
 import { connection } from '../lib/queue.js'
 import { getAdvertisers, getFeeds, getProductsByPartNo, PsApiError, type PsAdvertiser, type PsFeed } from '../lib/profitshare.js'
 import { downloadFeed, parseFeedFile, mapFeedRow } from '../importers/feed.js'
@@ -668,6 +669,17 @@ export async function runPriceSnapshot(jobId = 'direct') {
 
   // Snapshot-ul e ultima scriere zilnica in istoric (si finalul feed-sync-ului)
   await refreshPriceStats(log)
+
+  // Trackerul de evenimente (Black Friday → /black-friday-2026, migratia 036): dupa ultimul punct
+  // de istoric al zilei calculeaza referinta inghetata (o singura data) si agregatele zilei.
+  // Best-effort: o eroare aici nu trebuie sa strice snapshot-ul (istoricul e scopul principal).
+  try {
+    const t = Date.now()
+    const events = await runEventTracker()
+    log.info({ events, ms: Date.now() - t }, 'Tracker evenimente actualizat')
+  } catch (err) {
+    log.error({ err }, 'Tracker evenimente esuat (migratia 036 aplicata?)')
+  }
 
   const duration = ((Date.now() - startTime) / 1000).toFixed(1)
   log.info({ recorded, duration: `${duration}s` }, 'Snapshot preturi finalizat')
