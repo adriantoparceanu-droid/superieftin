@@ -34,6 +34,13 @@ const GA4_SYNC_CRON = process.env.GA4_SYNC_CRON || '15 6 * * *'
 // Digestul alertelor pe email: o trecere pe ora trimite alertele amanate de plafonul zilnic (si pe
 // cele declansate de preturi schimbate in afara joburilor de sync). Pe langa asta, digestul se cere
 // si dupa fiecare job care schimba preturi (sync.worker.ts).
+// Indicele lunar al preturilor (/indice) + „Cand sa cumperi” (/cand-sa-cumperi), lib/price-index.ts:
+// pe 1 ale lunii, dupa feed-sync (04:00) → editia lunii incheiate. O trecere saptamanala (luni)
+// recalculeaza seria „Cand sa cumperi” si recupereaza o editie ratata (cea publicata nu se rescrie).
+// Ora Romaniei explicit: limita lunii trebuie sa fie miezul noptii la noi, nu in UTC.
+const PRICE_INDEX_CRON = process.env.PRICE_INDEX_CRON || '0 5 1 * *'
+const PRICE_TIMING_CRON = process.env.PRICE_TIMING_CRON || '30 5 * * 1'
+const PRICE_INDEX_TZ = 'Europe/Bucharest'
 const EMAIL_DIGEST_CRON = process.env.EMAIL_DIGEST_CRON || '5 * * * *'
 
 async function scheduleRepeatingJobs() {
@@ -88,6 +95,18 @@ async function scheduleRepeatingJobs() {
     { repeat: { pattern: GA4_SYNC_CRON }, jobId: 'ga4-sync-repeat' }
   )
   logger.info({ cron: GA4_SYNC_CRON }, 'Job repeating programat: ga4-sync')
+
+  await syncQueue.add(
+    'price-index',
+    { type: 'price-index' },
+    { repeat: { pattern: PRICE_INDEX_CRON, tz: PRICE_INDEX_TZ }, jobId: 'price-index-repeat' }
+  )
+  await syncQueue.add(
+    'price-index',
+    { type: 'price-index' },
+    { repeat: { pattern: PRICE_TIMING_CRON, tz: PRICE_INDEX_TZ }, jobId: 'price-index-weekly-repeat' }
+  )
+  logger.info({ cron: PRICE_INDEX_CRON, weekly: PRICE_TIMING_CRON, tz: PRICE_INDEX_TZ }, 'Job repeating programat: price-index')
 
   if (emailConfig()) {
     await emailQueue.add('digest', {}, { repeat: { pattern: EMAIL_DIGEST_CRON }, jobId: 'email-digest-repeat', removeOnComplete: 100, removeOnFail: 100 })

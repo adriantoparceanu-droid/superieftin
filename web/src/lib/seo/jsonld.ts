@@ -10,6 +10,11 @@ import { ORGANIZATION_ID, SITE_NAME, SITE_URL, WEBSITE_ID, absUrl } from './site
 // `offers.availability` (obiect sau lista) + linkurile /c/<slug> din BreadcrumbList.
 // Nu muta Product intr-un @graph si nu scoate `availability` de pe AggregateOffer.
 
+// Descrierea organizatiei (o folosesc si homepage-ul / llms.txt ca formulare de baza)
+export const ORGANIZATION_DESCRIPTION =
+  'Observatorul reducerilor reale din România: urmărim zilnic prețurile magazinelor online și verificăm, ' +
+  'față de mediana ultimelor 30 de zile, dacă o reducere e reală. Publicăm lunar indicele prețurilor pe categorii.'
+
 // Organizatia din spatele site-ului (o singura data, in layout). Datele firmei vin din company.ts.
 export function organizationLd() {
   return {
@@ -18,7 +23,9 @@ export function organizationLd() {
     '@id': ORGANIZATION_ID,
     name: SITE_NAME,
     url: `${SITE_URL}/`,
-    description: 'Comparator de prețuri cu istoric pentru magazinele online din România.',
+    // Identitatea din repoziționarea din 21 oct. 2026 (docs/plans/2026-10-21-observator-repozitionare-design.md):
+    // observatorul e ce facem; comparatorul și linkurile spre magazine sunt consecința analizei.
+    description: ORGANIZATION_DESCRIPTION,
     ...(COMPANY.name ? { legalName: COMPANY.name } : {}),
     ...(COMPANY.email ? { email: COMPANY.email } : {}),
     ...(COMPANY.address ? { address: { '@type': 'PostalAddress', streetAddress: COMPANY.address, addressCountry: 'RO' } } : {}),
@@ -37,7 +44,7 @@ export function websiteLd() {
     name: SITE_NAME,
     url: `${SITE_URL}/`,
     inLanguage: 'ro-RO',
-    description: 'Comparator de prețuri cu istoric — reduceri reale pe piața din România',
+    description: 'Observatorul reducerilor reale din România — prețuri cu istoric, indicele lunar al prețurilor și reduceri verificate față de mediana pe 30 de zile',
     publisher: { '@id': ORGANIZATION_ID },
     potentialAction: {
       '@type': 'SearchAction',

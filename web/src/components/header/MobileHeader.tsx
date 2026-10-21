@@ -30,7 +30,7 @@ function activeParentId(menu: NavParent[], pathname: string): number | null {
   return hit && hit.children.length ? hit.id : null
 }
 
-export function MobileHeader({ menu, tags }: { menu: NavParent[]; tags: NavTag[] }) {
+export function MobileHeader({ menu, tags, observator = [] }: { menu: NavParent[]; tags: NavTag[]; observator?: [string, string][] }) {
   const pathname = usePathname()
   const isHome = pathname === '/'
 
@@ -240,6 +240,23 @@ export function MobileHeader({ menu, tags }: { menu: NavParent[]; tags: NavTag[]
             )
           })}
         </ul>
+
+        {/* Observatorul reducerilor reale (linkuri statice, primite din Header.tsx) */}
+        {observator.length > 0 && (
+          <div className="px-3.5 pt-3">
+            <p className="text-[13px] text-ink-3">Observatorul reducerilor reale:</p>
+            <ul>
+              {observator.map(([href, label]) => (
+                <li key={href} className="border-b border-line">
+                  <Link href={href} className="flex items-center justify-between py-3 font-semibold text-ink hover:text-red-ink">
+                    {label}
+                    <ChevronRight size={18} aria-hidden="true" className="text-ink-3" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         <ul className="px-3.5 py-2.5">
           {PAGE_LINKS.map(([href, label]) => (

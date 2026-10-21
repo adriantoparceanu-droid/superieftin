@@ -26,6 +26,7 @@ import { requestEmailDigest } from './email.worker.js'
 import { runTrackingSyncJob } from '../tracking/sync.js'
 import { runAdsGuardJob } from '../ads/campaigns/guard.js'
 import { runGa4Sync } from '../lib/ga4/sync.js'
+import { runPriceIndexJob } from '../lib/price-index.js'
 
 const logger = pino({ level: 'info' })
 
@@ -40,6 +41,7 @@ export type SyncJobData =
   | { type: 'tracking-sync' }
   | { type: 'ads-guard' }
   | { type: 'ga4-sync' }
+  | { type: 'price-index' }
 
 // Sub acest prag (fata de sincronizarea anterioara) un feed e considerat suspect si respins.
 const MIN_FEED_RATIO = 0.5
@@ -744,6 +746,7 @@ export function startSyncWorker() {
         : job.data.type === 'tracking-sync' ? runTrackingSyncJob(pool, (m) => logger.info(m))
         : job.data.type === 'ads-guard' ? runAdsGuardJob((m) => logger.info(m))
         : job.data.type === 'ga4-sync' ? runGa4Sync(pool)
+        : job.data.type === 'price-index' ? runPriceIndexJob((m) => logger.info(m))
         : job.data.type === 'file-import' ? runFileImport(job.data.filePath, job.data.retailerSlug, job.id, job.data.filename)
             .finally(() => unlink((job.data as { filePath: string }).filePath).catch(() => {}))
         : runFeedSync(job.id),
@@ -762,6 +765,12 @@ export function startSyncWorker() {
     logger.info({ job: job.id, ...result }, 'Job completat')
     // Comisioanele, garda reclamelor si statisticile GA4 nu schimba preturi/oferte → fara alerte si fara invalidare cache
     if (job.data.type === 'tracking-sync' || job.data.type === 'ads-guard' || job.data.type === 'ga4-sync') return
+    // Indicele de preturi nu schimba ofertele → fara alerte; doar cache-ul site-ului (paginile /indice
+    // si /cand-sa-cumperi au oricum ISR de o ora)
+    if (job.data.type === 'price-index') {
+      invalidateSiteCache().catch((err) => logger.warn({ err }, 'Cache invalidation esuat'))
+      return
+    }
     checkAndSendAlerts().catch((err) => logger.error({ err }, 'Eroare verificare alerte'))
     requestEmailDigest().catch((err) => logger.error({ err }, 'Eroare programare digest alerte email'))
     invalidateSiteCache().catch((err) => logger.warn({ err }, 'Cache invalidation esuat'))

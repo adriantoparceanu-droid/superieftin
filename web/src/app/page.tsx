@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { BookOpen, Calculator } from 'lucide-react'
+import { BookOpen, Calculator, CalendarClock, ChartLine, Tag } from 'lucide-react'
 import {
   getTopDiscounts, getCheapestProducts, getCategories,
   getActiveRetailersPublic, getMenu, getBanners,
@@ -18,18 +18,21 @@ import { HomeCategories } from '@/components/home/HomeCategories'
 import { getSiteFacts } from '@/lib/seo/site-facts'
 import { withOg } from '@/lib/seo/og'
 import { SITE_URL, roCount } from '@/lib/seo/site'
+import { monthLabel } from '@/lib/observator/observator'
 
 export const dynamic = 'force-dynamic'
 
 // Titlul cu brand + ce face site-ul (template-ul „%s | superieftin.ro” nu se aplica pe radacina,
 // deci titlul era fara brand). Descrierea are cifre live (lib/seo/site-facts.ts, cache 1 h).
-const HOME_TITLE = 'superieftin.ro — comparator de prețuri cu istoric și reduceri reale'
+// Identitatea = „Observatorul reducerilor reale din România” (repoziționarea din 21 oct. 2026).
+const HOME_TITLE = 'superieftin.ro — observatorul reducerilor reale din România'
 
 export async function generateMetadata(): Promise<Metadata> {
   const facts = await getSiteFacts().catch(() => null)
+  const since = facts?.historySince ? ` din ${monthLabel(facts.historySince)}` : ''
   const tracked = facts && facts.products > 0
-    ? `Urmărim zilnic ${roCount(facts.products, 'produse', 'produs')} de la ${roCount(facts.retailers, 'magazine online', 'magazin online')} din România. `
-    : 'Urmărim zilnic prețurile magazinelor online din România. '
+    ? `Observatorul reducerilor reale: urmărim zilnic${since} ${roCount(facts.products, 'produse', 'produs')} de la ${roCount(facts.retailers, 'magazine online', 'magazin online')} din România. `
+    : 'Observatorul reducerilor reale: urmărim zilnic prețurile magazinelor online din România. '
   const description = `${tracked}Comparăm prețul de azi cu mediana ultimelor 30 de zile — nu cu prețul vechi afișat de magazin.`
   return {
     title: { absolute: HOME_TITLE },
@@ -130,6 +133,32 @@ export default async function HomePage() {
             icon={<Calculator size={26} aria-hidden="true" />}
             title="Cum calculăm reducerea reală"
             text="Mediana ultimelor 30 de zile, pragul de 5% și de ce nu ne uităm la prețul vechi afișat de magazin."
+          />
+        </div>
+      </section>
+
+      {/* Observatorul reducerilor reale (repoziționarea din 21 oct. 2026): pagini cu date proprii,
+          calculate de worker — doar linkuri aici, fără query în plus pe homepage. */}
+      <section aria-labelledby="observator">
+        <SectionHeading id="observator" title="Observatorul reducerilor reale" />
+        <div className="grid gap-2 lg:grid-cols-3 lg:gap-3">
+          <GuideLink
+            href="/black-friday-2026"
+            icon={<Tag size={26} aria-hidden="true" />}
+            title="Black Friday 2026"
+            text="Câte dintre reducerile de Black Friday sunt reale, măsurat zilnic față de mediana de dinainte de 1 noiembrie."
+          />
+          <GuideLink
+            href="/indice"
+            icon={<ChartLine size={26} aria-hidden="true" />}
+            title="Indicele prețurilor"
+            text="Cum s-au schimbat prețurile pe categorii, lună de lună, pe un coș stabil de produse."
+          />
+          <GuideLink
+            href="/cand-sa-cumperi"
+            icon={<CalendarClock size={26} aria-hidden="true" />}
+            title="Când să cumperi"
+            text="Cât de des apar reduceri reale în fiecare categorie și cât durează, din datele noastre."
           />
         </div>
       </section>
