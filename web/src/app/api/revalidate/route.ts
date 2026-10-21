@@ -13,6 +13,10 @@ export async function POST(req: NextRequest) {
   revalidateTag('categories', 'max')
   revalidateTag('menu', 'max')
   revalidateTag('banners', 'max')
+  // Observatorul (migratiile 036/037): worker-ul cheama ruta dupa feed-sync (snapshot → tracker
+  // evenimente) si dupa jobul price-index — fara ele paginile asteptau expirarea cache-ului (1 h)
+  revalidateTag('event-tracker', 'max')
+  revalidateTag('price-index', 'max')
 
   return NextResponse.json({ revalidated: true })
 }
