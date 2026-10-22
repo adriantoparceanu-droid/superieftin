@@ -7,7 +7,8 @@
 # Nu atinge alte stack-uri de pe acelasi VPS (ex. pricetoday).
 #
 # Ruleaza pe VPS (nu local) — copie de referinta a /home/superieftin/app/cleanup.sh,
-# instalat prin crontab-ul userului superieftin: 0 4 * * 0 (duminica 04:00).
+# instalat prin crontab-ul userului superieftin: 30 3 * * * (zilnic 03:30 ora serverului,
+# Europe/Berlin = 04:30 ora Romaniei). Zilnic din 22.10.2026: cache-ul /p/ crestea ~3 GB/zi.
 set -e
 cd /home/superieftin/app
 echo "=== $(date -Is) ==="

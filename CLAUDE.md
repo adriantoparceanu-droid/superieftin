@@ -50,7 +50,7 @@ cd worker && npm run price-index:now -- [--month=YYYY-MM] [--retro] [--draft] [-
 #   docker compose --profile tools build migrate
 #   docker compose --profile tools run --rm migrate
 
-# Curățenie VPS: cronul userului superieftin rulează duminica 04:00 ./cleanup-vps.sh
+# Curățenie VPS: cronul userului superieftin rulează ZILNIC 03:30 ora serverului (Europe/Berlin = 04:30 RO; din 22.10.2026, cache-ul /p/ creștea ~3 GB/zi) ./cleanup-vps.sh
 #   (copie locală de referință; scriptul instalat pe server e /home/superieftin/app/cleanup.sh) —
 #   recreează containerul web (golește cache-ul Next.js/ISR care crește nelimitat în stratul
 #   scriptibil, ~2.4GB acumulați în 15h la instalare) și rulează `docker image prune -f`
