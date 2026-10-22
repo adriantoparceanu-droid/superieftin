@@ -69,4 +69,10 @@ Trei piste lucrate în paralel de agenții `site-dev`, unite în `main` și veri
 
 ## Verificarea după feed-sync-ul de la 04:00
 
-_(completată mai jos după rulare)_
+Verificarea a rulat la 05:32 (ora României).
+
+- **Feed-sync-ul nu rulase încă.** Cron-ul `0 4 * * *` e în ora containerului (UTC), deci pornește la **07:00** ora României. Nu e o eroare, e programarea existentă. Trackerul BF rulează abia la finalul lui; până pe 1 nov. doar scrie în log că suntem înainte de eveniment.
+- **Canonical pe variante:** s-a calculat deja prin price-check (la 3 ore), care recalculează și statisticile. 3.611 grupuri, 3.798 de produse cu pagină principală, durată ~4 s. Dintre paginile indexabile, **110 variante** trimit acum canonical spre pagina principală și au ieșit din sitemap.
+- **Sitemap-ul de produse:** 1.913 pagini (2.023 indexabile − 110 variante). Telefoane 1.121, TV & Audio 503, Laptopuri 289.
+- **Fără erori** în loguri (nimic de nivel error/fatal).
+- **De urmărit:** recalcularea statisticilor de preț a durat 39 s la 23:00 și 64 s la 02:00, pentru 80.066 de oferte. Calculul nou pe 60 de zile o face mai grea. Nu blochează site-ul (rulează în worker), dar dacă trece de câteva minute merită optimizat.
