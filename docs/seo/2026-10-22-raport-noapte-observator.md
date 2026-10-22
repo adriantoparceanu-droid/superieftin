@@ -54,7 +54,7 @@ Trei piste lucrate în paralel de agenții `site-dev`, unite în `main` și veri
 
 ## De decis / de făcut de tine
 
-1. **Cloudflare (din interfață, 5 min):** GPTBot și ClaudeBot primesc încă 403. Recomand să-i deblochezi, măcar pentru `/indice*`, `/cand-sa-cumperi*`, `/black-friday-2026`, `/ghiduri*`. Fără asta ChatGPT și Claude nu pot cita observatorul.
+1. ~~**Cloudflare**~~ **Rezolvat pe 22 oct.:** proprietarul a deblocat roboții AI. Verificat cu curl pe `/`, `/indice`, `/black-friday-2026`: GPTBot, ClaudeBot, anthropic-ai, CCBot, Amazonbot, PerplexityBot, OAI-SearchBot, Claude-SearchBot etc. → 200 (și Bytespider → 200).
 2. **Search Console:** „Solicită indexarea” pentru `/black-friday-2026`, `/indice`, `/indice/2026-09`, `/cand-sa-cumperi`, `/cand-sa-cumperi/televizoare`, `/cand-sa-cumperi/telefoane-mobile`, `/cand-sa-cumperi/laptopuri`. Retrimite `sitemap.xml`. Contează înainte de Black Friday.
 3. **Pragul „are poveste” a tăiat indexul la jumătate (4.341 → 2.023).** Așa a fost decis, dar dacă vrei mai puțin agresiv, cea mai simplă relaxare e ≥ 2 schimbări de preț în loc de 3. Spune-mi și rulez raportul cu pragul nou înainte de schimbare.
 4. **Indicele arată 0% peste tot.** Variante: (a) îl lăsăm onest așa, iar valoarea vine din „Mai ieftine” și din top; (b) titlul ediției pune în față „X% din produse s-au ieftinit” în locul medianei. Recomand (b): e o schimbare mică de text, tot adevărată.
