@@ -56,7 +56,8 @@ export async function ingestScraper(scraper: Scraper): Promise<{ imported: numbe
   if (officialBase) log.info({ officialBase }, 'Folosesc linkul oficial Profitshare (fix) pentru toate produsele')
   else log.warn('Fara link oficial Profitshare in .env — linkurile vor folosi codul din API (risc: cod nenumarat)')
 
-  let imported = 0, errors = 0, affiliated = 0
+  let imported = 0, errors = 0, affiliated = 0, duplicates = 0
+  const seen = new Set<string>()   // ofertele scrise in rularea asta (upsertProduct: primul rand castiga)
   for await (const product of scraper.run()) {
     const aff = officialBase ? null : resolver.resolve(product.url)
     if (officialBase) {
@@ -99,8 +100,8 @@ export async function ingestScraper(scraper: Scraper): Promise<{ imported: numbe
     const rule = resolveRule(retailerId, product.feedCategory, product.name)
       if (rule === IGNORE) continue   // regula „ignoră” din Admin → Mapare
     try {
-      await upsertProduct(product, retailerId, rule)
-      imported++
+      if (await upsertProduct(product, retailerId, rule, seen) === 'duplicate') duplicates++
+      else imported++
     } catch (err) {
       errors++
       if (errors <= 5) log.error({ slug: product.slug, err }, 'Eroare upsert produs scrapat')
@@ -125,6 +126,6 @@ export async function ingestScraper(scraper: Scraper): Promise<{ imported: numbe
   }
 
   if (unaffiliated > 0) log.warn({ unaffiliated }, 'Produse ramase FARA link afiliat (vezi erorile de mai sus)')
-  log.info({ imported, errors, affiliated, unaffiliated, hidden, deleted }, 'Scraper ingerat')
+  log.info({ imported, errors, affiliated, unaffiliated, hidden, deleted, duplicates }, 'Scraper ingerat')
   return { imported, errors, affiliated }
 }

@@ -25,7 +25,17 @@ export async function upsertRetailerByDomain(domain: string, name?: string, base
 // Unificarea produselor intre retaileri: intai dupa (part_no, brand), apoi fallback pe slug.
 // `rule` (din feed_category_map) seteaza categoria site-ului si tagurile; fara regula,
 // produsul ramane nemapat (category_id NULL) si apare in inbox-ul de mapare din admin.
-export async function upsertProduct(product: ImportedProduct, retailerId: number, rule: FeedRule | null = null): Promise<void> {
+//
+// `seen` (optional, cate un Set nou pe rulare de feed/scanare): ofertele (produs + magazin)
+// deja scrise in rularea curenta. Un rand care ajunge la o oferta deja scrisa e sarit complet
+// (ROLLBACK, intoarce 'duplicate') — primul rand castiga. De ce (22 oct. 2026): CITGrup are
+// workstation-uri configurabile cu ~2.200 de randuri in feed (preturi 8.800–30.500 lei) ale caror
+// denumiri lungi dau acelasi slug (taiat la 120 de caractere) → o singura oferta al carei pret
+// sarea la fiecare rand, cu cate un punct de istoric pe saritura (~2.200/zi): pret aleator pe
+// pagina, „are poveste” fals (mii de „schimbari”) si date /p/ peste limita de 2 MB a cache-ului.
+export async function upsertProduct(
+  product: ImportedProduct, retailerId: number, rule: FeedRule | null = null, seen?: Set<string>,
+): Promise<'ok' | 'duplicate'> {
   const client = await pool.connect()
   try {
     await client.query('BEGIN')
@@ -75,6 +85,14 @@ export async function upsertProduct(product: ImportedProduct, retailerId: number
         product.brand, product.partNo, product.imageUrl,
       ])
       productId = result.rows[0].id
+    }
+
+    // Oferta deja scrisa in aceasta rulare → randul se sare (vezi `seen` mai sus); ROLLBACK
+    // anuleaza si actualizarea produsului de mai sus (numele/categoria raman ale primului rand)
+    const seenKey = `${productId}:${retailerId}`
+    if (seen?.has(seenKey)) {
+      await client.query('ROLLBACK')
+      return 'duplicate'
     }
 
     // Tagurile din regula de mapare
@@ -130,6 +148,8 @@ export async function upsertProduct(product: ImportedProduct, retailerId: number
     }
 
     await client.query('COMMIT')
+    seen?.add(seenKey)   // dupa COMMIT: un rand esuat nu blocheaza urmatorul rand al ofertei
+    return 'ok'
   } catch (err) {
     await client.query('ROLLBACK')
     throw err

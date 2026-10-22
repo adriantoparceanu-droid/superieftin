@@ -194,7 +194,8 @@ async function syncOneFeed(
     }
 
     // Pasul 2: import efectiv
-    let imported = 0, errors = 0, unmapped = 0
+    let imported = 0, errors = 0, unmapped = 0, duplicates = 0
+    const seen = new Set<string>()   // ofertele scrise in rularea asta (upsertProduct: primul rand castiga)
     for await (const row of parseFeedFile(tmpFile, feed.type)) {
       const product = mapFeedRow(row)
       if (!product) continue
@@ -205,8 +206,8 @@ async function syncOneFeed(
       if (!rule) unmapped++
       applyAffiliate(product)
       try {
-        await upsertProduct(product, retailerId, rule)
-        imported++
+        if (await upsertProduct(product, retailerId, rule, seen) === 'duplicate') duplicates++
+        else imported++
       } catch (err) {
         errors++
         if (errors <= 5) log.error({ slug: product.slug, err }, 'Eroare upsert produs')
@@ -228,7 +229,7 @@ async function syncOneFeed(
       retailerId: retailerByName.values().next().value ?? null,
     })
 
-    log.info({ imported, errors, unmapped }, 'Feed importat')
+    log.info({ imported, errors, unmapped, duplicates }, 'Feed importat')
     return { imported, errors }
   } finally {
     await unlink(tmpFile).catch(() => {})
@@ -257,8 +258,9 @@ export async function runFileImport(filePath: string, retailerSlug?: string, job
   }
 
   log.info({ type }, 'Import din fisier pornit')
-  let imported = 0, errors = 0, skipped = 0, unmapped = 0
+  let imported = 0, errors = 0, skipped = 0, unmapped = 0, duplicates = 0
   const touchedRetailers = new Set<number>()
+  const seen = new Set<string>()   // ofertele scrise in rularea asta (upsertProduct: primul rand castiga)
 
   for await (const row of parseFeedFile(filePath, type)) {
     const product = mapFeedRow(row)
@@ -276,9 +278,12 @@ export async function runFileImport(filePath: string, retailerSlug?: string, job
     if (!rule) unmapped++
     applyAffiliate(product)
     try {
-      await upsertProduct(product, retailerId, rule)
-      touchedRetailers.add(retailerId)
-      imported++
+      if (await upsertProduct(product, retailerId, rule, seen) === 'duplicate') {
+        duplicates++
+      } else {
+        touchedRetailers.add(retailerId)
+        imported++
+      }
     } catch (err) {
       errors++
       if (errors <= 5) log.error({ slug: product.slug, err }, 'Eroare upsert produs')
@@ -302,7 +307,7 @@ export async function runFileImport(filePath: string, retailerSlug?: string, job
 
   const duration = ((Date.now() - startTime) / 1000).toFixed(1)
   await refreshPriceStats(log)
-  log.info({ imported, errors, skipped, unmapped, duration: `${duration}s` }, 'Import din fisier finalizat')
+  log.info({ imported, errors, skipped, unmapped, duplicates, duration: `${duration}s` }, 'Import din fisier finalizat')
   return { imported, errors, skipped, unmapped, duration }
 }
 
@@ -580,7 +585,8 @@ export async function syncExternalFeeds(resolveRule: RuleLookup): Promise<{ impo
     const categoryAllowed = compileCategoryFilter(feed.category_filter)
     const tmpFile = join(tmpdir(), `tp-feed-${Date.now()}.xml`)
     const retailerByDomain = new Map<string, number>()
-    let imported = 0, errors = 0, filteredOut = 0
+    let imported = 0, errors = 0, filteredOut = 0, duplicates = 0
+    const seen = new Set<string>()   // ofertele scrise in rularea asta (upsertProduct: primul rand castiga)
     try {
       await downloadFeed(feed.url, tmpFile)
       for await (const row of parseTpFeed(tmpFile)) {
@@ -600,8 +606,8 @@ export async function syncExternalFeeds(resolveRule: RuleLookup): Promise<{ impo
         const rule = resolveRule(retailerId, product.feedCategory, product.name)
         if (rule === IGNORE) continue   // regula „ignoră” din Admin → Mapare
         try {
-          await upsertProduct(product, retailerId, rule)
-          imported++
+          if (await upsertProduct(product, retailerId, rule, seen) === 'duplicate') duplicates++
+          else imported++
         } catch (err) {
           errors++
           if (errors <= 5) log.error({ slug: product.slug, err }, 'Eroare upsert produs 2P')
@@ -620,7 +626,7 @@ export async function syncExternalFeeds(resolveRule: RuleLookup): Promise<{ impo
         retailerId: retailerByDomain.values().next().value ?? null,
       })
       log.info({
-        feed: feed.label, imported, errors,
+        feed: feed.label, imported, errors, duplicates,
         // cate randuri au fost sarite de filtrul de categorii (0 cand feed-ul importa tot)
         ...(feed.category_filter ? { filteredOut, categoriesAllowed: feed.category_filter.length } : {}),
       }, 'Feed 2Performant importat')
