@@ -2,7 +2,8 @@ import { COMPANY } from '../company'
 import { ORGANIZATION_ID, SITE_NAME, SITE_URL, WEBSITE_ID, absUrl } from './site'
 
 // Date structurate (schema.org) comune. Pure (fara DB) — testate in jsonld.test.ts.
-// Reguli: fara Review / AggregateRating (nu avem recenzii reale); URL-urile din marcaj sunt
+// Reguli: fara Review / AggregateRating (nu avem recenzii reale ale utilizatorilor; singura exceptie
+// = recenzia editoriala pro/contra din articole, fara note — lib/guides/jsonld.ts); URL-urile din marcaj sunt
 // paginile NOASTRE (niciodata /go/ — e blocat in robots.txt si e redirect de afiliere).
 //
 // ATENTIE: worker/src/ads/campaigns/validate.ts (ads:validate + garda ads-guard) citeste

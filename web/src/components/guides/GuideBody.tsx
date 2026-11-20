@@ -1,5 +1,5 @@
 import { splitGuideBody, collectRefs, type GuideSegment } from '@/lib/guides/markers'
-import { renderMarkdown } from '@/lib/guides/markdown'
+import { renderMarkdown, newHeadingEnv } from '@/lib/guides/markdown'
 import { highlightUnverified } from '@/lib/guides/review'
 import { loadLiveProducts, refsKey, type LiveProduct } from '@/lib/guides/queries'
 import { getBestOffers, type BestOffer } from '@/lib/best-offer'
@@ -133,13 +133,16 @@ export async function GuideBody({ body, preview }: { body: string; preview?: boo
   const products = await loadLiveProducts(refsKey(collectRefs(segments)))
   const offers = await getBestOffers([...new Set([...products.values()].map((p) => p.id))])
   const owners = anchorOwners(segments, products)
+  // Id-uri pe H2 (cuprinsul paginii, lib/guides/toc.ts): un singur env pe tot corpul → unice in
+  // pagina. Bucatile se randeaza in ordinea din text (map sincron), ca in guideToc().
+  const headings = newHeadingEnv()
   return (
     // Stilurile de text lung se aplica DOAR bucatilor Markdown, nu blocurilor live
     // (altfel [&_a] ar colora si butoanele spre magazine)
     <div>
       {segments.map((seg, i) => {
         if (seg.kind === 'md') {
-          return <div key={i} className={PROSE_CLASS} dangerouslySetInnerHTML={{ __html: preview ? highlightUnverified(renderMarkdown(seg.text)) : renderMarkdown(seg.text) }} />
+          return <div key={i} className={PROSE_CLASS} dangerouslySetInnerHTML={{ __html: preview ? highlightUnverified(renderMarkdown(seg.text, headings)) : renderMarkdown(seg.text, headings) }} />
         }
         if (seg.kind === 'removed') {
           // Marcaj scos din setul public (istoricul de pret e intern): public nu se randeaza nimic

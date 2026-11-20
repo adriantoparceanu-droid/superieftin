@@ -3,6 +3,12 @@ import { RENAMED_CATEGORIES, CATEGORIES_TO_TAGS } from './src/lib/legacy-map'
 
 const nextConfig: NextConfig = {
   output: 'standalone',
+  // Fonturile imaginii Open Graph a articolelor (citite cu readFile la cerere): le adaugam explicit
+  // in build-ul standalone, ca sa ajunga in imaginea Docker (app/ghiduri/[slug]/opengraph-image.tsx).
+  outputFileTracingIncludes: {
+    '/ghiduri/*/opengraph-image': ['./assets/fonts/*.ttf'],
+    '/ghiduri/\\[slug\\]/opengraph-image': ['./assets/fonts/*.ttf'],
+  },
   // Dev local prin Herd (.test): permite resursele /_next/* si HMR de pe domeniul proxy,
   // altfel Next 16 le blocheaza ca fiind cross-origin (HMR esueaza, bundle-ul client poate
   // sa nu se incarce => fara hidratare => fara drag-and-drop).

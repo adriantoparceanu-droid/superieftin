@@ -222,3 +222,128 @@ export async function getGuideProductIds(guideId: number): Promise<string[]> {
   )
   return rows.map((r) => r.product_id)
 }
+
+// ---------- Tema, articole inrudite, autori, RSS (etapa 6b: SEO + AI) ----------
+
+// Produsele articolului = cele din corp (ref-uri din marcaje, id sau slug) + cele legate in admin
+// (guide_products). Fragment SQL comun: $1 = guide id, $2 = id-uri, $3 = slug-uri.
+const GUIDE_PRODUCTS_SQL = `
+  SELECT p.id, p.category_id FROM products p
+  WHERE p.id IN (SELECT product_id FROM guide_products WHERE guide_id = $1)
+     OR p.id = ANY($2::bigint[]) OR p.slug = ANY($3::text[])`
+
+function splitRefs(key: string): [string[], string[]] {
+  const refs = key ? key.split('\n') : []
+  return [refs.filter(isIdRef), refs.filter((r) => !isIdRef(r))]
+}
+
+// Tema articolului: categoria aleasa in admin (category_slug); altfel categoria-parinte cea mai
+// frecventa printre produsele lui. null = fara tema (articol general).
+export const getGuideTheme = cache(async (guideId: number, categorySlug: string | null, key: string): Promise<{ slug: string; name: string } | null> => {
+  if (categorySlug) {
+    // Doar categorii vizibile: tema apare ca link spre /c/<slug> (ascunsa = 404)
+    const { rows } = await pool.query<{ slug: string; name: string }>(
+      'SELECT slug, name FROM categories WHERE slug = $1 AND is_visible', [categorySlug])
+    if (rows[0]) return rows[0]
+  }
+  const [ids, slugs] = splitRefs(key)
+  const { rows } = await pool.query<{ slug: string; name: string }>(`
+    WITH gp AS (${GUIDE_PRODUCTS_SQL})
+    SELECT COALESCE(par.slug, c.slug) AS slug, COALESCE(par.name, c.name) AS name
+    FROM gp JOIN categories c ON c.id = gp.category_id
+    LEFT JOIN categories par ON par.id = c.parent_id
+    WHERE COALESCE(par.is_visible, c.is_visible)
+    GROUP BY 1, 2
+    ORDER BY count(*) DESC, 2
+    LIMIT 1
+  `, [guideId, ids, slugs])
+  return rows[0] ?? null
+})
+
+export interface RelatedGuide {
+  slug: string
+  title: string
+  meta_description: string | null
+  published_at: string | null
+  category_name: string | null
+}
+
+// „Articole inrudite”: alte articole publicate cu produse din aceleasi categorii (aceeasi
+// subcategorie = 2 puncte, acelasi parinte = 1 punct; conteaza si categoria aleasa in admin).
+// Fara potriviri (sau prea putine) → lista se completeaza cu cele mai noi articole.
+export async function getRelatedGuides(guideId: number, key: string, limit = 4): Promise<RelatedGuide[]> {
+  const [ids, slugs] = splitRefs(key)
+  const { rows } = await pool.query<RelatedGuide>(`
+    WITH mine AS (
+      SELECT c.id, COALESCE(c.parent_id, c.id) AS root
+      FROM (${GUIDE_PRODUCTS_SQL}) gp JOIN categories c ON c.id = gp.category_id
+      UNION
+      SELECT c.id, COALESCE(c.parent_id, c.id) FROM guides g JOIN categories c ON c.slug = g.category_slug WHERE g.id = $1
+    ),
+    theirs AS (
+      SELECT gp.guide_id, c.id, COALESCE(c.parent_id, c.id) AS root
+      FROM guide_products gp JOIN products p ON p.id = gp.product_id JOIN categories c ON c.id = p.category_id
+      UNION
+      SELECT g.id, c.id, COALESCE(c.parent_id, c.id) FROM guides g JOIN categories c ON c.slug = g.category_slug
+    ),
+    scored AS (
+      SELECT t.guide_id,
+             2 * count(DISTINCT t.id) FILTER (WHERE t.id IN (SELECT id FROM mine))
+               + count(DISTINCT t.root) FILTER (WHERE t.root IN (SELECT root FROM mine)) AS score
+      FROM theirs t GROUP BY t.guide_id
+    )
+    SELECT g.slug, g.title, g.meta_description, g.published_at::text AS published_at, c.name AS category_name
+    FROM guides g
+    LEFT JOIN scored s ON s.guide_id = g.id
+    LEFT JOIN categories c ON c.slug = g.category_slug
+    WHERE g.status = 'published' AND g.id <> $1
+    ORDER BY COALESCE(s.score, 0) DESC, g.published_at DESC NULLS LAST, g.id DESC
+    LIMIT $4
+  `, [guideId, ids, slugs, limit])
+  return rows
+}
+
+export interface AuthorArticle {
+  slug: string
+  title: string
+  meta_description: string | null
+  published_at: string | null
+  updated_at: string
+  role: 'autor' | 'verificator' | 'autor și verificator'
+}
+
+// Autorul + articolele lui PUBLICATE (ca autor sau verificator). null = slug inexistent; lista
+// goala = autor fara articole publicate (pagina da 404 in ambele cazuri).
+export const getAuthorPage = cache(async (slug: string): Promise<{ author: GuideAuthor; articles: AuthorArticle[] } | null> => {
+  const a = await pool.query<GuideAuthor>('SELECT id, name, slug, kind, bio, url FROM guide_authors WHERE slug = $1', [slug])
+  const author = a.rows[0]
+  if (!author) return null
+  const { rows } = await pool.query<AuthorArticle>(`
+    SELECT g.slug, g.title, g.meta_description, g.published_at::text AS published_at, g.updated_at::text AS updated_at,
+           CASE WHEN g.author_id = $1 AND g.reviewer_id = $1 THEN 'autor și verificator'
+                WHEN g.author_id = $1 THEN 'autor' ELSE 'verificator' END AS role
+    FROM guides g
+    WHERE g.status = 'published' AND (g.author_id = $1 OR g.reviewer_id = $1)
+    ORDER BY g.published_at DESC NULLS LAST, g.id DESC
+  `, [author.id])
+  return { author, articles: rows }
+})
+
+// Fluxul RSS: ultimele articole publicate, cu autorul si tema aleasa in admin
+export async function listRssGuides(limit = 50) {
+  const { rows } = await pool.query<{
+    slug: string; title: string; description: string | null; published_at: string | null
+    updated_at: string; author_name: string | null; category_name: string | null
+  }>(`
+    SELECT g.slug, g.title, g.meta_description AS description,
+           g.published_at::text AS published_at, g.updated_at::text AS updated_at,
+           a.name AS author_name, c.name AS category_name
+    FROM guides g
+    LEFT JOIN guide_authors a ON a.id = g.author_id
+    LEFT JOIN categories c ON c.slug = g.category_slug
+    WHERE g.status = 'published'
+    ORDER BY g.published_at DESC NULLS LAST, g.id DESC
+    LIMIT $1
+  `, [limit])
+  return rows
+}
