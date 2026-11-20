@@ -1,99 +1,95 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { LegalPage } from '@/components/LegalPage'
-import { REAL_DISCOUNT_PCT, ABOVE_MEDIAN_PCT, FRESH_HOURS } from '@/lib/discount'
 import { OFFER_STALE_DAYS } from '@/lib/availability'
+import { RSS_PATH, RSS_TITLE } from '@/lib/guides/rss'
 
-// Metodologia ghidurilor. Fiecare afirmatie de aici trebuie sa corespunda codului:
-// - pragurile vin din lib/discount.ts, ascunderea ofertelor din lib/availability.ts
-//   (importate, nu scrise de mana, ca textul sa nu ramana in urma daca se schimba valorile);
-// - ordinea ofertelor: pagina de produs le sorteaza dupa pret (queries.ts → getProductDetail),
-//   listele dupa pret, reducere sau nume — niciodata dupa comision.
+// Metodologia articolelor (blogul de recomandari, reorganizarea din 20.11.2026). Fiecare
+// afirmatie trebuie sa corespunda codului si fluxului real:
+// - cardul de produs = cel mai ieftin magazin partener cu oferta disponibila si link afiliat
+//   (lib/best-offer.ts → pickBestOffer); ofertele vechi se ascund dupa OFFER_STALE_DAYS (importat);
+// - verificarea saptamanala = jobul guide-health din worker (produse indisponibile, pret peste
+//   bugetul din titlu, articole neactualizate de mult) — doar semnaleaza, corectia o face un om;
+// - autorul si verificatorul apar sub titlu si au pagina proprie (/autori/<slug>).
+// Fara cifre scrise de mana si fara promisiuni.
 export const metadata: Metadata = {
-  title: 'Metodologie — cum verificăm prețurile din ghiduri',
+  title: 'Metodologie — cum alegem și verificăm recomandările',
   description:
-    'De unde vin prețurile, cum calculăm reducerea reală față de mediana de 30 de zile, cum scriem și verificăm ghidurile și cum câștigăm bani.',
-  alternates: { canonical: '/ghiduri/metodologie' },
+    'Cum alegem produsele din articole, de unde vin prețurile, cine verifică fiecare articol, cum ne finanțăm și cât de des actualizăm.',
+  alternates: {
+    canonical: '/ghiduri/metodologie',
+    types: { 'application/rss+xml': [{ url: RSS_PATH, title: RSS_TITLE }] },
+  },
 }
 
 export default function MetodologiePage() {
   return (
-    <LegalPage title="Metodologie: cum lucrăm la ghiduri">
-      <h2>De unde vin datele</h2>
+    <LegalPage title="Metodologie: cum lucrăm la articole">
+      <h2>Cum alegem produsele</h2>
       <ul>
         <li>
-          Prețurile vin din feed-urile de produse ale magazinelor (fișiere cu produse și prețuri, primite
-          de regulă prin rețelele de afiliere) și din scanarea periodică a paginilor unor magazine.
+          Pornim de la ce caută oamenii și de la produsele pe care magazinele partenere le au efectiv
+          în stoc. Nu recomandăm produse pe care nu le poți cumpăra.
         </li>
         <li>
-          Fiecare preț găsit se salvează în istoricul nostru de preț. Din acest istoric calculăm
-          mediana și desenăm graficul de pe pagina fiecărui produs.
+          Urmărim zilnic, intern, prețurile magazinelor partenere. Ne uităm la cum a evoluat prețul
+          unui produs în ultimele săptămâni, ca să nu recomandăm un produs într-un moment în care e
+          mai scump decât de obicei. Istoricul de preț rămâne o unealtă internă de lucru.
         </li>
         <li>
-          Prețurile se actualizează periodic, nu în timp real. Prețul final și stocul sunt cele
-          afișate de magazin în momentul comenzii.
+          Caracteristicile tehnice (dimensiuni, capacitate, consum, compatibilitate) le luăm din
+          specificațiile publicate de producător și din fișa produsului de la magazin.
+        </li>
+        <li>
+          Pentru fiecare produs recomandat scriem pe scurt ce face bine și ce face mai slab, ca să
+          poți decide singur dacă ți se potrivește.
         </li>
       </ul>
 
-      <h2>Cum calculăm reducerea reală</h2>
-      <ul>
-        <li>
-          Pentru fiecare ofertă calculăm <strong>mediana 30 de zile</strong>: prețul „din mijloc” al
-          ultimelor 30 de zile. Mediana e puțin influențată de un preț urcat pentru câteva zile
-          chiar înainte de o promoție.
-        </li>
-        <li>
-          Un preț este <strong>reducere reală</strong> dacă e cu cel puțin {REAL_DISCOUNT_PCT}% sub mediana
-          30 de zile. Între {REAL_DISCOUNT_PCT}% sub și {ABOVE_MEDIAN_PCT}% peste mediană îl numim „preț în
-          intervalul obișnuit”, iar peste {ABOVE_MEDIAN_PCT}% îl marcăm ca mai scump decât de obicei.
-        </li>
-        <li>Nu ne uităm la „prețul vechi” tăiat afișat de magazin.</li>
-        <li>
-          În ghiduri, o reducere reală se afișează doar dacă prețul a fost verificat în ultimele{' '}
-          {FRESH_HOURS} de ore și avem cel puțin două prețuri în ultimele 30 de zile; altfel scriem
-          „istoric insuficient”.
-        </li>
-      </ul>
-
-      <h2>Prețurile din ghiduri nu sunt scrise de mână</h2>
+      <h2>Prețul din articol</h2>
       <p>
-        Ofertele, prețurile, graficele și procentele de reducere din ghiduri se completează automat din
-        baza noastră de date, la fiecare actualizare a paginii. Dacă prețul se schimbă după publicare,
-        ghidul arată prețul nou, nu pe cel din ziua scrierii.
+        Prețurile nu sunt scrise de mână. Cardul fiecărui produs arată cel mai bun preț găsit la
+        magazinele partenere, completat automat din datele noastre, și un singur buton spre acel
+        magazin. Prețurile se actualizează periodic, nu în timp real: prețul final și stocul sunt cele
+        afișate de magazin în momentul comenzii.
+      </p>
+      <p>
+        O ofertă pe care n-am mai găsit-o de {OFFER_STALE_DAYS} zile la magazin nu mai apare în
+        articole. Dacă niciun magazin partener nu mai are produsul, cardul scrie că e momentan
+        indisponibil, fără buton.
       </p>
 
-      <h2>Ofertele vechi sunt ascunse</h2>
+      <h2>Cine scrie și cine verifică</h2>
       <p>
-        O ofertă pe care n-am mai găsit-o de {OFFER_STALE_DAYS} zile în niciun feed sau scanare este
-        considerată fără stoc și nu mai apare pe site. Dacă un produs nu mai are nicio ofertă
-        disponibilă, ghidul scrie „indisponibil momentan” în locul prețului. Ofertele revin automat
-        când produsul reapare la magazin.
+        Ciornele se pot scrie cu ajutorul unor instrumente de inteligență artificială, pornind de la
+        datele noastre. Fiecare articol este citit și verificat de un om înainte de publicare. Numele
+        autorului și al celui care a verificat articolul apar sub titlu, cu link spre pagina lor, alături
+        de data publicării și a ultimei actualizări.
       </p>
 
-      <h2>Cine scrie ghidurile</h2>
+      <h2>Cât de des actualizăm</h2>
       <p>
-        Ghidurile sunt semnate de echipa superieftin.ro. Ciornele se pot scrie cu ajutorul unor
-        instrumente de inteligență artificială; fiecare ghid este citit și verificat de un om înainte
-        de publicare, iar numele celui care l-a verificat apare sub titlu. Data publicării și data
-        ultimei actualizări sunt afișate pe fiecare ghid.
+        Verificăm săptămânal articolele publicate: dacă un produs recomandat nu mai e disponibil, dacă
+        prețul a ieșit din bugetul din titlu sau dacă un articol n-a mai fost revizuit de mult. Când
+        găsim o problemă, articolul se corectează și data actualizării se schimbă.
       </p>
 
-      <h2>Cum câștigăm bani</h2>
+      <h2>Cum ne finanțăm</h2>
       <p>
-        Linkurile spre magazine sunt linkuri de afiliere prin rețelele Profitshare și 2Performant.
+        Unele linkuri spre magazine sunt linkuri de afiliere, prin rețelele Profitshare și 2Performant.
         Dacă cumperi după ce ai dat click pe un astfel de link, magazinul ne plătește un comision.
         <strong> Prețul pentru tine rămâne același.</strong>
       </p>
       <p>
-        Comisionul nu influențează ordinea ofertelor: pe pagina unui produs, ofertele sunt ordonate
-        după preț, de la cel mai mic. Listele de produse se ordonează după preț, după reducerea față de
-        mediană sau după nume. Verdictul „reducere reală” vine doar din istoricul de preț.
+        Nu primim bani de la producători sau de la magazine pentru a recomanda un produs, iar comisionul
+        nu decide ce produse intră în articol. Butonul din card duce la magazinul partener cu cel mai bun
+        preț găsit, nu la cel care plătește comisionul mai mare.
       </p>
 
       <h2>Mai multe</h2>
       <p>
         Despre site și firma care îl operează: <Link href="/despre">Despre noi</Link>. Ai găsit o
-        greșeală într-un ghid? Scrie-ne pe pagina de <Link href="/contact">contact</Link>.
+        greșeală într-un articol? Scrie-ne pe pagina de <Link href="/contact">contact</Link>.
       </p>
     </LegalPage>
   )
