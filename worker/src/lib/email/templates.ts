@@ -7,6 +7,7 @@
 // fara „reducere”, procente sau promisiuni. Pretul se poate schimba: o spunem explicit.
 
 import { alertProductUrl, formatRon } from '../price-alert.js'
+import { FAREWELL_EMAIL, farewellHomeUrl } from '../alerts-closing.js'
 
 export interface RenderedEmail {
   subject: string
@@ -159,6 +160,28 @@ Preț constatat: <strong>${formatRon(it.price)} RON</strong> la ${esc(it.retaile
     subject,
     html: layout({ title: subject, preheader: n === 1 ? `${formatRon(o.items[0].price)} RON la ${o.items[0].retailerName}` : `${n} produse au ajuns la pragul tău`, body, footer: footerHtml(o.links, why) }),
     text: `Am constatat prețuri la sau sub pragul ales de tine:\n\n${textItems}\n\nPrețurile se pot schimba oricând — verifică oferta pe pagină înainte să cumperi. Alertele rămân active: te anunțăm din nou la următoarea scădere la sau sub prag (cel mult un email pe zi). Le oprești din Alertele mele: ${o.links.manageUrl}\n\n${footerText(o.links, why)}\n`,
+    unsubscribeUrl: o.links.unsubscribePostUrl,
+  }
+}
+
+// ---------- 4. Ramas-bun: inchiderea alertelor (20 nov. 2026) ----------
+// Textele stau in lib/alerts-closing.ts (FAREWELL_EMAIL) — aici doar asezarea in pagina. Fara link
+// „Alertele mele” (nu mai e nimic de gestionat); linkul de stergere imediata = dezabonarea de acum.
+
+export function renderFarewellEmail(o: { links: EmailLinks }): RenderedEmail {
+  const t = FAREWELL_EMAIL
+  const home = farewellHomeUrl(o.links.siteUrl, 'email')
+  const body = `${t.paragraphs.map((p) => `<p style="margin:0 0 12px;">${esc(p)}</p>`).join('\n')}
+<p style="margin:8px 0 20px;">${button(home, t.button)}</p>
+<p style="margin:0;">${esc(t.closing)}</p>`
+  const footer = `${esc(t.why)}<br>
+<a href="${esc(o.links.unsubscribePageUrl)}" style="color:${C.muted};">${esc(t.deleteNowLabel)}</a> &middot;
+<a href="${esc(o.links.siteUrl)}/confidentialitate" style="color:${C.muted};">Confidențialitate</a> &middot;
+<a href="${esc(o.links.siteUrl)}/contact" style="color:${C.muted};">Contact</a>`
+  return {
+    subject: t.subject,
+    html: layout({ title: t.subject, preheader: t.preheader, body, footer }),
+    text: `${t.paragraphs.join('\n\n')}\n\n${t.button}: ${home}\n\n${t.closing}\n\n--\n${t.why}\n${t.deleteNowLabel}: ${o.links.unsubscribePageUrl}\nConfidențialitate: ${o.links.siteUrl}/confidentialitate\n`,
     unsubscribeUrl: o.links.unsubscribePostUrl,
   }
 }

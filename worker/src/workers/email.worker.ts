@@ -6,8 +6,13 @@
 //   confirm      { alertId }       — trimis de site (POST /api/alerte-email) dupa o cerere de abonare
 //   manage-link  { subscriberId }  — trimis de site cand cineva cere din nou linkul „Alertele mele”
 //   digest       {}                — programat (EMAIL_DIGEST_CRON) + dupa fiecare job care schimba preturi
+//   farewell     { subscriberId }  — ramas-bun la inchiderea alertelor (npm run alerte:ramas-bun -- --confirm)
 //
 // Fara configurare (lib/email/config.ts) workerul nu porneste deloc; site-ul nici nu arata formularul.
+//
+// Inchiderea alertelor (20 nov. 2026): cu PRICE_ALERTS_ENABLED oprit (implicit), 'digest' face DOAR
+// curatenia GDPR (nu mai trimite alerte), iar 'confirm' / 'manage-link' sunt sarite. 'farewell'
+// merge mereu (e chiar mesajul de inchidere).
 
 import { Worker, type Job } from 'bullmq'
 import pino from 'pino'
@@ -23,6 +28,8 @@ import { pickTriggerOffer, type AlertOffer } from '../lib/price-alert.js'
 import { ALERT_HAS_TRIGGER_SQL, ALERT_OFFERS_JSON_SQL } from '../lib/alert-sql.js'
 import { alertRearmPct, bestAvailablePrice, decideAlert, rearmThreshold } from '../lib/alert-rearm.js'
 import { deleteIdleAlerts, markNotified, rearmAlerts } from '../lib/alert-lifecycle.js'
+import { priceAlertsEnabled } from '../lib/alerts-closing.js'
+import { sendFarewellEmail } from '../lib/email/farewell.js'
 
 const logger = pino({ level: 'info' })
 
@@ -34,6 +41,17 @@ export const UNCONFIRMED_TTL_DAYS = 7
 export const SENT_ALERT_TTL_DAYS = 90
 
 export type EmailJobData = { alertId: number } | { subscriberId: number } | Record<string, never>
+
+// Ramas-bun pentru un abonat confirmat; sters intre timp (dezabonare / purge) → nimic
+export async function sendFarewellEmailJob(cfg: EmailConfig, mailer: Pick<Transporter, 'sendMail'>, subscriberId: number): Promise<'sent' | 'skip'> {
+  const { rows } = await pool.query(
+    `SELECT id, email FROM email_subscribers WHERE id = $1 AND confirmed_at IS NOT NULL`,
+    [subscriberId],
+  )
+  if (!rows[0]) return 'skip'
+  await sendFarewellEmail(cfg, mailer, { id: rows[0].id, email: rows[0].email })
+  return 'sent'
+}
 
 function linksFor(cfg: EmailConfig, subscriberId: number) {
   return emailLinks(cfg.siteUrl, {
@@ -157,6 +175,8 @@ export async function runEmailDigest(
 ): Promise<{ candidates: number; emails: number; alerts: number; deferred: number; failed: number }> {
   const cleanup = await cleanupEmailAlerts()
   if (Object.values(cleanup).some((n) => n > 0)) logger.info(cleanup, 'Alerte email: curatenie')
+  // Alertele inchise (PRICE_ALERTS_ENABLED oprit): ramane doar curatenia GDPR de mai sus
+  if (!priceAlertsEnabled()) return { candidates: 0, emails: 0, alerts: 0, deferred: 0, failed: 0 }
 
   const rearmed = await rearmEmailAlerts(nowMs)
   if (rearmed) logger.info({ rearmed }, 'Alerte email: re-armate')
@@ -211,7 +231,8 @@ export async function runEmailDigest(
 
 // Cere un digest (din sync.worker, dupa joburile care schimba preturi). Fara email configurat → nimic.
 export async function requestEmailDigest(): Promise<void> {
-  if (!emailConfig()) return
+  // Alerte inchise → nimic de trimis; curatenia GDPR ruleaza oricum la fiecare ora (EMAIL_DIGEST_CRON)
+  if (!emailConfig() || !priceAlertsEnabled()) return
   await emailQueue.add('digest', {}, { removeOnComplete: 100, removeOnFail: 100 })
 }
 
@@ -225,6 +246,9 @@ export function startEmailWorker(): Worker | null {
   const worker = new Worker<EmailJobData>(
     'email',
     async (job: Job<EmailJobData>) => {
+      if (job.name === 'farewell') return sendFarewellEmailJob(cfg, mailer, Number((job.data as { subscriberId: number }).subscriberId))
+      // Alerte inchise: nu mai confirmam abonari si nu mai trimitem linkuri „Alertele mele”
+      if ((job.name === 'confirm' || job.name === 'manage-link') && !priceAlertsEnabled()) return 'closed'
       if (job.name === 'confirm') return sendConfirmEmail(cfg, mailer, Number((job.data as { alertId: number }).alertId))
       if (job.name === 'manage-link') return sendManageLinkEmail(cfg, mailer, Number((job.data as { subscriberId: number }).subscriberId))
       if (job.name === 'digest') return runEmailDigest(cfg, mailer)

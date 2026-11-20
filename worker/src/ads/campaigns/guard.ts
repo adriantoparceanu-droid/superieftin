@@ -1,19 +1,21 @@
 // Garda zilnica a campaniilor (job BullMQ `ads-guard`, manual: npm run ads:guard).
 //
 // De ce exista: un anunt aprobat azi poate deveni fals peste cateva zile fara ca cineva sa-l
-// atinga — produsul iese din stoc, pagina devine 404 / noindex fara oferta, iar daca textul ar vorbi de
-// reducere, insigna „Reducere reala” dispare cand mediana pe 30 de zile prinde pretul din urma
+// atinga — articolul e retras (404 / noindex), produsele lui nu mai au nicio oferta disponibila la
+// magazinele partenere (niciun buton spre magazin), iar un procent din text nu mai apare pe pagina
 // (verdictul policy-reviewer B1, 2026-09-27). Regula 9 cere ca afirmatiile sa fie adevarate pe
 // landing; garda verifica asta in fiecare dimineata si opreste grupul care nu mai corespunde.
+// Din 20 nov. 2026 (site-ul devine blog) landing-urile sunt articole /ghiduri/<slug>; un landing /p/
+// (pagini disparute) pica fara descarcare.
 //
 // Ce face, pe scurt:
 //  1. strange grupurile de anunturi ACTIVE din campaniile noastre („SE | …”): din cont (o citire
 //     GAQL) si din YAML (grupurile care au deja `id`, scris de ads:apply). Fara ID-uri in YAML si
 //     fara grupuri active in cont → nu face nimic (nici macar nu descarca pagini);
 //  2. pentru fiecare grup verifica pagina de destinatie cu aceleasi reguli ca ads:validate
-//     (200 direct, oferta in stoc, indexabila — noindex e permis pe /p/ in stoc, decizia SEO din
-//     5 oct. 2026 —, categorie permisa) + afirmatiile din texte
-//     (reducere / procent → „Reducere reala” vizibila; marci prezente pe pagina);
+//     (200 direct, indexabila, categorie permisa; articol = JSON-LD BlogPosting + cel putin un
+//     buton afiliat /go/ — landingProblems in validate.ts) + afirmatiile din texte
+//     (procent → acelasi procent vizibil pe pagina; marci prezente pe pagina);
 //  3. o pagina care pica se re-verifica o data dupa un minut (o sughitare a site-ului nu
 //     opreste reclamele);
 //  4. grupurile care pica si acum → PAUZA prin pauseOnly() (google-ads.ts — accepta DOAR
@@ -117,7 +119,7 @@ export async function evaluateTargets(targets: GuardTarget[], g: Guardrails, fet
     const problems: string[] = []
     if (!t.urls.length) problems.push('niciun URL de destinație')
     for (const url of t.urls) {
-      const landing = await landingProblems(url, loader, g, { strictStock: true })
+      const landing = await landingProblems(url, loader, g)
       problems.push(...landing)
       const p = loader.pages.get(url)
       if (!landing.length && p?.status === 200) problems.push(...claimIssues(t.texts, p, t.adGroupName).map((i) => i.msg))

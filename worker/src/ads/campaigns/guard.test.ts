@@ -87,22 +87,25 @@ test('pauseOnly trimite validate_only fără flag și cerere reală cu flag', as
 
 // --- Garda --------------------------------------------------------------------------------------------
 
+// Din 20 nov. 2026 landing-urile sunt articole /ghiduri/<slug> (paginile /p/ dispar)
+const URL_A = 'https://www.superieftin.ro/ghiduri/telefoane-bune-sub-1500-lei'
 const URL_P = 'https://www.superieftin.ro/p/telefon-test'
-function campFile(id: string | null, headlines = ['Samsung Galaxy Test 256GB', 'Istoric de preț pe 90 de zile']): CampaignFile {
+function campFile(id: string | null, headlines = ['Samsung Galaxy Test 256GB', 'Istoric de preț pe 90 de zile'], finalUrl = URL_A): CampaignFile {
   const c = {
     name: 'SE | Search | Test', id: null, status: 'PAUSED', daily_budget: 8, bidding: { strategy: 'MANUAL_CPC', max_cpc: 0.35 },
-    ad_groups: [{ name: 'Grup test', id, final_url: URL_P, keywords: { exact: ['x'] },
+    ad_groups: [{ name: 'Grup test', id, final_url: finalUrl, keywords: { exact: ['x'] },
       ads: [{ type: 'RSA', id: null, headlines, descriptions: ['Comparăm cu mediana pe 30 de zile.'] }] }],
   } as unknown as Campaign
   return { file: '/tmp/t.yaml', rel: 'ads/campaigns/t.yaml', slug: 't', raw: stringify({ campaign: c }), campaign: c }
 }
 
-function productHtml(opts: { inStock?: boolean; noindex?: boolean; discount?: string | null } = {}) {
-  const { inStock = true, noindex = false, discount = null } = opts
+// HTML-ul unui articol: BlogPosting + Product cu review FARA offers + butoane /go/ (ProductPick)
+function articleHtml(opts: { noindex?: boolean; goLinks?: number; text?: string } = {}) {
+  const { noindex = false, goLinks = 1, text = '' } = opts
   return `<html><head>${noindex ? '<meta name="robots" content="noindex">' : ''}
-<script type="application/ld+json">${JSON.stringify({ '@type': 'Product', name: 'Samsung Galaxy Test', category: 'telefoane-mobile',
-    offers: { '@type': 'Offer', price: 100, availability: `https://schema.org/${inStock ? 'InStock' : 'OutOfStock'}` } })}</script></head>
-<body><h1>Samsung Galaxy Test 256GB</h1>${discount ? `<p>Reducere reală: ${discount} % sub mediana de 30 de zile</p>` : ''}</body></html>`
+<script type="application/ld+json">${JSON.stringify({ '@type': 'BlogPosting', headline: 'Telefoane bune' })}</script>
+<script type="application/ld+json">${JSON.stringify({ '@type': 'Product', name: 'Samsung Galaxy Test', review: { '@type': 'Review' } })}</script></head>
+<body><h1>Samsung Galaxy Test 256GB</h1>${text}${Array.from({ length: goLinks }, (_, i) => `<a href="/go/${i + 1}">Vezi la magazin</a>`).join('')}</body></html>`
 }
 const fetcherFor = (status: number, body: string): Fetcher & { calls: number } => {
   const f = (async () => { f.calls++; return { status, body } }) as unknown as Fetcher & { calls: number }
@@ -120,7 +123,7 @@ function spies() {
 }
 
 test('garda: fără ID-uri în YAML și fără grupuri active în cont → nu face nimic (nicio pagină, nicio pauză)', async () => {
-  const f = fetcherFor(200, productHtml())
+  const f = fetcherFor(200, articleHtml())
   const { s, pause, notify } = spies()
   const r = await runAdsGuard({ files: [campFile(null)], guardrails: G, cfg: CFG, readAccount: async () => [], fetcher: f, pause, notify, retryDelayMs: 0, log: () => {} })
   assert.equal(r.checked, 0)
@@ -131,20 +134,22 @@ test('garda: fără ID-uri în YAML și fără grupuri active în cont → nu fa
 
 test('garda: landing bun → nicio pauză, nicio alertă', async () => {
   const { s, pause, notify } = spies()
-  const r = await runAdsGuard({ files: [campFile('123')], guardrails: G, cfg: null, fetcher: fetcherFor(200, productHtml()), pause, notify, retryDelayMs: 0, log: () => {} })
+  const r = await runAdsGuard({ files: [campFile('123')], guardrails: G, cfg: null, fetcher: fetcherFor(200, articleHtml()), pause, notify, retryDelayMs: 0, log: () => {} })
   assert.equal(r.checked, 1)
   assert.equal(r.failing, 0)
   assert.equal(s.paused.length + s.notified.length, 0)
 })
 
-test('garda: landing invalid (404 / fără stoc / noindex fără stoc) → pauză DOAR pentru grup + alertă', async () => {
-  for (const [status, body, re] of [
-    [404, '', /404/],
-    [200, productHtml({ inStock: false }), /nicio ofertă în stoc/],
-    [200, productHtml({ noindex: true, inStock: false }), /noindex/],
+test('garda: landing invalid (404 / 410 / noindex / fără buton spre magazin / /p/) → pauză DOAR pentru grup + alertă', async () => {
+  for (const [status, body, re, url] of [
+    [404, '', /404/, URL_A],
+    [410, '', /410/, URL_A],
+    [200, articleHtml({ noindex: true }), /noindex/, URL_A],
+    [200, articleHtml({ goLinks: 0 }), /niciun buton spre magazin/, URL_A],
+    [200, articleHtml(), /paginile \/p\/ nu mai există/, URL_P],
   ] as const) {
     const { s, pause, notify } = spies()
-    const acc: GuardTarget[] = [{ source: 'cont', campaignName: 'SE | Search | Test', adGroupId: '123', adGroupName: 'Grup test', urls: [URL_P], texts: ['Samsung Galaxy Test'] }]
+    const acc: GuardTarget[] = [{ source: 'cont', campaignName: 'SE | Search | Test', adGroupId: '123', adGroupName: 'Grup test', urls: [url], texts: ['Samsung Galaxy Test'] }]
     const f = fetcherFor(status, body)
     const r = await runAdsGuard({ files: [], guardrails: G, cfg: CFG, readAccount: async () => acc, fetcher: f, pause, notify, retryDelayMs: 0, log: () => {} })
     assert.equal(r.failing, 1)
@@ -154,44 +159,33 @@ test('garda: landing invalid (404 / fără stoc / noindex fără stoc) → pauz�
     assert.equal(s.notified.length, 1)
     assert.match(s.notified[0], re)
     assert.match(s.notified[0], /puse pe PAUZĂ/)
-    assert.ok(f.calls >= 2, 'pagina care pică se re-verifică o dată')
+    // pagina care pica se re-verifica o data (/p/ pica fara nicio descarcare)
+    if (url === URL_A) assert.ok(f.calls >= 2, 'pagina care pică se re-verifică o dată')
+    else assert.equal(f.calls, 0)
   }
 })
-// Decizia SEO din 5 oct. 2026: /p/ e noindex si pentru produsele urmarite de sub 30 de zile
-// (ex. Petmart, campania PET). Pagina 200 + JSON-LD InStock = landing valid pentru reclama.
-test('garda: produs noindex dar în stoc (istoric < 30 de zile) → nicio pauză, nicio alertă', async () => {
+// Articolul are Product cu review FARA offers: nu inseamna „fara stoc” (bug-ul de dinainte de
+// 20 nov. 2026 — garda ar fi pus pe pauza orice grup spre /ghiduri/)
+test('garda: articol cu Product fără offers + buton /go/ → nicio pauză, nicio alertă', async () => {
   const { s, pause, notify } = spies()
-  const acc: GuardTarget[] = [{ source: 'cont', campaignName: 'SE | Search | Test', adGroupId: '123', adGroupName: 'Grup test', urls: [URL_P], texts: ['Samsung Galaxy Test'] }]
-  const r = await runAdsGuard({ files: [], guardrails: G, cfg: CFG, readAccount: async () => acc, fetcher: fetcherFor(200, productHtml({ noindex: true })), pause, notify, retryDelayMs: 0, log: () => {} })
+  const acc: GuardTarget[] = [{ source: 'cont', campaignName: 'SE | Search | Test', adGroupId: '123', adGroupName: 'Grup test', urls: [URL_A], texts: ['Samsung Galaxy Test'] }]
+  const r = await runAdsGuard({ files: [], guardrails: G, cfg: CFG, readAccount: async () => acc, fetcher: fetcherFor(200, articleHtml()), pause, notify, retryDelayMs: 0, log: () => {} })
   assert.equal(r.checked, 1)
   assert.equal(r.failing, 0)
   assert.equal(s.paused.length + s.notified.length, 0)
 })
 
-test('garda: produs noindex fără nicio ofertă (fără JSON-LD Product) → pauză', async () => {
-  const { s, pause, notify } = spies()
-  const acc: GuardTarget[] = [{ source: 'cont', campaignName: 'SE | Search | Test', adGroupId: '123', adGroupName: 'Grup test', urls: [URL_P], texts: ['Samsung Galaxy Test'] }]
-  const body = '<html><head><meta name="robots" content="noindex, follow"></head><body><h1>Samsung Galaxy Test</h1></body></html>'
-  const r = await runAdsGuard({ files: [], guardrails: G, cfg: CFG, readAccount: async () => acc, fetcher: fetcherFor(200, body), pause, notify, retryDelayMs: 0, log: () => {} })
-  assert.equal(r.failing, 1)
-  assert.equal(s.paused.length, 1)
-  assert.match(s.notified[0], /noindex/)
-})
-
 const pause_ = (rn: string) => ({ adGroupOperation: { update: { resourceName: rn, status: 'PAUSED' }, updateMask: 'status' } })
 
-test('garda: text care vorbește de reducere + insigna dispărută → pauză; cu insignă → OK', async () => {
-  const files = [campFile('123', ['Samsung Galaxy Test', 'Galaxy Test sub mediană'])]
+test('garda: procent din anunț care nu apare pe articol → pauză (fără cont: alertă cu pauză manuală)', async () => {
+  const files = [campFile('123', ['Samsung Galaxy Test', 'Galaxy Test -12%'])]
   const a = spies()
-  const r1 = await runAdsGuard({ files, guardrails: G, cfg: null, fetcher: fetcherFor(200, productHtml({ discount: null })), pause: a.pause, notify: a.notify, retryDelayMs: 0, log: () => {} })
+  const r1 = await runAdsGuard({ files, guardrails: G, cfg: null, fetcher: fetcherFor(200, articleHtml()), pause: a.pause, notify: a.notify, retryDelayMs: 0, log: () => {} })
   assert.equal(r1.failing, 1)
-  assert.match(a.s.notified[0], /nu mai afișează „Reducere reală”/)
+  assert.match(a.s.notified[0], /nu afișează nicio reducere reală/)
   // fara acces la cont nu se poate pune pauza → alerta cere pauza manuala
   assert.equal(a.s.paused.length, 0)
   assert.match(a.s.notified[0], /pauză manual/)
-  const b = spies()
-  const r2 = await runAdsGuard({ files, guardrails: G, cfg: null, fetcher: fetcherFor(200, productHtml({ discount: '12,5' })), pause: b.pause, notify: b.notify, retryDelayMs: 0, log: () => {} })
-  assert.equal(r2.failing, 0)
 })
 
 test('garda: fără ADS_GUARD_REAL_PAUSE pauza e doar validată, iar alerta cere pauză manuală', async () => {

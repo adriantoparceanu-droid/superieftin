@@ -8,7 +8,6 @@ import { CookieSettingsButton } from '@/components/consent/CookieSettingsButton'
 const FOOTER_LINKS: [string, string][] = [
   ['/ghiduri', 'Articole'],
   ['/ghiduri/metodologie', 'Cum lucrăm'],
-  ['/alerte/gestionare', 'Alertele mele'],
   ['/despre', 'Despre noi'],
   ['/contact', 'Contact'],
   ['/confidentialitate', 'Confidențialitate'],
