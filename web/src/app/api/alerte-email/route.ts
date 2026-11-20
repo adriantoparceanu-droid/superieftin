@@ -5,7 +5,7 @@ import { ALERTS_CLOSED_MESSAGE } from '@/lib/email-alerts'
 //
 // Alertele de pret s-au inchis pe 20 nov. 2026 (site-ul devine blog de recomandari): nu mai cream
 // alerte si nu mai colectam adrese de email. Formularul de pe /p/ dispare odata cu pagina; un
-// formular ramas deschis intr-un tab vechi primeste mesajul de mai jos (EmailAlertForm il afiseaza).
+// formular ramas deschis intr-un tab vechi primeste mesajul de mai jos (formularul a fost sters odata cu /p/).
 // Dezabonarea (POST /api/alerte-email/dezabonare) ramane functionala pana la stergerea datelor.
 
 const NO_STORE = { 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex, nofollow' }

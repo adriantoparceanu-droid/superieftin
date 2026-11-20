@@ -24,7 +24,7 @@ export interface LlmsGuideFull extends LlmsGuide {
 
 export interface LlmsData {
   guides: LlmsGuide[]
-  themes: LlmsTheme[]            // temele /c/ (categoriile-parinte vizibile)
+  themes: LlmsTheme[]            // temele /c/ indexabile (indexableThemes, ca in sitemap)
 }
 
 const IDENTITY =

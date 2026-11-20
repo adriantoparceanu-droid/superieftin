@@ -3,13 +3,14 @@
 //
 // Structura (blog de recomandari, 20 nov. 2026):
 //   /sitemap.xml          → INDEX (acelasi URL ca inainte: Search Console / robots.txt nu se schimba)
-//   /sitemaps/pagini.xml  → homepage, /ghiduri, metodologie, articolele, temele /c/, autorii,
+//   /sitemaps/pagini.xml  → homepage, /ghiduri, metodologie, articolele, temele /c/ cu articole, autorii,
 //                           paginile legale. Fisierele produse-N.xml au disparut odata cu /p/.
 //
 // `lastmod` doar unde e REAL (Google ignora un lastmod care „minte” sistematic): articole =
 // updated_at; /ghiduri = cel mai recent articol; restul fara lastmod.
 
 import { absUrl } from './site'
+import { subthemeHasOwnPage, themeGuides, type BlogGuide } from '../guides/blog'
 
 export const SITEMAP_FILES = ['pagini.xml'] as const
 
@@ -64,9 +65,27 @@ export function latestLastmod(entries: SitemapEntry[]): Date | null {
 // Paginile de incredere (Despre, Contact, politici) — cerute de Google pentru site-urile de afiliere
 export const LEGAL_PAGES = ['/despre', '/contact', '/confidentialitate', '/termeni', '/cookies']
 
+// Temele indexabile (sitemap + llms.txt), cu ACEEASI regula ca pagina /c/ (lib/guides/blog.ts):
+// - parintele: cu cel putin un articol (al lui sau al subcategoriilor); fara articole pagina e noindex;
+// - subcategoria: doar daca are pagina proprie (>= MIN_SUBTHEME_GUIDES articole) — altfel 308 spre parinte.
+// Ordinea: fiecare parinte urmat de subtemele lui (ordinea din `categories`, deja sortata).
+export function indexableThemes<T extends { id: number; slug: string; parent_id: number | null }>(
+  categories: T[], guides: BlogGuide[],
+): T[] {
+  const out: T[] = []
+  for (const parent of categories.filter((c) => c.parent_id == null)) {
+    const children = categories.filter((c) => c.parent_id === parent.id)
+    const ref = { id: parent.id, slug: parent.slug, childIds: children.map((c) => c.id), childSlugs: children.map((c) => c.slug) }
+    if (themeGuides(guides, ref).length === 0) continue
+    out.push(parent)
+    for (const c of children) if (subthemeHasOwnPage(themeGuides(guides, c).length)) out.push(c)
+  }
+  return out
+}
+
 export interface PageSources {
   guides: { slug: string; updated_at: string }[]
-  themes: { slug: string }[]          // temele /c/ (parintii vizibili)
+  themes: { slug: string }[]          // temele /c/ indexabile (indexableThemes)
   authors: { slug: string }[]         // autori cu cel putin un articol publicat
 }
 

@@ -26,7 +26,7 @@ export function alertProductUrl(site: string, slug: string, medium: AlertMedium)
 // Parametrul /start trimis de butonul de pe site:
 //   prod_<id produs>[_<prag in lei>]  — formatul actual (alerta pe produs, orice magazin)
 //   offer_<id oferta>[_<prag>]        — linkuri vechi (pe o oferta); botul le muta pe produsul ofertei
-// Formatul il produce web/src/lib/price-alert.ts (alertStartParam) — modifica-le impreuna.
+// Formatul il producea web/src/lib/price-alert.ts (alertStartParam, sters odata cu /p/ — 20 nov. 2026).
 export type AlertStartParam = { productId: number; offerId: null; target: number | null }
   | { productId: null; offerId: number; target: number | null }
 

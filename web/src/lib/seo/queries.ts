@@ -6,6 +6,8 @@ import { OFFER_AVAILABLE_SQL } from '../availability'
 // /p/, llms.txt). Toate: doar oferte disponibile (OFFER_AVAILABLE_SQL), cache unstable_cache,
 // fara agregari pe price_history (CLAUDE.md: „Mediana precalculată”, incidentul din 26 sep).
 
+export interface PublicCategory { id: number; slug: string; name: string; parent_id: number | null }
+
 export interface CategoryStat {
   id: number
   slug: string
@@ -67,19 +69,20 @@ export const getCategoryTreeStats = unstable_cache(
   { revalidate: 3600, tags: ['categories', 'products'] }
 )
 
-// Temele blogului pentru sitemap si llms.txt: categoriile-parinte vizibile (/c/<parinte>), in
-// ordinea din meniu. Subcategoriile NU intra: pagina lor proprie de tema exista doar daca au
-// destule articole (regula e in pagina /c/) — cand regula devine o functie comuna, adaug-o aici.
-export const getThemeCategories = unstable_cache(
-  async (): Promise<{ slug: string; name: string }[]> => {
-    const { rows } = await pool.query<{ slug: string; name: string }>(`
-      SELECT slug, name FROM categories
-      WHERE parent_id IS NULL AND is_visible
-      ORDER BY sort_order, id
+// Categoriile publice (vizibile, cu parintele vizibil), in ordinea din meniu — sursa temelor din
+// sitemap si llms.txt. Care dintre ele sunt teme indexabile decide indexableThemes (lib/seo/sitemap.ts),
+// cu aceeasi regula ca pagina /c/ (lib/guides/blog.ts).
+export const getPublicCategories = unstable_cache(
+  async (): Promise<PublicCategory[]> => {
+    const { rows } = await pool.query<PublicCategory>(`
+      SELECT c.id, c.slug, c.name, c.parent_id
+      FROM categories c LEFT JOIN categories pc ON pc.id = c.parent_id
+      WHERE c.is_visible AND COALESCE(pc.is_visible, true)
+      ORDER BY COALESCE(pc.sort_order, c.sort_order), COALESCE(pc.id, c.id), c.parent_id NULLS FIRST, c.sort_order, c.id
     `)
     return rows
   },
-  ['seo-theme-categories'],
+  ['seo-public-categories'],
   { revalidate: 3600, tags: ['categories'] }
 )
 

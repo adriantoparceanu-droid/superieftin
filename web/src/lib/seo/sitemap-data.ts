@@ -1,7 +1,8 @@
 import pool from '../db'
 import { getPublishedGuideSlugs } from '../guides/queries'
-import { getThemeCategories } from './queries'
-import { buildPageEntries, type SitemapEntry } from './sitemap'
+import { getBlogGuides } from '../guides/blog-queries'
+import { getPublicCategories } from './queries'
+import { buildPageEntries, indexableThemes, type SitemapEntry } from './sitemap'
 
 // Datele sitemap-ului (rutele app/sitemap.xml si app/sitemaps/[fisier]). Zeci de adrese, query-uri
 // mici. .catch: o sursa cazuta nu goleste tot sitemap-ul.
@@ -18,10 +19,11 @@ async function getAuthorSlugs(): Promise<{ slug: string }[]> {
 }
 
 export async function pageEntries(): Promise<SitemapEntry[]> {
-  const [guides, themes, authors] = await Promise.all([
+  const [guides, categories, blogGuides, authors] = await Promise.all([
     getPublishedGuideSlugs().catch(() => []),
-    getThemeCategories().catch(() => []),
+    getPublicCategories().catch(() => []),
+    getBlogGuides().catch(() => []),
     getAuthorSlugs().catch(() => []),
   ])
-  return buildPageEntries({ guides, themes, authors })
+  return buildPageEntries({ guides, themes: indexableThemes(categories, blogGuides), authors })
 }

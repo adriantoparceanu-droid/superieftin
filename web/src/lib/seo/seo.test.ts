@@ -4,7 +4,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { listingSeo, listingDescription, parsePageParam } from './listing'
 import { organizationLd, websiteLd, breadcrumbLd, itemListLd, ldScript, ORGANIZATION_DESCRIPTION } from './jsonld'
-import { urlsetXml, sitemapIndexXml, isSitemapFile, latestLastmod, buildPageEntries, SITEMAP_FILES, LEGAL_PAGES } from './sitemap'
+import { urlsetXml, sitemapIndexXml, isSitemapFile, latestLastmod, buildPageEntries, indexableThemes, SITEMAP_FILES, LEGAL_PAGES } from './sitemap'
 import { robotsRules, AI_BOTS } from './robots'
 import { variantBase, historyPartialSince, historyTitle, historyChartPhrase } from './product-facts'
 import { indexableCategories, landingCategories, isExcludedFromAds } from './categories'
@@ -156,6 +156,24 @@ test('sitemap: pagini.xml = homepage, articole (lastmod + imagine OG), teme, aut
   assert.match(xml, /xmlns:image="http:\/\/www.google.com\/schemas\/sitemap-image\/1.1"/)
   assert.match(xml, new RegExp(`<loc>${SITE_URL}/ghiduri/ghid-a</loc><lastmod>2026-11-10T10:00:00.000Z</lastmod><image:image><image:loc>${SITE_URL}/ghiduri/ghid-a/opengraph-image</image:loc></image:image></url>`))
   assert.doesNotMatch(xml, /\/p\//)
+})
+
+test('sitemap: teme = parintii cu articole + subcategoriile cu pagina proprie (>= 3 articole)', () => {
+  const cats = [
+    { id: 1, slug: 'telefoane-accesorii', name: 'T&A', parent_id: null },
+    { id: 11, slug: 'telefoane-mobile', name: 'Telefoane', parent_id: 1 },
+    { id: 12, slug: 'huse', name: 'Huse', parent_id: 1 },
+    { id: 2, slug: 'tv-audio', name: 'TV', parent_id: null },          // fara articole → noindex
+    { id: 3, slug: 'laptopuri-calculatoare', name: 'Laptopuri', parent_id: null },
+  ]
+  const g = (slug: string, ids: number[], cat: string | null = null) => ({
+    slug, title: slug, meta_description: null, published_at: null, updated_at: '2026-11-01T00:00:00Z',
+    category_slug: cat, category_ids: ids, image_url: null, words: 0, author_name: null,
+  })
+  const guides = [g('a', [11]), g('b', [11]), g('c', [11]), g('d', [12]), g('e', [], 'laptopuri-calculatoare')]
+  // huse are 1 articol → 308 spre parinte, nu intra; tv-audio fara articole → nu intra
+  assert.deepEqual(indexableThemes(cats, guides).map((c) => c.slug), ['telefoane-accesorii', 'telefoane-mobile', 'laptopuri-calculatoare'])
+  assert.deepEqual(indexableThemes(cats, []), [])
 })
 
 test('sitemap: XML valid, escapare, lastmod doar unde exista', () => {
