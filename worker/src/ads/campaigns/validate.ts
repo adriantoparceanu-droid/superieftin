@@ -5,10 +5,13 @@
 //     (fara broad, fara branduri de retaileri, fara duplicate, neblocate de propriile negative),
 //     negativele de baza prezente, URL-uri pe www.superieftin.ro, fara /go/, fara categorii excluse;
 //  2. live (pe site-ul de productie): fiecare URL raspunde 200 direct (fara redirect), pagina nu e
-//     noindex (exceptie: pagina de produs in stoc — vezi landingProblems), produsul e in stoc,
-//     categoria nu e exclusa, iar afirmatiile din anunturi sunt
-//     adevarate pe pagina ACUM (regula 9): „reducere / sub mediana” cere insigna „Reducere reala”,
-//     orice procent trebuie sa coincida cu procentul afisat, marcile din text apar pe pagina.
+//     noindex, categoria nu e exclusa; un articol (/ghiduri/<slug>) are JSON-LD BlogPosting si cel
+//     putin un buton afiliat (link /go/) — vezi landingProblems; iar afirmatiile din anunturi sunt
+//     adevarate pe pagina ACUM (regula 9): orice procent trebuie sa coincida cu procentul afisat,
+//     marcile din text apar pe pagina.
+//
+// Reorganizarea in blog (20 nov. 2026): paginile de produs /p/ dispar (308 spre articol sau 410).
+// Un landing /p/ e eroare statica — campaniile se refac spre articole.
 
 import type { Campaign, CampaignFile, Guardrails, Keyword, AdGroup, RsaAd } from './schema.js'
 import { positiveKeywords, parseNegative, kwKey, formatKw, normKw } from './schema.js'
@@ -97,11 +100,14 @@ export function claimsDiscount(text: string): boolean {
 // callouts, snippets) vorbesc DOAR despre metoda si serviciu („Comparam cu mediana pe 30 zile”,
 // „Istoric de pret pe 90 de zile”), niciodata despre starea de azi a pretului.
 //
-// Exceptie ingusta: un anunt sau sitelink catre o pagina de LISTA (ex. /reduceri-reale/telefoane-mobile,
-// /despre — orice nu e /p/) poate vorbi de „reduceri” / „sub mediana”, pentru ca pagina aceea e,
-// prin definitie, lista produselor sub mediana (sau explicatia metodei) — afirmatia nu expira.
-// Callouts si snippets n-au exceptia (apar langa orice anunt, inclusiv cele spre /p/). Procentele
-// si „pret redus” raman interzise peste tot.
+// Exceptie ingusta: un anunt sau sitelink catre o pagina de LISTA / prezentare (ex. /despre,
+// /ghiduri/metodologie — orice nu e /p/ sau articol) poate vorbi de „reduceri” / „sub mediana”,
+// pentru ca pagina aceea explica metoda — afirmatia nu expira. Callouts si snippets n-au exceptia
+// (apar langa orice anunt). Procentele si „pret redus” raman interzise peste tot.
+//
+// Articolele (/ghiduri/<slug>, blogul din 20 nov. 2026) n-au exceptia si, in plus, anunturile spre
+// ele nu pot afirma PRETURI („2.499 lei”): cardurile din articol arata pretul de azi al celui mai
+// ieftin magazin partener, care se schimba zilnic — o suma in anunt devine falsa (regula 9).
 const EXPIRING_ANYWHERE: [RegExp, string][] = [
   [/\d+(?:[.,]\d+)?\s*%/, 'procent de reducere'],
   [/\bredus[aei]?\b|\breduse\b/, '„redus”'],
@@ -116,14 +122,33 @@ const EXPIRING_UNLESS_LISTING: [RegExp, string][] = [
   [/\bsub median/, '„sub mediană”'],
   [/\breduc\w*/, '„reducere”'],
 ]
+const EXPIRING_ON_ARTICLE: [RegExp, string][] = [
+  [/\d[\d.,]*\s*(?:lei|ron)\b/, 'preț în lei'],
+]
 
 // Motivele pentru care textul contine o afirmatie care expira (gol = textul e stabil).
-// listingPage = textul e al unui sitelink catre o pagina care NU e de produs (vezi mai sus).
-export function expiringClaims(text: string, opts: { listingPage?: boolean } = {}): string[] {
+// listingPage = textul duce la o pagina de lista / prezentare (nu /p/, nu articol — vezi mai sus);
+// articlePage = textul duce la un articol /ghiduri/<slug> (fara exceptie + fara preturi).
+export function expiringClaims(text: string, opts: { listingPage?: boolean; articlePage?: boolean } = {}): string[] {
   const t = strip(text)
-  const rules = opts.listingPage ? EXPIRING_ANYWHERE : [...EXPIRING_ANYWHERE, ...EXPIRING_UNLESS_LISTING]
+  const rules = opts.articlePage
+    ? [...EXPIRING_ANYWHERE, ...EXPIRING_UNLESS_LISTING, ...EXPIRING_ON_ARTICLE]
+    : opts.listingPage ? EXPIRING_ANYWHERE : [...EXPIRING_ANYWHERE, ...EXPIRING_UNLESS_LISTING]
   return rules.filter(([re]) => re.test(t)).map(([, why]) => why)
 }
+
+// Tipul paginii de destinatie, dupa cale: articol (/ghiduri/<slug>; /ghiduri si /ghiduri/metodologie
+// sunt pagini de prezentare), produs (/p/ — nu mai exista), altceva (lista / pagina statica).
+export type LandingKind = 'article' | 'product' | 'other'
+export function landingKind(url: string): LandingKind {
+  let path: string
+  try { path = new URL(url).pathname } catch { return 'product' }   // URL invalid: regulile cele mai stricte
+  if (/^\/p\//.test(path)) return 'product'
+  const m = path.match(/^\/ghiduri\/([^/]+)\/?$/)
+  if (m && m[1] !== 'metodologie' && m[1] !== 'feed.xml') return 'article'
+  return 'other'
+}
+const PRODUCT_PAGE_GONE = 'paginile /p/ nu mai există (site-ul e blog de recomandări din 20 nov. 2026) — folosește un articol /ghiduri/<slug>'
 
 export function checkUrlStatic(url: string, g: Guardrails): string[] {
   const out: string[] = []
@@ -131,7 +156,8 @@ export function checkUrlStatic(url: string, g: Guardrails): string[] {
   try { u = new URL(url) } catch { return [`URL invalid: ${url}`] }
   if (u.protocol !== 'https:') out.push(`URL-ul trebuie să fie https: ${url}`)
   if (u.host !== SITE_HOST) out.push(`URL-ul trebuie să fie pe ${SITE_HOST} (domeniul canonic): ${url}`)
-  if (/^\/go(\/|$)/.test(u.pathname)) out.push(`URL-ul final nu poate fi /go/ (link afiliat) — folosește pagina /p/: ${url}`)
+  if (/^\/go(\/|$)/.test(u.pathname)) out.push(`URL-ul final nu poate fi /go/ (link afiliat) — folosește un articol /ghiduri/<slug>: ${url}`)
+  if (/^\/p\//.test(u.pathname)) out.push(`${PRODUCT_PAGE_GONE}: ${url}`)
   for (const c of g.excluded_categories ?? []) {
     if (u.pathname.split('/').includes(c)) out.push(`categorie exclusă din reclame (${c}): ${url}`)
   }
@@ -274,18 +300,21 @@ export function validateCampaign(cf: CampaignFile, g: Guardrails): Issue[] {
   for (const s of ext.structured_snippets ?? []) for (const x of s.values ?? []) texts.push(['extensions.structured_snippets', x])
   for (const [w, x] of texts) for (const b of RETAILER_BRANDS) if (containsTerm(x, b)) err(w, `textul „${x}” conține brandul retailerului „${b}”`)
 
-  // Afirmatii care expira (reducere „azi”) — vezi expiringClaims. Sitelink-urile catre pagini
-  // care nu sunt de produs au exceptia ingusta pentru „reduceri” / „sub mediana”.
-  const isProductUrl = (u: string) => { try { return new URL(u).pathname.startsWith('/p/') } catch { return true } }
-  const stable = (w: string, x: string, listingPage = false) => {
-    const why = expiringClaims(x, { listingPage })
-    if (why.length) err(w, `„${x}” afirmă o reducere de azi (${why.join(', ')}) — devine falsă când mediana prinde prețul din urmă; scrie despre metodă/serviciu (regula 9)`)
+  // Afirmatii care expira (reducere „azi”, pret) — vezi expiringClaims. Sitelink-urile catre pagini
+  // de lista au exceptia ingusta pentru „reduceri” / „sub mediana”; articolele nu, plus fara preturi.
+  const claimOpts = (u: string) => {
+    const k = landingKind(u)
+    return { listingPage: k === 'other', articlePage: k === 'article' }
+  }
+  const stable = (w: string, x: string, opts: { listingPage?: boolean; articlePage?: boolean } = {}) => {
+    const why = expiringClaims(x, opts)
+    if (why.length) err(w, `„${x}” afirmă o reducere de azi (${why.join(', ')}) — devine falsă când prețul se schimbă; scrie despre metodă/serviciu (regula 9)`)
   }
   for (const [i, ag] of (c.ad_groups ?? []).entries()) for (const [j, ad] of (ag.ads ?? []).entries()) {
-    const listing = !isProductUrl(ad.final_url || ag.final_url)
-    for (const x of adTexts(ad)) stable(`ad_groups[${i}] › ads[${j}]`, x, listing)
+    const o = claimOpts(ad.final_url || ag.final_url)
+    for (const x of adTexts(ad)) stable(`ad_groups[${i}] › ads[${j}]`, x, o)
   }
-  for (const [i, s] of sl.entries()) for (const x of [s.text, s.description1, s.description2]) if (x) stable(`extensions.sitelinks[${i}]`, x, !isProductUrl(s.url))
+  for (const [i, s] of sl.entries()) for (const x of [s.text, s.description1, s.description2]) if (x) stable(`extensions.sitelinks[${i}]`, x, claimOpts(s.url))
   for (const [i, x] of (ext.callouts ?? []).entries()) stable(`extensions.callouts[${i}]`, x)
   for (const [i, s] of (ext.structured_snippets ?? []).entries()) for (const x of s.values ?? []) stable(`extensions.structured_snippets[${i}]`, x)
 
@@ -400,8 +429,10 @@ export interface PageFacts {
   text: string                  // textul vizibil (fara taguri), pentru afirmatii si marci
   noindex: boolean
   discountPct: number | null    // „Reducere reala: 16,8% sub mediana de 30 de zile”
-  inStock: boolean | null       // din JSON-LD Product (null = pagina nu e de produs)
+  inStock: boolean | null       // din JSON-LD Product CU offers (null = niciun Product cu oferte)
   categories: string[]          // slug-urile din breadcrumb / JSON-LD
+  article?: boolean             // JSON-LD BlogPosting (articolele /ghiduri/<slug>)
+  affiliateLinks?: number       // linkuri spre /go/ (butoanele „Vezi la <magazin>” din articol)
 }
 
 export type Fetcher = (url: string) => Promise<{ status: number; location?: string; body: string }>
@@ -438,16 +469,24 @@ export function parsePage(url: string, status: number, body: string, location?: 
   const noindex = /<meta[^>]+name="robots"[^>]+content="[^"]*noindex/i.test(body)
   const discountPct = parseDiscountPct(text)
   let inStock: boolean | null = null
+  let article = false
   const categories = new Set<string>()
+  // Butoanele afiliate (components/analytics/AffiliateLink.tsx): href="/go/<id>" in HTML-ul randat
+  const affiliateLinks = [...body.matchAll(/<a\b[^>]*\bhref="(?:https:\/\/www\.superieftin\.ro)?\/go\/\d+/gi)].length
   for (const s of body.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)) {
     try {
       const j = JSON.parse(s[1])
       for (const node of Array.isArray(j) ? j : [j]) {
-        if (node['@type'] === 'Product') {
-          const offers = Array.isArray(node.offers) ? node.offers : node.offers ? [node.offers] : []
-          inStock = offers.some((o: any) => String(o.availability ?? '').endsWith('InStock'))
+        const types: unknown[] = Array.isArray(node['@type']) ? node['@type'] : [node['@type']]
+        // Articolele (/ghiduri/) au noduri Product cu `review` editorial si FARA offers (fara pret in
+        // schema — web/src/lib/guides/jsonld.ts). Un Product fara offers nu spune nimic despre stoc:
+        // il ignoram, altfel garda ar crede „nicio oferta in stoc” si ar pune grupul pe pauza.
+        if (types.includes('Product') && node.offers != null) {
+          const offers = Array.isArray(node.offers) ? node.offers : [node.offers]
+          inStock = inStock === true || offers.some((o: any) => String(o.availability ?? '').endsWith('InStock'))
           if (node.category) categories.add(String(node.category))
         }
+        if (types.includes('BlogPosting') || types.includes('Article')) article = true
         if (node['@type'] === 'BreadcrumbList') {
           for (const it of node.itemListElement ?? []) {
             const mm = String(it.item ?? '').match(/\/c\/([^/?#]+)/)
@@ -457,7 +496,7 @@ export function parsePage(url: string, status: number, body: string, location?: 
       }
     } catch { /* JSON-LD invalid: ignoram */ }
   }
-  return { url, status, location, text, noindex, discountPct, inStock, categories: [...categories] }
+  return { url, status, location, text, noindex, discountPct, inStock, categories: [...categories], article, affiliateLinks }
 }
 
 // Incarcator de pagini cu cache (o pagina se descarca o singura data pe rulare). Folosit de
@@ -470,7 +509,7 @@ export function createPageLoader(fetcher: Fetcher = defaultFetcher) {
         const r = await fetcher(url)
         pages.set(url, parsePage(url, r.status, r.body, r.location))
       } catch (e) {
-        pages.set(url, { url, status: 0, text: '', noindex: false, discountPct: null, inStock: null, categories: [], location: String((e as Error).message) })
+        pages.set(url, { url, status: 0, text: '', noindex: false, discountPct: null, inStock: null, categories: [], article: false, affiliateLinks: 0, location: String((e as Error).message) })
       }
     }
     return pages.get(url)!
@@ -489,25 +528,26 @@ export function createPageLoader(fetcher: Fetcher = defaultFetcher) {
 }
 export type PageLoader = ReturnType<typeof createPageLoader>
 
-// Verificarea unei pagini de destinatie: 200 direct (fara redirect), indexabila (sau pagina de
-// produs in stoc), cu oferta in stoc, in afara categoriilor excluse. Intoarce motivele de
-// respingere (gol = pagina e buna).
-// strictStock = pagina de produs FARA JSON-LD Product (deci fara oferta) e respinsa (garda).
-export async function landingProblems(url: string, loader: PageLoader, g: Guardrails, opts: { strictStock?: boolean } = {}): Promise<string[]> {
+// Verificarea unei pagini de destinatie. Intoarce motivele de respingere (gol = pagina e buna).
+//  - /p/ → respins fara descarcare: paginile de produs nu mai exista (blog din 20 nov. 2026);
+//  - toate: 200 direct (fara redirect), fara noindex, in afara categoriilor excluse;
+//  - articol (/ghiduri/<slug>): JSON-LD BlogPosting + cel putin un buton afiliat (link /go/). NU
+//    cerem oferta in JSON-LD: produsele din articol au Product + Review FARA offers (decizia din
+//    20 nov. 2026 — fara pret in schema). Butonul „Vezi la <magazin>” apare doar cand exista o
+//    oferta disponibila cu link afiliat (components/guides/ProductPick.tsx), deci zero butoane =
+//    reclama ar trimite pe o pagina de pe care nu se ajunge la niciun magazin;
+//  - alte pagini cu JSON-LD Product cu oferte: cel putin una in stoc.
+export async function landingProblems(url: string, loader: PageLoader, g: Guardrails): Promise<string[]> {
+  const kind = landingKind(url)
+  if (kind === 'product') return [`${url}: ${PRODUCT_PAGE_GONE}`]
   const out: string[] = []
   const p = await loader.get(url)
   if (p.status !== 200) return [`${url} răspunde ${p.status || 'eroare de rețea'}${p.location ? ` (→ ${p.location})` : ''}; trebuie 200 direct`]
-  // noindex SINGUR nu mai e motiv de respingere cand pagina e de produs si JSON-LD spune InStock.
-  // De ce (decizia SEO din 5 oct. 2026, web/src/lib/seo/product-index.ts): /p/ e noindex si pentru
-  // produsele urmarite de sub 30 de zile, nemapate sau din Sanatate & Naturale — pagina e complet
-  // functionala (pret, oferte, linkuri), doar ca Google nu o indexeaza. Altfel garda ar pune pe
-  // pauza campaniile cu produse noi (ex. PET Royal Canin, Petmart urmarit din 3 oct.).
-  // Reclama nu are nevoie de index: conteaza ca pagina raspunde 200 si are oferta in stoc.
-  // Produsul indisponibil (OutOfStock / fara JSON-LD Product) ramane esec, ca inainte; la fel
-  // noindex pe /c/ sau /reduceri-reale/ (lista goala). Categoria exclusa e verificata separat, mai jos.
-  if (p.noindex && p.inStock !== true) out.push(`${url} e noindex (produs indisponibil?)`)
-  if (p.inStock === false) out.push(`${url}: nicio ofertă în stoc`)
-  else if (opts.strictStock && p.inStock == null && /^\/p\//.test(new URL(url).pathname)) out.push(`${url}: pagina de produs nu are nicio ofertă disponibilă`)
+  if (p.noindex) out.push(`${url} e noindex`)
+  if (kind === 'article') {
+    if (!p.article) out.push(`${url}: articolul nu are JSON-LD BlogPosting (nu e un articol publicat?)`)
+    if (!p.affiliateLinks) out.push(`${url}: articolul nu are niciun buton spre magazin (link /go/) — niciun produs disponibil la magazinele partenere`)
+  } else if (p.inStock === false) out.push(`${url}: nicio ofertă în stoc`)
   // Categoria: din pagina (breadcrumb / JSON-LD) + din URL pentru /c/<slug> si /reduceri-reale/<slug>
   const fromPath = new URL(url).pathname.match(/^\/(?:c|reduceri-reale)\/([^/]+)/)?.[1]
   const own = [...p.categories, ...(fromPath ? [fromPath] : [])]

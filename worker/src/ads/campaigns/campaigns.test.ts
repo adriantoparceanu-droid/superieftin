@@ -23,6 +23,8 @@ const G: Guardrails = {
 }
 
 const URL_P = 'https://www.superieftin.ro/p/telefon-test'
+// Din 20 nov. 2026 landing-urile sunt articole (paginile /p/ dispar)
+const URL_A = 'https://www.superieftin.ro/ghiduri/telefoane-bune-sub-1500-lei'
 const H = ['Titlu unu', 'Titlu doi', 'Titlu trei', 'Titlu patru', 'Titlu cinci', 'Titlu șase', 'Titlu șapte', 'Titlu opt',
   'Titlu nouă', 'Titlu zece', 'Titlu unsprezece', 'Titlu doisprezece']
 const D = ['Descriere unu, suficient de clară.', 'Descriere doi, tot clară.', 'Descriere trei.', 'Descriere patru.']
@@ -35,7 +37,7 @@ function camp(over: Partial<Campaign> = {}): Campaign {
     targeting: { countries: ['RO'], languages: ['ro'], location_mode: 'PRESENCE', networks: { search: true, search_partners: false, display: false } },
     negative_keywords: [...BASE_NEGATIVES, ...RETAILER_BRANDS],
     ad_groups: [{
-      name: 'Grup', id: null, final_url: URL_P,
+      name: 'Grup', id: null, final_url: URL_A,
       keywords: { exact: ['telefon test pret'], phrase: ['telefon test'] },
       ads: [{ type: 'RSA', id: null, headlines: [...H], descriptions: [...D], path1: 'telefon', path2: 'test' }],
     }],
@@ -153,6 +155,27 @@ test('URL-uri: doar www.superieftin.ro, fără /go/, fără categorii excluse', 
   assert.ok(hasErr(c4, /www\.superieftin\.ro/))
 })
 
+test('URL-uri: landing /p/ = eroare clară (paginile de produs nu mai există), și în sitelinks', () => {
+  const c = camp(); c.ad_groups[0].final_url = URL_P
+  assert.ok(hasErr(c, /paginile \/p\/ nu mai există.*folosește un articol/))
+  const c2 = camp(); c2.extensions!.sitelinks![0] = { text: 'Telefon test', url: URL_P }
+  assert.ok(hasErr(c2, /paginile \/p\/ nu mai există/))
+  assert.deepEqual(errors(camp()), [])   // articolul /ghiduri/<slug> e acceptat
+})
+
+test('anunțuri spre articole: fără reduceri și fără prețuri; pagina de metodologie păstrează excepția de listă', () => {
+  for (const x of ['Telefoane sub mediană', 'Reduceri la telefoane', 'Galaxy A56 la 1.499 lei', 'De la 999 RON', 'Telefon -10%']) {
+    assert.ok(expiringClaims(x, { articlePage: true }).length > 0, `ar trebui respins: ${x}`)
+  }
+  for (const x of ['Telefoane bune, testate de noi', 'Pro și contra pentru fiecare model', 'Ce telefon merită în 2026']) {
+    assert.deepEqual(expiringClaims(x, { articlePage: true }), [], `ar trebui permis: ${x}`)
+  }
+  const c = camp(); c.ad_groups[0].ads[0].headlines[0] = 'Telefoane de la 999 lei'
+  assert.ok(hasErr(c, /preț în lei/))
+  const c2 = camp(); c2.extensions!.sitelinks![0] = { text: 'Cum alegem', url: 'https://www.superieftin.ro/ghiduri/metodologie', description1: 'Cum verificăm reducerile', description2: 'Metoda, pe scurt' }
+  assert.deepEqual(errors(c2), [])
+})
+
 test('stil: majuscule excesive, „!” în titlu, punctuație repetată, emoji', () => {
   assert.ok(styleProblems('REDUCERI mari', 'headline').some((p) => /majuscule/.test(p)))
   assert.ok(styleProblems('Galaxy 256GB RAM', 'headline').length === 0)
@@ -233,28 +256,58 @@ test('parsePage extrage reducerea, stocul și categoriile din HTML-ul real', () 
   assert.equal(p2.discountPct, null)
 })
 
-// Decizia SEO din 5 oct. 2026: /p/ e noindex si pentru produsele urmarite de sub 30 de zile,
-// nemapate sau din Sanatate & Naturale. noindex SINGUR nu mai respinge un landing de produs in stoc.
-const ldProduct = (avail: 'InStock' | 'OutOfStock') =>
-  `<script type="application/ld+json">{"@type":"Product","offers":{"@type":"AggregateOffer","availability":"https://schema.org/${avail}"}}</script>`
-const pageFetcher = (body: string): Fetcher => async () => ({ status: 200, body })
+const pageFetcher = (body: string, status = 200): Fetcher => async () => ({ status, body })
 
-test('landing: noindex + InStock (produs urmărit de < 30 de zile) → OK', async () => {
-  const html = `<head><meta name="robots" content="noindex, follow"/></head>${ldProduct('InStock')}`
-  assert.deepEqual(await landingProblems(URL_P, createPageLoader(pageFetcher(html)), G, { strictStock: true }), [])
+// Articolul (/ghiduri/<slug>) are Product + Review editorial FARA offers (fara pret in schema) si
+// butoane „Vezi la <magazin>” spre /go/. Asa arata HTML-ul randat de web/src/app/ghiduri/[slug].
+function articleHtml(o: { noindex?: boolean; blogPosting?: boolean; goLinks?: number } = {}) {
+  const { noindex = false, blogPosting = true, goLinks = 2 } = o
+  const ld = (d: unknown) => `<script type="application/ld+json">${JSON.stringify(d)}</script>`
+  return `<html><head>${noindex ? '<meta name="robots" content="noindex, follow"/>' : ''}
+${blogPosting ? ld({ '@context': 'https://schema.org', '@type': 'BlogPosting', headline: 'Telefoane bune sub 1500 lei' }) : ''}
+${ld({ '@context': 'https://schema.org', '@type': 'Product', name: 'Samsung Galaxy A56', review: { '@type': 'Review', positiveNotes: { '@type': 'ItemList', itemListElement: [] } } })}
+${ld({ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 2, name: 'Telefoane', item: 'https://www.superieftin.ro/c/telefoane-mobile' }] })}
+</head><body><h1>Telefoane bune sub 1500 lei</h1>
+${Array.from({ length: goLinks }, (_, i) => `<a class="btn" href="/go/${1000 + i}" rel="sponsored nofollow">Vezi la magazin</a>`).join('\n')}
+</body></html>`
+}
+
+test('parsePage: Product fără offers (review din articol) NU înseamnă „fără stoc”; BlogPosting și linkurile /go/', () => {
+  const p = parsePage(URL_A, 200, articleHtml())
+  assert.equal(p.inStock, null)
+  assert.equal(p.article, true)
+  assert.equal(p.affiliateLinks, 2)
+  assert.deepEqual(p.categories, ['telefoane-mobile'])
 })
 
-test('landing: noindex + OutOfStock / fără ofertă → eșec, ca înainte', async () => {
-  const out = `<head><meta name="robots" content="noindex, follow"/></head>${ldProduct('OutOfStock')}`
-  const p1 = await landingProblems(URL_P, createPageLoader(pageFetcher(out)), G)
-  assert.ok(p1.some((m) => /noindex/.test(m)))
-  assert.ok(p1.some((m) => /nicio ofertă în stoc/.test(m)))
-  // fara JSON-LD Product (produs indisponibil) → tot noindex = esec
-  const none = '<head><meta name="robots" content="noindex, follow"/></head><h1>Telefon</h1>'
-  assert.ok((await landingProblems(URL_P, createPageLoader(pageFetcher(none)), G)).some((m) => /noindex/.test(m)))
-  // noindex pe o lista (/reduceri-reale/, fara JSON-LD Product) ramane esec
-  const lst = 'https://www.superieftin.ro/reduceri-reale/telefoane-mobile'
-  assert.ok((await landingProblems(lst, createPageLoader(pageFetcher(none)), G)).some((m) => /noindex/.test(m)))
+test('landing articol: 200 + indexabil + BlogPosting + buton /go/ → OK', async () => {
+  assert.deepEqual(await landingProblems(URL_A, createPageLoader(pageFetcher(articleHtml())), G), [])
+})
+
+test('landing articol: noindex / fără BlogPosting / fără niciun buton spre magazin / 404 → eșec', async () => {
+  const run = async (body: string, status = 200) => landingProblems(URL_A, createPageLoader(pageFetcher(body, status)), G)
+  assert.ok((await run(articleHtml({ noindex: true }))).some((m) => /noindex/.test(m)))
+  assert.ok((await run(articleHtml({ blogPosting: false }))).some((m) => /BlogPosting/.test(m)))
+  assert.ok((await run(articleHtml({ goLinks: 0 }))).some((m) => /niciun buton spre magazin/.test(m)))
+  assert.ok((await run('', 404)).some((m) => /404/.test(m)))
+  assert.ok((await run('', 410)).some((m) => /410/.test(m)))
+})
+
+test('landing /p/ → respins fără descărcare („paginile /p/ nu mai există”)', async () => {
+  let calls = 0
+  const f: Fetcher = async () => { calls++; return { status: 200, body: '' } }
+  const out = await landingProblems(URL_P, createPageLoader(f), G)
+  assert.equal(out.length, 1)
+  assert.match(out[0], /paginile \/p\/ nu mai există/)
+  assert.equal(calls, 0)
+})
+
+test('landing altă pagină (ex. /despre): noindex = eșec; categorie exclusă = eșec', async () => {
+  const despre = 'https://www.superieftin.ro/despre'
+  assert.ok((await landingProblems(despre, createPageLoader(pageFetcher('<meta name="robots" content="noindex"/>')), G)).some((m) => /noindex/.test(m)))
+  assert.deepEqual(await landingProblems(despre, createPageLoader(pageFetcher('<h1>Despre</h1>')), G), [])
+  const ex = 'https://www.superieftin.ro/c/sanatate-naturale'
+  assert.ok((await landingProblems(ex, createPageLoader(pageFetcher('<h1>x</h1>')), G)).some((m) => /exclusă/.test(m)))
 })
 
 test('parsePage: cardul de verdict din redesign („Reducere reală” + „Prețul de azi e cu X% sub mediana”)', () => {
@@ -368,7 +421,7 @@ test('plan pe campanie existentă: nimic de schimbat → zero operații; ce lips
       { adGroupId: '20', criterionId: '3', resourceName: 'r/k3', text: 'telefon vechi', matchType: 'EXACT', status: 'ENABLED', negative: false },
     ],
     ads: [{ adGroupId: '20', adId: '30', resourceName: 'customers/111/adGroupAds/20~30', adResourceName: 'customers/111/ads/30', status: 'ENABLED', type: 'RESPONSIVE_SEARCH_AD',
-      finalUrls: [URL_P], headlines: [...H], descriptions: [...D], path1: 'telefon', path2: 'test', approval: 'APPROVED' }],
+      finalUrls: [URL_A], headlines: [...H], descriptions: [...D], path1: 'telefon', path2: 'test', approval: 'APPROVED' }],
     customGoals: [{ id: '9', name: 'SE | Comision afiliere', resourceName: 'customers/111/customConversionGoals/9', actions: ['customers/111/conversionActions/7799099014'], status: 'ENABLED' }],
     goalConfigs: [{ campaignId: '10', level: 'CAMPAIGN', customGoal: 'customers/111/customConversionGoals/9' }],
   })
@@ -392,10 +445,12 @@ test('plan: campanie cu id din YAML care lipsește din cont = eroare (nu recreea
   assert.ok(plan.campaigns[0].errors.some((e) => /nu există în cont/.test(e)))
 })
 
-test('fișierele reale din ads/campaigns trec validarea statică', () => {
+test('fișierele reale din ads/campaigns: singurele erori statice sunt landing-urile /p/ (de refăcut spre articole)', () => {
   const files = loadAllCampaigns()
   assert.ok(files.length >= 3)
-  const errs = validateAll(files, loadGuardrails()).filter((i) => i.level === 'error')
+  // Din 20 nov. 2026 paginile /p/ dispar: campaniile vechi (toate pe pauză) se refac spre articole
+  // (task separat: ads-builder + policy-reviewer). Pana atunci, orice ALTA eroare e o regresie.
+  const errs = validateAll(files, loadGuardrails()).filter((i) => i.level === 'error' && !/paginile \/p\/ nu mai există/.test(i.msg))
   assert.deepEqual(errs, [])
   for (const f of files) {
     // Dupa ads:apply, YAML-ul are ID-urile din cont; contul simulat aici e gol, deci planul ar
