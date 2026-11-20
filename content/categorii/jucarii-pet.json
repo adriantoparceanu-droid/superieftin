@@ -1,0 +1,43 @@
+{
+  "slug": "jucarii-pet",
+  "intro_md": "Articolele despre jucării pentru câini și pisici: mingi, frânghii, jucării de ros, de pluș sau interactive.\n\n**Mărimea, după talia animalului.** O minge prea mică pentru un câine mare poate fi înghițită. Dimensiunea apare de obicei în denumire, în centimetri.\n\n**Materialul, după felul în care se joacă.** Cauciucul dur rezistă mai bine la ros decât plușul sau sfoara. Pentru pisici, jucăriile care se mișcă sau imită prada le țin ocupate mai mult.\n\nVerifică periodic jucăriile și înlocuiește-le pe cele rupte. Cum lucrăm: [metodologia](/ghiduri/metodologie).",
+  "faq": [
+    {
+      "q": "Ce jucărie e potrivită pentru un câine care roade tot?",
+      "a": "Una din cauciuc dur, de mărimea potrivită taliei lui. Plușul și sfoara se rup repede la câinii care rod mult."
+    },
+    {
+      "q": "Ce jucării aleg pentru o pisică de apartament?",
+      "a": "Jucării interactive, undițe cu pene, mingi mici și tuneluri. Rotește-le din când în când ca să nu se plictisească."
+    },
+    {
+      "q": "Cât de des schimb jucăriile?",
+      "a": "Când se rup sau se desprind bucăți care pot fi înghițite. Verifică-le periodic."
+    }
+  ],
+  "review": {
+    "facts": [
+      {
+        "claim": "Recomandăm doar produse disponibile la magazinele partenere; caracteristicile vin din specificațiile producătorului și fișa magazinului; articolele sunt verificate de un om și revizuite săptămânal; comisionul nu decide ce produse intră în articol",
+        "source_type": "db",
+        "source": "web/src/app/ghiduri/metodologie/page.tsx (reorganizarea din 20.11.2026) + jobul guide-health din worker",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Pagina /c/<temă> arată textul introductiv, articolele din temă și FAQ-ul; fără liste de produse și fără prețuri",
+        "source_type": "db",
+        "source": "CLAUDE.md „Paginile publice ale blogului” + docs/plans/2026-11-20-reorganizare-blog-design.md",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Sfaturile de alegere (ce contează la cumpărare) sunt preluate și scurtate din textul categoriei publicat anterior, fără cifrele live, verdictele de preț și alertele",
+        "source_type": "db",
+        "source": "categories.intro_md / faq pentru „jucarii-pet” pe producție (SELECT, 20.11.2026)",
+        "status": "confirmat"
+      }
+    ],
+    "warnings": [
+      "Text rescris la reorganizarea blogului (20.11.2026): fără marcaje {{cat:…}}, prețuri, mediană, verdicte, alerte sau linkuri spre pagini scoase."
+    ]
+  }
+}

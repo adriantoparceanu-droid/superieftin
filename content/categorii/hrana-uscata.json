@@ -1,0 +1,43 @@
+{
+  "slug": "hrana-uscata",
+  "intro_md": "Articolele despre hrana uscată pentru câini și pisici: cum alegi sortimentul și cum compari corect pachete diferite.\n\n**Întâi animalul, apoi pachetul.** Alege după specie, etapa de viață (junior, adult, senior) și talie, apoi compară produsele care se potrivesc.\n\n**Prețul pe kilogram.** Același sortiment se vinde în gramaje foarte diferite, de la pungi mici la saci mari. Împarte prețul la numărul de kilograme ca să compari corect. Sacul mare iese de regulă mai avantajos pe kilogram, dar merită doar dacă animalul acceptă hrana și o terminați înainte de expirare.\n\nPentru orice întrebare despre dieta unui animal cu probleme de sănătate, întreabă medicul veterinar. Cum lucrăm: [metodologia](/ghiduri/metodologie).",
+  "faq": [
+    {
+      "q": "Cum compar două pachete cu gramaj diferit?",
+      "a": "Împarte prețul pachetului la greutatea lui în kilograme; greutatea apare în denumire. Compară doar produse pentru aceeași specie și aceeași etapă de viață."
+    },
+    {
+      "q": "Merită să cumpăr sacul cel mai mare?",
+      "a": "Doar dacă hrana se consumă înainte de expirare și se păstrează bine închisă, ferită de umezeală. Pentru o hrană nouă, un pachet mic e o alegere mai prudentă."
+    },
+    {
+      "q": "Cum trec animalul pe o hrană nouă?",
+      "a": "Treptat, în câteva zile, amestecând hrana nouă cu cea veche în proporții tot mai mari. Instrucțiunile producătorului de pe ambalaj sunt un bun punct de plecare."
+    }
+  ],
+  "review": {
+    "facts": [
+      {
+        "claim": "Recomandăm doar produse disponibile la magazinele partenere; caracteristicile vin din specificațiile producătorului și fișa magazinului; articolele sunt verificate de un om și revizuite săptămânal; comisionul nu decide ce produse intră în articol",
+        "source_type": "db",
+        "source": "web/src/app/ghiduri/metodologie/page.tsx (reorganizarea din 20.11.2026) + jobul guide-health din worker",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Pagina /c/<temă> arată textul introductiv, articolele din temă și FAQ-ul; fără liste de produse și fără prețuri",
+        "source_type": "db",
+        "source": "CLAUDE.md „Paginile publice ale blogului” + docs/plans/2026-11-20-reorganizare-blog-design.md",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Sfaturile de alegere (ce contează la cumpărare) sunt preluate și scurtate din textul categoriei publicat anterior, fără cifrele live, verdictele de preț și alertele",
+        "source_type": "db",
+        "source": "categories.intro_md / faq pentru „hrana-uscata” pe producție (SELECT, 20.11.2026)",
+        "status": "confirmat"
+      }
+    ],
+    "warnings": [
+      "Text rescris la reorganizarea blogului (20.11.2026): fără marcaje {{cat:…}}, prețuri, mediană, verdicte, alerte sau linkuri spre pagini scoase."
+    ]
+  }
+}

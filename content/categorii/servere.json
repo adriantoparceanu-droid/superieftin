@@ -1,40 +1,32 @@
 {
   "slug": "servere",
-  "intro_md": "Pe această pagină sunt {{cat:produse|server|servere}} disponibile acum la {{cat:lista-magazine}}, de la {{cat:branduri-top}}: servere de rack recondiționate, în special Dell PowerEdge și HP ProLiant, cu procesoare Intel Xeon și memorie ECC, în multe configurații de procesor, memorie și discuri. Prețul median este {{cat:pret-median}}, iar 8 din 10 configurații costă între {{cat:pret-p10}} și {{cat:pret-p90}}. Urmărim prețurile din {{cat:istoric-de-la}}, așa că istoricul e încă scurt: {{cat:cu-mediana|configurație are|configurații au}} deja o mediană pe 30 de zile, iar {{cat:reduceri|configurație are|configurații au}} acum prețul cu cel puțin {{cat:prag}} sub ea.\n\n### Cum alegi un server refurbished\n\n**Formatul.** Serverele de aici sunt de rack; înălțimea se măsoară în unități (U) — de exemplu, Dell PowerEdge R650xs ocupă 1U. Verifică dacă ai un rack cu adâncime suficientă și un loc potrivit pentru el.\n\n**Procesoarele.** Multe configurații au două procesoare Intel Xeon (Silver sau Gold). Contează generația, numărul de nuclee și frecvența, plus licențierea programelor pe care le rulezi, dacă se plătește pe nucleu.\n\n**Memoria.** Serverele de aici folosesc memorie ECC; la cantitățile mari apare și tipul LRDIMM. Compară cantitatea de memorie cu nevoia reală (mașini virtuale, baze de date) — e una dintre cele mai mari diferențe de preț între configurații.\n\n**Discurile.** Numărul de locașuri (bay) și dimensiunea lor (2,5 sau 3,5 inch) arată cât poți extinde. Unele configurații vin „Fara Hard Disk”, altele cu SSD-uri noi; verifică ce intră în preț și ce controler RAID are serverul.\n\n**Garanția.** Durata garanției oferite de magazin e scrisă de obicei în denumire. Verifică pe site-ul magazinului ce acoperă și cum se face înlocuirea pieselor.\n\nPentru stații de lucru puternice, de pus pe birou, vezi [workstation-urile](/c/workstations).\n\n### Cum verifici prețul\n\nPe pagina fiecărei configurații ai graficul prețului; verdictul față de mediana pe 30 de zile apare după ce se adună suficiente înregistrări. La servere, același model apare în zeci de configurații, deci compară configurația exactă. Cum calculăm: [metodologia](/ghiduri/metodologie).",
+  "intro_md": "Articolele despre servere, mai ales servere de rack recondiționate (de exemplu Dell PowerEdge și HP ProLiant) pentru firme mici, laboratoare sau proiecte personale.\n\n**Formatul.** Serverele de rack se măsoară în unități (U): un server 1U e subțire, unul 2U are loc pentru mai multe discuri și răcire mai liniștită. Verifică adâncimea rackului și locul în care va sta, pentru că ventilatoarele fac zgomot.\n\n**Configurația.** Procesoarele Intel Xeon, memoria ECC și controlerul de discuri contează mai mult decât numărul de nuclee luat singur. La „fără hard disk”, discurile se cumpără separat.\n\nRecomandăm doar configurații în stoc la magazinele partenere. Cum lucrăm: [metodologia](/ghiduri/metodologie).",
   "faq": [
     {
       "q": "Merită un server refurbished pentru o firmă mică?",
-      "a": "Un server refurbished oferă procesoare Xeon, memorie ECC și locașuri de discuri la un preț mai mic decât un model nou similar. Merită luat în calcul dacă ai un rack, o cameră tehnică și pe cineva care îl administrează. Verifică generația procesoarelor, garanția și disponibilitatea pieselor de schimb."
+      "a": "Pentru partajare de fișiere, virtualizare sau un server intern, un model recondiționat cu garanție poate fi o alegere bună. Ține cont de zgomot, consumul de curent și spațiul în rack."
     },
     {
-      "q": "Ce înseamnă 1U sau 2U la un server?",
-      "a": "U (rack unit) este unitatea de înălțime folosită la rackurile de 19 inch, egală cu 44,45 mm. Un server 1U, cum e Dell PowerEdge R650xs, e foarte subțire; modelele 2U au de obicei loc pentru mai multe discuri și plăci de extensie. Înainte să cumperi, verifică și adâncimea serverului față de rackul tău."
+      "q": "Ce înseamnă 1U sau 2U?",
+      "a": "U este unitatea de înălțime a rackurilor (1¾ inch). Un server 1U ocupă o unitate, unul 2U două."
     },
     {
-      "q": "Ce e memoria ECC și LRDIMM?",
-      "a": "ECC este memorie care detectează și corectează automat erorile de un bit, standard la servere. LRDIMM (Load-Reduced DIMM) este un tip de memorie înregistrată (registered), care are în plus un buffer pe liniile de date și permite capacități totale de memorie mari. Tipul de memorie e scris în denumirea configurației."
-    },
-    {
-      "q": "Ce înseamnă „Fara Hard Disk” la un server?",
-      "a": "Configurația se vinde fără discuri de stocare: adaugi tu discurile potrivite pentru locașurile serverului. E utilă dacă ai deja discuri sau vrei un anumit tip. Când compari prețuri, pune față în față configurații cu stocare comparabilă."
-    },
-    {
-      "q": "Cum știu dacă prețul unui server e bun?",
-      "a": "Pe pagina configurației vezi graficul prețului și, după ce se adună suficiente înregistrări, verdictul față de mediana pe 30 de zile. „Reducere reală” înseamnă cel puțin {{cat:prag}} sub mediană. Urmărim prețurile serverelor din {{cat:istoric-de-la}}, așa că istoricul e încă scurt."
+      "q": "Ce e memoria ECC?",
+      "a": "Memorie care detectează și corectează erorile de un bit, folosită la servere pentru stabilitate. Verifică tipul cerut de placa de bază (de exemplu RDIMM sau LRDIMM)."
     }
   ],
   "review": {
     "facts": [
       {
-        "claim": "Lista = servere refurbished CITGrup.ro: Dell PowerEdge (R650XS, R740XD), HP ProLiant (DL380 G10, SE326M1), Xeon Silver/Gold, DDR4 ECC / LRDIMM, configurații „Fara Hard Disk”, garanție în denumire",
+        "claim": "Recomandăm doar produse disponibile la magazinele partenere; caracteristicile vin din specificațiile producătorului și fișa magazinului; articolele sunt verificate de un om și revizuite săptămânal; comisionul nu decide ce produse intră în articol",
         "source_type": "db",
-        "source": "SELECT 10.10.2026: 883 produse disponibile, toate CITGrup, tag refurbished; mărci Dell 847, HP 36",
+        "source": "web/src/app/ghiduri/metodologie/page.tsx (reorganizarea din 20.11.2026) + jobul guide-health din worker",
         "status": "confirmat"
       },
       {
-        "claim": "Istoricul serverelor pornește din octombrie 2026 (prima ofertă disponibilă 5.10.2026)",
+        "claim": "Pagina /c/<temă> arată textul introductiv, articolele din temă și FAQ-ul; fără liste de produse și fără prețuri",
         "source_type": "db",
-        "source": "SELECT min(offers.created_at) pe oferte disponibile, categoria servere",
+        "source": "CLAUDE.md „Paginile publice ale blogului” + docs/plans/2026-11-20-reorganizare-blog-design.md",
         "status": "confirmat"
       },
       {
@@ -54,12 +46,16 @@
         "source_type": "web",
         "source": "https://en.wikipedia.org/wiki/Rack_unit ; https://en.wikipedia.org/wiki/Registered_memory (citite 10.10.2026)",
         "status": "confirmat"
+      },
+      {
+        "claim": "Sfaturile de alegere (ce contează la cumpărare) sunt preluate și scurtate din textul categoriei publicat anterior, fără cifrele live, verdictele de preț și alertele",
+        "source_type": "db",
+        "source": "categories.intro_md / faq pentru „servere” pe producție (SELECT, 20.11.2026)",
+        "status": "confirmat"
       }
     ],
     "warnings": [
-      "Istoric foarte scurt (din 5 oct. 2026) și 0 reduceri reale acum — fără secțiune Black Friday și fără link spre /reduceri-reale/servere (ruta există, 200, dar ar arăta doar „cele mai apropiate de prag”).",
-      "Paginile /p/ ale serverelor sunt noindex până la 30 de zile de istoric (regula SEO din 5 oct.); pagina /c/ nu e afectată.",
-      "Corecție după verificarea surselor: LRDIMM redefinit după Wikipedia (Registered memory); scoasă fraza „serverele de rack nu sunt gândite pentru un birou obișnuit” (fără sursă citită)."
+      "Text rescris la reorganizarea blogului (20.11.2026): fără marcaje {{cat:…}}, prețuri, mediană, verdicte, alerte sau linkuri spre pagini scoase."
     ]
   }
 }

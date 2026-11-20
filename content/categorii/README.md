@@ -1,9 +1,13 @@
 # Texte pentru paginile de categorie (`/c/<slug>`)
 
 Textul introductiv și întrebările frecvente ale unei categorii stau în baza de date
-(`categories.intro_md`, `faq`, `content_updated_at` — migrația 030) și apar pe `/c/<slug>` **sub
-lista de produse**, doar pe pagina 1 fără filtre (și doar dacă categoria are produse disponibile).
-Se pot edita din **Admin → Categorii → „text”** sau se pot scrie ca fișiere JSON aici,
+(`categories.intro_md`, `faq`, `content_updated_at` — migrația 030) și apar pe pagina de temă
+`/c/<slug>`: textul introductiv **sus**, apoi articolele din temă, apoi FAQ-ul (reorganizarea
+blogului, 20.11.2026). Textele sunt introduceri de temă: ce găsești în articole, ce contează la
+alegere, trimitere la `/ghiduri/metodologie`. **Fără** prețuri, mediană, „reducere reală”, istoric,
+alerte și fără linkuri spre paginile scoase (`/p/`, `/t/`, `/reduceri-reale`, `/indice`,
+`/cand-sa-cumperi`); marcajele `{{cat:…}}` de mai jos încă trec validarea, dar nu se mai folosesc
+în texte publice (afișează cifre de produse/prețuri). Se pot edita din **Admin → Categorii → „text”** sau se pot scrie ca fișiere JSON aici,
 `content/categorii/<slug>.json`, importate cu `npm run categorii:import`.
 
 Importul face **exact ce face „Salvează” din admin**: aceeași validare, aceleași coloane. Fișierul

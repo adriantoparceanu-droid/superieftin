@@ -1,0 +1,43 @@
+{
+  "slug": "suport-tv",
+  "intro_md": "Articolele despre suporturi TV: de perete (fixe, înclinabile sau articulate), de tavan și standuri mobile.\n\n**Trei lucruri decid dacă un suport se potrivește:** standardul VESA (distanța dintre găurile de prindere din spatele televizorului, de exemplu 200×200 sau 400×400 mm), greutatea maximă suportată și intervalul de diagonale. Le găsești în manualul televizorului și în denumirea suportului.\n\n**Tipul suportului.** Unul fix ține televizorul aproape de perete; unul articulat permite rotirea ecranului, dar îl ține mai departe de perete. Verifică și tipul peretelui și diblurile potrivite.\n\nRecomandăm doar produse în stoc la magazinele partenere. Cum lucrăm: [metodologia](/ghiduri/metodologie).",
+  "faq": [
+    {
+      "q": "Cum aflu ce standard VESA are televizorul meu?",
+      "a": "Din manual sau din specificațiile producătorului. Poți și măsura, în milimetri, distanța dintre găurile de prindere din spatele televizorului, pe orizontală și pe verticală."
+    },
+    {
+      "q": "Suport fix, înclinabil sau articulat?",
+      "a": "Fixul e cel mai discret; înclinabilul ajută dacă televizorul stă sus; articulatul e util când privești din mai multe locuri ale camerei."
+    },
+    {
+      "q": "Ce greutate trebuie să suporte suportul?",
+      "a": "Cel puțin greutatea televizorului fără picior, trecută în specificații, de preferat cu o rezervă."
+    }
+  ],
+  "review": {
+    "facts": [
+      {
+        "claim": "Recomandăm doar produse disponibile la magazinele partenere; caracteristicile vin din specificațiile producătorului și fișa magazinului; articolele sunt verificate de un om și revizuite săptămânal; comisionul nu decide ce produse intră în articol",
+        "source_type": "db",
+        "source": "web/src/app/ghiduri/metodologie/page.tsx (reorganizarea din 20.11.2026) + jobul guide-health din worker",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Pagina /c/<temă> arată textul introductiv, articolele din temă și FAQ-ul; fără liste de produse și fără prețuri",
+        "source_type": "db",
+        "source": "CLAUDE.md „Paginile publice ale blogului” + docs/plans/2026-11-20-reorganizare-blog-design.md",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Sfaturile de alegere (ce contează la cumpărare) sunt preluate și scurtate din textul categoriei publicat anterior, fără cifrele live, verdictele de preț și alertele",
+        "source_type": "db",
+        "source": "categories.intro_md / faq pentru „suport-tv” pe producție (SELECT, 20.11.2026)",
+        "status": "confirmat"
+      }
+    ],
+    "warnings": [
+      "Text rescris la reorganizarea blogului (20.11.2026): fără marcaje {{cat:…}}, prețuri, mediană, verdicte, alerte sau linkuri spre pagini scoase."
+    ]
+  }
+}

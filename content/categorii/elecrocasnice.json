@@ -1,0 +1,37 @@
+{
+  "slug": "elecrocasnice",
+  "intro_md": "Aici găsești articolele despre electrocasnice mici pentru casă: aspiratoare (verticale fără fir, cu sac sau fără sac, cu spălare), accesoriile lor și aparatele pentru îngrijirea părului. Explicăm ce înseamnă specificațiile de pe cutie, cum alegi tipul de aparat după casa ta și ce merită comparat între două modele apropiate.\n\nRecomandăm doar produse pe care magazinele partenere le au în stoc, cu specificațiile verificate în fișa producătorului. Fiecare articol e citit de un om înainte de publicare și revizuit periodic. Cum lucrăm: [metodologia](/ghiduri/metodologie).",
+  "faq": [
+    {
+      "q": "Aspirator vertical fără fir sau aspirator cu fir?",
+      "a": "Verticalul fără fir e comod pentru curățenia de zi cu zi, dar are autonomie și recipient limitate. Un aspirator cu fir, cu sac sau fără sac, se potrivește mai bine suprafețelor mari și covoarelor."
+    },
+    {
+      "q": "Contează puterea în wați scrisă pe cutie?",
+      "a": "Nu se compară direct între aparatele cu fir și cele cu acumulator. La aspiratoarele fără fir, producătorii indică adesea puterea de aspirare în „air watts”, care spune mai mult decât puterea motorului."
+    },
+    {
+      "q": "Ce verific la accesoriile pentru aspirator?",
+      "a": "Compatibilitatea cu modelul exact: filtrele, sacii și periile diferă chiar între modele din aceeași serie. Codul compatibil apare de obicei în denumirea accesoriului."
+    }
+  ],
+  "review": {
+    "facts": [
+      {
+        "claim": "Recomandăm doar produse disponibile la magazinele partenere; caracteristicile vin din specificațiile producătorului și fișa magazinului; articolele sunt verificate de un om și revizuite săptămânal; comisionul nu decide ce produse intră în articol",
+        "source_type": "db",
+        "source": "web/src/app/ghiduri/metodologie/page.tsx (reorganizarea din 20.11.2026) + jobul guide-health din worker",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Pagina /c/<temă> arată textul introductiv, articolele din temă și FAQ-ul; fără liste de produse și fără prețuri",
+        "source_type": "db",
+        "source": "CLAUDE.md „Paginile publice ale blogului” + docs/plans/2026-11-20-reorganizare-blog-design.md",
+        "status": "confirmat"
+      }
+    ],
+    "warnings": [
+      "Text rescris la reorganizarea blogului (20.11.2026): fără marcaje {{cat:…}}, prețuri, mediană, verdicte, alerte sau linkuri spre pagini scoase."
+    ]
+  }
+}

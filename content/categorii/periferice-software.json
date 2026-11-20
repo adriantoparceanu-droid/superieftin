@@ -1,34 +1,32 @@
 {
   "slug": "periferice-software",
-  "intro_md": "Categoria adună {{cat:produse|produs|produse}} disponibile acum la {{cat:lista-magazine}}, de la mărci precum {{cat:branduri-top}}. Este o categorie mixtă: UPS-uri recondiționate cu acumulatori noi, sisteme POS cu ecran tactil, accesorii pentru telefon (curele, portofele MagSafe, suporturi), localizatoare AirTag și SmartTag, stylusuri S Pen, tonere și multifuncționale. Prețul median este {{cat:pret-median}}, iar 8 din 10 produse costă între {{cat:pret-p10}} și {{cat:pret-p90}}; urmărim prețurile din {{cat:istoric-de-la}}, iar acum {{cat:reduceri|produs are|produse au}} prețul cu cel puțin {{cat:prag}} sub mediana pe 30 de zile.\n\n### Cum alegi\n\n**UPS-ul.** Adună puterea în wați a echipamentelor pe care vrei să le ții pornite și compar-o cu puterea în wați a UPS-ului, nu doar cu cea în VA: puterea în wați nu poate depăși valoarea în VA și poate fi mai mică. La UPS-urile recondiționate, denumirea spune dacă acumulatorii sunt noi și ce garanție are produsul.\n\n**Localizatoarele.** AirTag funcționează cu iPhone sau iPad (aplicația Găsire / Find My). Pentru alte localizatoare, verifică pe pagina producătorului cu ce telefoane sunt compatibile.\n\n**Stylusurile și accesoriile pentru telefon.** Un S Pen e făcut pentru anumite modele Galaxy, iar denumirea spune pentru care. La portofelele și suporturile MagSafe, verifică dacă telefonul sau husa ta au magneți compatibili.\n\n**Tonerele.** La un toner, codul imprimantei din denumire trebuie să se potrivească exact cu modelul tău; tonerele compatibile și cele originale au prețuri și randamente (număr de pagini) diferite.\n\nPentru încărcătoare și cabluri, vezi [încărcătoare & cabluri](/c/incarcatoare-cabluri).\n\n### Cum verifici o reducere\n\nPe pagina fiecărui produs ai graficul prețului și verdictul față de mediana pe 30 de zile; „Reducere reală” apare doar la cel puțin {{cat:prag}} sub mediană. Lista de acum: [Reduceri reale la periferice & software](/reduceri-reale/periferice-software); cum calculăm: [metodologia](/ghiduri/metodologie).",
+  "intro_md": "Articolele din tema Periferice & software: UPS-uri, imprimante și multifuncționale, localizatoare (AirTag, SmartTag), stylusuri și accesorii de birou.\n\n**UPS-ul.** Adună puterea în wați a echipamentelor pe care vrei să le ții pornite și compar-o cu puterea în wați a UPS-ului, nu doar cu cea în VA: puterea în wați nu poate depăși valoarea în VA și de obicei e mai mică.\n\n**Localizatoarele.** Alege după telefon: AirTag merge cu iPhone, SmartTag cu telefoanele Samsung.\n\n**Imprimantele.** Pe lângă aparat, uită-te la costul consumabilelor și la câte pagini dă un cartuș sau un toner.\n\nRecomandăm doar produse în stoc la magazinele partenere. Cum lucrăm: [metodologia](/ghiduri/metodologie).",
   "faq": [
     {
       "q": "Ce UPS îmi trebuie pentru calculator?",
-      "a": "Adună puterea în wați a calculatorului, monitorului și a celorlalte echipamente pe care vrei să le ții pornite și alege un UPS a cărui putere în wați o depășește cu o rezervă. Puterea în wați nu depășește valoarea în VA din denumire și poate fi mai mică, așa că verifică în specificații ambele valori. Autonomia depinde de cât consumă echipamentele conectate."
+      "a": "Unul a cărui putere în wați depășește cu o rezervă consumul calculatorului și al monitorului. Autonomia la baterie e de obicei de câteva minute, cât să salvezi și să închizi corect."
     },
     {
       "q": "Care e diferența dintre VA și W la un UPS?",
-      "a": "W (wați) este puterea reală consumată de echipamente; VA (volt-amperi) este puterea aparentă, produsul dintre tensiune și curent. Puterea aparentă nu e niciodată mai mică decât cea reală. Un UPS are ambele limite și niciuna nu trebuie depășită."
+      "a": "VA e puterea aparentă, iar W puterea reală pe care o poate da. Puterea în wați nu depășește niciodată valoarea în VA, așa că pentru dimensionare contează valoarea în wați."
     },
     {
       "q": "Merge AirTag pe un telefon Android?",
-      "a": "Nu: AirTag se configurează și se urmărește cu un iPhone sau iPad, prin aplicația Găsire (Find My). Un telefon Android poate doar să detecteze un AirTag necunoscut din apropiere. Alege localizatorul după telefonul pe care îl ai."
-    },
-    {
-      "q": "Merită un UPS refurbished?",
-      "a": "Un UPS recondiționat poate fi o alternativă la unul nou. Verifică în denumire dacă acumulatorii sunt noi, garanția oferită și dacă puterea în wați acoperă echipamentele tale."
-    },
-    {
-      "q": "Cum știu dacă prețul unui accesoriu e bun?",
-      "a": "Pe pagina produsului vezi verdictul față de mediana ultimelor 30 de zile și graficul prețului. „Reducere reală” înseamnă cel puțin {{cat:prag}} sub mediană. La produsele ieftine, o diferență mică în lei poate trece pragul, așa că uită-te și la grafic."
+      "a": "Nu pentru urmărire: AirTag se folosește cu iPhone sau iPad, prin aplicația Find My. Un telefon Android poate doar detecta un AirTag necunoscut aflat în apropiere."
     }
   ],
   "review": {
     "facts": [
       {
-        "claim": "Conținutul real al categoriei: UPS-uri APC refurbished cu acumulatori noi, sisteme POS ELO Touch, accesorii telefon (curele, portofele MagSafe, suporturi), AirTag, SmartTag2, S Pen, tonere, multifuncționale",
+        "claim": "Recomandăm doar produse disponibile la magazinele partenere; caracteristicile vin din specificațiile producătorului și fișa magazinului; articolele sunt verificate de un om și revizuite săptămânal; comisionul nu decide ce produse intră în articol",
         "source_type": "db",
-        "source": "SELECT nume pe oferte disponibile, categoria periferice-software, 10.10.2026: 124 produse (ITGalaxy 89, CITGrup 35, Vexio 1)",
+        "source": "web/src/app/ghiduri/metodologie/page.tsx (reorganizarea din 20.11.2026) + jobul guide-health din worker",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Pagina /c/<temă> arată textul introductiv, articolele din temă și FAQ-ul; fără liste de produse și fără prețuri",
+        "source_type": "db",
+        "source": "CLAUDE.md „Paginile publice ale blogului” + docs/plans/2026-11-20-reorganizare-blog-design.md",
         "status": "confirmat"
       },
       {
@@ -44,15 +42,14 @@
         "status": "confirmat"
       },
       {
-        "claim": "Verdictul „Reducere reală” = preț cu cel puțin pragul (marcaj {{cat:prag}}) sub mediana pe 30 de zile; prețul tăiat al magazinului nu intră în calcul",
+        "claim": "Sfaturile de alegere (ce contează la cumpărare) sunt preluate și scurtate din textul categoriei publicat anterior, fără cifrele live, verdictele de preț și alertele",
         "source_type": "db",
-        "source": "web/src/lib/discount.ts (REAL_DISCOUNT_PCT), lib/verdict.ts, /ghiduri/metodologie",
+        "source": "categories.intro_md / faq pentru „periferice-software” pe producție (SELECT, 20.11.2026)",
         "status": "confirmat"
       }
     ],
     "warnings": [
-      "Categoria e un amestec (accesorii de telefon ITGalaxy + UPS/POS/tonere CITGrup); textul descrie amestecul real. Dacă accesoriile de telefon se mută într-o categorie proprie, primul paragraf și secțiunile „Localizatoarele”/„Stylusurile” trebuie revizuite.",
-      "Corecție după verificarea surselor: scoasă fraza „acumulatorul e componenta care se uzează”; VA/W reformulat strict după Wikipedia (fără „de obicei semnificativ mai mică”/„60%”); AirTag confirmat pe Wikipedia; fraza despre compatibilitatea SmartTag2 scoasă (fără sursă oficială Samsung, decizia proprietarului 10.10);"
+      "Text rescris la reorganizarea blogului (20.11.2026): fără marcaje {{cat:…}}, prețuri, mediană, verdicte, alerte sau linkuri spre pagini scoase."
     ]
   }
 }

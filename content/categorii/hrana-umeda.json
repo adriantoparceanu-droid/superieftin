@@ -1,0 +1,43 @@
+{
+  "slug": "hrana-umeda",
+  "intro_md": "Articolele despre hrana umedă pentru câini și pisici: conserve, plicuri și caserole.\n\n**Ambalarea face diferența.** Un plic individual și un bax de mai multe bucăți sunt produse separate. Ca să compari, uită-te la gramajul din denumire și la numărul de bucăți, apoi calculează prețul pe 100 g sau pe bucată. Baxurile ies adesea mai avantajos pe bucată, dar verifică pe fiecare produs, nu presupune.\n\n**Potrivirea.** Alege după specie, vârstă și preferințele animalului; un bax mixt ajută să afli ce sortiment îi place.\n\nPentru diete speciale, întreabă medicul veterinar. Cum lucrăm: [metodologia](/ghiduri/metodologie).",
+  "faq": [
+    {
+      "q": "Cum calculez prețul pe bucată la un bax?",
+      "a": "Împarte prețul baxului la numărul de bucăți din denumire. Pentru produse cu gramaje diferite, compară prețul pe 100 g."
+    },
+    {
+      "q": "Pot compara la preț hrana umedă cu hrana uscată?",
+      "a": "Nu direct: hrana umedă conține multă apă, deci la aceeași greutate are mai puțină hrană propriu-zisă. Compară umedă cu umedă și uscată cu uscată."
+    },
+    {
+      "q": "Cât rezistă o conservă deschisă?",
+      "a": "Urmează indicația producătorului de pe ambalaj; de obicei se păstrează acoperită, la frigider, și se consumă în scurt timp."
+    }
+  ],
+  "review": {
+    "facts": [
+      {
+        "claim": "Recomandăm doar produse disponibile la magazinele partenere; caracteristicile vin din specificațiile producătorului și fișa magazinului; articolele sunt verificate de un om și revizuite săptămânal; comisionul nu decide ce produse intră în articol",
+        "source_type": "db",
+        "source": "web/src/app/ghiduri/metodologie/page.tsx (reorganizarea din 20.11.2026) + jobul guide-health din worker",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Pagina /c/<temă> arată textul introductiv, articolele din temă și FAQ-ul; fără liste de produse și fără prețuri",
+        "source_type": "db",
+        "source": "CLAUDE.md „Paginile publice ale blogului” + docs/plans/2026-11-20-reorganizare-blog-design.md",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Sfaturile de alegere (ce contează la cumpărare) sunt preluate și scurtate din textul categoriei publicat anterior, fără cifrele live, verdictele de preț și alertele",
+        "source_type": "db",
+        "source": "categories.intro_md / faq pentru „hrana-umeda” pe producție (SELECT, 20.11.2026)",
+        "status": "confirmat"
+      }
+    ],
+    "warnings": [
+      "Text rescris la reorganizarea blogului (20.11.2026): fără marcaje {{cat:…}}, prețuri, mediană, verdicte, alerte sau linkuri spre pagini scoase."
+    ]
+  }
+}

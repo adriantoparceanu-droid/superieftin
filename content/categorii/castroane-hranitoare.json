@@ -1,36 +1,32 @@
 {
   "slug": "castroane-hranitoare",
-  "intro_md": "În categoria Castroane & hrănitoare sunt {{cat:produse|produs|produse}} pentru câini și pisici, disponibile acum la {{cat:lista-magazine}}: castroane din inox, plastic, ceramică sau silicon, castroane duble și cu suport, castroane de hrănire lentă, fântâni și dozatoare de apă, hrănitoare și adăpătoare, recipiente de apă pentru drum. Prețul median al unui produs este {{cat:pret-median}}, iar 8 din 10 costă între {{cat:pret-p10}} și {{cat:pret-p90}}. Pentru fiecare produs păstrăm istoricul prețului și îl comparăm cu mediana pe 30 de zile; la ultima actualizare, {{cat:reduceri|produs îndeplinea|produse îndeplineau}} condiția de „Reducere reală”.\n\n### Cum alegi\n\n- **Capacitatea și diametrul:** sunt trecute în denumire (de exemplu „0,75 l / 16 cm”). Alege-le după talia animalului și după cât de des poți umple castronul.\n- **Materialul:** inoxul și ceramica se spală ușor și nu se zgârie repede; plasticul e mai ușor și mai ieftin; silicon pliabil găsești la castroanele de drum, care se strâng în bagaj.\n- **Stabilitatea:** dacă animalul împinge castronul prin casă, caută variante cu bază antiderapantă, cu greutate sau cu suport. Un covoraș sub castron ține podeaua curată.\n- **Castroanele de hrănire lentă** au forme în relief care îl obligă pe câine sau pe pisică să scoată mâncarea pe rând, așa că mănâncă mai încet.\n- **Fântânile și dozatoarele** țin o rezervă de apă sau de hrană uscată; compară capacitatea în litri și, la fântâni, prețul filtrelor de schimb.\n\nHrana o găsești în [hrană uscată](/c/hrana-uscata) și [hrană umedă](/c/hrana-umeda), iar restul produselor pentru câini și pisici în [Animale de companie](/c/animale-de-companie). Pentru păsări și rozătoare, hrănitoarele și adăpătoarele sunt în [Păsări](/c/pasari) și [Rozătoare](/c/rozatoare).\n\n### Prețuri și istoric\n\nUrmărim prețurile din această categorie din {{cat:istoric-de-la}}. Pe pagina fiecărui produs vezi prețul de azi, graficul și, când există destule înregistrări, comparația cu mediana pe 30 de zile. Cum calculăm verdictul afli din [metodologie](/ghiduri/metodologie).",
+  "intro_md": "Articolele despre castroane, fântâni de apă și hrănitoare pentru câini și pisici.\n\n**Capacitatea și diametrul** sunt trecute în denumire. Alege-le după talia animalului și după cât de des poți umple castronul.\n\n**Materialul.** Inoxul și ceramica se spală ușor și nu se zgârie repede; plasticul e ușor și ieftin, dar se zgârie în timp.\n\n**Tipuri speciale.** Castroanele de hrănire lentă au un relief care face animalul să mănânce mai încet. Fântânile de apă mențin apa în mișcare și au filtre care se schimbă periodic — ține cont și de costul lor.\n\nCum lucrăm: [metodologia](/ghiduri/metodologie).",
   "faq": [
     {
       "q": "Castron din inox, ceramică sau plastic?",
-      "a": "Inoxul și ceramica se spală ușor și rezistă mult, dar ceramica se poate sparge dacă e scăpată pe jos. Plasticul e cel mai ușor și mai ieftin, dar se zgârie în timp. Dacă animalul mută castronul, alege un model cu bază antiderapantă sau cu suport."
-    },
-    {
-      "q": "Ce mărime de castron îmi trebuie?",
-      "a": "Uită-te la capacitatea în litri și la diametrul în centimetri, trecute în denumire, și alege după talia animalului. Dacă nu ești acasă toată ziua, un castron de apă mai încăpător sau o fântână te scutește să îl umpli des."
+      "a": "Inoxul și ceramica sunt mai ușor de igienizat și mai rezistente. Plasticul e potrivit pentru drum sau ca soluție temporară."
     },
     {
       "q": "Ce este un castron de hrănire lentă?",
-      "a": "Este un castron cu forme în relief sau cu labirint, din care animalul scoate mâncarea pe rând, deci mănâncă mai încet decât dintr-un castron simplu. Îl găsești căutând „hrănire lentă” sau „interactiv” în denumire."
+      "a": "Un castron cu labirint sau relief, care obligă animalul să mănânce mai încet. E util la animalele care înghit hrana foarte repede."
     },
     {
-      "q": "De unde vin prețurile la castroane și hrănitoare?",
-      "a": "Din ofertele publicate de {{cat:lista-magazine}}, preluate automat în fiecare zi. „Reducere reală” apare doar când prețul de azi e cu cel puțin {{cat:prag}} sub mediana pe 30 de zile a produsului."
+      "q": "Ce verific la o fântână de apă?",
+      "a": "Capacitatea, zgomotul pompei, cât de ușor se demontează pentru spălare și cât de des trebuie schimbat filtrul."
     }
   ],
   "review": {
     "facts": [
       {
-        "claim": "Categoria conține castroane din inox, plastic, silicon pliabil, castroane duble și cu suport, antiderapante, de hrănire lentă, fântâni, dozatoare, hrănitoare/adăpătoare, recipiente de apă portabile",
+        "claim": "Recomandăm doar produse disponibile la magazinele partenere; caracteristicile vin din specificațiile producătorului și fișa magazinului; articolele sunt verificate de un om și revizuite săptămânal; comisionul nu decide ce produse intră în articol",
         "source_type": "db",
-        "source": "products.feed_category: Castroane Inox 86, Castroane Plastic 56, Hranitoare - Adapatoare 50, Hranitoare - Adapatori-Pisici 19, Hranitoare/dozatoare 4; cuvinte în products.name: antiderapant 38, hranire lenta 14, fantana 11, dispenser 10, pliabil 6, silicon 6, dublu 11, suport 12 (SELECT 10.10.2026)",
+        "source": "web/src/app/ghiduri/metodologie/page.tsx (reorganizarea din 20.11.2026) + jobul guide-health din worker",
         "status": "confirmat"
       },
       {
-        "claim": "Capacitatea și diametrul apar în denumire",
+        "claim": "Pagina /c/<temă> arată textul introductiv, articolele din temă și FAQ-ul; fără liste de produse și fără prețuri",
         "source_type": "db",
-        "source": "products.name: „Castron Plastic cu Greutate Antiderapant 0.75 l/16 cm”, „Castron Pliabil Din Silicon 2 l/22 cm”, „Castron Inox Dublu 2x0.9 l/16 cm cu Suport”",
+        "source": "CLAUDE.md „Paginile publice ale blogului” + docs/plans/2026-11-20-reorganizare-blog-design.md",
         "status": "confirmat"
       },
       {
@@ -38,13 +34,16 @@
         "source_type": "web",
         "source": "https://sodapup.com/blogs/enrichment/what-is-a-slow-feeder-bowl-benefits-types-how-to-choose",
         "status": "confirmat"
+      },
+      {
+        "claim": "Sfaturile de alegere (ce contează la cumpărare) sunt preluate și scurtate din textul categoriei publicat anterior, fără cifrele live, verdictele de preț și alertele",
+        "source_type": "db",
+        "source": "categories.intro_md / faq pentru „castroane-hranitoare” pe producție (SELECT, 20.11.2026)",
+        "status": "confirmat"
       }
     ],
     "warnings": [
-      "Castroanele ceramice (~57) sunt mapate greșit în acvaristica (feed_category „Castroane Ceramice”); după remapare apar aici. Textul menționează ceramica, care e un material real în ofertă (ex. castroane Trixie, Pet's Home).",
-      "Hrănitoarele automate (feed_category „Hranitoare Automate”, 6) sunt mapate în culcusuri-transport — ar trebui mutate aici.",
-      "Un singur magazin (petmart.ro); products.brand NULL → {{cat:branduri-top}} nefolosit.",
-      "Istoricul începe pe 3 oct. 2026."
+      "Text rescris la reorganizarea blogului (20.11.2026): fără marcaje {{cat:…}}, prețuri, mediană, verdicte, alerte sau linkuri spre pagini scoase."
     ]
   }
 }

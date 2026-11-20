@@ -1,0 +1,43 @@
+{
+  "slug": "componente-pc-server",
+  "intro_md": "Articolele despre componente pentru calculatoare și servere: procesoare, SSD-uri și HDD-uri, surse, controlere și echipamente de rack.\n\n**Compatibilitatea, întâi.** Socketul procesorului trebuie să se potrivească cu placa de bază, interfața discurilor (SATA, SAS, NVMe) cu controlerul, iar formatul (2,5 sau 3,5 inch) cu locașul. La rackuri contează înălțimea în unități (U) și adâncimea.\n\n**Procesoarele „Tray”.** Vin fără cutie și, de regulă, fără cooler — îl cumperi separat.\n\nRecomandăm doar produse în stoc la magazinele partenere, cu specificațiile verificate la producător. Cum lucrăm: [metodologia](/ghiduri/metodologie).",
+  "faq": [
+    {
+      "q": "Ce înseamnă „Tray” la un procesor?",
+      "a": "Procesorul e vândut fără cutia de retail și, de regulă, fără cooler. Garanția poate fi diferită față de varianta „Box”; verifică la magazin."
+    },
+    {
+      "q": "HDD SAS sau SATA?",
+      "a": "SAS e interfața de servere, cu controlere dedicate; SATA e cea obișnuită în calculatoare. Un disc SAS nu merge pe un port SATA, invers de obicei da, pe un controler SAS."
+    },
+    {
+      "q": "Ce înseamnă 1U sau 22U la echipamentele de rack?",
+      "a": "U este unitatea de înălțime a rackurilor. Un echipament de 1U ocupă o unitate; un dulap de 22U are loc pentru 22 de unități."
+    }
+  ],
+  "review": {
+    "facts": [
+      {
+        "claim": "Recomandăm doar produse disponibile la magazinele partenere; caracteristicile vin din specificațiile producătorului și fișa magazinului; articolele sunt verificate de un om și revizuite săptămânal; comisionul nu decide ce produse intră în articol",
+        "source_type": "db",
+        "source": "web/src/app/ghiduri/metodologie/page.tsx (reorganizarea din 20.11.2026) + jobul guide-health din worker",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Pagina /c/<temă> arată textul introductiv, articolele din temă și FAQ-ul; fără liste de produse și fără prețuri",
+        "source_type": "db",
+        "source": "CLAUDE.md „Paginile publice ale blogului” + docs/plans/2026-11-20-reorganizare-blog-design.md",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Sfaturile de alegere (ce contează la cumpărare) sunt preluate și scurtate din textul categoriei publicat anterior, fără cifrele live, verdictele de preț și alertele",
+        "source_type": "db",
+        "source": "categories.intro_md / faq pentru „componente-pc-server” pe producție (SELECT, 20.11.2026)",
+        "status": "confirmat"
+      }
+    ],
+    "warnings": [
+      "Text rescris la reorganizarea blogului (20.11.2026): fără marcaje {{cat:…}}, prețuri, mediană, verdicte, alerte sau linkuri spre pagini scoase."
+    ]
+  }
+}

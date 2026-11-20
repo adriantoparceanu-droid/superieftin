@@ -1,30 +1,34 @@
 {
   "slug": "monitoare",
-  "intro_md": "Pe această pagină sunt {{cat:produse|monitor|monitoare}} cu ofertă disponibilă acum la {{cat:lista-magazine}}, cel mai des de la {{cat:branduri-top}}. Prețul median este {{cat:pret-median}}, iar 8 din 10 monitoare costă între {{cat:pret-p10}} și {{cat:pret-p90}}. Pentru fiecare monitor înregistrăm prețul zilnic și îl comparăm cu mediana ultimelor 30 de zile; la momentul actualizării, {{cat:reduceri|monitor are|monitoare au}} prețul cu cel puțin {{cat:prag}} sub mediană.\n\n### Cum alegi un monitor\n\n**Diagonala și rezoluția.** Merg împreună: la aceeași rezoluție, un ecran mai mare are pixeli mai mari și textul arată mai puțin clar. Combinațiile întâlnite des sunt Full HD la 24 inch, QHD (2560 × 1440) la 27 inch și 4K la 27–32 inch.\n\n**Rata de reîmprospătare.** Pentru birou ajung 60–75 Hz; pentru jocuri, 144 Hz sau mai mult fac mișcarea mai fluidă, cu condiția ca placa video să scoată atâtea cadre.\n\n**Tipul panoului.** IPS are unghiuri de vizionare largi și culori constante; VA are contrast mai mare, potrivit într-o cameră întunecată; OLED are negru complet, dar elementele statice ținute ore întregi pe ecran (bara de activități, tabele) pot lăsa urme permanente.\n\n**Conectorii.** Verifică ce porturi are calculatorul: HDMI, DisplayPort sau USB-C. Un monitor cu USB-C și Power Delivery poate primi imaginea și încărca laptopul pe același cablu — uită-te la puterea în wați din specificații.\n\n**Ergonomia.** Reglajul pe înălțime, pivotul și prinderea VESA contează dacă stai multe ore la birou.\n\n### Monitoare refurbished și second hand\n\nO parte din monitoare sunt recondiționate sau second hand, marcate cu eticheta corespunzătoare ([Refurbished](/t/refurbished), [Second Hand](/t/second-hand)). La ele verifică pe site-ul magazinului garanția și ce spune vânzătorul despre starea ecranului (pixeli morți, zgârieturi).\n\n### Black Friday 2026: cum verifici o reducere\n\nPe pagina fiecărui monitor ai graficul prețului și verdictul față de mediana pe 30 de zile; prețul tăiat al magazinului nu intră în calcul. Lista de acum e la [Reduceri reale la monitoare](/reduceri-reale/monitoare), pașii sunt în [Black Friday 2026: cum verifici dacă o reducere e reală](/ghiduri/reduceri-reale-black-friday-cum-verifici), iar calculul în [metodologia](/ghiduri/metodologie).",
+  "intro_md": "Articolele despre monitoare pentru birou, gaming și lucru cu imagine: ce diagonală, rezoluție, rată de reîmprospătare și tip de panou să alegi.\n\n**Diagonala și rezoluția merg împreună.** La aceeași rezoluție, un ecran mai mare are pixeli mai mari și textul arată mai puțin clar. Combinații des întâlnite: Full HD la 24 inch, QHD la 27 inch și 4K la 27–32 inch.\n\n**Rata de reîmprospătare.** Pentru birou ajunge o rată obișnuită; pentru jocuri, 144 Hz sau mai mult fac mișcarea mai fluidă, dacă placa video ține pasul.\n\n**Conectarea.** Un port USB-C cu Power Delivery poate alimenta laptopul pe același cablu.\n\nCum lucrăm: [metodologia](/ghiduri/metodologie).",
   "faq": [
     {
-      "q": "Ce monitor să iau pentru birou?",
-      "a": "Pentru documente, tabele și browser, un monitor IPS de 24 inch Full HD sau de 27 inch QHD, la 60–75 Hz, e o alegere comună. Contează mai mult reglajul pe înălțime și porturile potrivite cu laptopul sau calculatorul tău decât rata de reîmprospătare. Dacă lucrezi pe laptop, un monitor cu USB-C și Power Delivery reduce cablurile la unul singur."
+      "q": "Ce monitor iau pentru birou?",
+      "a": "Un panou IPS de 24 sau 27 inch, cu rezoluție potrivită diagonalei și, dacă lucrezi pe laptop, un port USB-C cu alimentare. Un suport reglabil pe înălțime ajută la o poziție corectă."
     },
     {
       "q": "Câți Hz trebuie să aibă un monitor de gaming?",
-      "a": "Pentru jocuri, 144 Hz sau mai mult face mișcarea vizibil mai fluidă decât 60 Hz. Beneficiul apare doar dacă placa video scoate atâtea cadre pe secundă în jocurile tale, așa că alege rata de reîmprospătare împreună cu placa video și cu rezoluția."
+      "a": "Cel puțin 144 Hz pentru o mișcare fluidă, cu condiția ca placa video să scoată atâtea cadre pe secundă în jocurile tale."
     },
     {
-      "q": "IPS, VA sau OLED: ce panou e mai bun?",
-      "a": "Depinde de folosire. IPS are unghiuri de vizionare largi și culori constante, bun pentru birou și editare foto; VA are contrast mai mare, potrivit pentru filme într-o cameră întunecată; OLED are negru complet și răspuns foarte rapid, dar elementele statice afișate ore în șir pot lăsa urme permanente."
-    },
-    {
-      "q": "Merită un monitor refurbished sau second hand?",
-      "a": "Poate fi o variantă de comparat cu unul nou, mai ales pentru un al doilea ecran la birou. Verifică garanția oferită de magazin, ce spune vânzătorul despre starea ecranului și porturile disponibile, apoi compară prețul cu un monitor nou de aceeași diagonală și rezoluție."
-    },
-    {
-      "q": "Cum știu dacă prețul unui monitor e bun acum?",
-      "a": "Pe pagina monitorului vezi verdictul față de mediana ultimelor 30 de zile și graficul prețului. „Reducere reală” înseamnă cel puțin {{cat:prag}} sub mediană; „Preț obișnuit” înseamnă aproape de ea. Poți seta și o alertă de preț, ca să fii anunțat când monitorul ajunge la suma dorită."
+      "q": "IPS, VA sau OLED?",
+      "a": "IPS are unghiuri de vizionare bune și culori constante; VA are contrast mai mare, util într-o cameră întunecată; OLED are negru complet, dar elementele statice afișate mult timp pot lăsa urme (burn-in)."
     }
   ],
   "review": {
     "facts": [
+      {
+        "claim": "Recomandăm doar produse disponibile la magazinele partenere; caracteristicile vin din specificațiile producătorului și fișa magazinului; articolele sunt verificate de un om și revizuite săptămânal; comisionul nu decide ce produse intră în articol",
+        "source_type": "db",
+        "source": "web/src/app/ghiduri/metodologie/page.tsx (reorganizarea din 20.11.2026) + jobul guide-health din worker",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Pagina /c/<temă> arată textul introductiv, articolele din temă și FAQ-ul; fără liste de produse și fără prețuri",
+        "source_type": "db",
+        "source": "CLAUDE.md „Paginile publice ale blogului” + docs/plans/2026-11-20-reorganizare-blog-design.md",
+        "status": "confirmat"
+      },
       {
         "claim": "IPS: unghiuri de vizionare mai bune; VA: contrast mai mare, potrivit în cameră întunecată",
         "source_type": "web",
@@ -44,27 +48,14 @@
         "status": "confirmat"
       },
       {
-        "claim": "Combinații uzuale: Full HD la 24 inch, QHD la 27 inch, 4K la 27–32 inch; la aceeași rezoluție, ecran mai mare = pixeli mai mari",
+        "claim": "Sfaturile de alegere (ce contează la cumpărare) sunt preluate și scurtate din textul categoriei publicat anterior, fără cifrele live, verdictele de preț și alertele",
         "source_type": "db",
-        "source": "calcul densitate: 24 inch FHD ≈ 92 ppi, 27 inch QHD ≈ 109 ppi, 27 inch FHD ≈ 82 ppi (geometrie, nu afirmație de produs)",
-        "status": "confirmat"
-      },
-      {
-        "claim": "Eticheta „Refurbished” / „Second Hand” e tag filtrabil, cu pagini /t/refurbished și /t/second-hand",
-        "source_type": "db",
-        "source": "tabela tags (refurbished, second-hand) + ruta web/src/app/t/[slug]; ambele răspund 200 pe producție (10.10.2026)",
-        "status": "confirmat"
-      },
-      {
-        "claim": "Verdictul „Reducere reală” = preț cu cel puțin pragul (marcaj {{cat:prag}}) sub mediana pe 30 de zile; prețul tăiat al magazinului nu intră în calcul",
-        "source_type": "db",
-        "source": "web/src/lib/discount.ts (REAL_DISCOUNT_PCT), lib/verdict.ts, /ghiduri/metodologie",
+        "source": "categories.intro_md / faq pentru „monitoare” pe producție (SELECT, 20.11.2026)",
         "status": "confirmat"
       }
     ],
     "warnings": [
-      "Istoric-de-la și lista de magazine nu sunt folosite în primul paragraf ca să nu depindă de produsele mapate greșit; după reparare se poate adăuga {{cat:istoric-de-la}}.",
-      "Categoria reparată pe 10.10.2026: migrația 034 a scos workstation-urile și calculatoarele All in One; regula feed CITGrup „microsoft refurbished” → monitoare (267, noi, fără tag); 99 de monitoare evomag mutate din desktop-uri (din regula după denumire nr. 1 s-a scos termenul „monitor”). Azi: 372 de monitoare în stoc."
+      "Text rescris la reorganizarea blogului (20.11.2026): fără marcaje {{cat:…}}, prețuri, mediană, verdicte, alerte sau linkuri spre pagini scoase."
     ]
   }
 }
