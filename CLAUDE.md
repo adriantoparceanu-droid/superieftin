@@ -31,6 +31,8 @@ cd worker && npm run ads:guard      # garda: verifică landing-urile grupurilor 
 cd worker && npm run seo:index-report    # DOAR citire: câte /p/ sunt indexabile (regula veche vs „are poveste”), pe motive/categorii, variante canonical-izate
 cd worker && npm run event-tracker:now   # tracker evenimente (Black Friday): referință înghețată + agregatele zilei (rulează și singur după snapshot)
 cd worker && npm run price-index:now -- [--month=YYYY-MM] [--retro] [--draft] [--timing-only|--no-timing]   # indicele lunar + „Când să cumperi”
+cd worker && npm run cercetare -- --tema=<slug> [--buget=N] [--limit=N] [--reduceri] [--json]   # DOAR citire: candidați pt. articole (temă + subcategorii, fără Sănătate/farmacie vet.) — cel mai ieftin magazin partener (disponibil + afiliat, `lib/best-offer.ts`), mediană/min/max 30 z, min 90 z, nr. magazine
+cd worker && npm run guide-health:now [-- --telegram]   # verificarea articolelor publicate (produs fără ofertă cu afiliat, preț peste „sub N lei” din titlu, > 90 z neactualizat); jobul BullMQ `guide-health` o rulează luni 07:30 (`GUIDE_HEALTH_CRON`, Europe/Bucharest) și trimite Telegram doar la probleme; nu modifică nimic
 
 # Scraping eMAG → producție (WAF-ul eMAG blochează IP-ul VPS/datacenter cu 511):
 #   1. în .env local: EMAG_FETCH=playwright   (o dată: cd worker && npx playwright install chromium)
