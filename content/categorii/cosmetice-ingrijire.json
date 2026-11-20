@@ -1,0 +1,45 @@
+{
+  "slug": "cosmetice-ingrijire",
+  "intro_md": "Articolele despre cosmetice naturale: săpunuri solide și lichide, șampoane și balsamuri, uleiuri cosmetice, deodorante și creme.\n\nLe alegem după ce scrie pe ambalaj: lista de ingrediente (INCI), cu sau fără parfum, gramajul și tipul de ambalaj. Pe eticheta unui săpun, de exemplu, uleiul de măsline apare ca „sodium olivate”, cel de cocos ca „sodium cocoate”, iar cel de palmier ca „sodium palmate”. Nu scriem despre efecte asupra pielii sau a părului.\n\nNu recomandăm suplimente sau medicamente și nu facem afirmații de sănătate — pentru acestea, întreabă medicul sau farmacistul. Pentru o problemă de piele, întreabă medicul dermatolog. Cum lucrăm: [metodologia](/ghiduri/metodologie).",
+  "faq": [
+    {
+      "q": "Cum citesc lista de ingrediente a unui cosmetic?",
+      "a": "Ingredientele sunt trecute în ordinea cantității, de la cel mai mult la cel mai puțin. Parfumul apare de obicei ca „parfum”."
+    },
+    {
+      "q": "Cum compar prețul a două produse?",
+      "a": "Împarte prețul la gramaj sau la mililitri. Calupurile de săpun și flacoanele de șampon au cantități diferite."
+    },
+    {
+      "q": "Recomandați produse pentru o problemă de piele?",
+      "a": "Nu. Alegem după ingrediente, parfum și preț. Pentru o problemă de piele, întreabă medicul dermatolog sau farmacistul."
+    }
+  ],
+  "review": {
+    "facts": [
+      {
+        "claim": "Recomandăm doar produse disponibile la magazinele partenere; caracteristicile vin din specificațiile producătorului și fișa magazinului; articolele sunt verificate de un om; comisionul nu decide ce produse intră în articol",
+        "source_type": "db",
+        "source": "web/src/app/ghiduri/metodologie/page.tsx (reorganizarea din 20.11.2026)",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Pe blog, în tema Sănătate & Naturale scriem doar despre produse ne-medicale (cosmetice, ceaiuri și alimente ca atare, produse eco pentru casă); fără suplimente, vitamine, medicamente și fără afirmații de sănătate",
+        "source_type": "db",
+        "source": "decizia proprietarului, 20.11.2026 (brief-ul agentului de conținut)",
+        "status": "confirmat"
+      },
+      {
+        "claim": "INCI: sodium olivate = săpun din ulei de măsline, sodium cocoate = cocos, sodium palmate = palmier; ingredientele se listează în ordinea descrescătoare a cantității",
+        "source_type": "web",
+        "source": "https://incidecoder.com/ingredients/sodium-palmate",
+        "status": "confirmat",
+        "note": "Proprietarul: confirmă pe pagină înainte de import."
+      }
+    ],
+    "warnings": [
+      "Text nou (categoria nu avea text pe producție la 20.11.2026). Validatorul curent refuză categoriile din Sănătate & Naturale — importul așteaptă validatorul nou (alt agent).",
+      "Fără marcaje {{cat:…}}, prețuri, verdicte sau linkuri spre pagini scoase (reorganizarea blogului)."
+    ]
+  }
+}

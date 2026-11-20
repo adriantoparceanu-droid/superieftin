@@ -1,0 +1,45 @@
+{
+  "slug": "alimente-bio",
+  "intro_md": "Articolele despre alimente bio și naturale: uleiuri pentru bucătărie, făinuri, semințe și nuci, fulgi și cereale, paste, orez și leguminoase, gustări și băuturi.\n\nLe alegem după folosire (la rece sau la cald, pentru copt sau pentru salate), după ingrediente și după prețul pe kilogram sau pe litru. Mențiuni ca „fără gluten”, „vegan” sau „fără zahăr adăugat” le scriem doar dacă apar pe etichetă sau pe pagina producătorului, ca informație, nu ca promisiune.\n\nNu recomandăm suplimente sau medicamente și nu facem afirmații de sănătate — pentru acestea, întreabă medicul sau farmacistul. Cum lucrăm: [metodologia](/ghiduri/metodologie).",
+  "faq": [
+    {
+      "q": "Cum compar prețul a două sticle de ulei sau a două pungi de făină?",
+      "a": "Împarte prețul la volum sau la gramaj. Ambalajele mici ies adesea mai scumpe pe litru sau pe kilogram."
+    },
+    {
+      "q": "Ce înseamnă ulei „extravirgin” sau „presat la rece”?",
+      "a": "„Extravirgin” e o categorie de ulei de măsline obținut doar prin procedee mecanice. „Presat la rece” și „virgin” arată că uleiul nu a fost rafinat. Detaliile sunt pe etichetă."
+    },
+    {
+      "q": "Scrieți despre beneficiile alimentelor pentru sănătate?",
+      "a": "Nu. Scriem despre gust, folosire, ingrediente și preț. Pentru alimentație și sănătate, întreabă medicul."
+    }
+  ],
+  "review": {
+    "facts": [
+      {
+        "claim": "Recomandăm doar produse disponibile la magazinele partenere; caracteristicile vin din specificațiile producătorului și fișa magazinului; articolele sunt verificate de un om; comisionul nu decide ce produse intră în articol",
+        "source_type": "db",
+        "source": "web/src/app/ghiduri/metodologie/page.tsx (reorganizarea din 20.11.2026)",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Pe blog, în tema Sănătate & Naturale scriem doar despre produse ne-medicale (cosmetice, ceaiuri și alimente ca atare, produse eco pentru casă); fără suplimente, vitamine, medicamente și fără afirmații de sănătate",
+        "source_type": "db",
+        "source": "decizia proprietarului, 20.11.2026 (brief-ul agentului de conținut)",
+        "status": "confirmat"
+      },
+      {
+        "claim": "„Extravirgin” = categorie a uleiului de măsline obținut doar prin procedee mecanice (legislația UE)",
+        "source_type": "web",
+        "source": "https://eur-lex.europa.eu/legal-content/RO/TXT/?uri=CELEX:32022R2104",
+        "status": "confirmat",
+        "note": "Regulamentul delegat (UE) 2022/2104; proprietarul: confirmă formularea înainte de import."
+      }
+    ],
+    "warnings": [
+      "Text nou (categoria nu avea text pe producție la 20.11.2026). Validatorul curent refuză categoriile din Sănătate & Naturale — importul așteaptă validatorul nou (alt agent).",
+      "Fără marcaje {{cat:…}}, prețuri, verdicte sau linkuri spre pagini scoase (reorganizarea blogului)."
+    ]
+  }
+}

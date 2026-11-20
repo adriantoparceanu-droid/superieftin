@@ -1,0 +1,45 @@
+{
+  "slug": "miere-apicole",
+  "intro_md": "Articolele despre miere: de salcâm, tei, castan, hrișcă și polifloră, crudă sau nu, bio sau nu.\n\nO alegem după gust și consistență: mierea de salcâm e blândă și rămâne lichidă mult timp, cea de castan și cea de hrișcă au gust puternic, iar cea polifloră diferă de la un lot la altul. Cuvintele „crudă” și „bio” le scriem doar unde apar în denumirea produsului. Comparăm prețul pe kilogram, pentru că borcanele au gramaje diferite.\n\nNu scriem despre polen, păstură sau miere de Manuka, care se vând de obicei cu afirmații de sănătate.\n\nNu recomandăm suplimente sau medicamente și nu facem afirmații de sănătate — pentru acestea, întreabă medicul sau farmacistul. Cum lucrăm: [metodologia](/ghiduri/metodologie).",
+  "faq": [
+    {
+      "q": "De ce s-a zaharisit mierea?",
+      "a": "Cristalizarea e un proces natural la mierea naturală. Ca să o faci din nou lichidă, ține borcanul în apă caldă, nu fierbinte."
+    },
+    {
+      "q": "Cum compar prețul a două borcane?",
+      "a": "Împarte prețul la gramaj. Un borcan mai ieftin la raft poate ieși mai scump pe kilogram."
+    },
+    {
+      "q": "Scrieți despre polen sau miere de Manuka?",
+      "a": "Nu. Acestea se vând de obicei cu afirmații de sănătate, pe care nu le facem. Pentru întrebări de sănătate, întreabă medicul sau farmacistul."
+    }
+  ],
+  "review": {
+    "facts": [
+      {
+        "claim": "Recomandăm doar produse disponibile la magazinele partenere; caracteristicile vin din specificațiile producătorului și fișa magazinului; articolele sunt verificate de un om; comisionul nu decide ce produse intră în articol",
+        "source_type": "db",
+        "source": "web/src/app/ghiduri/metodologie/page.tsx (reorganizarea din 20.11.2026)",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Pe blog, în tema Sănătate & Naturale scriem doar despre produse ne-medicale (cosmetice, ceaiuri și alimente ca atare, produse eco pentru casă); fără suplimente, vitamine, medicamente și fără afirmații de sănătate",
+        "source_type": "db",
+        "source": "decizia proprietarului, 20.11.2026 (brief-ul agentului de conținut)",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Mierea de salcâm cristalizează mai lent decât cea polifloră; mierea de castan e mai închisă la culoare",
+        "source_type": "web",
+        "source": "https://adevarul.ro/stiri-locale/satu-mare/cum-sa-deosebesti-mierea-naturala-de-una-cu-1877784.html",
+        "status": "confirmat",
+        "note": "Găsit prin căutare (adevarul.ro / evz.ro / infocons.ro); proprietarul: confirmă pe pagină înainte de import. Gustul puternic al hrișcii/castanului — fapt general de gust."
+      }
+    ],
+    "warnings": [
+      "Text nou (categoria nu avea text pe producție la 20.11.2026). Validatorul curent refuză categoriile din Sănătate & Naturale — importul așteaptă validatorul nou (alt agent).",
+      "Fără marcaje {{cat:…}}, prețuri, verdicte sau linkuri spre pagini scoase (reorganizarea blogului)."
+    ]
+  }
+}

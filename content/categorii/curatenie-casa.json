@@ -1,0 +1,44 @@
+{
+  "slug": "curatenie-casa",
+  "intro_md": "Articolele despre produse eco pentru casă: detergenți de rufe și de vase, soluții de curățat pentru baie, bucătărie și geamuri, acid citric și sodă, bureți și lavete.\n\nLe alegem după folosire, după ce scrie pe etichetă (cu sau fără parfum, „ecologic” doar dacă o spune producătorul) și după prețul pe litru sau pe kilogram. Ambalajele mari, de 5 litri, ies de obicei mai ieftin pe litru decât flacoanele de 1 litru ale aceluiași producător. Concentrația diferă de la un produs la altul, așa că uită-te și la doza recomandată pe spălare.\n\nNu recomandăm suplimente sau medicamente și nu facem afirmații de sănătate — pentru acestea, întreabă medicul sau farmacistul. Cum lucrăm: [metodologia](/ghiduri/metodologie).",
+  "faq": [
+    {
+      "q": "Merită ambalajul mare de detergent?",
+      "a": "La același producător, flaconul de 5 litri iese de obicei mai ieftin pe litru. Compară și doza recomandată pe spălare, nu doar prețul pe litru."
+    },
+    {
+      "q": "Ce înseamnă „ecologic” pe un detergent?",
+      "a": "Scriem „ecologic” sau „bio” doar când apare în denumirea produsului sau pe pagina producătorului. Detaliile despre certificare sunt pe etichetă."
+    },
+    {
+      "q": "Pot amesteca două soluții de curățat?",
+      "a": "Nu amesteca produse de curățat între ele; folosește-le pe rând, după instrucțiunile de pe etichetă."
+    }
+  ],
+  "review": {
+    "facts": [
+      {
+        "claim": "Recomandăm doar produse disponibile la magazinele partenere; caracteristicile vin din specificațiile producătorului și fișa magazinului; articolele sunt verificate de un om; comisionul nu decide ce produse intră în articol",
+        "source_type": "db",
+        "source": "web/src/app/ghiduri/metodologie/page.tsx (reorganizarea din 20.11.2026)",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Pe blog, în tema Sănătate & Naturale scriem doar despre produse ne-medicale (cosmetice, ceaiuri și alimente ca atare, produse eco pentru casă); fără suplimente, vitamine, medicamente și fără afirmații de sănătate",
+        "source_type": "db",
+        "source": "decizia proprietarului, 20.11.2026 (brief-ul agentului de conținut)",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Flacoanele de 5 l ies mai ieftin pe litru decât cele de 1 l la același producător (ex. Sonett detergent de rufe cu lavandă 5 l vs 2 l; Biolu universal 5 l vs 1 l)",
+        "source_type": "db",
+        "source": "baza noastră, offers Vegis (20.11.2026)",
+        "status": "confirmat"
+      }
+    ],
+    "warnings": [
+      "Text nou (categoria nu avea text pe producție la 20.11.2026). Validatorul curent refuză categoriile din Sănătate & Naturale — importul așteaptă validatorul nou (alt agent).",
+      "Fără marcaje {{cat:…}}, prețuri, verdicte sau linkuri spre pagini scoase (reorganizarea blogului)."
+    ]
+  }
+}

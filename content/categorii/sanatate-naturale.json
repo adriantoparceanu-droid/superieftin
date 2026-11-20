@@ -1,0 +1,38 @@
+{
+  "slug": "sanatate-naturale",
+  "intro_md": "Articolele din această temă sunt despre produse naturale de zi cu zi: ceaiuri, miere, alimente bio (uleiuri, făinuri, semințe, gustări), cosmetice naturale (săpunuri, șampoane, uleiuri cosmetice, deodorante) și produse eco pentru casă.\n\nLe alegem după ce se vede pe etichetă: ingrediente, gramaj, mod de folosire, ambalaj și certificări (bio, eco — doar dacă le scrie producătorul). Comparăm prețul pe kilogram sau pe litru, nu pe bucată, pentru că ambalajele au gramaje foarte diferite.\n\nNu recomandăm suplimente sau medicamente și nu facem afirmații de sănătate — pentru acestea, întreabă medicul sau farmacistul.\n\nGăsești aici [ceaiuri](/c/ceaiuri-infuzii), [miere](/c/miere-apicole), [alimente bio](/c/alimente-bio), [cosmetice](/c/cosmetice-ingrijire) și [produse de curățenie](/c/curatenie-casa). Cum lucrăm: [metodologia](/ghiduri/metodologie).",
+  "faq": [
+    {
+      "q": "Recomandați suplimente alimentare sau vitamine?",
+      "a": "Nu. Pe blog scriem doar despre produse ne-medicale: alimente ca atare, ceaiuri, cosmetice și produse pentru casă. Pentru suplimente și medicamente, întreabă medicul sau farmacistul."
+    },
+    {
+      "q": "Ce înseamnă „bio” sau „ecologic” în articolele voastre?",
+      "a": "Scriem „bio” sau „ecologic” doar când apare în denumirea produsului sau pe pagina producătorului. Nu verificăm noi certificarea; detaliile sunt pe etichetă."
+    },
+    {
+      "q": "Cum comparați prețurile între ambalaje diferite?",
+      "a": "Împărțim prețul la gramaj sau la volum. Un borcan sau o sticlă mai mică poate ieși mai scumpă pe kilogram sau pe litru."
+    }
+  ],
+  "review": {
+    "facts": [
+      {
+        "claim": "Recomandăm doar produse disponibile la magazinele partenere; caracteristicile vin din specificațiile producătorului și fișa magazinului; articolele sunt verificate de un om; comisionul nu decide ce produse intră în articol",
+        "source_type": "db",
+        "source": "web/src/app/ghiduri/metodologie/page.tsx (reorganizarea din 20.11.2026)",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Pe blog, în tema Sănătate & Naturale scriem doar despre produse ne-medicale (cosmetice, ceaiuri și alimente ca atare, produse eco pentru casă); fără suplimente, vitamine, medicamente și fără afirmații de sănătate",
+        "source_type": "db",
+        "source": "decizia proprietarului, 20.11.2026 (brief-ul agentului de conținut)",
+        "status": "confirmat"
+      }
+    ],
+    "warnings": [
+      "Text nou (categoria nu avea text pe producție la 20.11.2026). Validatorul curent refuză categoriile din Sănătate & Naturale — importul așteaptă validatorul nou (alt agent).",
+      "Fără marcaje {{cat:…}}, prețuri, verdicte sau linkuri spre pagini scoase (reorganizarea blogului)."
+    ]
+  }
+}
