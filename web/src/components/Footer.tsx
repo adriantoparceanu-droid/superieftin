@@ -12,7 +12,6 @@ const FOOTER_LINKS: [string, string][] = [
   ['/cand-sa-cumperi', 'Când să cumperi'],
   ['/ghiduri', 'Ghiduri'],
   ['/ghiduri/metodologie', 'Cum calculăm'],
-  ['/alerte/gestionare', 'Alertele mele'],
   ['/despre', 'Despre noi'],
   ['/contact', 'Contact'],
   ['/confidentialitate', 'Confidențialitate'],

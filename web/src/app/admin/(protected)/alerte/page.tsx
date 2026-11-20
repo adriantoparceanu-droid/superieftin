@@ -103,6 +103,17 @@ export default async function AlertePage({ searchParams }: Props) {
   return (
     <div className="max-w-6xl">
       <h1 className="text-2xl font-bold mb-2">Alerte de preț</h1>
+      {/* Inchiderea alertelor (20 nov. 2026): site-ul devine blog. Ramas-bun + stergere: worker
+          `npm run alerte:ramas-bun` (plan → --confirm → --purge --confirm). Stergerile de aici raman. */}
+      <div role="status" className="mb-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <p className="font-semibold">Alertele sunt închise</p>
+        <p className="mt-1">
+          Site-ul nu mai creează alerte noi, iar workerul nu mai verifică și nu mai trimite alerte (comutatorul{' '}
+          <code>PRICE_ALERTS_ENABLED</code> e oprit). Abonații primesc un singur mesaj de rămas-bun, apoi datele
+          lor se șterg (<code>npm run alerte:ramas-bun</code> în worker). Ștergerea manuală a unui abonat (cerere
+          GDPR) merge în continuare, mai jos.
+        </p>
+      </div>
       <p className="text-sm text-muted mb-6">
         Alertele puse de vizitatori pe Telegram și pe email. O alertă vie e fie <strong>armată</strong> (așteaptă ca
         prețul să coboare la prag), fie <strong>trimisă</strong> (a anunțat și așteaptă ca prețul să urce din nou peste
