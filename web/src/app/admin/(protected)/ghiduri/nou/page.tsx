@@ -21,7 +21,7 @@ export default async function NewGuidePage({ searchParams }: Props) {
     ? {
         products: [{ id: p.id, name: p.name, slug: p.slug }],
         category_slug: categories.some((c) => c.slug === p.category) ? p.category : null,
-        body_md: `{{reducere:${p.id}}}\n\n## \n\n{{oferte:${p.id}}}\n\n{{istoric-pret:${p.id}}}\n`,
+        body_md: `## \n\n{{oferte:${p.id}}}\n`,
       }
     : undefined
 
