@@ -14,9 +14,8 @@ import { productNotes, splitGuideBody, collectRefs } from './markers'
 // Produsele fara {{pro}}/{{contra}} nu primesc nod Product (un Product fara offers/review e
 // marcat invalid de Google); apar doar in ItemList si in `mentions` (ca Thing, cu numele).
 //
-// Worker-ul (ads:validate / ads-guard, worker/src/ads/campaigns/validate.ts) citeste orice nod
-// top-level "@type": "Product": pe o pagina de articol, un Product fara offers ar insemna „fara
-// stoc”. Azi nicio campanie nu trimite spre /ghiduri/ — de adaptat garda inainte de prima.
+// Garda Ads (worker/src/ads/campaigns/validate.ts) trateaza landing-urile /ghiduri/ separat:
+// cere BlogPosting + macar un link /go/; un Product fara offers NU mai inseamna „fara stoc”.
 
 export interface LdAuthor {
   name: string
