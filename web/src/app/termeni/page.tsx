@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 // Sectiunea 7 completata pe 3 oct 2026 (reclame personalizate) — de verificat de jurist inainte de deploy.
 export default function TermeniPage() {
   return (
-    <LegalPage title="Termeni și condiții" updated="3 octombrie 2026">
+    <LegalPage title="Termeni și condiții" updated="20 noiembrie 2026">
       <h2>1. Despre serviciu</h2>
       <p>
         superieftin.ro, operat de {COMPANY.name ?? <Todo>denumire firmă</Todo>} (CUI{' '}
@@ -40,15 +40,9 @@ export default function TermeniPage() {
 
       <h2>4. Alerte de preț</h2>
       <p>
-        Alertele de preț (pe Telegram sau pe email) sunt gratuite și oferite „ca atare”. O alertă
-        pornește când prețul unui produs, la oricare dintre magazinele monitorizate, ajunge la pragul
-        ales sau sub el. După anunț alerta rămâne activă: te anunțăm din nou după ce prețul a urcat
-        peste prag (cu o marjă, implicit 3%) și a scăzut iar la prag; pe Telegram cel mult un mesaj pe
-        zi pentru aceeași alertă. O alertă fără nicio activitate timp de 12 luni se șterge automat. Nu garantăm livrarea fiecărei alerte în
-        timp util și nici că prețul va scădea; prețul se poate schimba până ajungi pe site-ul
-        magazinului. Pe email primești cel mult un mesaj pe zi, cu toate produsele care au ajuns la
-        prag. Alertele pe Telegram le oprești cu comanda <code>/sterge</code>; pe cele pe email, din
-        linkul „Alertele mele” sau „Dezabonare” din fiecare email.
+        Alertele de preț (pe Telegram și pe email) s-au închis pe 20 noiembrie 2026: nu mai creăm alerte
+        noi și nu mai trimitem alerte. Datele alertelor existente se șterg, așa cum e descris în{' '}
+        <Link href="/confidentialitate">Politica de confidențialitate</Link>.
       </p>
 
       <h2>5. Proprietate intelectuală</h2>

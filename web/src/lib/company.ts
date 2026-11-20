@@ -10,6 +10,8 @@ export const COMPANY = {
   privacyEmail: 'contact@superieftin.ro' as string | null,   // email pentru cereri GDPR (poate fi acelasi)
   hosting: 'Contabo GmbH, server în Franța (UE)' as string | null,        // furnizorul VPS + tara, ex. 'Hetzner Online GmbH (Germania)'
   // Furnizorul de trimitere a emailurilor de alerta (imputernicit GDPR), ex. 'Sendinblue SAS (Brevo), Franța (UE)'.
+  // Alertele s-au inchis pe 20 nov. 2026: furnizorul mai trimite doar emailul de ramas-bun; dupa
+  // stergerea datelor (npm run alerte:ramas-bun -- --purge --confirm) mentiunea de pe /confidentialitate poate disparea.
   // null = pe /confidentialitate apare categoria generica (nu blocheaza nimic); completeaza-l cand alegi furnizorul.
   emailProvider: 'Resend, Inc. (SUA), cu trimiterea din regiunea UE (Irlanda)' as string | null,
 }

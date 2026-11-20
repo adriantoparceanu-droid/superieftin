@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { getThemeCategories } from '@/lib/seo/queries'
+import { getMenu } from '@/lib/queries'
 import { INK_BUTTON } from '@/components/article'
 
 // Pagina 404 in romana (raport SEO 2026-10-04, A2). Statusul ramane 404. `noindex` il pune Next
@@ -12,8 +12,10 @@ export const metadata: Metadata = {
 }
 
 export default async function NotFound() {
-  // Temele (categoriile-parinte vizibile); o eroare DB nu strica pagina 404
-  const roots = await getThemeCategories().catch(() => [])
+  // Temele (parintii din meniu, ca in antet); o eroare DB nu strica pagina 404
+  const roots = await getMenu()
+    .then((menu) => menu.map((m) => ({ href: m.href, name: m.label })))
+    .catch(() => [])
 
   return (
     <section className="mx-auto max-w-2xl py-8 text-center sm:py-14">
@@ -27,7 +29,7 @@ export default async function NotFound() {
       <p className="mt-5 font-display text-[13px] font-extrabold uppercase tracking-[.08em] text-red-ink">Eroare 404</p>
       <h1 className="mt-1 text-[28px] font-extrabold leading-[1.1] text-ink sm:text-[36px]">Pagina nu există</h1>
       <p className="mx-auto mt-2.5 max-w-md text-[15px] leading-relaxed text-ink-2 sm:text-base">
-        Linkul poate fi vechi sau greșit. Caută un articol sau alege o temă.
+        Linkul poate fi vechi sau greșit. Caută în articole sau alege o temă.
       </p>
 
       <form action="/cautare" method="get" role="search" className="mx-auto mt-6 flex max-w-md gap-2">
@@ -47,8 +49,8 @@ export default async function NotFound() {
           <h2 className="text-[12px] font-extrabold uppercase tracking-[.08em] text-ink-3">Teme</h2>
           <ul className="mt-3 flex flex-wrap justify-center gap-2">
             {roots.map((c) => (
-              <li key={c.slug}>
-                <Link href={`/c/${c.slug}`} className="inline-flex h-9 items-center rounded-full bg-surface px-3.5 text-[13.5px] font-semibold text-ink ring-1 ring-inset ring-line-2 transition-shadow hover:ring-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink">
+              <li key={c.href}>
+                <Link href={c.href} className="inline-flex h-9 items-center rounded-full bg-surface px-3.5 text-[13.5px] font-semibold text-ink ring-1 ring-inset ring-line-2 transition-shadow hover:ring-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink">
                   {c.name}
                 </Link>
               </li>

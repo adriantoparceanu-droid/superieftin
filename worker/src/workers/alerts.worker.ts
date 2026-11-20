@@ -4,6 +4,7 @@ import { alertProductUrl, buildAlertMessage, pickTriggerOffer, siteUrl, type Ale
 import { ALERT_HAS_TRIGGER_SQL, ALERT_OFFERS_JSON_SQL } from '../lib/alert-sql.js'
 import { alertRearmPct, bestAvailablePrice, decideAlert, rearmThreshold, telegramMinIntervalHours } from '../lib/alert-rearm.js'
 import { deleteIdleAlerts, markNotified, rearmAlerts } from '../lib/alert-lifecycle.js'
+import { priceAlertsEnabled } from '../lib/alerts-closing.js'
 
 // Alertele pe TELEGRAM (cele pe email: workers/email.worker.ts, cu digest si plafon zilnic).
 // Alerta e pe PRODUS: pleaca atunci cand ORICE oferta disponibila a produsului (orice magazin)
@@ -31,6 +32,10 @@ export async function checkAndSendAlerts() {
 
   const idle = await deleteIdleAlerts().catch((err) => { logger.error({ err }, 'Alerte: curatenie esuata'); return 0 })
   if (idle) logger.info({ idle }, 'Alerte: sterse dupa limita de viata')
+
+  // Alertele inchise (20 nov. 2026, PRICE_ALERTS_ENABLED oprit — implicit): ramane doar curatenia
+  // de mai sus; nu mai verificam preturi si nu mai trimitem nimic (lib/alerts-closing.ts)
+  if (!priceAlertsEnabled()) return
 
   const rearmPct = alertRearmPct()
   const minIntervalHours = telegramMinIntervalHours()

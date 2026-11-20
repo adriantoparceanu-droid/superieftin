@@ -4,6 +4,7 @@ import { escHtml } from '../lib/admin-telegram.js'
 import { checkTarget, formatRon, immediateAlertNote, parseAlertStartParam, parseTypedPrice, siteUrl } from '../lib/price-alert.js'
 import { PRODUCT_BEST_PRICE_SQL } from '../lib/alert-sql.js'
 import { alertRearmPct, rearmThreshold } from '../lib/alert-rearm.js'
+import { closedBotReply, priceAlertsEnabled } from '../lib/alerts-closing.js'
 
 const logger = pino({ level: 'info' })
 const TOKEN = process.env.TELEGRAM_BOT_TOKEN
@@ -195,11 +196,20 @@ async function handlePrice(chatId: number, text: string) {
   )
 }
 
-async function processUpdate(update: Record<string, unknown>) {
+export async function processUpdate(update: Record<string, unknown>) {
   const msg = update.message as Record<string, unknown> | undefined
   if (!msg?.text) return
 
   const chatId = (msg.chat as Record<string, unknown>).id as number
+
+  // Alertele s-au inchis (20 nov. 2026, PRICE_ALERTS_ENABLED oprit — implicit): orice mesaj, inclusiv
+  // /start prod_… / offer_… de pe linkuri vechi, primeste doar raspunsul de inchidere. Nu cream
+  // alerte si nu mai salvam conversatii noi in telegram_users (fara date noi de sters).
+  if (!priceAlertsEnabled()) {
+    await sendMsg(chatId, closedBotReply(SITE_URL))
+    return
+  }
+
   const text = (msg.text as string).trim()
   const from = msg.from as Record<string, unknown> | undefined
   const username = from?.username as string | undefined
@@ -233,7 +243,7 @@ export async function startBotWorker() {
     return
   }
 
-  logger.info('Bot Telegram pornit (long polling)')
+  logger.info({ alerts: priceAlertsEnabled() ? 'active' : 'inchise' }, 'Bot Telegram pornit (long polling)')
   let offset = 0
 
   // eslint-disable-next-line no-constant-condition

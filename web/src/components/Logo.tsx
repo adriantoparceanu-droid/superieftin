@@ -32,19 +32,27 @@ interface LogoProps {
   // fără link (ex. în emailuri sau acolo unde logo-ul e deja într-un link)
   href?: string | null
   size?: 'md' | 'lg'
+  // true = doar textul (antetul blogului, varianta A „Revista”): „super” + „ieftin” roșu + „.ro”,
+  // Archivo 900 condensat, fără simbol. Simbolul rămâne favicon-ul și logo-ul din subsol.
+  wordmark?: boolean
   className?: string
 }
 
-export function Logo({ onDark = false, href = '/', size = 'md', className = '' }: LogoProps) {
+export function Logo({ onDark = false, href = '/', size = 'md', wordmark = false, className = '' }: LogoProps) {
   const sym = size === 'lg' ? 40 : 30
   const text = size === 'lg' ? 'text-[28px]' : 'text-[21px]'
-  const inner = (
+  const red = onDark ? 'text-red-on-head' : 'text-red-ink'
+  const inner = wordmark ? (
+    <span className={`font-display font-black leading-none tracking-[-0.03em] [font-stretch:75%] ${size === 'lg' ? 'text-[34px]' : 'text-[26px] sm:text-[30px]'} ${onDark ? 'text-head-ink' : 'text-ink'}`}>
+      super<span className={red}>ieftin</span>.ro
+    </span>
+  ) : (
     <>
       <LogoSymbol size={sym} />
       <span
         className={`font-display font-[850] leading-none tracking-[-0.02em] [font-stretch:84%] ${text} ${onDark ? 'text-head-ink' : 'text-ink'}`}
       >
-        superieftin<span className={onDark ? 'text-red-on-head' : 'text-red-ink'}>.ro</span>
+        superieftin<span className={red}>.ro</span>
       </span>
     </>
   )

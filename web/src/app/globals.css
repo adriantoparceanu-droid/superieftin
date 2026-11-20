@@ -18,7 +18,7 @@
 [data-theme="light"] {
   color-scheme: light;
 
-  --bg: #F4F5F7;          /* fundalul paginii */
+  --bg: #FBFAF7;          /* fundalul paginii: crem (blogul, varianta A „Revista”, 20.11.2026) */
   --surface: #FFFFFF;     /* carduri */
   --surface-2: #F0F1F4;   /* zone secundare, rânduri alternante */
   --ink: #14161A;         /* text principal */

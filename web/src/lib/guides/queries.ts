@@ -42,18 +42,6 @@ export interface Guide {
   reviewer: GuideAuthor | null
 }
 
-export interface GuideListItem {
-  slug: string
-  title: string
-  meta_description: string | null
-  summary: string | null
-  kind: 'produs' | 'categorie'
-  published_at: string | null
-  updated_at: string
-  category_slug: string | null
-  category_name: string | null
-}
-
 const GUIDE_SELECT = `
   SELECT g.id, g.slug, g.title, g.meta_description, g.kind, g.body_md, g.summary, g.faq, g.status,
          g.published_at::text AS published_at, g.updated_at::text AS updated_at,
@@ -75,39 +63,6 @@ export const getPublishedGuide = cache(async (slug: string): Promise<Guide | nul
   )
   return rows[0] ?? null
 })
-
-// Lista publica, cele mai noi primele. Filtrul de categorie include subcategoriile
-// (un ghid pe „telefoane-mobile” apare si la „telefoane-accesorii”).
-export async function listPublishedGuides(categorySlug?: string | null, limit = 60): Promise<GuideListItem[]> {
-  const { rows } = await pool.query<GuideListItem>(`
-    SELECT g.slug, g.title, g.meta_description, g.summary, g.kind,
-           g.published_at::text AS published_at, g.updated_at::text AS updated_at,
-           g.category_slug, c.name AS category_name
-    FROM guides g
-    LEFT JOIN categories c ON c.slug = g.category_slug
-    WHERE g.status = 'published'
-      AND ($1::text IS NULL OR g.category_slug = $1 OR g.category_slug IN (
-        SELECT ch.slug FROM categories ch WHERE ch.parent_id = (SELECT id FROM categories WHERE slug = $1)))
-    ORDER BY g.published_at DESC NULLS LAST, g.id DESC
-    LIMIT $2
-  `, [categorySlug || null, limit])
-  return rows
-}
-
-// Categoriile care au cel putin un ghid publicat (pentru filtrul de pe /ghiduri), grupate pe
-// categoria-parinte: filtrul arata doar cele 3–4 categorii mari, nu zeci de subcategorii.
-export async function getGuideCategories(): Promise<{ slug: string; name: string; count: number }[]> {
-  const { rows } = await pool.query<{ slug: string; name: string; count: number }>(`
-    SELECT COALESCE(par.slug, c.slug) AS slug, COALESCE(par.name, c.name) AS name, count(*)::int AS count
-    FROM guides g
-    JOIN categories c ON c.slug = g.category_slug
-    LEFT JOIN categories par ON par.id = c.parent_id
-    WHERE g.status = 'published'
-    GROUP BY 1, 2
-    ORDER BY count DESC, name
-  `)
-  return rows
-}
 
 // Pentru sitemap si llms.txt. Tabela poate lipsi daca web-ul ajunge pe server inaintea
 // migratiei 023 → apelantii prind eroarea si merg mai departe fara ghiduri.

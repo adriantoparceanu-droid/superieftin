@@ -14,6 +14,11 @@ import { parseLeiAmount } from './alert-threshold'
 
 type Env = Partial<Record<string, string>>
 
+// Alertele de pret s-au inchis pe 20 nov. 2026 (site-ul devine blog de recomandari). Mesajul apare in
+// raspunsurile 410 ale /api/alerte-email si pe paginile /alerte/*. Textele de ramas-bun trimise
+// abonatilor: worker/src/lib/alerts-closing.ts.
+export const ALERTS_CLOSED_MESSAGE = 'Alertele de preț s-au închis. superieftin.ro e acum un blog de recomandări.'
+
 // Aceeasi regula ca emailConfig() din worker: fara SMTP_HOST, EMAIL_FROM si ALERT_TOKEN_SECRET,
 // formularul nu apare deloc, iar endpoint-urile raspund „dezactivat”.
 export function emailAlertsEnabled(env: Env = process.env): boolean {
