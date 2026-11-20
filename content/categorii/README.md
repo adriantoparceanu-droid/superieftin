@@ -51,11 +51,12 @@ Alte câmpuri (ex. `intro`, `checklist`) sunt eroare — prind greșelile de tip
 - marcaj necunoscut sau scris greșit (`{{cat:pret-minim}}`, acolade rămase);
 - preț sau procent scris de mână („de la 499 lei”, „2499 RON”, „20%”) — folosește marcajele;
 - promisiuni („garantat”, „economisești”, „cele mai mici prețuri”, „cel mai ieftin din”… — regula 9);
-- afirmații de sănătate („vindecă”, „tratează”, „detoxifică”… — regula 8);
+- afirmații de sănătate („vindecă”, „tratează”, „imunitate”, „detox”, „slăbire”… — lista completă: `HEALTH_CLAIMS` din `worker/src/lib/medical-content.ts`, regula 8);
 - peste 6 întrebări, întrebare fără răspuns sau invers;
 - `[DE VERIFICAT…]` rămas în text;
-- categorie inexistentă, ascunsă (ea sau părintele), din **Sănătate & Naturale** sau
-  **`farmacie-veterinara`** (REGULI.md, regula 8);
+- categorie inexistentă sau ascunsă (ea sau părintele). **Sănătate & Naturale** și
+  **`farmacie-veterinara`** sunt permise din 20.11.2026, dar textul vorbește DOAR despre produse
+  ne-medicale (fără suplimente, medicamente, afirmații de sănătate — REGULI.md, regula 8);
 - în `review.facts`: vreun fapt cu `status` diferit de `confirmat`, `source_type` altul decât
   `db`/`web`, sau `web` fără URL `http(s)://`. `facts` poate fi listă goală (text doar cu marcaje);
 - același slug de două ori în același import.

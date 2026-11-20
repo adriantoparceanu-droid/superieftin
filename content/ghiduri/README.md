@@ -66,7 +66,7 @@ de preț e doar intern) și sunt respinse. Orice alt `{{…}}` e eroare la impor
 - `checklist` (listă nevidă): pașii pe care proprietarul îi bifează în editor înainte de „Publică”.
 - `warnings` (opțional): contradicții între surse, alegeri făcute de AI.
 
-Fără afirmații de sănătate (vindecă, tratează, detoxifică…) — publicarea le blochează (REGULI.md, regula 8).
+Fără afirmații de sănătate (vindecă, tratează, imunitate, detox, slăbire… — lista completă: `HEALTH_CLAIMS` din `worker/src/lib/medical-content.ts`) — publicarea le blochează (REGULI.md, regula 8). În Sănătate & Naturale și `farmacie-veterinara` se recomandă DOAR produse ne-medicale: un produs a cărui denumire conține termeni medicali (supliment, capsule, vitamine, antiparazitar… — `MEDICAL_PRODUCT_TERMS`) e refuzat la import și la salvare.
 
 ## Publicare directă — `publicate/<slug>.json`
 
