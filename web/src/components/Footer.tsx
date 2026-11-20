@@ -2,16 +2,12 @@ import Link from 'next/link'
 import { Logo } from '@/components/Logo'
 import { CookieSettingsButton } from '@/components/consent/CookieSettingsButton'
 
-// Subsolul (redesign, macheta „.ft”): cărbune în ambele teme, ca antetul.
-// Paginile de incredere — Google le cere vizibile pe orice pagina a unui site de afiliere
-// + legaturi interne spre hubul de reduceri reale si metodologie (raport SEO 2026-10-04, A8)
+// Subsolul blogului (varianta A „Revista”): pe tokeni (deschis / întunecat ca restul paginii),
+// cu separatorul negru gros de 3px deasupra. Paginile de încredere — Google le cere vizibile pe
+// orice pagină a unui site de afiliere — + nota de afiliere.
 const FOOTER_LINKS: [string, string][] = [
-  ['/reduceri-reale', 'Reduceri reale'],
-  // Observatorul reducerilor reale (repoziționarea din 21 oct. 2026)
-  ['/indice', 'Indicele prețurilor'],
-  ['/cand-sa-cumperi', 'Când să cumperi'],
-  ['/ghiduri', 'Ghiduri'],
-  ['/ghiduri/metodologie', 'Cum calculăm'],
+  ['/ghiduri', 'Articole'],
+  ['/ghiduri/metodologie', 'Cum lucrăm'],
   ['/alerte/gestionare', 'Alertele mele'],
   ['/despre', 'Despre noi'],
   ['/contact', 'Contact'],
@@ -21,36 +17,37 @@ const FOOTER_LINKS: [string, string][] = [
 ]
 
 const linkClass =
-  'text-head-ink underline-offset-2 hover:underline rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-on-head'
+  'text-ink underline-offset-2 hover:underline hover:text-red-ink rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink'
 
 export function Footer() {
   return (
-    <footer className="mt-12 bg-head text-head-ink-2 text-[13px]">
-      <div className="max-w-7xl mx-auto px-4 pt-6 pb-7">
-        <Logo onDark />
-        <p className="mt-2.5 max-w-xl leading-relaxed">
-          Comparăm prețul de azi cu mediana ultimelor 30 de zile. Reducere reală = minimum 5% sub mediană.
-        </p>
+    <footer className="mt-16 text-ink-3 text-[13px]">
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="border-t-[3px] border-ink pt-6 pb-8">
+          <Logo wordmark />
+          <p className="mt-2.5 max-w-xl leading-relaxed text-ink-2">
+            Recomandări de cumpărare: top-uri pe buget, comparații și ghiduri de alegere, scrise și verificate de echipa noastră.
+          </p>
 
-        <nav
-          aria-label="Informații"
-          className="grid grid-cols-2 gap-x-3 gap-y-2 my-4 sm:flex sm:flex-wrap sm:gap-x-6"
-        >
-          {FOOTER_LINKS.map(([href, label]) => (
-            <Link key={href} href={href} className={linkClass}>{label}</Link>
-          ))}
-        </nav>
+          <nav
+            aria-label="Informații"
+            className="grid grid-cols-2 gap-x-3 gap-y-2 my-4 sm:flex sm:flex-wrap sm:gap-x-6"
+          >
+            {FOOTER_LINKS.map(([href, label]) => (
+              <Link key={href} href={href} className={linkClass}>{label}</Link>
+            ))}
+          </nav>
 
-        <CookieSettingsButton className="border border-[#3A3F49] text-head-ink rounded-lg px-3 py-2 text-[13px] hover:bg-white/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-on-head" />
+          <CookieSettingsButton className="border border-line-2 text-ink rounded-lg px-3 py-2 text-[13px] hover:bg-surface-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink" />
 
-        <p className="mt-4 text-xs leading-normal">
-          superieftin.ro folosește linkuri de afiliere. Dacă cumperi prin linkurile noastre,
-          primim un comision mic din partea retailerului, fără cost suplimentar pentru tine.
-          Prețurile și reducerile sunt verificate independent.
-        </p>
-        <p className="mt-2.5 text-xs">
-          © {new Date().getFullYear()} superieftin.ro — Observatorul reducerilor reale din România
-        </p>
+          <p className="mt-4 max-w-3xl text-xs leading-normal">
+            superieftin.ro folosește linkuri de afiliere. Dacă cumperi prin linkurile noastre,
+            primim un comision mic din partea magazinului, fără cost suplimentar pentru tine.
+          </p>
+          <p className="mt-2.5 text-xs">
+            © {new Date().getFullYear()} superieftin.ro — recomandări de cumpărare
+          </p>
+        </div>
       </div>
     </footer>
   )

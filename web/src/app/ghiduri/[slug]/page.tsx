@@ -11,7 +11,6 @@ import { guideToc } from '@/lib/guides/toc'
 import { RSS_PATH, RSS_TITLE } from '@/lib/guides/rss'
 import { formatGuideDate } from '@/lib/guides/format'
 import { renderMarkdown } from '@/lib/guides/markdown'
-import { formatPrice } from '@/lib/discount'
 import { GuideBody, PROSE_CLASS } from '@/components/guides/GuideBody'
 import { ARTICLE_CARD, ARTICLE_H1 } from '@/components/article'
 import { Crumbs, InfoIcon } from '@/components/listing/ListingParts'
@@ -87,13 +86,11 @@ export default async function GuidePage({ params }: Props) {
   if (!guide) notFound()
 
   const { bodyRefs, linkedIds, key } = await guideRefs(guide)
-  const [live, linked, theme] = await Promise.all([
+  const [live, theme] = await Promise.all([
     loadLiveProducts(key),
-    loadLiveProducts(refsKey(linkedIds)),
     getGuideTheme(guide.id, guide.category_slug, refsKey([...bodyRefs, ...linkedIds])),
   ])
   const related = await getRelatedGuides(guide.id, key).catch(() => [])
-  const linkedProducts = linkedIds.map((id) => linked.get(id)).filter((p) => !!p)
 
   // JSON-LD: articol + pagina (verificator) + firimituri + lista produselor + recenziile editoriale
   // (doar produsele cu pro/contra) + FAQ. Fara preturi si fara linkuri spre /p/ (lib/guides/jsonld.ts).
@@ -192,23 +189,6 @@ export default async function GuidePage({ params }: Props) {
                 </div>
               ))}
             </div>
-          </section>
-        )}
-
-        {/* Legaturi interne spre paginile de produs. Dispar in etapa 6 (odata cu /p/). */}
-        {linkedProducts.length > 0 && (
-          <section aria-labelledby="produse" className="mt-10">
-            <h2 id="produse" className="text-[18px] font-extrabold text-ink">Produsele din acest ghid</h2>
-            <ul className="mt-2 divide-y divide-line text-sm">
-              {linkedProducts.map((p) => (
-                <li key={p.id} className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 py-2.5">
-                  <Link href={`/p/${p.slug}`} className="min-w-0 font-semibold text-ink underline-offset-2 hover:text-red-ink hover:underline">{p.name}</Link>
-                  <span className="tabular-nums text-ink-3">
-                    {p.offers[0] ? <>de la <strong className="font-display font-extrabold text-ink">{formatPrice(p.offers[0].current_price)}</strong></> : 'indisponibil momentan'}
-                  </span>
-                </li>
-              ))}
-            </ul>
           </section>
         )}
 

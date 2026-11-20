@@ -319,7 +319,7 @@ export const getCategoryProducts = unstable_cache(
     category: string,
     page = 1,
     sort: 'discount' | 'price' | 'name' = 'price',
-    // Marcile bifate (?brand= repetat); null = toate. Vezi brandsForQuery (lib/listing-filters.ts).
+    // Lista de marci (sortata); null = toate. Filtrul de marca de pe /c/ a fost scos (blogul, 20.11.2026).
     brands: string[] | null = null,
     includeSub = false
   ): Promise<ProductWithDiscount[]> => {

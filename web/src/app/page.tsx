@@ -1,185 +1,89 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { BookOpen, Calculator, CalendarClock, ChartLine, Tag } from 'lucide-react'
-import {
-  getTopDiscounts, getCheapestProducts, getCategories,
-  getActiveRetailersPublic, getMenu, getBanners,
-  type Banner as BannerData,
-} from '@/lib/queries'
-import { cookies } from 'next/headers'
-import { ProductCard } from '@/components/ProductCard'
-import { HomeBanners } from '@/components/home/HomeBanners'
-import { CONSENT_COOKIE, parseConsentCookie } from '@/lib/consent'
-import { RetailerStrip } from '@/components/RetailerStrip'
-import { HomeHero } from '@/components/home/HomeHero'
-import { VerdictLegend } from '@/components/home/VerdictLegend'
-import { SectionHeading } from '@/components/home/SectionHeading'
-import { HomeCategories } from '@/components/home/HomeCategories'
-import { getSiteFacts } from '@/lib/seo/site-facts'
+import { getMenu } from '@/lib/queries'
+import { getBlogGuides, getGuidePageViews } from '@/lib/guides/blog-queries'
+import { homeSelection, mostReadGuides } from '@/lib/guides/blog'
+import { ArticleGrid } from '@/components/blog/ArticleCard'
+import { FeaturedArticle } from '@/components/home/FeaturedArticle'
+import { MostRead } from '@/components/home/MostRead'
+import { ThemeLinks } from '@/components/home/ThemeLinks'
+import { itemListLd, ldScript } from '@/lib/seo/jsonld'
 import { withOg } from '@/lib/seo/og'
-import { SITE_URL, roCount } from '@/lib/seo/site'
-import { monthLabel } from '@/lib/observator/observator'
+import { SITE_URL } from '@/lib/seo/site'
 
+// Randata la cerere: lista de articole trebuie sa fie la zi imediat dupa publicarea din admin,
+// iar la build DB-ul nu e accesibil. Query-urile sunt mici (zeci de articole).
 export const dynamic = 'force-dynamic'
 
-// Titlul cu brand + ce face site-ul (template-ul „%s | superieftin.ro” nu se aplica pe radacina,
-// deci titlul era fara brand). Descrierea are cifre live (lib/seo/site-facts.ts, cache 1 h).
-// Identitatea = „Observatorul reducerilor reale din România” (repoziționarea din 21 oct. 2026).
-const HOME_TITLE = 'superieftin.ro — observatorul reducerilor reale din România'
+// Homepage-ul blogului de recomandari (reorganizarea din 20.11.2026, varianta A „Revista”):
+// articolul principal + „Cele mai citite” + „Articole noi” + temele. Fara produse, preturi sau
+// reduceri. JSON-LD WebSite (+ SearchAction) si Organization vin din layout.
+const HOME_TITLE = 'superieftin.ro — recomandări de cumpărare, explicate pe înțeles'
+const HOME_DESCRIPTION =
+  'Articole care te ajută să alegi: top-uri pe buget, comparații între modele și ghiduri de alegere ' +
+  'pentru telefoane, laptopuri, televizoare și multe altele, scrise și verificate de echipa superieftin.ro.'
 
 export async function generateMetadata(): Promise<Metadata> {
-  const facts = await getSiteFacts().catch(() => null)
-  const since = facts?.historySince ? ` din ${monthLabel(facts.historySince)}` : ''
-  const tracked = facts && facts.products > 0
-    ? `Observatorul reducerilor reale: urmărim zilnic${since} ${roCount(facts.products, 'produse', 'produs')} de la ${roCount(facts.retailers, 'magazine online', 'magazin online')} din România. `
-    : 'Observatorul reducerilor reale: urmărim zilnic prețurile magazinelor online din România. '
-  const description = `${tracked}Comparăm prețul de azi cu mediana ultimelor 30 de zile — nu cu prețul vechi afișat de magazin.`
   return {
     title: { absolute: HOME_TITLE },
-    description,
+    description: HOME_DESCRIPTION,
     alternates: { canonical: '/' },
-    openGraph: withOg({ title: HOME_TITLE, description, url: `${SITE_URL}/` }),
+    openGraph: withOg({ title: HOME_TITLE, description: HOME_DESCRIPTION, url: `${SITE_URL}/` }),
   }
 }
 
-// Câte carduri arătăm în „Reduceri reale azi”: 12 = 2 rânduri pe desktop (6 coloane) și
-// 3 rânduri pe tabletă (4 coloane); pe mobil (2 coloane) doar primele 8, ca pagina să nu fie
-// un perete de carduri înainte de categorii.
-const TOP_PRODUCTS = 12
-const TOP_PRODUCTS_MOBILE = 8
-
-// Homepage-ul redesignului (design §4 „Homepage”, macheta direcției B, secțiunea 3):
-// bannerele din admin (doar desktop, dacă există) → bandă cărbune cu metoda și cifre live →
-// legenda verdictelor → reducerile reale de azi → categorii → ghiduri → magazinele urmărite.
-// JSON-LD WebSite (+ SearchAction) si Organization sunt in layout, pe toate paginile
-// (lib/seo/jsonld.ts), cu @id comun.
 export default async function HomePage() {
-  const [facts, discounts, categories, retailers, menu, banners, cookieStore] = await Promise.all([
-    getSiteFacts().catch(() => null),
-    getTopDiscounts(TOP_PRODUCTS * 2).catch(() => []),
-    getCategories().catch(() => []),
-    getActiveRetailersPublic().catch(() => []),
+  const [guides, views, menu] = await Promise.all([
+    getBlogGuides().catch(() => []),
+    getGuidePageViews().catch(() => []),
     getMenu().catch(() => []),
-    getBanners().catch(() => ({} as Record<string, BannerData>)),
-    cookies(),
   ])
-  // Acordul „Publicitate” citit pe server: doar ca indiciu pentru rezervarea casetelor bannerelor
-  // HTML (fără salt de pagină); scripturile se încarcă tot după verificarea din browser.
-  const adConsentHint = parseConsentCookie(cookieStore.get(CONSENT_COOKIE)?.value)?.ads === true
-
-  // getTopDiscounts întoarce oferte, nu produse: același produs poate apărea de două ori (la
-  // două magazine). Păstrăm prima apariție (cea cu procentul cel mai mare — lista e sortată).
-  const seen = new Set<string>()
-  const topDiscounts = discounts.filter((p) => !seen.has(p.id) && seen.add(p.id)).slice(0, TOP_PRODUCTS)
-
-  // Fără reduceri reale (ex. imediat după un import, înainte să avem 30 de zile de date):
-  // cele mai mici prețuri, ca înainte — dar cerute doar atunci, nu la fiecare afișare.
-  const isRealDiscount = topDiscounts.length > 0
-  const products = isRealDiscount
-    ? topDiscounts
-    : await getCheapestProducts(TOP_PRODUCTS).catch(() => [])
+  const { featured, latest } = homeSelection(guides)
+  const popular = mostReadGuides(views, guides, 4)
+  const themes = menu.map((m) => ({ href: m.href, label: m.label }))
+  const listLd = latest.length
+    ? itemListLd('Articole noi', latest.map((g) => ({ name: g.title, path: `/ghiduri/${g.slug}` })))
+    : null
 
   return (
     <>
-      <HomeBanners banners={banners} adConsentHint={adConsentHint} />
-      <HomeHero facts={facts} />
-      <VerdictLegend />
+      {listLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldScript(listLd) }} />}
+      {/* Un singur H1 pe pagina; titlurile articolelor sunt H2/H3 */}
+      <h1 className="sr-only">superieftin.ro — recomandări de cumpărare</h1>
 
-      <section aria-labelledby="reduceri-azi">
-        <SectionHeading
-          id="reduceri-azi"
-          title={isRealDiscount ? 'Reduceri reale azi' : 'Cele mai mici prețuri acum'}
-          // Legătura internă spre hubul /reduceri-reale (raport SEO, A8)
-          href="/reduceri-reale"
-          sub={isRealDiscount
-            ? 'Sortate după procentul sub mediana pe 30 de zile · prețuri verificate în ultimele 48 de ore'
-            : 'Reducerile reale apar pe măsură ce adunăm istoricul de prețuri.'}
-        />
-        {products.length > 0 ? (
-          <ul className="grid grid-cols-2 gap-2.5 md:grid-cols-4 md:gap-3 lg:grid-cols-6">
-            {products.map((product, i) => (
-              <li key={product.offer_id} className={i >= TOP_PRODUCTS_MOBILE ? 'hidden md:block' : undefined}>
-                <ProductCard product={product} />
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="rounded-xl bg-surface p-6 text-center text-sm text-ink-3 shadow-card">
-            Monitorizăm prețurile — reducerile reale apar pe măsură ce acumulăm date.
-          </p>
-        )}
-      </section>
+      {!featured ? (
+        <p className="rounded-2xl bg-surface p-6 text-ink-2 shadow-card">
+          Primele articole apar în curând. Până atunci, vezi{' '}
+          <Link href="/ghiduri/metodologie" className="text-red-ink underline underline-offset-2">cum lucrăm</Link>.
+        </p>
+      ) : (
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-12">
+          <FeaturedArticle guide={featured} />
+          <MostRead guides={popular} />
+        </div>
+      )}
 
-      {categories.length > 0 && (
-        <section aria-labelledby="categorii">
-          <SectionHeading id="categorii" title="Categorii" />
-          <HomeCategories categories={categories} menu={menu} />
+      {latest.length > 0 && (
+        <section aria-labelledby="articole-noi" className="mt-14">
+          <div className="flex items-baseline justify-between gap-4 border-t-[3px] border-ink pt-3">
+            <h2 id="articole-noi" className="font-display text-[13px] font-extrabold uppercase tracking-[.1em] text-ink">
+              Articole noi
+            </h2>
+            <Link href="/ghiduri" className="text-[14px] font-semibold text-ink-2 underline-offset-2 hover:text-red-ink hover:underline">
+              Toate articolele →
+            </Link>
+          </div>
+          <div className="mt-6">
+            <ArticleGrid guides={latest} />
+          </div>
         </section>
       )}
 
-      {/* Ghiduri: homepage-ul nu încarcă articolele (fără query în plus pe fiecare afișare) —
-          doar linkuri spre lista de ghiduri și spre metodologie, pagini care există mereu. */}
-      <section aria-labelledby="ghiduri">
-        <SectionHeading id="ghiduri" title="Ghiduri" href="/ghiduri" />
-        <div className="grid gap-2 lg:grid-cols-2 lg:gap-3">
-          <GuideLink
-            href="/ghiduri"
-            icon={<BookOpen size={26} aria-hidden="true" />}
-            title="Ghiduri de cumpărare"
-            text="Ce contează când alegi, cu prețuri și reduceri actualizate automat din datele noastre."
-          />
-          <GuideLink
-            href="/ghiduri/metodologie"
-            icon={<Calculator size={26} aria-hidden="true" />}
-            title="Cum calculăm reducerea reală"
-            text="Mediana ultimelor 30 de zile, pragul de 5% și de ce nu ne uităm la prețul vechi afișat de magazin."
-          />
+      {themes.length > 0 && (
+        <div className="mt-14">
+          <ThemeLinks themes={themes} />
         </div>
-      </section>
-
-      {/* Observatorul reducerilor reale (repoziționarea din 21 oct. 2026): pagini cu date proprii,
-          calculate de worker — doar linkuri aici, fără query în plus pe homepage. */}
-      <section aria-labelledby="observator">
-        <SectionHeading id="observator" title="Observatorul reducerilor reale" />
-        <div className="grid gap-2 lg:grid-cols-3 lg:gap-3">
-          <GuideLink
-            href="/black-friday-2026"
-            icon={<Tag size={26} aria-hidden="true" />}
-            title="Black Friday 2026"
-            text="Câte dintre reducerile de Black Friday sunt reale, măsurat zilnic față de mediana de dinainte de 1 noiembrie."
-          />
-          <GuideLink
-            href="/indice"
-            icon={<ChartLine size={26} aria-hidden="true" />}
-            title="Indicele prețurilor"
-            text="Cum s-au schimbat prețurile pe categorii, lună de lună, pe un coș stabil de produse."
-          />
-          <GuideLink
-            href="/cand-sa-cumperi"
-            icon={<CalendarClock size={26} aria-hidden="true" />}
-            title="Când să cumperi"
-            text="Cât de des apar reduceri reale în fiecare categorie și cât durează, din datele noastre."
-          />
-        </div>
-      </section>
-
-      <RetailerStrip retailers={retailers} />
+      )}
     </>
-  )
-}
-
-// Card de ghid (macheta „.guide”): iconiță pe surface-2 + titlu + o frază
-function GuideLink({ href, icon, title, text }: { href: string; icon: React.ReactNode; title: string; text: string }) {
-  return (
-    <Link
-      href={href}
-      className="group flex gap-3 rounded-xl bg-surface p-3 shadow-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink lg:p-4"
-    >
-      <span className="grid h-[54px] w-[54px] shrink-0 place-items-center rounded-[10px] bg-surface-2 text-ink-3">{icon}</span>
-      <span className="min-w-0">
-        <b className="block text-sm leading-[1.3] text-ink group-hover:text-red-ink transition-colors lg:text-base">{title}</b>
-        <span className="text-xs text-ink-3 lg:text-sm">{text}</span>
-      </span>
-    </Link>
   )
 }

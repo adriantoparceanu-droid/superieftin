@@ -5,6 +5,7 @@ import { loadLiveProducts, refsKey, type LiveProduct } from '@/lib/guides/querie
 import { getBestOffers, type BestOffer } from '@/lib/best-offer'
 import { ARTICLE_PROSE } from '@/components/article'
 import { ProductPick } from '@/components/guides/ProductPick'
+import { anchorOwners } from '@/lib/guides/anchors'
 
 // Tipografia pentru textul lung al ghidului: cea comuna de articol (components/article.ts, la fel
 // ca paginile legale). Exportata si sub numele vechi, folosit de pagina ghidului pentru „Pe scurt”.
@@ -68,22 +69,6 @@ function blockProducts(seg: Extract<GuideSegment, { kind: 'block' }>, products: 
   return [...new Map(refs.flatMap((r) => products.get(r) ?? []).map((p) => [p.id, p])).values()]
 }
 
-// Ancora #produs-<slug> merge pe PRIMA aparitie a produsului in articol (id unic in pagina).
-// Calculata dinainte, in ordinea din text — nu depindem de ordinea in care React randeaza.
-function anchorOwners(segments: GuideSegment[], products: Map<string, LiveProduct>): Map<number, Set<string>> {
-  const seen = new Set<string>()
-  const owners = new Map<number, Set<string>>()
-  segments.forEach((seg, i) => {
-    if (seg.kind !== 'block') return
-    const mine = new Set<string>()
-    for (const p of blockProducts(seg, products)) {
-      if (!seen.has(p.slug)) { seen.add(p.slug); mine.add(p.slug) }
-    }
-    owners.set(i, mine)
-  })
-  return owners
-}
-
 function Block({ seg, index, products, offers, anchors, preview }: {
   index: number
   seg: Extract<GuideSegment, { kind: 'block' }>
@@ -132,7 +117,8 @@ export async function GuideBody({ body, preview }: { body: string; preview?: boo
   // cea mai buna oferta pentru toate odata (fara N+1).
   const products = await loadLiveProducts(refsKey(collectRefs(segments)))
   const offers = await getBestOffers([...new Set([...products.values()].map((p) => p.id))])
-  const owners = anchorOwners(segments, products)
+  // Ancora #produs-<slug>: pe cardul produsului; doar daca n-are card, pe coloana din comparatie
+  const owners = anchorOwners(segments, (ref) => products.get(ref)?.slug)
   // Id-uri pe H2 (cuprinsul paginii, lib/guides/toc.ts): un singur env pe tot corpul → unice in
   // pagina. Bucatile se randeaza in ordinea din text (map sincron), ca in guideToc().
   const headings = newHeadingEnv()

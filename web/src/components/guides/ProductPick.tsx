@@ -28,8 +28,9 @@ interface Props {
   offer: BestOffer | null
   // compact = în tabelul de comparație: poză mică, fără nume (numele e în capul coloanei)
   compact?: boolean
-  // Ancora #produs-<slug> (țintă pentru redirecturile /p/ → articol). O pune GuideBody DOAR pe
-  // prima apariție a produsului în articol, ca id-ul să rămână unic în pagină.
+  // Ancora #produs-<slug> (țintă pentru redirecturile /p/ → articol). GuideBody o pune o singură
+  // dată pe articol: pe cardul produsului, iar dacă produsul apare doar într-o comparație, pe
+  // coloana lui (lib/guides/anchors.ts) — id-ul rămâne unic în pagină.
   anchor?: boolean
   // Punctele tari / slabe scrise de autor ({{pro:…}} / {{contra:…}} sub marcaj, lib/guides/markers.ts).
   // Opinie editoriala, nu date de pret — de aceea pot sta in card. Doar in varianta mare.

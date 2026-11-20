@@ -1,117 +1,85 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { searchProducts, searchProductCount, logSearch, PAGE_SIZE } from '@/lib/queries'
+import { logSearch } from '@/lib/queries'
+import { getBlogGuides, searchGuideSlugs } from '@/lib/guides/blog-queries'
 import { TrackSearch } from '@/components/analytics/TrackSearch'
-import { ProductList } from '@/components/listing/ProductList'
-import { EmptyState, ListingHeader, MethodNote } from '@/components/listing/ListingParts'
+import { ArticleGrid } from '@/components/blog/ArticleCard'
+import { Crumbs } from '@/components/listing/ListingParts'
 import { roCount } from '@/lib/seo/site'
-import { Pagination } from '@/components/Pagination'
 
 export const dynamic = 'force-dynamic'
 
+// Cautarea in ARTICOLE (blogul, 20.11.2026): titlu, rezumat, meta description si corp, fara
+// diacritice (lib/guides/blog-queries.ts → searchGuideSlugs). Nu mai cauta in produse.
+
 type Props = {
-  searchParams: Promise<{ q?: string; page?: string }>
+  searchParams: Promise<{ q?: string | string[] }>
 }
 
+const firstParam = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v)
+
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
-  const { q } = await searchParams
-  const query = q?.trim() ?? ''
+  const query = firstParam((await searchParams).q)?.trim() ?? ''
   return {
-    title: query ? `"${query}" — căutare prețuri` : 'Căutare — superieftin.ro',
-    description: query
-      ? `Rezultate pentru "${query}" — comparare prețuri și reduceri reale.`
-      : 'Caută produse și compară prețuri pe superieftin.ro.',
+    title: query ? `„${query}” — căutare în articole` : 'Căutare în articole',
+    description: 'Caută în articolele superieftin.ro: recomandări, comparații și ghiduri de alegere.',
     // noindex (rezultatele de cautare nu se indexeaza), dar follow: robotii pot urma linkurile
-    // spre produse. Fara canonical (raport SEO, A9).
+    // spre articole. Fara canonical (raport SEO, A9).
     robots: { index: false, follow: true },
   }
 }
 
 export default async function SearchPage({ searchParams }: Props) {
-  const { q, page: pageStr } = await searchParams
-  const query = q?.trim() ?? ''
-  const currentPage = Math.max(1, parseInt(pageStr ?? '1') || 1)
+  const query = (firstParam((await searchParams).q)?.trim() ?? '').slice(0, 100)
 
-  const [products, totalCount] = query
-    ? await Promise.all([
-        searchProducts(query, currentPage),
-        searchProductCount(query),
-      ])
-    : [[], 0]
+  const [slugs, all] = query
+    ? await Promise.all([searchGuideSlugs(query).catch(() => []), getBlogGuides().catch(() => [])])
+    : [[], []]
+  const bySlug = new Map(all.map((g) => [g.slug, g]))
+  const results = slugs.flatMap((s) => bySlug.get(s) ?? [])
 
-  // Logheaza termenul o singura data per cautare (doar prima pagina), non-blocking.
-  if (query && currentPage === 1) void logSearch(query, totalCount)
-
-  const totalPages = Math.ceil(totalCount / PAGE_SIZE)
-
-  function buildUrl(page: number) {
-    const params = new URLSearchParams({ q: query })
-    if (page > 1) params.set('page', String(page))
-    return `/cautare?${params.toString()}`
-  }
+  // Termenul cautat se logheaza (fara date personale), pentru subiecte noi de articole
+  if (query) void logSearch(query, results.length)
 
   return (
     <div>
       {query && <TrackSearch term={query} />}
-      <ListingHeader
-        crumbs={[{ label: 'Acasă', href: '/' }, { label: 'Căutare' }]}
-        title={query ? <>Rezultate pentru „{query}”</> : 'Caută un produs'}
-      >
-        {query && products.length > 0 && (
-          <p className="tabular-nums">
-            {roCount(totalCount, 'rezultate', 'rezultat')}
-            {totalPages > 1 && ` · pagina ${currentPage} din ${totalPages}`}
-          </p>
-        )}
-      </ListingHeader>
+      <Crumbs items={[{ label: 'Acasă', href: '/' }, { label: 'Căutare' }]} />
+      <h1 className="mt-3 font-display text-[30px] font-extrabold leading-[1.1] text-ink sm:text-[40px]">
+        {query ? <>Rezultate pentru „{query}”</> : 'Caută în articole'}
+      </h1>
+      {query && results.length > 0 && (
+        <p className="mt-1 text-[14px] tabular-nums text-ink-3">{roCount(results.length, 'articole', 'articol')}</p>
+      )}
 
       {/* Formularul de căutare (GET, merge și fără JavaScript) */}
-      <form action="/cautare" method="get" role="search" className="mb-4 flex max-w-xl gap-2">
+      <form action="/cautare" method="get" role="search" className="mt-5 mb-8 flex max-w-xl gap-2">
         <input
           name="q"
           type="search"
           defaultValue={query}
-          placeholder="Caută produs, brand sau categorie..."
-          aria-label="Caută produs, brand sau categorie"
+          placeholder="Ex.: telefon sub 1.500 lei, televizor 55 inch"
+          aria-label="Caută în articole"
           autoFocus
           autoComplete="off"
           className="h-12 min-w-0 flex-1 rounded-xl bg-surface px-4 text-[15px] text-ink ring-[1.5px] ring-inset ring-line-2 placeholder:text-ink-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-ink"
         />
-        {/* Cerneală, nu roșu: roșul plin e rezervat butonului „Vezi oferta” (design §3) */}
         <button
           type="submit"
-          className="inline-flex h-12 items-center rounded-xl bg-ink px-5 font-display text-[15px] font-extrabold text-page transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2"
+          className="inline-flex h-12 items-center rounded-xl bg-ink px-5 font-display text-[15px] font-extrabold text-[var(--bg)] transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2"
         >
           Caută
         </button>
       </form>
 
-      {/* Stare: fără query */}
-      {!query && (
-        <EmptyState title="Scrie un produs sau o marcă pentru a căuta.">
-          <p>Exemplu: <em>Samsung Galaxy</em>, <em>iPhone 15</em>, <em>Xiaomi</em></p>
-        </EmptyState>
+      {query && results.length === 0 && (
+        <p className="rounded-2xl bg-surface p-6 text-ink-2 shadow-card">
+          Niciun articol pentru „{query}”. Încearcă alte cuvinte sau{' '}
+          <Link href="/ghiduri" className="text-red-ink underline underline-offset-2">vezi toate articolele</Link>.
+        </p>
       )}
 
-      {/* Stare: query fără rezultate */}
-      {query && products.length === 0 && (
-        <EmptyState title={<>Niciun rezultat pentru „{query}”.</>}>
-          <p>Încearcă cu mai puține cuvinte sau verifică ortografia.</p>
-          <Link href="/" className="mt-3 inline-block font-semibold text-ink underline underline-offset-[3px] hover:text-red-ink">
-            ← Înapoi la pagina principală
-          </Link>
-        </EmptyState>
-      )}
-
-      {/* Rezultate */}
-      {query && products.length > 0 && (
-        <>
-          <MethodNote className="mb-3" />
-          <h2 className="sr-only">Produse</h2>
-          <ProductList products={products} />
-          <Pagination currentPage={currentPage} totalPages={totalPages} buildUrl={buildUrl} />
-        </>
-      )}
+      {results.length > 0 && <ArticleGrid guides={results} headingLevel={2} />}
     </div>
   )
 }

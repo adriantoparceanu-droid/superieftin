@@ -1,80 +1,51 @@
 import Link from 'next/link'
 import { Logo } from './Logo'
-import { CategoryIcon } from './CategoryIcon'
 import { MobileHeader } from './header/MobileHeader'
-import { DesktopCategoryBar } from './header/DesktopCategoryBar'
 import { SearchForm } from './header/SearchForm'
-import type { NavParent } from './header/types'
-import { getMenu, getMenuTags } from '@/lib/queries'
+import type { NavLink } from './header/types'
+import { getMenu } from '@/lib/queries'
 
-// Antetul site-ului (redesign, design §4 „Antet, meniu, subsol”; macheta „.sh” / „.dh”):
-// cărbune în ambele teme. Datele vin din arborele `menu_items` (Admin → Meniu) și din `tags` —
-// nimic scris de mână aici. Arătăm 2 niveluri (părinte → subcategorii); un al treilea nivel,
-// dacă apare în meniu, se vede pe pagina subcategoriei.
+// Antetul blogului (reorganizarea din 20.11.2026, varianta A „Revista”): fundal deschis (tokenul
+// --surface, închis în modul întunecat), logo text, meniul TEMELOR + paginile fixe, căutarea în
+// articole. Temele = părinții din `menu_items` (Admin → Meniu), nimic scris de mână; subcategoriile
+// nu apar în meniu (paginile lor au temă proprie doar de la 3 articole — app/c/[categorie]).
 //  - sub lg (mobil, tabletă): MobileHeader — buton meniu · logo · căutare + panoul pe tot ecranul;
-//  - lg+ (desktop): rândul cu logo, căutare lată și linkuri + bara de categorii cu meniu derulant.
+//  - lg+ (desktop): logo + căutare, dedesubt rândul cu temele. Pe desktop antetul NU e lipicios:
+//    are ~120 px și ar acoperi ancorele din articole (#produs-…, cuprinsul — scroll-mt-24).
 
-// Linkurile din rândul de sus (desktop). Primele trei = observatorul reducerilor reale
-// (repoziționarea din 21 oct. 2026) — statice, lângă categorii, fără să atingă meniul pe 2 niveluri.
-// La 1024 px rândul (logo + căutare + linkuri) nu încape cu toate: `short` = eticheta scurtă sub
-// 1280 px, `from` = de la ce lățime apare linkul. „Ghiduri” și „Cum calculăm” rămân oricum în
-// subsol, în meniul mobil și pe homepage.
-export const OBSERVATOR_LINKS: [string, string][] = [
-  ['/black-friday-2026', 'Black Friday 2026'],
-  ['/indice', 'Indicele prețurilor'],
-  ['/cand-sa-cumperi', 'Când să cumperi'],
+// Paginile fixe din meniu, după teme
+const PAGE_LINKS: NavLink[] = [
+  { href: '/ghiduri', label: 'Toate articolele' },
+  { href: '/despre', label: 'Despre noi' },
 ]
 
-const DESKTOP_LINKS: { href: string; label: string; short?: string; from?: 'xl' | '2xl' }[] = [
-  { href: '/black-friday-2026', label: 'Black Friday 2026', short: 'Black Friday' },
-  { href: '/indice', label: 'Indicele prețurilor', short: 'Indice' },
-  { href: '/cand-sa-cumperi', label: 'Când să cumperi' },
-  { href: '/ghiduri', label: 'Ghiduri', from: 'xl' },
-  { href: '/ghiduri/metodologie', label: 'Cum calculăm', from: '2xl' },
-  { href: '/alerte/gestionare', label: 'Alertele mele' },
-]
-
-const FROM_CLASS = { xl: 'hidden xl:inline ', '2xl': 'hidden 2xl:inline ' }
+const navLink =
+  'whitespace-nowrap py-3 text-[15px] font-semibold text-ink-2 hover:text-red-ink transition-colors rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink'
 
 export async function Header() {
   // fallback gol: la build-ul Docker nu exista DB (pre-randarea /_not-found incarca layout-ul)
-  const [menu, tags] = await Promise.all([
-    getMenu().catch(() => []),
-    getMenuTags().catch(() => []),
-  ])
-
-  // Iconițele se randează aici, pe server: componentele client primesc doar SVG-ul gata făcut
-  const nav: NavParent[] = menu.map((m) => ({
-    id: m.id,
-    label: m.label,
-    href: m.href,
-    // fără iconiță aleasă în Admin → Categorii nu punem una generică (toate ar arăta la fel)
-    icon: m.icon ? <CategoryIcon name={m.icon} className="w-[21px] h-[21px]" /> : null,
-    children: (m.children ?? []).map((c) => ({ id: c.id, label: c.label, href: c.href })),
-  }))
+  const menu = await getMenu().catch(() => [])
+  const themes: NavLink[] = menu.map((m) => ({ href: m.href, label: m.label }))
 
   return (
-    <header className="sticky top-0 z-50 bg-head text-head-ink">
-      <MobileHeader menu={nav} tags={tags} observator={OBSERVATOR_LINKS} />
+    <header className="sticky top-0 z-50 lg:static border-b border-line bg-surface text-ink">
+      <MobileHeader themes={themes} pages={PAGE_LINKS} />
 
       <div className="hidden lg:block">
-        <div className="max-w-7xl mx-auto px-4 h-[72px] flex items-center gap-7">
-          <Logo onDark className="shrink-0" />
-          <SearchForm className="flex-1 max-w-[620px]" />
-          <nav aria-label="Linkuri utile" className="ml-auto flex items-center gap-[18px] text-sm font-semibold shrink-0">
-            {DESKTOP_LINKS.map(({ href, label, short, from }) => (
-              <Link
-                key={href}
-                href={href}
-                aria-label={short ? label : undefined}
-                className={`${from ? FROM_CLASS[from] : ''}whitespace-nowrap text-head-ink-2 hover:text-head-ink transition-colors rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-on-head`}
-              >
-                {short ? (<><span className="xl:hidden">{short}</span><span className="hidden xl:inline">{label}</span></>) : label}
-              </Link>
-            ))}
-          </nav>
+        <div className="max-w-7xl mx-auto px-4 h-[72px] flex items-center gap-8">
+          <Logo wordmark className="shrink-0" />
+          <SearchForm className="ml-auto w-full max-w-[380px]" />
         </div>
-        <DesktopCategoryBar menu={nav} />
+        <nav aria-label="Teme" className="max-w-7xl mx-auto px-4 flex items-center gap-x-7 border-t border-line">
+          {themes.map((t) => (
+            <Link key={t.href} href={t.href} className={navLink}>{t.label}</Link>
+          ))}
+          <span className="ml-auto flex items-center gap-x-7">
+            {PAGE_LINKS.map((p) => (
+              <Link key={p.href} href={p.href} className={navLink}>{p.label}</Link>
+            ))}
+          </span>
+        </nav>
       </div>
     </header>
   )
