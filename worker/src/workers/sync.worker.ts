@@ -27,6 +27,7 @@ import { runTrackingSyncJob } from '../tracking/sync.js'
 import { runAdsGuardJob } from '../ads/campaigns/guard.js'
 import { runGa4Sync } from '../lib/ga4/sync.js'
 import { runPriceIndexJob } from '../lib/price-index.js'
+import { runGuideHealthJob } from '../lib/guide-health-job.js'
 
 const logger = pino({ level: 'info' })
 
@@ -42,6 +43,7 @@ export type SyncJobData =
   | { type: 'ads-guard' }
   | { type: 'ga4-sync' }
   | { type: 'price-index' }
+  | { type: 'guide-health' }
 
 // Sub acest prag (fata de sincronizarea anterioara) un feed e considerat suspect si respins.
 const MIN_FEED_RATIO = 0.5
@@ -753,6 +755,7 @@ export function startSyncWorker() {
         : job.data.type === 'ads-guard' ? runAdsGuardJob((m) => logger.info(m))
         : job.data.type === 'ga4-sync' ? runGa4Sync(pool)
         : job.data.type === 'price-index' ? runPriceIndexJob((m) => logger.info(m))
+        : job.data.type === 'guide-health' ? runGuideHealthJob((m) => logger.info(m))
         : job.data.type === 'file-import' ? runFileImport(job.data.filePath, job.data.retailerSlug, job.id, job.data.filename)
             .finally(() => unlink((job.data as { filePath: string }).filePath).catch(() => {}))
         : runFeedSync(job.id),
@@ -769,8 +772,10 @@ export function startSyncWorker() {
 
   worker.on('completed', (job, result) => {
     logger.info({ job: job.id, ...result }, 'Job completat')
-    // Comisioanele, garda reclamelor si statisticile GA4 nu schimba preturi/oferte → fara alerte si fara invalidare cache
-    if (job.data.type === 'tracking-sync' || job.data.type === 'ads-guard' || job.data.type === 'ga4-sync') return
+    // Comisioanele, garda reclamelor, statisticile GA4 si verificarea articolelor nu schimba
+    // preturi/oferte → fara alerte si fara invalidare cache
+    if (job.data.type === 'tracking-sync' || job.data.type === 'ads-guard' || job.data.type === 'ga4-sync'
+      || job.data.type === 'guide-health') return
     // Indicele de preturi nu schimba ofertele → fara alerte; doar cache-ul site-ului (paginile /indice
     // si /cand-sa-cumperi au oricum ISR de o ora)
     if (job.data.type === 'price-index') {

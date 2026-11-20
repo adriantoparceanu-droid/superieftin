@@ -42,6 +42,11 @@ const PRICE_INDEX_CRON = process.env.PRICE_INDEX_CRON || '0 5 1 * *'
 const PRICE_TIMING_CRON = process.env.PRICE_TIMING_CRON || '30 5 * * 1'
 const PRICE_INDEX_TZ = 'Europe/Bucharest'
 const EMAIL_DIGEST_CRON = process.env.EMAIL_DIGEST_CRON || '5 * * * *'
+// Verificarea saptamanala a articolelor publicate (lib/guide-health-job.ts): produse fara oferta
+// disponibila cu afiliat, pret peste bugetul din titlu, articole neactualizate de > 90 de zile →
+// rezumat Telegram doar cand exista probleme. Luni dimineata, dupa feed-sync (04:00); doar citire.
+const GUIDE_HEALTH_CRON = process.env.GUIDE_HEALTH_CRON || '30 7 * * 1'
+const GUIDE_HEALTH_TZ = 'Europe/Bucharest'
 
 async function scheduleRepeatingJobs() {
   // Reincercare automata (20 nov. 2026): pe 19 nov. jobul de la 04:00 a picat pe o eroare DNS
@@ -121,6 +126,13 @@ async function scheduleRepeatingJobs() {
     { repeat: { pattern: PRICE_TIMING_CRON, tz: PRICE_INDEX_TZ }, jobId: 'price-index-weekly-repeat' }
   )
   logger.info({ cron: PRICE_INDEX_CRON, weekly: PRICE_TIMING_CRON, tz: PRICE_INDEX_TZ }, 'Job repeating programat: price-index')
+
+  await syncQueue.add(
+    'guide-health',
+    { type: 'guide-health' },
+    { repeat: { pattern: GUIDE_HEALTH_CRON, tz: GUIDE_HEALTH_TZ }, jobId: 'guide-health-repeat' }
+  )
+  logger.info({ cron: GUIDE_HEALTH_CRON, tz: GUIDE_HEALTH_TZ }, 'Job repeating programat: guide-health')
 
   if (emailConfig()) {
     await emailQueue.add('digest', {}, { repeat: { pattern: EMAIL_DIGEST_CRON }, jobId: 'email-digest-repeat', removeOnComplete: 100, removeOnFail: 100 })
