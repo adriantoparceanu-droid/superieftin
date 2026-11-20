@@ -3,7 +3,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import {
-  validateCategoryText, validateCategoryContent, validateCategoryFile, planAction, isExcludedCategory,
+  validateCategoryText, validateCategoryContent, validateCategoryFile, planAction, isHealthTree,
   CAT_MARKER_KEYS, MAX_FAQ, type CategoryFaqItem, type ContentIssue,
 } from './category-texts.js'
 
@@ -113,12 +113,19 @@ test('fisier: fisa de verificare — doar fapte „confirmat”, web = URL', () 
   assert.equal(errs(fact({ source_type: 'db', source: 'feed evomag' })), '')
 })
 
-test('excluderi regula 8: Sanatate & Naturale (cu subcategorii) si farmacie-veterinara', () => {
-  assert.equal(isExcludedCategory('sanatate-naturale', []), true)
-  assert.equal(isExcludedCategory('suplimente-alimentare', ['sanatate-naturale']), true)
-  assert.equal(isExcludedCategory('farmacie-veterinara', ['animale-de-companie']), true)
-  assert.equal(isExcludedCategory('monitoare', ['laptopuri-calculatoare']), false)
-  assert.equal(isExcludedCategory('castroane', ['animale-de-companie']), false)
+test('arbori de sanatate (permisi pe blog din 20.11.2026, doar avertisment): Sanatate & Naturale + farmacie-veterinara', () => {
+  assert.equal(isHealthTree('sanatate-naturale', []), true)
+  assert.equal(isHealthTree('suplimente-alimentare', ['sanatate-naturale']), true)
+  assert.equal(isHealthTree('farmacie-veterinara', ['animale-de-companie']), true)
+  assert.equal(isHealthTree('antiparazitare', ['farmacie-veterinara', 'animale-de-companie']), true)
+  assert.equal(isHealthTree('monitoare', ['laptopuri-calculatoare']), false)
+  assert.equal(isHealthTree('castroane', ['animale-de-companie']), false)
+})
+
+test('text de categorie in arbore de sanatate: textul curat trece, afirmatiile de sanatate nu', () => {
+  assert.deepEqual(validateCategoryText('text', 'Ceaiuri din plante, la pliculețe sau vrac, de la {{cat:magazine|magazin|magazine}}.'), [])
+  assert.ok(validateCategoryText('text', 'Un ceai care întărește imunitatea.').some((i) => /sănătate/.test(i.message)))
+  assert.ok(validateCategoryText('text', 'Ajută la slăbit și scade colesterolul.').some((i) => /sănătate/.test(i.message)))
 })
 
 test('planAction: CREEAZĂ / ACTUALIZEAZĂ / NESCHIMBAT', () => {

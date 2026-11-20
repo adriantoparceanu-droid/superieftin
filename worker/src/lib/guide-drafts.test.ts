@@ -142,7 +142,10 @@ test('publish: fapt „de_verificat” in fisa blocheaza publicarea', () => {
 
 test('publish: afirmatii de sanatate blocheaza (regula 8)', () => {
   const r = validateDraft({ ...publishable(), summary: 'Pe scurt: purificatorul tratează alergiile.' })
-  assert.ok(r.errors.some((e) => e.includes('sănătate') && e.includes('tratează')))
+  // cuvantul raportat e cel din text, fara diacritice (lib/medical-content.ts): „trateaza”
+  assert.ok(r.errors.some((e) => e.includes('sănătate') && e.includes('trateaza')))
+  const r2 = validateDraft({ ...publishable(), summary: 'Pe scurt: un ceai care susține imunitatea.' })
+  assert.ok(r2.errors.some((e) => e.includes('sănătate') && e.includes('imunitatea')))
   assert.deepEqual(findHealthClaims('Detoxifiere completă'), ['detoxifiere'])
   assert.deepEqual(findHealthClaims('Nu retratează nimic'), [])
 })

@@ -11,7 +11,8 @@ import { pingIndexNow } from '../guides/indexnow'
 import { GuideBody } from '@/components/guides/GuideBody'
 import type { FaqItem } from '../guides/queries'
 import { unverifiedFields } from '../guides/review'
-import { guideMarkerErrors } from '../guides/markers'
+import { guideMarkerErrors, collectRefs, splitGuideBody } from '../guides/markers'
+import { HEALTH_TREE_ROOTS, medicalProductErrors } from '../medical-content'
 
 export type GuideFormState = { error?: string; message?: string } | null
 
@@ -29,6 +30,23 @@ function revalidateGuide(slugs: string[]) {
   for (const s of new Set(slugs)) revalidatePath(`/ghiduri/${s}`)
   revalidatePath('/ghiduri')
   refresh()
+}
+
+// Produsele ghidului (id-uri legate + referinte din marcaje: id sau slug) aflate in arborii de
+// sanatate, verificate dupa denumire. Interogarea e aceeasi ca in worker/src/scripts/import-guide-drafts.ts.
+async function guideMedicalProductErrors(productIds: string[], markerRefs: string[]): Promise<string[]> {
+  const refs = [...new Set([...productIds, ...markerRefs])]
+  if (!refs.length) return []
+  const { rows } = await pool.query<{ ref: string; name: string }>(`
+    WITH RECURSIVE tree AS (
+      SELECT id FROM categories WHERE slug = ANY($2::text[])
+      UNION SELECT c.id FROM categories c JOIN tree t ON c.parent_id = t.id
+    )
+    SELECT p.slug AS ref, p.name FROM products p
+    WHERE (p.slug = ANY($1) OR p.id::text = ANY($1)) AND p.category_id IN (SELECT id FROM tree)
+    ORDER BY p.slug
+  `, [refs, [...HEALTH_TREE_ROOTS]])
+  return medicalProductErrors(rows.map((r) => ({ ref: r.ref, name: r.name, healthTree: true })))
 }
 
 // Salveaza (creare sau editare). intent:
@@ -64,6 +82,13 @@ export async function saveGuideAction(_prev: GuideFormState, formData: FormData)
   // {{pro}}/{{contra}} fara produs inainte, cu text prea scurt/lung sau peste 5 pe produs.
   const markerErrors = guideMarkerErrors(body)
   if (markerErrors.length) return { error: `Corpul articolului: ${markerErrors.join('; ')}.` }
+
+  // Arborii de sanatate (Sanatate & Naturale, farmacie-veterinara): pe blog doar produse
+  // ne-medicale (decizia proprietarului, 20.11.2026). Produsele legate + cele din marcaje cu
+  // denumire de supliment/medicament se resping la orice salvare — aceeasi regula ca importul din
+  // worker (lib/medical-content.ts, copie identica). Reclamele raman excluse pe acesti arbori.
+  const medicalErrors = await guideMedicalProductErrors(productIds, collectRefs(splitGuideBody(body)))
+  if (medicalErrors.length) return { error: `Produse nepermise pe blog: ${medicalErrors.join('; ')}.` }
 
   // Starea finala
   let status: 'draft' | 'published'

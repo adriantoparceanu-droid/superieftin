@@ -23,12 +23,16 @@
 //   „neschimbat” — reaplicarea nu atinge nimic, nici updated_at). published_at = prima publicare.
 //   Dupa scriere: POST ${SITE_URL}/api/revalidate/ghiduri (revalidatePath + IndexNow, ca adminul).
 //   --no-revalidate sare pasul (ex. la testare locala, unde .env poate avea SITE_URL de productie).
+// - Produsele (legate sau din marcaje) din Sanatate & Naturale / farmacie-veterinara (cu subcategorii)
+//   sunt REFUZATE daca denumirea pare medicala/supliment (lib/medical-content.ts — aceeasi regula
+//   ca la salvarea din admin; decizia proprietarului din 20.11.2026: pe blog doar ne-medical).
 // - DATABASE_URL vine din mediu (local: --env-file=../.env din npm script; prod: env-ul containerului).
 
 import { readFileSync, readdirSync, statSync } from 'fs'
 import { join, resolve } from 'path'
 import pool from '../lib/db.js'
 import { validateDraft, countUnverified, type GuideDraft } from '../lib/guide-drafts.js'
+import { HEALTH_TREE_ROOTS, medicalProductErrors } from '../lib/medical-content.js'
 
 // Implicit pentru ciorne (fisierele fara bloc „publish” — comportamentul vechi)
 const AUTHOR_SLUG = 'echipa-superieftin'   // „Echipa Superieftin.ro” (migratia 023)
@@ -131,6 +135,18 @@ async function main() {
       'SELECT id::text, slug FROM products WHERE id = ANY($1::bigint[]) OR slug = ANY($2)', [ids, slugs])
     const known = new Set(found.rows.flatMap((r) => [r.id, r.slug]))
     for (const r of markerRefs) if (!known.has(r)) errs.push(`body_md: marcajul trimite la produsul „${r}”, care nu există în baza de date`)
+
+    // Arborii de sanatate: pe blog doar produse ne-medicale (decizia proprietarului, 20.11.2026)
+    const healthRefs = [...new Set([...draft.product_slugs, ...markerRefs])]
+    const ht = await pool.query<{ ref: string; name: string }>(`
+      WITH RECURSIVE tree AS (
+        SELECT id FROM categories WHERE slug = ANY($2::text[])
+        UNION SELECT c.id FROM categories c JOIN tree t ON c.parent_id = t.id
+      )
+      SELECT p.slug AS ref, p.name FROM products p
+      WHERE (p.slug = ANY($1) OR p.id::text = ANY($1)) AND p.category_id IN (SELECT id FROM tree)
+      ORDER BY p.slug`, [healthRefs, [...HEALTH_TREE_ROOTS]])
+    errs.push(...medicalProductErrors(ht.rows.map((r) => ({ ref: r.ref, name: r.name, healthTree: true }))))
 
     const authorId = authorIdBySlug.get(draft.publish?.author_slug ?? AUTHOR_SLUG)
     const reviewerId = authorIdBySlug.get(draft.publish?.reviewer_slug ?? REVIEWER_SLUG)

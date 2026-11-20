@@ -18,7 +18,7 @@
 
 import pool from './db.js'
 import { OFFER_STALE_DAYS } from './stale.js'
-import { isExcludedCategory } from './category-texts.js'
+import { isHealthTree } from './medical-content.js'
 
 export const REDUCED_MIN_PCT = 5          // redusă: ≥ 5% sub maximul din 14 zile
 export const REAL_DISCOUNT_PCT = 5        // reală: ≥ 5% sub referință (pragul site-ului, lib/discount.ts)
@@ -249,7 +249,7 @@ async function computeReference(slug: string): Promise<number | null> {
 
 async function loadCategories(): Promise<Map<number, CategoryNode>> {
   // Doar categoriile vizibile (și cu părinte vizibil), fără Sănătate & Naturale (cu tot arborele)
-  // și fără farmacie-veterinara (REGULI.md regula 8; aceeași listă ca importul de texte).
+  // și fără farmacie-veterinara (observatorul îi exclude în continuare; aceeași listă: HEALTH_TREE_ROOTS).
   const { rows } = await pool.query<{ id: number; slug: string; name: string; parent_id: number | null; parent_slug: string | null }>(`
     SELECT c.id, c.slug, c.name, c.parent_id, pc.slug AS parent_slug
     FROM categories c
@@ -258,7 +258,7 @@ async function loadCategories(): Promise<Map<number, CategoryNode>> {
   `)
   const map = new Map<number, CategoryNode>()
   for (const r of rows) {
-    if (isExcludedCategory(r.slug, r.parent_slug ? [r.parent_slug] : [])) continue
+    if (isHealthTree(r.slug, r.parent_slug ? [r.parent_slug] : [])) continue
     map.set(r.id, { id: r.id, slug: r.slug, name: r.name, parentId: r.parent_id })
   }
   // O subcategorie al cărei părinte a fost exclus/ascuns nu se agregă (nu are vertical)

@@ -16,8 +16,9 @@
 //   intr-o singura tranzactie.
 // - Validarea textului = cea de la salvarea din admin (lib/category-texts.ts, copie a
 //   web/src/lib/category-markers.ts) + fisa de verificare (toate faptele „confirmat”).
-// - Refuza: categorie inexistenta, ascunsa (ea sau parintele — /c/ ar da 404), Sanatate &
-//   Naturale si farmacie-veterinara (REGULI.md regula 8).
+// - Refuza: categorie inexistenta, ascunsa (ea sau parintele — /c/ ar da 404). Sanatate &
+//   Naturale si farmacie-veterinara sunt PERMISE din 20.11.2026 (blog = doar ne-medical, decizia
+//   proprietarului), cu avertisment in plan; afirmatiile de sanatate raman blocate de validare.
 // - Fisierul e sursa de adevar: suprascrie si un text editat in admin, dar doar daca ceva difera
 //   (altfel NESCHIMBAT — nu se atinge nici content_updated_at). Daca textul a fost salvat din
 //   admin intre plan si scriere, importul se opreste (ROLLBACK), ca sa nu piarda editarea.
@@ -29,7 +30,7 @@
 import { readFileSync, readdirSync, statSync } from 'fs'
 import { join, resolve } from 'path'
 import pool from '../lib/db.js'
-import { validateCategoryFile, planAction, normalizeDbFaq, isExcludedCategory, type CategoryTextFile, type CategoryTextAction } from '../lib/category-texts.js'
+import { validateCategoryFile, planAction, normalizeDbFaq, isHealthTree, type CategoryTextFile, type CategoryTextAction } from '../lib/category-texts.js'
 
 interface Input { label: string; raw: unknown; parseError?: string }
 
@@ -94,7 +95,7 @@ async function main() {
     process.exit(1)
   }
 
-  type Planned = { file: CategoryTextFile; label: string; action: CategoryTextAction; cat: CategoryRow }
+  type Planned = { file: CategoryTextFile; label: string; action: CategoryTextAction; cat: CategoryRow; healthTree: boolean }
   const planned: Planned[] = []
   const failed: { label: string; errors: string[] }[] = []
   const seen = new Map<string, string>()
@@ -128,13 +129,10 @@ async function main() {
     else {
       if (!cat.is_visible) errs.push(`categoria „${file.slug}” e ascunsă (is_visible = false) — /c/${file.slug} dă 404`)
       if (cat.hidden_ancestor) errs.push(`categoria-părinte „${cat.hidden_ancestor}” e ascunsă — /c/${file.slug} nu e publică`)
-      if (isExcludedCategory(cat.slug, cat.ancestors)) {
-        errs.push(`categoria „${file.slug}” e în Sănătate & Naturale / farmacie veterinară — exclusă (REGULI.md, regula 8)`)
-      }
     }
 
     if (errs.length || !cat) { failed.push({ label: inp.label, errors: errs }); continue }
-    planned.push({ file, label: inp.label, cat, action: planAction(cat, file) })
+    planned.push({ file, label: inp.label, cat, action: planAction(cat, file), healthTree: isHealthTree(cat.slug, cat.ancestors) })
   }
 
   // Raport
@@ -155,6 +153,10 @@ async function main() {
       : `   Text: ${file.intro_md.length} caractere · FAQ: ${file.faq.length}`)
     console.log(`   Fișă: ${file.review.facts.length} afirmații confirmate, ${file.review.warnings.length} avertismente`)
     for (const w of file.review.warnings) console.log(`   ⚠ ${w}`)
+    if (p.healthTree) {
+      console.log('   ⚠ Arbore de sănătate (Sănătate & Naturale / farmacie veterinară): pe blog doar produse ne-medicale, ' +
+        'fără suplimente/medicamente și fără afirmații de sănătate — citește textul cu atenție (lista automată nu prinde tot).')
+    }
   }
 
   if (failed.length) {

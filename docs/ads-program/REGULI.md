@@ -39,6 +39,7 @@
    clickul se înregistrează anonim (fără ID-uri Google).
 8. **Categoria Sănătate & Naturale este exclusă din reclame** până la o decizie explicită
    a proprietarului. Nicio afirmație de sănătate (vindecă, tratează, detoxifică etc.).
+   Pe blog (din 20.11.2026, decizia proprietarului) se pot recomanda produse ne-medicale din aceste categorii; suplimentele, medicamentele și afirmațiile de sănătate rămân interzise; reclamele rămân excluse.
 9. **Afirmațiile din anunțuri trebuie să fie adevărate pe landing page** în momentul
    publicării (ex: „-40%” în anunț = -40% față de mediană, vizibil pe pagină).
 10. **`policy-reviewer` trebuie să dea PASS** înainte de orice `ads:apply --confirm`.

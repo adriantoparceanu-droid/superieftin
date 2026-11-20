@@ -44,10 +44,10 @@ test('parseSort + parseRealOnly', () => {
 })
 
 test('parseResearchParams: valori implicite', () => {
-  assert.deepEqual(parseResearchParams({}), { tema: null, buget: null, reale: false, sort: 'reducere', pagina: 1 })
+  assert.deepEqual(parseResearchParams({}), { tema: null, buget: null, reale: false, toate: false, sort: 'reducere', pagina: 1 })
   assert.deepEqual(
     parseResearchParams({ tema: 'laptopuri', buget: '3000', reale: '1', sort: 'pret', pagina: '3' }),
-    { tema: 'laptopuri', buget: 3000, reale: true, sort: 'pret', pagina: 3 },
+    { tema: 'laptopuri', buget: 3000, reale: true, toate: false, sort: 'pret', pagina: 3 },
   )
 })
 
@@ -59,6 +59,14 @@ test('researchHref: implicitele lipsesc, filtrul nou reseteaza pagina', () => {
   assert.equal(researchHref(cur, { pagina: 4 }), '/admin/cercetare?tema=laptopuri&buget=3000&reale=1&sort=pret&pagina=4')
   assert.equal(researchHref(cur, { sort: 'magazine' }), '/admin/cercetare?tema=laptopuri&buget=3000&reale=1&sort=magazine')
   assert.equal(researchHref(cur, { tema: null, reale: false }), '/admin/cercetare?buget=3000&sort=pret')
+})
+
+test('toate=1: arata si produsele medicale din arborii de sanatate; implicit lipseste din URL', () => {
+  const cur = parseResearchParams({ tema: 'sanatate-naturale', toate: '1' })
+  assert.equal(cur.toate, true)
+  assert.equal(researchHref(cur), '/admin/cercetare?tema=sanatate-naturale&toate=1')
+  assert.equal(researchHref(cur, { toate: false }), '/admin/cercetare?tema=sanatate-naturale')
+  assert.equal(parseResearchParams({ toate: 'on' }).toate, false)
 })
 
 test('researchOrderBy: lista fixa, ordine stabila', () => {

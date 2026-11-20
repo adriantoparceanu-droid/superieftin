@@ -4,6 +4,7 @@ import pool from '@/lib/db'
 import { getCategoryStats } from '@/lib/category-content'
 import { CAT_MARKER_KEYS, markerValue, parseFaq } from '@/lib/category-markers'
 import { CategoryContentView } from '@/components/CategoryContent'
+import { isHealthTree } from '@/lib/medical-content'
 import { CategoryContentEditor } from '@/components/admin/CategoryContentEditor'
 
 // Admin → Categorii → „text”: textul introductiv + întrebările frecvente ale unei categorii
@@ -41,7 +42,8 @@ export default async function CategoryContentPage({ params }: Props) {
 
   const faq = parseFaq(cat.faq)
   const stats = await getCategoryStats(cat.slug)
-  const isHealth = cat.slug === 'sanatate-naturale' || cat.parent_slug === 'sanatate-naturale'
+  // Arborele are 2 niveluri: ajunge parintele direct
+  const isHealth = isHealthTree(cat.slug, cat.parent_slug ? [cat.parent_slug] : [])
 
   return (
     <div className="max-w-4xl">
@@ -55,7 +57,11 @@ export default async function CategoryContentPage({ params }: Props) {
       </p>
       {isHealth && (
         <p className="text-sm bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
-          Categorie din Sănătate &amp; Naturale: nicio afirmație de sănătate (REGULI.md, regula 8). Salvarea e blocată la cuvinte ca „vindecă”, „tratează”, „detoxifică”, dar verifică și restul textului.
+          Categorie din Sănătate &amp; Naturale / farmacie veterinară: pe blog scrie DOAR despre produse ne-medicale
+          (cosmetice naturale, ceaiuri și alimente ca atare, accesorii fără medicamente) — fără suplimente, medicamente,
+          antiparazitare și fără afirmații de sănătate (decizia din 20.11.2026; reclamele rămân excluse, REGULI.md regula 8).
+          Salvarea e blocată la expresii ca „vindecă”, „întărește imunitatea”, „ajută la slăbit”, „antiinflamator”,
+          dar verifică și restul textului.
         </p>
       )}
 

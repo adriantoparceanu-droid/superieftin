@@ -2,11 +2,12 @@
 // docs/plans/2026-11-20-reorganizare-blog-plan.md). DOAR CITIRE: nu scrie nimic în baza de date.
 //
 // Utilizare (local, din worker/):
-//   npm run cercetare -- --tema=<slug categorie> [--buget=N] [--limit=N] [--reduceri] [--json]
+//   npm run cercetare -- --tema=<slug categorie> [--buget=N] [--limit=N] [--reduceri] [--toate] [--json]
 //     --tema      slug din `categories`; un părinte include toate subcategoriile lui
 //     --buget     doar produsele cu cel mai bun preț ≤ N lei
 //     --limit     câte produse se afișează (implicit 30)
 //     --reduceri  doar reducerile reale (preț < mediana pe 30 de zile × 0,95, regula site-ului)
+//     --toate     arată și produsele care par medicale/suplimente din arborii de sănătate (marcate MED)
 //     --json      JSON pe stdout (pentru scrierea ciornelor de articole)
 // Producție (containerul worker): docker compose exec -T worker node worker/dist/scripts/cercetare.js --tema=…
 //
@@ -14,21 +15,24 @@
 // preț” = regula „cel mai ieftin magazin partener” (lib/best-offer.ts). Mediana/min/max pe 30 de
 // zile sunt ale ofertei alese (offer_price_stats, precalculate); min 90 z = cel mai mic preț în stoc
 // din price_history pe TOATE ofertele produsului (doar pentru produsele afișate).
-// Arborii Sănătate & Naturale și farmacie veterinară sunt excluși (afirmații de sănătate, regula 8).
+// Arborii Sănătate & Naturale și farmacie veterinară (decizia proprietarului, 20.11.2026): incluși,
+// dar candidații din ei sunt marcați „doar ne-medical” (NM); cei a căror denumire pare de supliment
+// / medicament (lib/medical-content.ts — aceeași regulă care îi refuză în ghiduri) sunt ascunși
+// implicit, iar cu --toate apar marcați MED. Reclamele rămân excluse pe acești arbori (regula 8).
 
 import pool from '../lib/db.js'
 import { ALERT_OFFER_AVAILABLE_SQL } from '../lib/alert-sql.js'
 import { fetchProductOffers, summarizeByProduct } from '../lib/best-offer-query.js'
 import { compareCandidates, isRealDiscount, withinBudget } from '../lib/best-offer.js'
+import { HEALTH_TREE_ROOTS, medicalReasons } from '../lib/medical-content.js'
 
-const EXCLUDED_TREES = ['sanatate-naturale', 'farmacie-veterinara']
 const DEFAULT_LIMIT = 30
 
-interface Args { tema: string; buget: number | null; limit: number; reduceri: boolean; json: boolean }
+interface Args { tema: string; buget: number | null; limit: number; reduceri: boolean; toate: boolean; json: boolean }
 
 function parseArgs(argv: string[]): Args | string {
   const val = (name: string) => argv.find((a) => a.startsWith(`--${name}=`))?.split('=').slice(1).join('=')
-  const unknown = argv.filter((a) => !/^--(tema|buget|limit)=/.test(a) && a !== '--reduceri' && a !== '--json')
+  const unknown = argv.filter((a) => !/^--(tema|buget|limit)=/.test(a) && !['--reduceri', '--toate', '--json'].includes(a))
   if (unknown.length) return `Argumente necunoscute: ${unknown.join(' ')}`
   const tema = val('tema')?.trim()
   if (!tema) return 'Lipsește --tema=<slug categorie> (ex. --tema=telefoane-mobile)'
@@ -41,7 +45,7 @@ function parseArgs(argv: string[]): Args | string {
   const l = val('limit')
   const limit = l == null ? DEFAULT_LIMIT : Number(l)
   if (!Number.isInteger(limit) || limit < 1) return `--limit invalid: ${l}`
-  return { tema, buget, limit, reduceri: argv.includes('--reduceri'), json: argv.includes('--json') }
+  return { tema, buget, limit, reduceri: argv.includes('--reduceri'), toate: argv.includes('--toate'), json: argv.includes('--json') }
 }
 
 const lei = (n: number | null) => {
@@ -55,31 +59,28 @@ async function main(): Promise<number> {
   const args = parseArgs(process.argv.slice(2))
   if (typeof args === 'string') {
     console.error(args)
-    console.error('Utilizare: npm run cercetare -- --tema=<slug> [--buget=N] [--limit=N] [--reduceri] [--json]')
+    console.error('Utilizare: npm run cercetare -- --tema=<slug> [--buget=N] [--limit=N] [--reduceri] [--toate] [--json]')
     return 1
   }
 
-  // Categoria + toate subcategoriile ei (orice adâncime), fără arborii excluși.
-  const cats = await pool.query<{ id: number; slug: string; name: string; excluded: boolean }>(`
-    WITH RECURSIVE excluded AS (
+  // Categoria + toate subcategoriile ei (orice adâncime); health = în arborii de sănătate.
+  const cats = await pool.query<{ id: number; slug: string; name: string; health: boolean }>(`
+    WITH RECURSIVE health AS (
       SELECT id FROM categories WHERE slug = ANY($2::text[])
-      UNION SELECT c.id FROM categories c JOIN excluded e ON c.parent_id = e.id
+      UNION SELECT c.id FROM categories c JOIN health h ON c.parent_id = h.id
     ), tree AS (
       SELECT id, slug, name FROM categories WHERE slug = $1
       UNION SELECT c.id, c.slug, c.name FROM categories c JOIN tree t ON c.parent_id = t.id
     )
-    SELECT t.id, t.slug, t.name, (t.id IN (SELECT id FROM excluded)) AS excluded FROM tree t
-  `, [args.tema, EXCLUDED_TREES])
+    SELECT t.id, t.slug, t.name, (t.id IN (SELECT id FROM health)) AS health FROM tree t
+  `, [args.tema, [...HEALTH_TREE_ROOTS]])
   if (!cats.rows.length) {
     const roots = await pool.query<{ slug: string }>('SELECT slug FROM categories WHERE parent_id IS NULL ORDER BY sort_order, slug')
     console.error(`Tema „${args.tema}” nu există în categories. Părinți disponibili: ${roots.rows.map((r) => r.slug).join(', ')}`)
     return 1
   }
-  const allowed = cats.rows.filter((c) => !c.excluded)
-  if (!allowed.length) {
-    console.error(`Tema „${args.tema}” e în Sănătate & Naturale / farmacie veterinară — exclusă (afirmații de sănătate, regula 8).`)
-    return 1
-  }
+  const allowed = cats.rows
+  const healthCats = new Set(cats.rows.filter((c) => c.health).map((c) => c.slug))
   const catIds = allowed.map((c) => c.id)
 
   // Produsele din temă cu măcar o ofertă disponibilă cu link afiliat (filtru ieftin, în SQL);
@@ -103,7 +104,11 @@ async function main(): Promise<number> {
     if (!s?.best || s.best.price == null) return []
     const best = s.best
     const bestPrice = best.price as number
+    const healthTree = healthCats.has(p.cat_slug)
     return [{
+      // Arbore de sănătate → pe blog doar ne-medical; termeniMedicali nevid = ascuns implicit (MED)
+      doarNeMedical: healthTree,
+      termeniMedicali: healthTree ? medicalReasons(p.name) : [],
       id: Number(p.id), slug: p.slug, name: p.name, brand: p.brand,
       category: { slug: p.cat_slug, name: p.cat_name },
       bestPrice, retailer: best.retailerName, offerId: best.offerId,
@@ -113,7 +118,9 @@ async function main(): Promise<number> {
       pctVsMedian: best.median30d ? Math.round((bestPrice / best.median30d - 1) * 1000) / 10 : null,
     }]
   })
+  const medicalHidden = args.toate ? 0 : candidates.filter((c) => c.termeniMedicali.length).length
   const filtered = candidates
+    .filter((c) => args.toate || !c.termeniMedicali.length)
     .filter((c) => withinBudget(c.bestPrice, args.buget))
     .filter((c) => !args.reduceri || c.realDiscount)
     .sort(compareCandidates)
@@ -138,8 +145,10 @@ async function main(): Promise<number> {
       categorii: allowed.map((c) => c.slug),
       buget: args.buget,
       doarReduceri: args.reduceri,
+      toate: args.toate,
       generatLa: new Date().toISOString(),
       candidatiTotal: candidates.length,
+      ascunseMedicale: medicalHidden,
       dupaFiltre: filtered.length,
       produse: shown,
     }, null, 2))
@@ -148,12 +157,19 @@ async function main(): Promise<number> {
 
   console.log(`Tema: ${args.tema} (${allowed.length} categorii) · candidați disponibili cu afiliat: ${candidates.length}` +
     (args.buget != null ? ` · buget ≤ ${lei(args.buget)} lei` : '') + (args.reduceri ? ' · doar reduceri reale' : '') +
+    (medicalHidden ? ` · ascunse ca medicale/suplimente: ${medicalHidden} (--toate le arată)` : '') +
     ` · după filtre: ${filtered.length} · afișate: ${shown.length}`)
-  console.log('Prețuri în lei. Med/min/max 30z = ale ofertei alese; min 90z = toate ofertele produsului; mag = magazine disponibile; sch = schimbări de preț în 60 de zile; R = reducere reală.\n')
-  const header = ['#', 'preț', 'magazin', 'med 30z', 'min 30z', 'max 30z', 'min 90z', 'mag', 'sch', 'R', 'marcă', 'produs', 'slug']
+  console.log('Prețuri în lei. Med/min/max 30z = ale ofertei alese; min 90z = toate ofertele produsului; mag = magazine disponibile; sch = schimbări de preț în 60 de zile; R = reducere reală.')
+  if (healthCats.size) {
+    console.log('Arbore de sănătate: NM = doar ne-medical pe blog (fără afirmații de sănătate); MED = pare supliment/medicament — refuzat în ghiduri.')
+  }
+  console.log('')
+  const header = ['#', 'preț', 'magazin', 'med 30z', 'min 30z', 'max 30z', 'min 90z', 'mag', 'sch', 'R', 'S', 'marcă', 'produs', 'slug']
   const rows = shown.map((c, i) => [
     String(i + 1), lei(c.bestPrice), cut(c.retailer, 14), lei(c.median30d), lei(c.min30d), lei(c.max30d), lei(c.min90d),
-    String(c.storeCount), String(c.priceChanges60d), c.realDiscount ? 'R' : '', cut(c.brand ?? '–', 12), cut(c.name, 48), c.slug,
+    String(c.storeCount), String(c.priceChanges60d), c.realDiscount ? 'R' : '',
+    c.termeniMedicali.length ? 'MED' : c.doarNeMedical ? 'NM' : '',
+    cut(c.brand ?? '–', 12), cut(c.name, 48), c.slug,
   ])
   const right = new Set([0, 1, 3, 4, 5, 6, 7, 8])
   const widths = header.map((h, i) => Math.max(h.length, ...rows.map((r) => r[i].length)))
