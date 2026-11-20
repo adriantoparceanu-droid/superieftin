@@ -117,6 +117,54 @@ local: 30 de adrese vechi din sitemap-ul de pe prod → 308 spre articol existen
 **După deploy**: Search Console — retrimite sitemap-ul, URL Inspection pe homepage + 3 articole;
 GA4 — `click_affiliate_link` din articole; Profitshare — fără schimbări încă.
 
+## Etapa 6b — SEO + AI (Google și asistenți AI), parte din ziua schimbării
+
+Decizie proprietar 20.11.2026: produsele din articole = **recenzie editorială cu pro/contra**
+(Product + Review cu `positiveNotes`/`negativeNotes`, autor real, FĂRĂ note/stele, FĂRĂ preț în
+schemă). Înlocuiește regula veche „fără marcaj Review” DOAR pentru acest caz (fără
+`AggregateRating`, fără note inventate). Pro/contra = marcaje `{{pro: …}}` / `{{contra: …}}` după
+cardul produsului, vizibile pe pagină (etapa 2).
+
+**Date structurate (JSON-LD, `@id`-uri comune cu `lib/seo/jsonld.ts`):**
+- Articol: `BlogPosting` cu `headline`, `description`, `image` (obligatoriu pentru rezultate
+  îmbogățite), `author` = `Person` cu `url` spre `/autori/<slug>`, `publisher` = Organization `@id`,
+  `datePublished`/`dateModified`, `mainEntityOfPage`, `inLanguage: ro-RO`, `articleSection` (tema),
+  `about`/`mentions` (produsele); `WebPage.reviewedBy` = verificatorul.
+- Per produs recomandat: `Product` (`name`, `image`, `brand`, `gtin`/`mpn` doar dacă le avem
+  sigur) cu `review` = `Review` (`author`, `datePublished`, `positiveNotes`/`negativeNotes` ca
+  `ItemList`). Fără `offers`, fără `url` spre `/p/`. De verificat în Rich Results Test dacă Google
+  cere `reviewRating` pentru afișare — dacă da, decide proprietarul (fără note inventate).
+- Top-uri: `ItemList` cu produsele, `url` = ancora `#produs-<slug>` din articol.
+- `BreadcrumbList` (Acasă → Temă → Articol), `FAQPage` (doar întrebările vizibile).
+- Homepage: `WebSite` (+ `SearchAction` spre căutarea în articole) + `Organization` + `ItemList`
+  articole noi. Temă `/c/`: `CollectionPage` + `ItemList` articole + `BreadcrumbList` + `FAQPage`.
+- Autori: `/autori/<slug>` (nou) = `ProfilePage` + `Person` (`name`, `description`, `jobTitle`,
+  `sameAs` doar profile reale) + lista articolelor. Coloanele există (`guide_authors.bio/url`).
+
+**Pagini și semnale de încredere (E-E-A-T):**
+- Fiecare articol: autor + verificator vizibili cu link, „Publicat” + „Actualizat” vizibile,
+  notă de afiliere vizibilă sus („Unele linkuri sunt de afiliere…”), link spre metodologie.
+- `/ghiduri/metodologie` rescrisă: cum alegem produsele (date de preț interne, specificații de la
+  producător, cine verifică), cum ne finanțăm, cât de des actualizăm.
+- Cuprins cu ancore pe H2 (salturi din Google), un singur H1, `alt` pe toate imaginile.
+- Bloc „Articole înrudite” (aceeași temă, prin produse) + linkuri interne din homepage și temă.
+
+**Tehnic:**
+- Imagine Open Graph per articol generată (`opengraph-image.tsx`, Next `ImageResponse`: titlu +
+  temă + logo), `twitter:card = summary_large_image`; aceeași imagine în `BlogPosting.image`.
+- Linkurile afiliate: `rel="sponsored nofollow"` (deja în `AffiliateLink` — de păstrat).
+- Sitemap: homepage, teme, articole (`lastmod` = `updated_at`), autori, pagini legale;
+  imaginile articolelor ca `image:image`.
+- RSS `/ghiduri/feed.xml` (descoperire rapidă, agregatoare, asistenți AI) + `<link rel=alternate>`.
+- `llms.txt` / `llms-full.txt` rescrise: identitate „blog de recomandări”, lista articolelor cu
+  rezumat, metodologia; fără observator/comparator. `robots.txt`: AI deblocat (există).
+- IndexNow la publicare (există). Core Web Vitals: `next/image` cu dimensiuni, fonturi
+  preîncărcate, fără CLS din carduri; Lighthouse ≥ 90 pe mobil pentru homepage + 1 articol.
+
+**Verificare**: teste pentru generatorii JSON-LD (forma exactă, fără `offers`, fără `/p/`);
+Rich Results Test + Schema Markup Validator pe 3 articole (local prin tunel sau după deploy);
+Search Console: retrimite sitemap-ul, URL Inspection pe homepage + 3 articole.
+
 ## Etapa 7 — eMAG (după 2–4 săptămâni de blog live)
 
 - Profitshare: sursă nouă de trafic declarată „blog / site de conținut” pentru `www.superieftin.ro`
