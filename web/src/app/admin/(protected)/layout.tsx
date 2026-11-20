@@ -9,6 +9,7 @@ const NAV: NavEntry[] = [
   { href: '/admin', label: 'Dashboard' },
   { href: '/admin/statistici', label: 'Statistici' },
   { href: '/admin/alerte', label: 'Alerte' },
+  { href: '/admin/cercetare', label: 'Cercetare' },
   {
     group: 'Feeduri',
     children: [
