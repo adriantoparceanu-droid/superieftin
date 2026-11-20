@@ -44,23 +44,6 @@ export function parseTargetPrice(raw: unknown): number | null {
   return parseLeiAmount(raw)
 }
 
-// Anti-abuz per adresa (cineva care trimite cereri cu adresa altcuiva): cel mult atatea emailuri de
-// confirmare la 24 h pentru aceeasi adresa. Peste limita raspundem la fel, dar nu mai trimitem nimic.
-export const MAX_PENDING_PER_EMAIL_24H = 3
-
-// Limita per IP pentru formular si pentru cererea unui link nou (Redis, lib/go-rate-limit.ts)
-export function emailAlertRateLimits(env: Env = process.env) {
-  const int = (v: string | undefined, d: number) => {
-    const n = parseInt(v ?? '', 10)
-    return Number.isFinite(n) && n > 0 ? n : d
-  }
-  return {
-    perMinute: int(env.ALERT_RATE_PER_MIN, 5),
-    perHour: int(env.ALERT_RATE_PER_HOUR, 20),
-    timeoutMs: int(env.GO_RATE_REDIS_TIMEOUT_MS, 150),
-  }
-}
-
 // Re-armarea alertelor (logica in worker/src/lib/alert-rearm.ts — modifica-le impreuna): dupa anunt,
 // alerta asteapta ca cel mai mic pret sa urce peste prag + ALERT_REARM_PCT (implicit 3%), apoi
 // anunta din nou la urmatoarea scadere. Aici doar pentru textele din „Alertele mele”.
@@ -71,7 +54,3 @@ export function alertRearmPct(env: Env = process.env): number {
 export function rearmThreshold(target: number, rearmPct: number): number {
   return Math.round(target * (1 + rearmPct / 100) * 100) / 100
 }
-
-// Mesajul (identic) pe care il vede vizitatorul dupa trimiterea formularului
-export const SUBSCRIBE_OK_MESSAGE =
-  'Ți-am trimis un email de confirmare. Alerta pornește după ce apeși linkul din email (valabil 3 zile). Dacă nu-l găsești, verifică și dosarul Spam.'

@@ -5,11 +5,13 @@ import { pingIndexNow } from '@/lib/guides/indexnow'
 
 // Invalidare dupa publicarea ghidurilor DIN AFARA adminului (scriptul de import din worker:
 // worker/src/scripts/import-guide-drafts.ts, modul de publicare). Face acelasi lucru ca
-// saveGuideAction: revalidatePath pe articol, pe /ghiduri si pe paginile /p/ legate, apoi
-// ping IndexNow pentru caile publice ale ghidurilor (doar daca INDEXNOW_KEY e setat).
+// saveGuideAction: revalidatePath pe articol si pe /ghiduri, apoi ping IndexNow pentru caile
+// publice ale ghidurilor (doar daca INDEXNOW_KEY e setat).
 //
-// Corp JSON: { "paths": ["/ghiduri/slug", "/p/slug-produs", ...] }
+// Corp JSON: { "paths": ["/ghiduri/slug", ...] }
 // Acceptam DOAR /ghiduri/... si /p/... (secretul protejeaza oricum ruta, dar limitam efectul).
+// /p/... e inca ACCEPTAT (un worker vechi le mai trimite), dar ignorat: paginile de produs nu mai
+// exista (trecerea in blog, 20.11.2026) — proxy-ul raspunde 308/410 inainte de orice cache.
 const ALLOWED = /^\/(ghiduri(\/[a-z0-9-]{1,120})?|p\/[a-z0-9-]{1,300})$/
 const MAX_PATHS = 200
 
@@ -33,10 +35,10 @@ export async function POST(req: NextRequest) {
   const bad = paths.filter((p) => !ALLOWED.test(p))
   if (bad.length) return NextResponse.json({ error: 'căi nepermise', bad }, { status: 400 })
 
-  for (const p of paths) revalidatePath(p)
+  for (const p of paths) if (!p.startsWith('/p/')) revalidatePath(p)
   revalidatePath('/ghiduri')
 
-  // IndexNow doar pentru ghiduri (paginile /p/ nu se schimba ca text public important)
+  // IndexNow doar pentru ghiduri
   const guidePaths = paths.filter((p) => p.startsWith('/ghiduri'))
   if (guidePaths.length) after(() => pingIndexNow([...guidePaths, '/ghiduri']))
 

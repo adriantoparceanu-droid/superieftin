@@ -17,9 +17,12 @@ export function CookieBanner() {
   const [ads, setAds] = useState(false)
 
   useEffect(() => {
-    // Cookie-ul se citeste doar in browser → decidem dupa hidratare (evita mismatch SSR)
-    const saved = readConsent()
-    if (!saved) setOpen(true)
+    // Cookie-ul se citeste doar in browser → decidem dupa hidratare (evita mismatch SSR).
+    // In requestAnimationFrame, nu direct in efect: un setState sincron in efect forteaza o
+    // a doua randare in cascada (regula react-hooks/set-state-in-effect).
+    const frame = requestAnimationFrame(() => {
+      if (!readConsent()) setOpen(true)
+    })
 
     const reopen = () => {
       const c = readConsent()
@@ -29,7 +32,10 @@ export function CookieBanner() {
       setOpen(true)
     }
     window.addEventListener(OPEN_SETTINGS_EVENT, reopen)
-    return () => window.removeEventListener(OPEN_SETTINGS_EVENT, reopen)
+    return () => {
+      cancelAnimationFrame(frame)
+      window.removeEventListener(OPEN_SETTINGS_EVENT, reopen)
+    }
   }, [])
 
   if (!open) return null

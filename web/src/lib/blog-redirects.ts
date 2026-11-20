@@ -91,6 +91,16 @@ export function productDecision(slug: string, data: RedirectData): RedirectDecis
     : { status: 410 }
 }
 
+// Unde trimite /go/<oferta> un vizitator care NU poate merge la magazin (oferta indisponibila,
+// limita de viteza) si linkul „Inapoi” de pe pagina intermediara: direct la ancora produsului din
+// articolul publicat (fara ocolul prin /p/ → 308), altfel homepage. Aici „/” e corect (nu e
+// soft 404): e navigarea unui vizitator, nu o adresa indexata. data null = harta indisponibila.
+export function productReturnPath(slug: string, data: RedirectData | null): string {
+  if (!data) return '/'
+  const d = productDecision(slug, data)
+  return d?.status === 308 ? d.location : '/'
+}
+
 // Decizia pentru o cale. null = nu e o adresa scoasa (cererea merge mai departe normal).
 export function resolveBlogRedirect(pathname: string, data: RedirectData): RedirectDecision {
   const path = normalizePath(pathname)

@@ -37,7 +37,7 @@ export const getCategoryContent = unstable_cache(
 // Cifrele pentru marcaje, intr-o singura interogare. Aceleasi reguli ca restul site-ului:
 // - doar oferte disponibile (OFFER_AVAILABLE_SQL), categoria + subcategoriile ei;
 // - pretul unui produs = cea mai mica oferta disponibila;
-// - „reducere reala” = exact regula de pe /reduceri-reale/ (getLandingProducts): mediana din
+// - „reducere reala” = exact regula fostelor pagini /reduceri-reale/: mediana din
 //   offer_price_stats cu minim 2 preturi in 30 de zile, pret verificat in ultimele FRESH_HOURS,
 //   link afiliat, pret sub mediana cu cel putin REAL_DISCOUNT_PCT;
 // - mediana NU se calculeaza din price_history (CLAUDE.md, „Mediana precalculata”);

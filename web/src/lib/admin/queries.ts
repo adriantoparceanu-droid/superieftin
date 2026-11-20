@@ -213,11 +213,6 @@ export async function getAdminBanners(): Promise<AdminBanner[]> {
   return rows
 }
 
-export async function getActiveRetailersList(): Promise<{ id: number; name: string; slug: string }[]> {
-  const { rows } = await pool.query('SELECT id, name, slug FROM retailers ORDER BY name')
-  return rows
-}
-
 // --- Rapoarte dashboard ------------------------------------------------------
 
 export interface AffiliateAdvertiserRow {

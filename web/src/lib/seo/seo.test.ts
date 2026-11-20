@@ -1,77 +1,13 @@
-// Teste pentru logica SEO pura (lib/seo/*): canonical/paginare, JSON-LD, sitemap, robots.txt,
+// Teste pentru logica SEO pura (lib/seo/*): JSON-LD, sitemap, robots.txt,
 // fraze despre pret, variante, llms.txt. Rulare: cd web && npm test
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { listingSeo, listingDescription, parsePageParam } from './listing'
 import { organizationLd, websiteLd, breadcrumbLd, itemListLd, ldScript, ORGANIZATION_DESCRIPTION } from './jsonld'
 import { urlsetXml, sitemapIndexXml, isSitemapFile, latestLastmod, buildPageEntries, indexableThemes, SITEMAP_FILES, LEGAL_PAGES } from './sitemap'
 import { robotsRules, AI_BOTS } from './robots'
 import { variantBase, historyPartialSince, historyTitle, historyChartPhrase } from './product-facts'
-import { indexableCategories, landingCategories, isExcludedFromAds } from './categories'
 import { buildLlmsTxt, buildLlmsFull, stripGuideMarkers } from './llms'
 import { roCount, absUrl, lowerFirst, SITE_URL, ORGANIZATION_ID } from './site'
-
-// --- canonical / paginare / noindex (/c/, /t/) ------------------------------------------------
-
-const base = { basePath: '/c/telefoane-mobile', totalPages: 16, hasReorder: false, brand: null, empty: false }
-
-test('listing: pagina 1 → canonical de baza, indexabila', () => {
-  const s = listingSeo({ ...base, page: 1 })
-  assert.deepEqual(s, { notFound: false, canonical: '/c/telefoane-mobile', robots: null, titleSuffix: '' })
-})
-
-test('listing: ?page=2 → canonical propriu + sufix in titlu', () => {
-  const s = listingSeo({ ...base, page: 2 })
-  assert.equal(s.canonical, '/c/telefoane-mobile?page=2')
-  assert.equal(s.titleSuffix, ' — pagina 2')
-  assert.equal(s.robots, null)
-})
-
-test('listing: ?page peste ultima pagina → 404; pagina 1 a unei liste goale nu e 404', () => {
-  assert.equal(listingSeo({ ...base, page: 17 }).notFound, true)
-  assert.equal(listingSeo({ ...base, page: 16 }).notFound, false)
-  assert.equal(listingSeo({ ...base, totalPages: 0, page: 1, empty: true }).notFound, false)
-  assert.equal(listingSeo({ ...base, totalPages: 0, page: 2, empty: true }).notFound, true)
-})
-
-test('listing: sortarea / ?tot=1 → canonical spre baza (si pe pagina 2)', () => {
-  assert.equal(listingSeo({ ...base, page: 3, hasReorder: true }).canonical, '/c/telefoane-mobile')
-})
-
-test('listing: ?brand= → noindex, follow si canonical de baza', () => {
-  const s = listingSeo({ ...base, page: 1, brand: 'Samsung' })
-  assert.deepEqual(s.robots, { index: false, follow: true })
-  assert.equal(s.canonical, '/c/telefoane-mobile')
-})
-
-test('listing: mai multe marci → noindex, follow; lista goala de marci = fara filtru', () => {
-  const s = listingSeo({ ...base, page: 2, brand: ['Samsung', 'Apple'] })
-  assert.deepEqual(s.robots, { index: false, follow: true })
-  assert.equal(s.canonical, '/c/telefoane-mobile')
-  const none = listingSeo({ ...base, page: 2, brand: [] })
-  assert.equal(none.robots, null)
-  assert.equal(none.canonical, '/c/telefoane-mobile?page=2')
-})
-
-test('listing: categorie fara produse disponibile → noindex, follow', () => {
-  assert.deepEqual(listingSeo({ ...base, page: 1, totalPages: 0, empty: true }).robots, { index: false, follow: true })
-})
-
-test('parsePageParam: valori invalide → 1', () => {
-  assert.equal(parsePageParam(undefined), 1)
-  assert.equal(parsePageParam('abc'), 1)
-  assert.equal(parsePageParam('-4'), 1)
-  assert.equal(parsePageParam('3'), 3)
-})
-
-test('listingDescription: cifre live, fara promisiuni de reducere', () => {
-  const d = listingDescription('Telefoane Mobile', { products: 756, retailers: 4, brands: 31, minPrice: 99.9 })
-  assert.match(d, /^Telefoane Mobile: 756 de produse de la 4 magazine și 31 de mărci, cu istoric de preț\./)
-  assert.match(d, /Prețuri de la 99,9/)
-  assert.doesNotMatch(d, /%|garantat|economisești/i)
-  assert.match(listingDescription('Monitoare', { products: 0, retailers: 0, brands: 0, minPrice: null }), /niciun produs disponibil/)
-  assert.match(listingDescription('X', { products: 1, retailers: 1, brands: 1, minPrice: null }), /^X: 1 produs de la 1 magazin, cu istoric/)
-})
 
 test('roCount: „de” dupa regula romaneasca', () => {
   assert.equal(roCount(5, 'produse'), '5 produse')
@@ -195,21 +131,6 @@ test('sitemap: XML valid, escapare, lastmod doar unde exista', () => {
 test('sitemap: latestLastmod', () => {
   assert.equal(latestLastmod([{ path: '/' }]), null)
   assert.equal(latestLastmod([{ path: '/a', lastmod: '2026-10-01T00:00:00Z' }, { path: '/b', lastmod: '2026-10-03T00:00:00Z' }])?.toISOString(), '2026-10-03T00:00:00.000Z')
-})
-
-test('categorii: sitemap fara categorii goale / ascunse; landing fara Sanatate & Naturale', () => {
-  const cats = [
-    { slug: 'telefoane-accesorii', name: 'T&A', parent_slug: null, visible: true, products: 900 },
-    { slug: 'telefoane-mobile', name: 'Telefoane Mobile', parent_slug: 'telefoane-accesorii', visible: true, products: 756 },
-    { slug: 'monitoare', name: 'Monitoare', parent_slug: 'laptopuri-calculatoare', visible: true, products: 0 },
-    { slug: 'ascunsa', name: 'Ascunsă', parent_slug: null, visible: false, products: 10 },
-    { slug: 'sanatate-naturale', name: 'S&N', parent_slug: null, visible: true, products: 50 },
-    { slug: 'suplimente-alimentare', name: 'Suplimente', parent_slug: 'sanatate-naturale', visible: true, products: 40 },
-  ]
-  assert.deepEqual(indexableCategories(cats).map((c) => c.slug), ['telefoane-accesorii', 'telefoane-mobile', 'sanatate-naturale', 'suplimente-alimentare'])
-  assert.deepEqual(landingCategories(cats).map((c) => c.slug), ['telefoane-accesorii', 'telefoane-mobile'])
-  assert.equal(isExcludedFromAds('suplimente-alimentare', 'sanatate-naturale'), true)
-  assert.equal(isExcludedFromAds('laptopuri', 'laptopuri-calculatoare'), false)
 })
 
 // --- robots.txt --------------------------------------------------------------------------------

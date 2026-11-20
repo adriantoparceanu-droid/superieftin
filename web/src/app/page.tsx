@@ -10,6 +10,7 @@ import { ThemeLinks } from '@/components/home/ThemeLinks'
 import { itemListLd, ldScript } from '@/lib/seo/jsonld'
 import { withOg } from '@/lib/seo/og'
 import { SITE_URL } from '@/lib/seo/site'
+import { RSS_ALTERNATE_TYPES } from '@/lib/guides/rss'
 
 // Randata la cerere: lista de articole trebuie sa fie la zi imediat dupa publicarea din admin,
 // iar la build DB-ul nu e accesibil. Query-urile sunt mici (zeci de articole).
@@ -27,7 +28,8 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: { absolute: HOME_TITLE },
     description: HOME_DESCRIPTION,
-    alternates: { canonical: '/' },
+    // `types` repetat: alternates din pagina inlocuieste tot obiectul din layout (pierde RSS-ul)
+    alternates: { canonical: '/', types: RSS_ALTERNATE_TYPES },
     openGraph: withOg({ title: HOME_TITLE, description: HOME_DESCRIPTION, url: `${SITE_URL}/` }),
   }
 }
