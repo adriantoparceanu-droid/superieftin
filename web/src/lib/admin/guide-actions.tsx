@@ -23,12 +23,11 @@ function parseJson<T>(raw: FormDataEntryValue | null, fallback: T): T {
   }
 }
 
-// Invalideaza tot ce afiseaza ghidul: articolul (slug nou si vechi), lista, paginile de produs
-// legate (sectiunea „Ghiduri despre acest produs”). Sitemap-ul si llms.txt sunt dinamice.
-function revalidateGuide(slugs: string[], productSlugs: string[]) {
+// Invalideaza tot ce afiseaza ghidul: articolul (slug nou si vechi) si lista. Paginile /p/ nu mai
+// exista (trecerea in blog, 20.11.2026); sitemap-ul si llms.txt sunt dinamice.
+function revalidateGuide(slugs: string[]) {
   for (const s of new Set(slugs)) revalidatePath(`/ghiduri/${s}`)
   revalidatePath('/ghiduri')
-  for (const s of new Set(productSlugs)) revalidatePath(`/p/${s}`)
   refresh()
 }
 
@@ -104,7 +103,6 @@ export async function saveGuideAction(_prev: GuideFormState, formData: FormData)
   const client = await pool.connect()
   let guideId = id
   let oldSlug: string | null = null
-  let oldProductSlugs: string[] = []
   let wasPublished = false
   try {
     await client.query('BEGIN')
@@ -113,9 +111,6 @@ export async function saveGuideAction(_prev: GuideFormState, formData: FormData)
       if (!prev.rows[0]) throw new Error('Ghidul nu mai există.')
       oldSlug = prev.rows[0].slug
       wasPublished = prev.rows[0].status === 'published'
-      const ps = await client.query<{ slug: string }>(
-        'SELECT p.slug FROM guide_products gp JOIN products p ON p.id = gp.product_id WHERE gp.guide_id = $1', [id])
-      oldProductSlugs = ps.rows.map((r) => r.slug)
       await client.query(`
         UPDATE guides SET slug = $2, title = $3, meta_description = $4, kind = $5, author_id = $6,
           reviewer_id = $7, category_slug = $8, summary = $9, body_md = $10, faq = $11::jsonb,
@@ -150,9 +145,7 @@ export async function saveGuideAction(_prev: GuideFormState, formData: FormData)
     client.release()
   }
 
-  const newProducts = await pool.query<{ slug: string }>(
-    'SELECT p.slug FROM guide_products gp JOIN products p ON p.id = gp.product_id WHERE gp.guide_id = $1', [guideId])
-  revalidateGuide([slug, ...(oldSlug ? [oldSlug] : [])], [...oldProductSlugs, ...newProducts.rows.map((r) => r.slug)])
+  revalidateGuide([slug, ...(oldSlug ? [oldSlug] : [])])
 
   // IndexNow: doar cand se schimba ceva public (publicare, actualizare live, retragere)
   if (status === 'published' || wasPublished) {

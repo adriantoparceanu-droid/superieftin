@@ -24,7 +24,7 @@ const NAV: NavEntry[] = [
   { href: '/admin/categorii', label: 'Categorii' },
   { href: '/admin/taguri', label: 'Taguri' },
   { href: '/admin/meniu', label: 'Meniu' },
-  { href: '/admin/bannere', label: 'Bannere' },
+  // Bannere: scos din meniu la trecerea in blog (nu mai apar pe site); /admin/bannere ramane accesibil
   { href: '/admin/ghiduri', label: 'Ghiduri' },
   { href: '/admin/utilizatori', label: 'Utilizatori' },
 ]

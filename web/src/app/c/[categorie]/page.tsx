@@ -9,6 +9,7 @@ import { Crumbs } from '@/components/listing/ListingParts'
 import { breadcrumbLd, itemListLd, ldScript } from '@/lib/seo/jsonld'
 import { withOg } from '@/lib/seo/og'
 import { WEBSITE_ID, absUrl, lowerFirst } from '@/lib/seo/site'
+import { RSS_ALTERNATE_TYPES } from '@/lib/guides/rss'
 
 // Pagina TEMEI (reorganizarea in blog, 20.11.2026): titlu, textul introductiv (intro_md), articolele
 // publicate din tema, intrebarile frecvente. Fara produse, preturi, filtre, sortare sau paginare.
@@ -47,7 +48,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title,
     description,
-    alternates: { canonical: path },
+    // `types` repetat: alternates din pagina inlocuieste tot obiectul din layout (pierde RSS-ul)
+    alternates: { canonical: path, types: RSS_ALTERNATE_TYPES },
     // Tema fara articole: pagina ramane accesibila (din meniu), dar nu o indexam (pagina subtire)
     ...(guides.length === 0 ? { robots: { index: false, follow: true } } : {}),
     openGraph: withOg({ title, description, url: absUrl(path) }),

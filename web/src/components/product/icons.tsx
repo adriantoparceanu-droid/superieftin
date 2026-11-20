@@ -4,37 +4,10 @@
 type P = { className?: string }
 const base = { viewBox: '0 0 24 24', 'aria-hidden': true as const, fill: 'none', stroke: 'currentColor' }
 
-export function BellIcon({ className = 'w-5 h-5' }: P) {
-  return (
-    <svg {...base} className={className} strokeWidth={2} strokeLinejoin="round">
-      <path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15z" />
-      <path d="M10 20.5a2 2 0 0 0 4 0" />
-    </svg>
-  )
-}
-
 export function ExternalIcon({ className = 'w-[18px] h-[18px]' }: P) {
   return (
     <svg {...base} className={className} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
       <path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" />
-    </svg>
-  )
-}
-
-export function TelegramIcon({ className = 'w-[18px] h-[18px]' }: P) {
-  return (
-    <svg {...base} className={className} strokeWidth={1.8} strokeLinejoin="round">
-      <path d="M21 4 3 11l6 2 2 6 3-4 5 4z" />
-      <path d="m9 13 8-6" />
-    </svg>
-  )
-}
-
-export function MailIcon({ className = 'w-[18px] h-[18px]' }: P) {
-  return (
-    <svg {...base} className={className} strokeWidth={1.8}>
-      <rect x="3" y="5.5" width="18" height="13" rx="2" />
-      <path d="m4 7 8 6 8-6" />
     </svg>
   )
 }

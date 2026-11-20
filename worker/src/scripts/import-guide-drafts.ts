@@ -103,7 +103,6 @@ async function main() {
   type Planned = {
     draft: GuideDraft; label: string; action: Action; guideId?: number; productIds: string[]
     authorId: number; reviewerId: number; status: 'draft' | 'published'; wasPublished: boolean
-    oldSlugs: string[]   // slug-urile produselor legate inainte (pentru revalidarea /p/)
     unavailable: string[] // produse (legate sau din marcaje) fara oferta disponibila acum
   }
   const planned: Planned[] = []
@@ -171,7 +170,7 @@ async function main() {
     planned.push({
       draft, label: inp.label, action, guideId: row?.id, productIds,
       authorId: authorId!, reviewerId: reviewerId!, status,
-      wasPublished: row?.status === 'published', oldSlugs: row?.product_slugs ?? [], unavailable,
+      wasPublished: row?.status === 'published', unavailable,
     })
   }
 
@@ -250,7 +249,8 @@ async function main() {
       }
       written++
       if (p.status === 'published') {
-        revalidate.push(`/ghiduri/${d.slug}`, ...d.product_slugs.map((s) => `/p/${s}`), ...p.oldSlugs.map((s) => `/p/${s}`))
+        // Doar articolul: paginile /p/ nu mai exista (trecerea in blog, 20.11.2026)
+        revalidate.push(`/ghiduri/${d.slug}`)
         console.log(`✓ ${d.slug} → PUBLICAT #${id} (/ghiduri/${d.slug})`)
       } else {
         console.log(`✓ ${d.slug} → ciorna #${id} (/admin/ghiduri/${id})`)

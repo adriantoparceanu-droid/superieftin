@@ -12,10 +12,12 @@ import { clientIp } from '@/lib/rate-limit'
 import { checkRateLimit, goRateLimits, type RateLimitResult } from '@/lib/go-rate-limit'
 import { goTokenSecret, isTokenCheckEnabled, signFormToken, verifyFormToken, verifyGoToken } from '@/lib/go-token'
 import { renderInterstitial } from '@/lib/go-interstitial'
+import { productReturnPath } from '@/lib/blog-redirects'
+import { getRedirectData } from '@/lib/blog-redirects-data'
 
 // Protectia anti-roboti (decizia proprietarului, 2026-10-03), in ordinea verificarilor:
 //   1. lista alba (admin / se_intern / header de test GO_TEST_TOKEN) → trece direct, is_internal=true;
-//   2. limita de viteza per IP (lib/go-rate-limit.ts) → peste limita: inapoi pe /p/<slug>,
+//   2. limita de viteza per IP (lib/go-rate-limit.ts) → peste limita: inapoi la articol (returnTo),
 //      fara click inregistrat si fara retea;
 //   3. token JS (lib/go-token.ts) → fara token valid: pagina intermediara (lib/go-interstitial.ts),
 //      fara click inregistrat si fara retea. Fara JS: butonul trimite un formular (POST) cu un token
@@ -91,20 +93,24 @@ async function handle(
 
   const { affiliate_url, url, product_id, retailer_id, available, product_slug, product_name, retailer_name } = result.rows[0]
   const base = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.superieftin.ro'
-  const productPage = new URL(`/p/${encodeURIComponent(product_slug)}`, base)
+  // Pagina /p/ nu mai exista (trecerea in blog, 20.11.2026): vizitatorul care nu poate merge la
+  // magazin e trimis DIRECT la ancora produsului din articolul publicat, fara ocolul /p/ → 308,
+  // sau pe homepage daca produsul nu e in niciun articol. Harta e in cache 60 s (fara query nou
+  // pe cerere); cu DB-ul cazut si fara harta veche → homepage.
+  const returnPath = async () => productReturnPath(product_slug, (await getRedirectData())?.data ?? null)
 
   // Oferta negasita recent in feed-uri / scanari: linkul spre magazin probabil nu mai duce
-  // nicaieri (produs scos, pret vechi). Trimitem vizitatorul inapoi pe pagina produsului
+  // nicaieri (produs scos, pret vechi). Trimitem vizitatorul inapoi la articol
   // (linkuri vechi, pagini ramase deschise) — fara click inregistrat.
   if (!available) {
-    return NextResponse.redirect(productPage, { status: 302, headers: NO_STORE })
+    return NextResponse.redirect(new URL(await returnPath(), base), { status: 302, headers: NO_STORE })
   }
 
-  // Peste limita de viteza: inapoi pe pagina produsului (un om ajuns aici din greseala vede
-  // oferta si poate reveni peste un minut). 303 la POST, ca browserul sa faca GET pe /p/.
+  // Peste limita de viteza: inapoi la articol (un om ajuns aici din greseala vede
+  // recomandarea si poate reveni peste un minut). 303 la POST, ca browserul sa faca GET.
   if (!limit.allowed) {
     countBlocked('rate')
-    return NextResponse.redirect(productPage, {
+    return NextResponse.redirect(new URL(await returnPath(), base), {
       status: method === 'POST' ? 303 : 302,
       headers: { ...NO_STORE, 'X-Robots-Tag': 'noindex, nofollow' },
     })
@@ -126,7 +132,7 @@ async function handle(
     if (!ok) {
       countBlocked('interstitial')
       const html = renderInterstitial({
-        offerId: id, productName: product_name, retailerName: retailer_name, productSlug: product_slug,
+        offerId: id, productName: product_name, retailerName: retailer_name, backPath: await returnPath(),
         formToken: signFormToken(secret, id), tooFast,
       })
       return new NextResponse(html, {

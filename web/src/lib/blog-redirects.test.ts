@@ -3,7 +3,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
   ARTICLE_EQUIVALENTS, REMOVED_PREFIXES, RETIRED_CATEGORY_SLUGS, articlePath, buildProductGuides,
-  goneHtml, isRemovedPath, needsArticleData, normalizePath, productDecision, resolveBlogRedirect,
+  goneHtml, isRemovedPath, needsArticleData, normalizePath, productDecision, productReturnPath, resolveBlogRedirect,
   type RedirectData,
 } from './blog-redirects'
 import { RENAMED_CATEGORIES } from './legacy-map'
@@ -117,4 +117,13 @@ test('pagina 410: romana, noindex, linkuri spre homepage si articole', () => {
   assert.match(html, /name="robots" content="noindex"/)
   assert.match(html, /href="\/"/)
   assert.match(html, /href="\/ghiduri"/)
+})
+
+test('/go/: tinta de intoarcere = ancora din articol, altfel homepage', () => {
+  assert.equal(productReturnPath('samsung-galaxy-a36', data),
+    '/ghiduri/telefoane-bune-sub-1500-lei#produs-samsung-galaxy-a36')
+  assert.equal(productReturnPath('produs-in-ciorna', data), '/')   // articolul nu mai e publicat
+  assert.equal(productReturnPath('fara-articol', data), '/')
+  assert.equal(productReturnPath('', data), '/')
+  assert.equal(productReturnPath('samsung-galaxy-a36', null), '/')  // harta indisponibila (DB cazut)
 })

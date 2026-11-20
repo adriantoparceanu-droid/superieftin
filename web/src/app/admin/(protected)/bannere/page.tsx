@@ -49,6 +49,13 @@ export default async function BannerePage() {
   return (
     <div className="max-w-4xl">
       <h1 className="text-2xl font-bold mb-2">Bannere homepage</h1>
+      {/* Trecerea in blog (20.11.2026): homepage-ul nou nu mai are zona de bannere si ruta
+          /embed/banner a fost scoasa. Pagina ramane doar pentru datele existente (tabela banners
+          nu se sterge); nu mai e in meniul adminului. */}
+      <div role="status" className="mb-6 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <strong>Bannerele nu mai apar pe site după trecerea în blog.</strong> Ce adaugi sau activezi aici
+        nu se afișează nicăieri; datele existente sunt păstrate.
+      </div>
       <p className="text-sm text-muted mb-6">
         Zona din dreapta meniului de pe prima pagină: un <strong>banner mare</strong> sus și{' '}
         <strong>două bannere mici</strong> sub el. Fiecare poate fi o imagine (cu link) sau cod HTML/JS
@@ -80,7 +87,7 @@ export default async function BannerePage() {
         </div>
 
         <fieldset className="grid gap-3 border border-line rounded-lg p-3">
-          <legend className="text-xs text-muted px-1">Pentru tip „Imagine"</legend>
+          <legend className="text-xs text-muted px-1">Pentru tip „Imagine”</legend>
           <div>
             <label className={label}>URL imagine</label>
             <input name="image_url" type="url" className={input} placeholder="https://.../banner.jpg" />
@@ -98,7 +105,7 @@ export default async function BannerePage() {
         </fieldset>
 
         <fieldset className="grid gap-2 border border-line rounded-lg p-3">
-          <legend className="text-xs text-muted px-1">Pentru tip „Cod HTML / JS"</legend>
+          <legend className="text-xs text-muted px-1">Pentru tip „Cod HTML / JS”</legend>
           <textarea name="html" rows={4} className={`${input} font-mono text-xs`} placeholder="<a href='...'><img src='...'></a>  sau  <script>...</script>" />
         </fieldset>
 

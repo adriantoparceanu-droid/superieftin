@@ -15,7 +15,7 @@ export interface InterstitialData {
   offerId: number
   productName: string
   retailerName: string
-  productSlug: string
+  backPath: string              // „Inapoi”: ancora produsului din articol sau „/” (productReturnPath)
   formToken: string | null      // null = fara secret pe server (nu se intampla cand verificarea e activa)
   tooFast?: boolean             // formularul a fost trimis prea repede → rugam sa mai apese o data
 }
@@ -26,7 +26,7 @@ function esc(s: string): string {
 
 export function renderInterstitial(d: InterstitialData): string {
   const id = String(d.offerId)
-  const productUrl = `/p/${encodeURIComponent(d.productSlug)}`
+  const backLabel = d.backPath === '/' ? 'Înapoi la superieftin.ro' : 'Înapoi la articol'
   const note = d.tooFast
     ? '<p class="note">Mai apasă o dată butonul de mai jos.</p>'
     : ''
@@ -64,7 +64,7 @@ export function renderInterstitial(d: InterstitialData): string {
     ${d.formToken ? `<input type="hidden" name="ft" value="${esc(d.formToken)}">` : ''}
     <button type="submit">Continuă spre magazin</button>
   </form>
-  <p><a href="${productUrl}">Înapoi la produs</a></p>
+  <p><a href="${esc(d.backPath)}">${backLabel}</a></p>
 </main>
 <script>
 (function () {

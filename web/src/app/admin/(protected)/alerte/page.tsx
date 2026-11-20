@@ -216,7 +216,7 @@ export default async function AlertePage({ searchParams }: Props) {
               return (
                 <tr key={r.product_id} className="border-t border-line align-top">
                   <td className="px-4 py-2">
-                    <Link href={`/p/${r.slug}`} className="flex items-center gap-2 hover:text-brand" target="_blank">
+                    <Link href={`/admin/cercetare/${encodeURIComponent(r.slug)}`} className="flex items-center gap-2 hover:text-brand">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       {r.image_url && <img src={r.image_url} alt="" width={32} height={32} loading="lazy" className="w-8 h-8 object-contain rounded shrink-0" />}
                       <span className="line-clamp-2">{r.name}</span>
@@ -302,7 +302,7 @@ export default async function AlertePage({ searchParams }: Props) {
                       <ul className="mt-2 space-y-2">
                         {s.alerts.map((a) => (
                           <li key={a.id} className="text-xs flex flex-wrap items-baseline gap-x-2">
-                            <Link href={`/p/${a.product_slug}`} target="_blank" className="hover:text-brand line-clamp-1 max-w-72">{a.product_name}</Link>
+                            <Link href={`/admin/cercetare/${encodeURIComponent(a.product_slug)}`} className="hover:text-brand line-clamp-1 max-w-72">{a.product_name}</Link>
                             <span className="tabular-nums">prag {lei(a.target_price)}</span>
                             <span className="text-muted">
                               {!a.is_active ? 'oprită' : !a.confirmed ? 'neconfirmată' : a.triggered_at ? 'trimisă' : 'armată'}

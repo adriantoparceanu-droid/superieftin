@@ -75,23 +75,6 @@ export async function getPublishedGuideSlugs(): Promise<{ slug: string; title: s
   return rows
 }
 
-// Sectiunea „Ghiduri despre acest produs” de pe /p/[slug]
-export async function getGuidesForProduct(productId: string): Promise<{ slug: string; title: string }[]> {
-  try {
-    const { rows } = await pool.query<{ slug: string; title: string }>(`
-      SELECT g.slug, g.title
-      FROM guide_products gp JOIN guides g ON g.id = gp.guide_id
-      WHERE gp.product_id = $1 AND g.status = 'published'
-      ORDER BY g.published_at DESC NULLS LAST
-      LIMIT 5
-    `, [productId])
-    return rows
-  } catch {
-    // Tabela lipseste (migratia 023 inca nerulata) — pagina de produs nu trebuie sa cada
-    return []
-  }
-}
-
 // ---------- Date live pentru blocurile din Markdown ----------
 
 export interface LiveOffer {

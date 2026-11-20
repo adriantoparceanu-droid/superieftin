@@ -40,19 +40,13 @@ export function calculateDiscount(
   if (ratio <= 1 + ABOVE_MEDIAN_PCT / 100) {
     return { verdict: 'normal', discountPct: pct, label: 'normal', labelRo: 'Preț obișnuit' }
   }
-  // „Peste obișnuit” (redesign): aceeași denumire ca insigna de verdict (components/VerdictBadge.tsx)
+  // „Peste obișnuit” (redesign): aceeași denumire ca insigna de verdict (verdictBadgeText)
   return { verdict: 'higher', discountPct: pct, label: 'higher', labelRo: `Peste obișnuit +${formatPct(pct)}%` }
 }
 
 // Procent in format romanesc, fara semn: 16.2 → „16,2”, 8 → „8”
 export function formatPct(pct: number): string {
   return Math.abs(pct).toLocaleString('ro-RO', { maximumFractionDigits: 1 })
-}
-
-// Text scurt pentru diferenta fata de mediana: „2% sub mediană” / „3% peste mediană”
-export function medianDeltaText(discountPct: number | null): string {
-  if (discountPct == null || discountPct === 0) return 'egal cu mediana'
-  return discountPct > 0 ? `${formatPct(discountPct)}% sub mediană` : `${formatPct(discountPct)}% peste mediană`
 }
 
 // „Verificat acum 3 ore” / „Verificat pe 31 august” — data reala, niciodata „azi” fix
