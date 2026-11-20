@@ -2,11 +2,12 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { LegalPage, Todo } from '@/components/LegalPage'
 import { COMPANY } from '@/lib/company'
+import { RSS_ALTERNATE_TYPES } from '@/lib/guides/rss'
 
 export const metadata: Metadata = {
   title: 'Termeni și condiții',
   description: 'Condițiile de utilizare a site-ului superieftin.ro.',
-  alternates: { canonical: '/termeni' },
+  alternates: { canonical: '/termeni', types: RSS_ALTERNATE_TYPES },
 }
 
 // Text redactat fara jurist — recomandat sa fie verificat inainte de lansarea reclamelor.

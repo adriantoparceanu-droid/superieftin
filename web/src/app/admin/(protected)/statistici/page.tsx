@@ -458,7 +458,7 @@ export default async function StatisticiPage({ searchParams }: Props) {
               render: (r) => {
                 if (r.key === null) return restLabel(r)
                 const p = productLabels.get(r.key)
-                if (p) return <Link href={`/p/${p.slug}`} target="_blank" className="hover:text-brand line-clamp-1">{p.name}</Link>
+                if (p) return <Link href={`/admin/cercetare/${p.slug}`} target="_blank" className="hover:text-brand line-clamp-1">{p.name}</Link>
                 // cheie numerica fara produs = produs sters din DB; altfel valoarea bruta din GA4
                 return <span className="text-muted">{/^\d+$/.test(r.key) ? `#${r.key} (produs șters)` : r.key}</span>
               },

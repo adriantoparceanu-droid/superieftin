@@ -115,7 +115,7 @@ export default async function AdminDashboard() {
                 {topProducts.map((p) => (
                   <tr key={p.id} className="border-t border-line">
                     <td className="px-4 py-2">
-                      <Link href={`/p/${p.slug}`} className="flex items-center gap-2 hover:text-brand">
+                      <Link href={`/admin/cercetare/${p.slug}`} className="flex items-center gap-2 hover:text-brand">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         {p.image_url && <img src={p.image_url} alt="" className="w-8 h-8 object-contain rounded shrink-0" />}
                         <span className="line-clamp-1">{p.name}</span>

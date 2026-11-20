@@ -3,11 +3,8 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { listingSeo, listingDescription, parsePageParam } from './listing'
-import { productLd, organizationLd, websiteLd, breadcrumbLd, itemListLd, isValidGtin, itemConditionFor, ldScript } from './jsonld'
-import {
-  urlsetXml, sitemapIndexXml, sitemapFileNames, parseSitemapFile, productSlice, productSitemapCount,
-  latestLastmod, PRODUCTS_PER_SITEMAP,
-} from './sitemap'
+import { organizationLd, websiteLd, breadcrumbLd, itemListLd, ldScript, ORGANIZATION_DESCRIPTION } from './jsonld'
+import { urlsetXml, sitemapIndexXml, isSitemapFile, latestLastmod, buildPageEntries, SITEMAP_FILES, LEGAL_PAGES } from './sitemap'
 import { robotsRules, AI_BOTS } from './robots'
 import { variantBase, historyPartialSince, historyTitle, historyChartPhrase } from './product-facts'
 import { indexableCategories, landingCategories, isExcludedFromAds } from './categories'
@@ -96,59 +93,6 @@ test('site: absUrl si lowerFirst', () => {
 
 // --- JSON-LD -----------------------------------------------------------------------------------
 
-const product = {
-  id: '42', name: 'Telefon X 128GB Negru', slug: 'telefon-x-128gb-negru', image: 'https://cdn/x.jpg',
-  brand: 'Samsung', partNo: 'SM-A556B', tags: [] as string[],
-  offers: [{ price: 1299.99, retailer: 'evomag' }, { price: 1349, retailer: 'ITGalaxy' }],
-}
-
-test('productLd: AggregateOffer cu low/high/count si Offer.url = pagina (nu /go/)', () => {
-  const ld = productLd(product)!
-  assert.equal(ld['@type'], 'Product')
-  assert.equal(ld.url, `${SITE_URL}/p/telefon-x-128gb-negru`)
-  assert.equal(ld.offers['@type'], 'AggregateOffer')
-  assert.equal(ld.offers.lowPrice, 1299.99)
-  assert.equal(ld.offers.highPrice, 1349)
-  assert.equal(ld.offers.offerCount, 2)
-  // ads:validate / ads-guard citesc availability de pe nodul offers
-  assert.equal(ld.offers.availability, 'https://schema.org/InStock')
-  for (const o of ld.offers.offers) {
-    assert.equal(o.url, `${SITE_URL}/p/telefon-x-128gb-negru`)
-    assert.doesNotMatch(o.url, /\/go\//)
-    assert.equal(o.itemCondition, 'https://schema.org/NewCondition')
-  }
-  assert.equal(ld.sku, '42')
-  assert.equal((ld as Record<string, unknown>).mpn, 'SM-A556B')
-  assert.deepEqual(ld.brand, { '@type': 'Brand', name: 'Samsung' })
-  // fara `category` (validatorul campaniilor l-ar trata drept slug de categorie)
-  assert.equal((ld as Record<string, unknown>).category, undefined)
-})
-
-test('productLd: fara oferte cu pret → null (nu emitem Product cu offers goale)', () => {
-  assert.equal(productLd({ ...product, offers: [] }), null)
-  assert.equal(productLd({ ...product, offers: [{ price: null, retailer: 'x' }] }), null)
-})
-
-test('productLd: fara brand → fara cheia brand; EAN valid in part_no → gtin, nu mpn', () => {
-  const ld = productLd({ ...product, brand: null, partNo: '8806097826972' }) as Record<string, unknown>
-  assert.equal('brand' in ld, false)
-  assert.equal(ld.gtin, '8806097826972')
-  assert.equal('mpn' in ld, false)
-})
-
-test('isValidGtin: cifra de control', () => {
-  assert.equal(isValidGtin('8806097826972'), true)
-  assert.equal(isValidGtin('8806097826973'), false)
-  assert.equal(isValidGtin('195950639094'), true)     // UPC-A (iPhone)
-  assert.equal(isValidGtin('SM-F966BZSBEUE'), false)
-})
-
-test('itemConditionFor: tag-urile refurbished / second-hand', () => {
-  assert.equal(itemConditionFor(['refurbished']), 'https://schema.org/RefurbishedCondition')
-  assert.equal(itemConditionFor(['second-hand']), 'https://schema.org/UsedCondition')
-  assert.equal(itemConditionFor([]), 'https://schema.org/NewCondition')
-})
-
 test('Organization + WebSite: @id comun, SearchAction pe domeniul canonic', () => {
   const org = organizationLd()
   const site = websiteLd()
@@ -157,6 +101,9 @@ test('Organization + WebSite: @id comun, SearchAction pe domeniul canonic', () =
   assert.equal(site.potentialAction.target.urlTemplate, `${SITE_URL}/cautare?q={search_term_string}`)
   assert.equal(site.inLanguage, 'ro-RO')
   assert.ok(org.legalName)
+  // Identitatea de blog (20 nov. 2026): fara observator / reduceri reale / indice
+  assert.match(ORGANIZATION_DESCRIPTION, /[Bb]log de recomandări/)
+  for (const t of [ORGANIZATION_DESCRIPTION, site.description]) assert.doesNotMatch(t, /[Oo]bservator|reduceri reale|indice|median/)
 })
 
 test('breadcrumbLd / itemListLd: pozitii si URL-uri absolute', () => {
@@ -176,24 +123,39 @@ test('ldScript: JSON valid, fara „</script>” in clar', () => {
 
 // --- sitemap -----------------------------------------------------------------------------------
 
-test('sitemap: impartire in fisiere de cate 10.000 de produse', () => {
-  assert.equal(PRODUCTS_PER_SITEMAP, 10_000)
-  assert.equal(productSitemapCount(0), 0)
-  assert.equal(productSitemapCount(10_000), 1)
-  assert.equal(productSitemapCount(29_022), 3)
-  assert.deepEqual(sitemapFileNames(29_022), ['pagini.xml', 'produse-1.xml', 'produse-2.xml', 'produse-3.xml'])
-  const all = Array.from({ length: 25_000 }, (_, i) => i)
-  assert.equal(productSlice(all, 1).length, 10_000)
-  assert.equal(productSlice(all, 3).length, 5_000)
-  assert.equal(productSlice(all, 3)[0], 20_000)
+test('sitemap: un singur fisier (pagini.xml); vechile produse-N.xml nu mai exista', () => {
+  assert.deepEqual([...SITEMAP_FILES], ['pagini.xml'])
+  assert.equal(isSitemapFile('pagini.xml'), true)
+  assert.equal(isSitemapFile('produse-1.xml'), false)
+  assert.equal(isSitemapFile('../etc.xml'), false)
 })
 
-test('sitemap: nume de fisiere acceptate', () => {
-  assert.deepEqual(parseSitemapFile('pagini.xml'), { kind: 'pages' })
-  assert.deepEqual(parseSitemapFile('produse-2.xml'), { kind: 'products', index: 2 })
-  assert.equal(parseSitemapFile('produse-0.xml'), null)
-  assert.equal(parseSitemapFile('produse-1'), null)
-  assert.equal(parseSitemapFile('../etc.xml'), null)
+test('sitemap: pagini.xml = homepage, articole (lastmod + imagine OG), teme, autori, pagini legale — fara /p/', () => {
+  const entries = buildPageEntries({
+    guides: [
+      { slug: 'ghid-a', updated_at: '2026-11-10T10:00:00.000Z' },
+      { slug: 'ghid-b', updated_at: '2026-11-18T08:00:00.000Z' },
+    ],
+    themes: [{ slug: 'telefoane-accesorii' }, { slug: 'tv-audio' }],
+    authors: [{ slug: 'adrian' }],
+  })
+  const paths = entries.map((e) => e.path)
+  assert.deepEqual(paths.slice(0, 3), ['/', '/ghiduri', '/ghiduri/metodologie'])
+  for (const p of ['/ghiduri/ghid-a', '/ghiduri/ghid-b', '/c/telefoane-accesorii', '/c/tv-audio', '/autori/adrian', ...LEGAL_PAGES]) {
+    assert.ok(paths.includes(p), p)
+  }
+  assert.ok(paths.every((p) => !/^\/(p|t|reduceri-reale|indice|cand-sa-cumperi|black-friday-2026)(\/|$)/.test(p)), 'fara adrese scoase')
+  assert.equal(new Set(paths).size, paths.length, 'fara dubluri')
+  const a = entries.find((e) => e.path === '/ghiduri/ghid-a')!
+  assert.equal(a.lastmod, '2026-11-10T10:00:00.000Z')
+  assert.deepEqual(a.images, ['/ghiduri/ghid-a/opengraph-image'])
+  assert.equal(entries.find((e) => e.path === '/ghiduri')!.lastmod, '2026-11-18T08:00:00.000Z')
+  assert.equal(entries.find((e) => e.path === '/')!.lastmod, undefined)
+
+  const xml = urlsetXml(entries)
+  assert.match(xml, /xmlns:image="http:\/\/www.google.com\/schemas\/sitemap-image\/1.1"/)
+  assert.match(xml, new RegExp(`<loc>${SITE_URL}/ghiduri/ghid-a</loc><lastmod>2026-11-10T10:00:00.000Z</lastmod><image:image><image:loc>${SITE_URL}/ghiduri/ghid-a/opengraph-image</image:loc></image:image></url>`))
+  assert.doesNotMatch(xml, /\/p\//)
 })
 
 test('sitemap: XML valid, escapare, lastmod doar unde exista', () => {
@@ -202,7 +164,7 @@ test('sitemap: XML valid, escapare, lastmod doar unde exista', () => {
     { path: '/p/x', lastmod: '2026-10-02T10:00:00.000Z' },
     { path: '/p/y', lastmod: null },
   ])
-  assert.match(xml, /^<\?xml version="1.0" encoding="UTF-8"\?>\n<urlset xmlns="http:\/\/www.sitemaps.org\/schemas\/sitemap\/0.9">/)
+  assert.match(xml, /^<\?xml version="1.0" encoding="UTF-8"\?>\n<urlset xmlns="http:\/\/www.sitemaps.org\/schemas\/sitemap\/0.9"/)
   assert.match(xml, new RegExp(`<loc>${SITE_URL}/c/a&amp;b</loc></url>`))
   assert.match(xml, /<loc>[^<]*\/p\/x<\/loc><lastmod>2026-10-02T10:00:00.000Z<\/lastmod>/)
   assert.equal((xml.match(/<lastmod>/g) ?? []).length, 1)
@@ -251,7 +213,7 @@ test('robots: fiecare robot AI are grup explicit si /go/ + /api/ raman interzise
   for (const bot of [...AI_BOTS, 'Googlebot', 'Mozilla/5.0 oarecare']) {
     assert.equal(allowed(bot, '/go/123'), false, `${bot} /go/`)
     assert.equal(allowed(bot, '/api/go-token'), false, `${bot} /api/`)
-    assert.equal(allowed(bot, '/p/telefon-x'), true, `${bot} /p/`)
+    assert.equal(allowed(bot, '/ghiduri/telefoane-bune'), true, `${bot} /ghiduri/`)
     assert.equal(allowed(bot, '/llms.txt'), true, `${bot} /llms.txt`)
   }
   for (const g of robotsRules()) assert.deepEqual(g.disallow, ['/go/', '/api/'])
@@ -290,46 +252,50 @@ test('variantBase: taie culoarea de dupa ultimul cuvant cu cifre', () => {
 // --- llms.txt ------------------------------------------------------------------------------------
 
 const llmsData = {
-  facts: { products: 29022, retailers: 6, realDiscounts: 412, historySince: '2026-06-11T14:37:59.000Z', generatedAt: '2026-10-04T08:00:00.000Z' },
   guides: [{ slug: 'ghid-a', title: 'Ghid A', meta_description: 'Descriere A' }],
-  categories: [
-    { slug: 'telefoane-accesorii', name: 'Telefoane & Accesorii', parent_slug: null, products: 2000 },
-    { slug: 'telefoane-mobile', name: 'Telefoane Mobile', parent_slug: 'telefoane-accesorii', products: 756 },
-    { slug: 'sanatate-naturale', name: 'Sănătate & Naturale', parent_slug: null, products: 6000 },
+  themes: [
+    { slug: 'telefoane-accesorii', name: 'Telefoane & Accesorii' },
+    { slug: 'tv-audio', name: 'TV & Audio' },
   ],
-  landings: [{ slug: 'telefoane-mobile', name: 'Telefoane Mobile', parent_slug: 'telefoane-accesorii', products: 756 }],
 }
 
-test('llms.txt: cifre live, categorii /c/, metodologie, contact, sub 20 KB', () => {
+test('llms.txt: blog de recomandari, articole cu rezumat, teme, metodologie, afiliere, RSS, contact', () => {
   const txt = buildLlmsTxt(llmsData)
   assert.match(txt, /^# superieftin\.ro/)
-  assert.match(txt, /29\.022/)
-  assert.match(txt, /Istoric de preț din: 11 iunie 2026/)
-  assert.match(txt, new RegExp(`\\[Telefoane Mobile\\]\\(${SITE_URL}/c/telefoane-mobile\\): 756 de produse disponibile`))
+  assert.match(txt, /> Blog de recomandări de produse din România/)
+  assert.match(txt, new RegExp(`\\[Ghid A\\]\\(${SITE_URL}/ghiduri/ghid-a\\): Descriere A`))
+  assert.match(txt, new RegExp(`\\[TV & Audio\\]\\(${SITE_URL}/c/tv-audio\\)`))
+  assert.match(txt, /## Cum alegem produsele/)
+  assert.match(txt, /## Cum ne finanțăm/)
+  assert.match(txt, /Profitshare/)
+  assert.match(txt, new RegExp(`${SITE_URL}/ghiduri/feed\\.xml`))
   assert.match(txt, new RegExp(`${SITE_URL}/ghiduri/metodologie`))
   assert.match(txt, new RegExp(`${SITE_URL}/contact`))
   assert.match(txt, new RegExp(`${SITE_URL}/llms-full.txt`))
-  assert.match(txt, /contact@superieftin\.ro/)
-  // Sanatate & Naturale: in categorii da, landing de reduceri nu
-  assert.match(txt, /\/c\/sanatate-naturale/)
-  assert.doesNotMatch(txt, /reduceri-reale\/sanatate/)
+  // fara comparator / observator / preturi
+  assert.doesNotMatch(txt, /[Oo]bservator|[Rr]educere reală|reduceri-reale|\/indice|cand-sa-cumperi|black-friday-2026|\/p\/|mediana/)
+  assert.doesNotMatch(txt, /\d+ lei/)
   assert.ok(Buffer.byteLength(txt) < 20_000)
   assert.doesNotMatch(txt, /\{\{/)
 })
 
-test('llms-full.txt: textul ghidului fara marcaje si fara preturi', () => {
+test('llms-full.txt: textul articolului fara marcaje, fara preturi si fara /p/', () => {
   const full = buildLlmsFull(llmsData, [{
     slug: 'ghid-a', title: 'Ghid A', meta_description: null, updated_at: '2026-09-27T10:00:00Z',
     summary: 'Pe scurt {{pret:telefon-x}}',
-    body_md: '## Titlu\n\nText.\n\n{{oferte:telefon-x}}\n\n{{comparatie:123,telefon-y}}\n',
+    body_md: '## Titlu\n\nText.\n\n{{oferte:telefon-x}}\n{{pro: Baterie mare}}\n{{contra: Fără încărcător}}\n\n{{comparatie:123,telefon-y}}\n',
     faq: [{ q: 'Întrebare?', a: 'Răspuns.' }],
   }])
+  const url = `${SITE_URL}/ghiduri/ghid-a`
   assert.match(full, /# Ghid A/)
   assert.match(full, /## Titlu/)
-  assert.match(full, new RegExp(`vezi prețul live pe ${SITE_URL}/p/telefon-x`))
-  assert.match(full, new RegExp(`vezi prețul live pe ${SITE_URL}/ghiduri/ghid-a, ${SITE_URL}/p/telefon-y`))
+  assert.ok(full.includes(`(produsul și prețul de azi: ${url}#produs-telefon-x)`))
+  assert.ok(full.includes(`(produsul și prețul de azi: ${url}, ${url}#produs-telefon-y)`))
+  assert.match(full, /Bun: Baterie mare/)
+  assert.match(full, /Mai slab: Fără încărcător/)
   assert.match(full, /\*\*Întrebare\?\*\*/)
   assert.doesNotMatch(full, /\{\{/)
+  assert.doesNotMatch(full, /\/p\/|[Oo]bservator/)
 })
 
 test('stripGuideMarkers: marcaje necunoscute dispar, textul ramane', () => {

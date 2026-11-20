@@ -7,6 +7,7 @@ import { GoogleAnalytics } from '@/components/analytics/GoogleAnalytics'
 import { CookieBanner } from '@/components/consent/CookieBanner'
 import { AdClickCapture } from '@/components/consent/AdClickCapture'
 import { organizationLd, websiteLd, ldScript } from '@/lib/seo/jsonld'
+import { RSS_ALTERNATE_TYPES } from '@/lib/guides/rss'
 
 // Fonturile redesignului (design §3): Archivo variabil pentru titluri, prețuri și verdicte —
 // cu axa de lățime (`wdth`), ca să-l putem condensa din CSS (font-stretch: 84–92%) fără un
@@ -33,16 +34,19 @@ export const metadata: Metadata = {
     profitshareid: '7b0fb694429c6ff955cbb90f718f6502',
   },
   title: {
-    default: 'SuperIeftin.ro — Reduceri reale pe piața din România',
+    default: 'superieftin.ro — recomandări de produse, pe bugete reale',
     template: '%s | superieftin.ro',
   },
   description:
-    'Comparăm prețurile și păstrăm istoricul ca să știi când e ofertă adevărată. Urmărim oferte de la mai multe magazine online din România.',
+    'Blog de recomandări de produse din România: top-uri pe buget, comparații și ghiduri de alegere, cu cel mai bun preț găsit la magazinele partenere.',
   openGraph: {
     type: 'website',
     locale: 'ro_RO',
     siteName: 'superieftin.ro',
   },
+  // Linkul RSS al articolelor pe toate paginile. DOAR `types` — paginile care isi pun
+  // `alternates.canonical` trebuie sa repete `types: RSS_ALTERNATE_TYPES` (combinare superficiala).
+  alternates: { types: RSS_ALTERNATE_TYPES },
   // FARA `robots` si `alternates.canonical` aici (raport SEO 2026-10-04, A1): ce e in layout se
   // mosteneste de orice pagina fara metadata proprie — 404-urile primeau „index, follow” langa
   // „noindex” si canonical = homepage. Fiecare pagina indexabila isi declara canonical-ul ei.

@@ -79,7 +79,7 @@ export default async function GhiduriAdminPage() {
               {candidates.map((c) => (
                 <tr key={c.id} className="border-t border-line">
                   <td className="px-4 py-2">
-                    <Link href={`/p/${c.slug}`} target="_blank" className="hover:text-brand">{c.name}</Link>
+                    <Link href={`/admin/cercetare/${c.slug}`} target="_blank" className="hover:text-brand">{c.name}</Link>
                     <div className="text-xs text-muted">#{c.id}{c.category_name ? ` · ${c.category_name}` : ''}{c.guides ? ` · ${c.guides} ghid(uri)` : ''}</div>
                   </td>
                   <td className="px-4 py-2 text-right tabular-nums">{c.clicks}</td>

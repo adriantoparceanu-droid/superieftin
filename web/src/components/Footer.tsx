@@ -4,14 +4,10 @@ import { CookieSettingsButton } from '@/components/consent/CookieSettingsButton'
 
 // Subsolul (redesign, macheta „.ft”): cărbune în ambele teme, ca antetul.
 // Paginile de incredere — Google le cere vizibile pe orice pagina a unui site de afiliere
-// + legaturi interne spre hubul de reduceri reale si metodologie (raport SEO 2026-10-04, A8)
+// + legaturi interne spre articole si metodologie (raport SEO 2026-10-04, A8; blog din 20 nov. 2026)
 const FOOTER_LINKS: [string, string][] = [
-  ['/reduceri-reale', 'Reduceri reale'],
-  // Observatorul reducerilor reale (repoziționarea din 21 oct. 2026)
-  ['/indice', 'Indicele prețurilor'],
-  ['/cand-sa-cumperi', 'Când să cumperi'],
-  ['/ghiduri', 'Ghiduri'],
-  ['/ghiduri/metodologie', 'Cum calculăm'],
+  ['/ghiduri', 'Articole'],
+  ['/ghiduri/metodologie', 'Cum alegem produsele'],
   ['/alerte/gestionare', 'Alertele mele'],
   ['/despre', 'Despre noi'],
   ['/contact', 'Contact'],
@@ -29,7 +25,7 @@ export function Footer() {
       <div className="max-w-7xl mx-auto px-4 pt-6 pb-7">
         <Logo onDark />
         <p className="mt-2.5 max-w-xl leading-relaxed">
-          Comparăm prețul de azi cu mediana ultimelor 30 de zile. Reducere reală = minimum 5% sub mediană.
+          Recomandări de produse, cu cel mai bun preț găsit la magazinele partenere. Unele linkuri sunt de afiliere.
         </p>
 
         <nav

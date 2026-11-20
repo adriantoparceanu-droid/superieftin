@@ -1,11 +1,12 @@
 import type { Metadata } from 'next'
 import { LegalPage, Todo } from '@/components/LegalPage'
 import { COMPANY } from '@/lib/company'
+import { RSS_ALTERNATE_TYPES } from '@/lib/guides/rss'
 
 export const metadata: Metadata = {
   title: 'Contact',
   description: 'Datele de contact și de identificare ale operatorului superieftin.ro.',
-  alternates: { canonical: '/contact' },
+  alternates: { canonical: '/contact', types: RSS_ALTERNATE_TYPES },
 }
 
 export default function ContactPage() {

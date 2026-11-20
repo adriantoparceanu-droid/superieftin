@@ -2,8 +2,8 @@ import { buildLlmsFull, type LlmsGuideFull } from '@/lib/seo/llms'
 import { loadLlmsData } from '@/lib/seo/llms-data'
 import { getPublishedGuide } from '@/lib/guides/queries'
 
-// /llms-full.txt — llms.txt + metodologia si textul integral al ghidurilor publicate (Markdown),
-// cu marcajele de pret inlocuite prin „vezi prețul live pe <URL>” (fara preturi care se invechesc).
+// /llms-full.txt — llms.txt + textul integral al articolelor publicate (Markdown),
+// cu marcajele de produs inlocuite prin trimiteri spre cardul din articol (fara preturi care se invechesc).
 export const dynamic = 'force-dynamic'
 
 export async function GET() {

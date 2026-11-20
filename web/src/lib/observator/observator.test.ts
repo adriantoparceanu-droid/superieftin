@@ -7,7 +7,6 @@ import {
   trackedSincePhrase, seasonalityAllowed, timingFact, datasetLd, faqPageLd,
   type Edition, type IndexRow, type TimingWeek,
 } from './observator'
-import { buildLlmsTxt } from '../seo/llms'
 import { SITE_URL } from '../seo/site'
 
 test('luni: parametrul din URL, etichete, luna anterioară', () => {
@@ -120,17 +119,4 @@ test('JSON-LD: Dataset și FAQPage', () => {
   assert.deepEqual(d.creator, { '@id': `${SITE_URL}/#organization` })
   assert.equal(faqPageLd([]), null)
   assert.equal(faqPageLd([{ q: 'Q', a: 'A' }])!.mainEntity[0].acceptedAnswer.text, 'A')
-})
-
-test('llms.txt: secțiunea Observator cu linkuri și ultima ediție', () => {
-  const base = { facts: null, guides: [], categories: [], landings: [] }
-  const without = buildLlmsTxt(base)
-  assert.match(without, /## Observatorul reducerilor reale/)
-  assert.match(without, new RegExp(`${SITE_URL}/black-friday-2026`))
-  assert.match(without, new RegExp(`${SITE_URL}/indice\\)`))
-  assert.match(without, new RegExp(`${SITE_URL}/cand-sa-cumperi\\)`))
-  const withData = buildLlmsTxt({ ...base, observator: { latestEdition: edition, timing: [{ slug: 'laptopuri', name: 'Laptopuri' }] } })
-  assert.match(withData, new RegExp(`\\[septembrie 2026\\]\\(${SITE_URL}/indice/2026-09\\)`))
-  assert.match(withData, /a scăzut cu 1,3%/)
-  assert.match(withData, new RegExp(`\\[Laptopuri\\]\\(${SITE_URL}/cand-sa-cumperi/laptopuri\\)`))
 })

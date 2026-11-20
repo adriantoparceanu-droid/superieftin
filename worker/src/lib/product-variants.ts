@@ -15,9 +15,8 @@
 // inregistrare cea mai veche), apoi id-ul cel mai mic (stabil intre rulari).
 //
 // Calculul ruleaza in worker, dupa refreshOfferPriceStats (sync.worker.ts), si scrie
-// products.canonical_product_id (migratia 035). Site-ul doar citeste coloana si pune canonical-ul
-// DOAR daca principala e ea insasi indexabila (web/src/lib/seo/product-index.ts,
-// CANONICAL_TARGET_INDEXABLE_SQL). Functiile de aici sunt pure (testate fara baza de date);
+// products.canonical_product_id (migratia 035). Folosit pentru canonical-ul paginilor /p/, scoase la
+// trecerea in blog (20 nov. 2026) — coloana ramane data interna. Functiile de aici sunt pure (testate fara baza de date);
 // scrierea in DB e in product-canonicals.ts.
 
 // Cuvinte de culoare (deja fara diacritice, litere mici). Lista e intentionat scurta: un cuvant

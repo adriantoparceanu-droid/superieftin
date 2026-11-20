@@ -67,6 +67,22 @@ export const getCategoryTreeStats = unstable_cache(
   { revalidate: 3600, tags: ['categories', 'products'] }
 )
 
+// Temele blogului pentru sitemap si llms.txt: categoriile-parinte vizibile (/c/<parinte>), in
+// ordinea din meniu. Subcategoriile NU intra: pagina lor proprie de tema exista doar daca au
+// destule articole (regula e in pagina /c/) — cand regula devine o functie comuna, adaug-o aici.
+export const getThemeCategories = unstable_cache(
+  async (): Promise<{ slug: string; name: string }[]> => {
+    const { rows } = await pool.query<{ slug: string; name: string }>(`
+      SELECT slug, name FROM categories
+      WHERE parent_id IS NULL AND is_visible
+      ORDER BY sort_order, id
+    `)
+    return rows
+  },
+  ['seo-theme-categories'],
+  { revalidate: 3600, tags: ['categories'] }
+)
+
 export async function getCategoryStat(slug: string): Promise<CategoryStat | null> {
   return (await getCategoryTreeStats()).find((c) => c.slug === slug) ?? null
 }

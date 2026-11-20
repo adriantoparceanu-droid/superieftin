@@ -13,9 +13,7 @@ export const RENAMED_CATEGORIES: Record<string, string> = {
   'miere-de-albine': 'miere-apicole',
 }
 
-// Vechile „categorii” care au devenit tag-uri de conditie (Refurbished / Second Hand)
-export const CATEGORIES_TO_TAGS: Record<string, string> = {
-  'refurbished': 'refurbished',
-  'second-hand': 'second-hand',
-  'touchscreen-second-hand': 'second-hand',
-}
+// Vechile „categorii” devenite tag-uri de conditie (Refurbished / Second Hand). Duceau pe /t/<tag>;
+// paginile /t/ au disparut la trecerea in blog (20 nov. 2026) → 410 direct, fara lant de redirect
+// (src/proxy.ts pentru /c/<slug>, lib/legacy-urls.ts pentru /categorie-produs/…).
+export const RETIRED_CATEGORY_SLUGS = ['refurbished', 'second-hand', 'touchscreen-second-hand'] as const

@@ -2,11 +2,12 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { LegalPage, Todo } from '@/components/LegalPage'
 import { COMPANY } from '@/lib/company'
+import { RSS_ALTERNATE_TYPES } from '@/lib/guides/rss'
 
 export const metadata: Metadata = {
   title: 'Politica de confidențialitate',
   description: 'Ce date colectează superieftin.ro, de ce, cât timp le păstrăm și ce drepturi ai.',
-  alternates: { canonical: '/confidentialitate' },
+  alternates: { canonical: '/confidentialitate', types: RSS_ALTERNATE_TYPES },
 }
 
 // ATENTIE: textul descrie ce face REAL codul. Cand se schimba colectarea de date (tracking nou,

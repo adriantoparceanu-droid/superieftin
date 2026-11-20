@@ -7,6 +7,11 @@ export const RSS_PATH = '/ghiduri/feed.xml'
 export const RSS_TITLE = `${SITE_NAME} — articole`
 export const RSS_MAX_ITEMS = 50
 
+// `alternates.types` pentru <link rel="alternate" type="application/rss+xml">. Metadata Next se
+// combina SUPERFICIAL: o pagina care isi pune `alternates: { canonical }` inlocuieste tot obiectul
+// `alternates` din layout, deci pierde linkul RSS → adauga `types: RSS_ALTERNATE_TYPES` alaturi.
+export const RSS_ALTERNATE_TYPES = { 'application/rss+xml': [{ url: RSS_PATH, title: RSS_TITLE }] }
+
 export interface RssItem {
   slug: string
   title: string

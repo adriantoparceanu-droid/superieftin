@@ -1,40 +1,64 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import pool from '@/lib/db'
-import { OFFER_AVAILABLE_SQL, PRODUCT_GONE_DAYS, PRODUCT_GONE_FROM } from '@/lib/availability'
+import { absoluteLocation, goneHtml, needsArticleData, resolveBlogRedirect } from '@/lib/blog-redirects'
+import { getRedirectData } from '@/lib/blog-redirects-data'
 
-// Produs fara nicio oferta disponibila de PRODUCT_GONE_DAYS zile → 410 Gone (Google il scoate
-// din index mai repede decat la 404). Pana atunci pagina afiseaza „indisponibil”, neindexata.
-// De ce aici si nu in pagina: o pagina Next poate intoarce doar 404 (notFound), nu 410.
-// Proxy-ul ruleaza in Node (Next 16), deci poate interoga Postgres direct.
+// Adresele scoase la trecerea in blog de recomandari (20 nov. 2026): /p/<slug>, observatorul
+// (/reduceri-reale, /indice, /cand-sa-cumperi, /black-friday-2026), /t/, /feeds/products.xml si
+// vechile categorii devenite tag-uri. Decizia (308 spre articol publicat sau 410) e in
+// lib/blog-redirects.ts. De ce aici: o pagina Next poate intoarce doar 404, nu 410; proxy-ul
+// ruleaza in Node (Next 16), deci poate citi Postgres direct.
+//
+// Comportament la eroare de DB (harta articol ↔ produs nu se poate citi/improspata):
+// - 308 din ultima harta reusita → il servim (un articol publicat acum cel mult cateva minute);
+// - 410 NU il servim pe date vechi sau lipsa: 410 e permanent pentru Google (scoate adresa din
+//   index), iar o pana de DB nu trebuie sa stearga din index produse care au articol. Raspundem
+//   503 + Retry-After — Google reincearca mai tarziu si nu scoate nimic din index.
 export async function proxy(request: NextRequest) {
-  // Perioada de gratie de la lansare (vezi PRODUCT_GONE_FROM) — fara interogare DB pana atunci
-  if (Date.now() < PRODUCT_GONE_FROM.getTime()) return NextResponse.next()
+  const path = request.nextUrl.pathname
 
-  const slug = decodeURIComponent(request.nextUrl.pathname.slice('/p/'.length)).split('/')[0]
-  if (!slug) return NextResponse.next()
+  // Prima trecere fara DB: adresa e una scoasa? (matcher-ul de jos le filtreaza deja)
+  const empty = { productGuides: new Map<string, string>(), publishedGuides: new Set<string>() }
+  if (resolveBlogRedirect(path, empty) === null) return NextResponse.next()
+  if (!needsArticleData(path)) return gone()
 
-  try {
-    const { rows } = await pool.query<{ gone: boolean }>(`
-      SELECT
-        NOT EXISTS (SELECT 1 FROM offers o WHERE o.product_id = p.id AND ${OFFER_AVAILABLE_SQL})
-        AND COALESCE((SELECT max(o.last_checked) FROM offers o WHERE o.product_id = p.id), p.updated_at)
-            < now() - make_interval(days => $2)
-        AS gone
-      FROM products p WHERE p.slug = $1
-    `, [slug, PRODUCT_GONE_DAYS])
-    if (rows[0]?.gone) {
-      return new NextResponse('Produsul nu mai este disponibil la magazinele monitorizate.', {
-        status: 410,
-        headers: { 'Content-Type': 'text/plain; charset=utf-8', 'X-Robots-Tag': 'noindex' },
-      })
-    }
-  } catch {
-    // Orice eroare DB → lasam pagina sa se incarce normal (nu blocam site-ul din proxy)
+  const loaded = await getRedirectData()
+  const decision = resolveBlogRedirect(path, loaded?.data ?? empty)
+  if (decision?.status === 308) return NextResponse.redirect(absoluteLocation(decision.location), 308)
+  if (!loaded || !loaded.fresh) {
+    return new NextResponse('Serviciu temporar indisponibil. Încearcă din nou în câteva minute.', {
+      status: 503,
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Retry-After': '300',
+        'Cache-Control': 'no-store',
+        'X-Robots-Tag': 'noindex',
+      },
+    })
   }
-  return NextResponse.next()
+  return gone()
 }
 
+function gone(): NextResponse {
+  return new NextResponse(goneHtml(), {
+    status: 410,
+    headers: { 'Content-Type': 'text/html; charset=utf-8', 'X-Robots-Tag': 'noindex' },
+  })
+}
+
+// Valori constante (analizate la build). Pastreaza-le in acord cu REMOVED_PREFIXES /
+// RETIRED_CATEGORY_SLUGS din lib/blog-redirects.ts. `:path*` include si adresa goala (/indice).
 export const config = {
-  matcher: '/p/:slug',
+  matcher: [
+    '/p/:path*',
+    '/t/:path*',
+    '/reduceri-reale/:path*',
+    '/indice/:path*',
+    '/cand-sa-cumperi/:path*',
+    '/black-friday-2026/:path*',
+    '/feeds/products.xml',
+    '/c/refurbished',
+    '/c/second-hand',
+    '/c/touchscreen-second-hand',
+  ],
 }

@@ -3,11 +3,12 @@ import Link from 'next/link'
 import { LegalPage } from '@/components/LegalPage'
 import { INK_BUTTON } from '@/components/article'
 import { CookieSettingsButton } from '@/components/consent/CookieSettingsButton'
+import { RSS_ALTERNATE_TYPES } from '@/lib/guides/rss'
 
 export const metadata: Metadata = {
   title: 'Politica de cookies',
   description: 'Ce cookie-uri folosește superieftin.ro și cum îți schimbi alegerea.',
-  alternates: { canonical: '/cookies' },
+  alternates: { canonical: '/cookies', types: RSS_ALTERNATE_TYPES },
 }
 
 // Lista reflecta ce seteaza REAL site-ul. La un tag/cookie nou, actualizeaza tabelul.

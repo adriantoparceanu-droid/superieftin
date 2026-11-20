@@ -1,21 +1,22 @@
-// Sitemap impartit (sitemap index). Pure: construieste XML-ul si decide impartirea; datele vin
-// din rutele app/sitemap.xml si app/sitemaps/[fisier].
+// Sitemap (sitemap index). Pure: construieste XML-ul; datele vin din lib/seo/sitemap-data.ts,
+// rutele sunt app/sitemap.xml si app/sitemaps/[fisier].
 //
-// Structura (decizia din raportul SEO 2026-10-04, A7):
-//   /sitemap.xml                  → INDEX (acelasi URL ca inainte: Search Console nu trebuie schimbat)
-//   /sitemaps/pagini.xml          → homepage, pagini statice, ghiduri, /c/, /t/, /reduceri-reale/*
-//   /sitemaps/produse-1.xml, -2…  → paginile de produs disponibile, cate PRODUCTS_PER_SITEMAP
+// Structura (blog de recomandari, 20 nov. 2026):
+//   /sitemap.xml          → INDEX (acelasi URL ca inainte: Search Console / robots.txt nu se schimba)
+//   /sitemaps/pagini.xml  → homepage, /ghiduri, metodologie, articolele, temele /c/, autorii,
+//                           paginile legale. Fisierele produse-N.xml au disparut odata cu /p/.
 //
-// `lastmod` doar unde e REAL (Google ignora un lastmod care „minte” sistematic): produse = ultima
-// schimbare de pret, ghiduri = updated_at; categoriile/landing-urile NU au lastmod.
+// `lastmod` doar unde e REAL (Google ignora un lastmod care „minte” sistematic): articole =
+// updated_at; /ghiduri = cel mai recent articol; restul fara lastmod.
 
 import { absUrl } from './site'
 
-export const PRODUCTS_PER_SITEMAP = 10_000
+export const SITEMAP_FILES = ['pagini.xml'] as const
 
 export interface SitemapEntry {
   path: string                    // cale relativa („/c/laptopuri”) sau URL absolut
   lastmod?: Date | string | null
+  images?: string[]               // <image:image> (articole: imaginea Open Graph generata)
 }
 
 export function xmlEscape(s: string): string {
@@ -28,9 +29,15 @@ function lastmodTag(v: Date | string | null | undefined): string {
   return Number.isNaN(d.getTime()) ? '' : `<lastmod>${d.toISOString()}</lastmod>`
 }
 
+function imageTags(images: string[] | undefined): string {
+  return (images ?? []).map((i) => `<image:image><image:loc>${xmlEscape(absUrl(i))}</image:loc></image:image>`).join('')
+}
+
 export function urlsetXml(entries: SitemapEntry[]): string {
-  const body = entries.map((e) => `<url><loc>${xmlEscape(absUrl(e.path))}</loc>${lastmodTag(e.lastmod)}</url>`).join('\n')
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`
+  const body = entries.map((e) => `<url><loc>${xmlEscape(absUrl(e.path))}</loc>${lastmodTag(e.lastmod)}${imageTags(e.images)}</url>`).join('\n')
+  return '<?xml version="1.0" encoding="UTF-8"?>\n' +
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n' +
+    `${body}\n</urlset>\n`
 }
 
 export function sitemapIndexXml(entries: SitemapEntry[]): string {
@@ -38,28 +45,9 @@ export function sitemapIndexXml(entries: SitemapEntry[]): string {
   return `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</sitemapindex>\n`
 }
 
-// Cate fisiere de produse sunt necesare (0 produse → 0 fisiere)
-export function productSitemapCount(totalProducts: number): number {
-  return Math.ceil(Math.max(0, totalProducts) / PRODUCTS_PER_SITEMAP)
-}
-
-export function sitemapFileNames(totalProducts: number): string[] {
-  const n = productSitemapCount(totalProducts)
-  return ['pagini.xml', ...Array.from({ length: n }, (_, i) => `produse-${i + 1}.xml`)]
-}
-
-// „pagini.xml” → { kind: 'pages' }; „produse-2.xml” → { kind: 'products', index: 2 }; altceva → null
-export function parseSitemapFile(name: string): { kind: 'pages' } | { kind: 'products'; index: number } | null {
-  if (name === 'pagini.xml') return { kind: 'pages' }
-  const m = name.match(/^produse-([1-9]\d{0,4})\.xml$/)
-  return m ? { kind: 'products', index: Number(m[1]) } : null
-}
-
-// Felia de produse pentru fisierul `index` (1-based). Lista trebuie sa fie intr-o ordine
-// stabila (dupa id), altfel produsele „sar” intre fisiere de la o zi la alta.
-export function productSlice<T>(all: T[], index: number): T[] {
-  const start = (index - 1) * PRODUCTS_PER_SITEMAP
-  return all.slice(start, start + PRODUCTS_PER_SITEMAP)
+// Doar fisierele din SITEMAP_FILES exista; restul (inclusiv vechile produse-N.xml) → 404
+export function isSitemapFile(name: string): boolean {
+  return (SITEMAP_FILES as readonly string[]).includes(name)
 }
 
 // Cel mai recent lastmod dintr-o lista (pentru <lastmod> din index); null daca niciunul
@@ -71,4 +59,31 @@ export function latestLastmod(entries: SitemapEntry[]): Date | null {
     if (!Number.isNaN(t) && t > max) max = t
   }
   return max ? new Date(max) : null
+}
+
+// Paginile de incredere (Despre, Contact, politici) — cerute de Google pentru site-urile de afiliere
+export const LEGAL_PAGES = ['/despre', '/contact', '/confidentialitate', '/termeni', '/cookies']
+
+export interface PageSources {
+  guides: { slug: string; updated_at: string }[]
+  themes: { slug: string }[]          // temele /c/ (parintii vizibili)
+  authors: { slug: string }[]         // autori cu cel putin un articol publicat
+}
+
+// Lista din pagini.xml, in ordinea: homepage, articole, teme, autori, pagini legale
+export function buildPageEntries(s: PageSources): SitemapEntry[] {
+  const latestGuide = s.guides.reduce<string | null>((m, g) => (!m || g.updated_at > m ? g.updated_at : m), null)
+  return [
+    { path: '/' },   // se schimba la fiecare articol nou, fara o data „reala” proprie → fara lastmod
+    { path: '/ghiduri', lastmod: latestGuide },
+    { path: '/ghiduri/metodologie' },
+    ...s.guides.map((g) => ({
+      path: `/ghiduri/${g.slug}`,
+      lastmod: g.updated_at,
+      images: [`/ghiduri/${g.slug}/opengraph-image`],
+    })),
+    ...s.themes.map((c) => ({ path: `/c/${c.slug}` })),
+    ...s.authors.map((a) => ({ path: `/autori/${a.slug}` })),
+    ...LEGAL_PAGES.map((path) => ({ path })),
+  ]
 }

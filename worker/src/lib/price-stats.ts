@@ -4,13 +4,11 @@ import pool from './db.js'
 // ultimul pret din istoric, pentru FIECARE oferta. Din migratia 032 si minimul/maximul pe
 // aceeasi fereastra de 30 de zile (termometrul de pe /p/ si mini-termometrele din liste) —
 // calculate in aceeasi agregare, ca cele trei valori sa fie mereu din acelasi set de puncte.
-// Din migratia 033 si data primei inregistrari din istoric (first_recorded_at): regula SEO din
-// 5 oct. 2026 indexeaza /p/ doar daca urmarim produsul de cel putin 30 de zile
-// (web/src/lib/seo/product-index.ts); sitemap-ul ia MIN(first_recorded_at) pe ofertele produsului.
-// Din migratia 035 si price_changes_60d: de cate ori s-a schimbat pretul intre doua puncte
-// CONSECUTIVE din istoric, ambele in ultimele 60 de zile — conditia „are poveste” a indexarii /p/
-// (≥ 2 magazine SAU ≥ 3 schimbari de pret, product-index.ts). Doua puncte la acelasi pret
-// (snapshot-ul zilnic + feed-sync) nu sunt o schimbare.
+// Din migratia 033 si data primei inregistrari din istoric (first_recorded_at) si, din migratia 035,
+// price_changes_60d: de cate ori s-a schimbat pretul intre doua puncte CONSECUTIVE din istoric,
+// ambele in ultimele 60 de zile. Au fost criteriile de indexare ale paginilor /p/ (scoase la
+// trecerea in blog, 20 nov. 2026); raman date interne (cercetare, /admin/cercetare). Doua puncte la
+// acelasi pret (snapshot-ul zilnic + feed-sync) nu sunt o schimbare.
 // Site-ul citeste doar tabela (JOIN), in loc sa agrege price_history la fiecare pagina. Rulat dupa fiecare scriere in istoric.
 //
 // Un singur UPSERT tranzactional: site-ul vede fie valorile vechi, fie cele noi, niciodata

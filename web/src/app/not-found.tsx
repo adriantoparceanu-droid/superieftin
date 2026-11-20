@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { getCategoryTreeStats } from '@/lib/seo/queries'
-import { indexableCategories } from '@/lib/seo/categories'
+import { getThemeCategories } from '@/lib/seo/queries'
 import { INK_BUTTON } from '@/components/article'
 
 // Pagina 404 in romana (raport SEO 2026-10-04, A2). Statusul ramane 404. `noindex` il pune Next
@@ -13,10 +12,8 @@ export const metadata: Metadata = {
 }
 
 export default async function NotFound() {
-  // Categoriile principale (parinti cu produse disponibile); o eroare DB nu strica pagina 404
-  const roots = await getCategoryTreeStats()
-    .then((all) => indexableCategories(all).filter((c) => !c.parent_slug))
-    .catch(() => [])
+  // Temele (categoriile-parinte vizibile); o eroare DB nu strica pagina 404
+  const roots = await getThemeCategories().catch(() => [])
 
   return (
     <section className="mx-auto max-w-2xl py-8 text-center sm:py-14">
@@ -30,15 +27,15 @@ export default async function NotFound() {
       <p className="mt-5 font-display text-[13px] font-extrabold uppercase tracking-[.08em] text-red-ink">Eroare 404</p>
       <h1 className="mt-1 text-[28px] font-extrabold leading-[1.1] text-ink sm:text-[36px]">Pagina nu există</h1>
       <p className="mx-auto mt-2.5 max-w-md text-[15px] leading-relaxed text-ink-2 sm:text-base">
-        Linkul poate fi vechi sau greșit, ori produsul nu mai e listat. Caută produsul sau alege o categorie.
+        Linkul poate fi vechi sau greșit. Caută un articol sau alege o temă.
       </p>
 
       <form action="/cautare" method="get" role="search" className="mx-auto mt-6 flex max-w-md gap-2">
         <input
           name="q"
           type="search"
-          placeholder="Caută produs sau brand..."
-          aria-label="Caută produs sau brand"
+          placeholder="Caută în articole..."
+          aria-label="Caută în articole"
           autoComplete="off"
           className="min-h-12 min-w-0 flex-1 rounded-xl border-[1.5px] border-line-2 bg-surface px-4 text-[15px] text-ink placeholder:text-ink-3 focus:border-ink focus:outline-none"
         />
@@ -46,8 +43,8 @@ export default async function NotFound() {
       </form>
 
       {roots.length > 0 && (
-        <nav aria-label="Categorii principale" className="mt-8">
-          <h2 className="text-[12px] font-extrabold uppercase tracking-[.08em] text-ink-3">Categorii</h2>
+        <nav aria-label="Teme" className="mt-8">
+          <h2 className="text-[12px] font-extrabold uppercase tracking-[.08em] text-ink-3">Teme</h2>
           <ul className="mt-3 flex flex-wrap justify-center gap-2">
             {roots.map((c) => (
               <li key={c.slug}>
@@ -62,8 +59,7 @@ export default async function NotFound() {
 
       <p className="mt-8 flex flex-wrap justify-center gap-x-5 gap-y-2 text-[15px] font-semibold">
         <Link href="/" className="text-red-ink underline-offset-2 hover:underline">Pagina principală</Link>
-        <Link href="/reduceri-reale" className="text-red-ink underline-offset-2 hover:underline">Reduceri reale azi</Link>
-        <Link href="/ghiduri" className="text-red-ink underline-offset-2 hover:underline">Ghiduri de cumpărare</Link>
+        <Link href="/ghiduri" className="text-red-ink underline-offset-2 hover:underline">Toate articolele</Link>
       </p>
     </section>
   )

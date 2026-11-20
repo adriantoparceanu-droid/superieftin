@@ -2,7 +2,6 @@ import { unstable_cache } from 'next/cache'
 import pool from './db'
 import { maskPII } from './pii'
 import { OFFER_AVAILABLE_SQL } from './availability'
-import { PRODUCT_INDEXABLE_SQL, CANONICAL_TARGET_INDEXABLE_SQL } from './seo/product-index'
 
 export interface ProductWithDiscount {
   id: string
@@ -42,7 +41,7 @@ export interface ProductDetail {
   category_name: string | null    // numele categoriei (breadcrumb JSON-LD)
   parent_slug: string | null      // parintele categoriei, daca exista
   parent_name: string | null
-  category_slug: string | null    // slug-ul categoriei mapate (regula de indexare — lib/seo/product-index.ts)
+  category_slug: string | null    // slug-ul categoriei mapate
   category_visible: boolean | null
   parent_visible: boolean | null  // null = categoria nu are parinte
   tags: string[]                  // slug-urile tag-urilor (refurbished, second-hand → itemCondition)
@@ -68,7 +67,7 @@ export interface OfferRow {
   min_30d?: number | null
   max_30d?: number | null
   // Schimbarile de pret pe 60 de zile (offer_price_stats, migratia 035) — conditia „are poveste”
-  // a indexarii (lib/seo/product-index.ts). Completat doar de getProductDetail.
+  // (fișa internă /admin/cercetare/[slug]). Completat doar de getProductDetail.
   price_changes_60d?: number
 }
 
@@ -583,23 +582,6 @@ export const getHistoryStart = unstable_cache(
   { revalidate: 3600, tags: ['price-history'] }
 )
 
-// Canonical pe variante (migratia 035): slug-ul paginii principale a grupului, DOAR daca principala
-// e ea insasi indexabila acum (aceeasi regula ca sitemap-ul — CANONICAL_TARGET_INDEXABLE_SQL).
-// null = varianta isi pastreaza canonical-ul propriu. Un singur produs, pe cheia primara.
-export const getCanonicalTargetSlug = unstable_cache(
-  async (productId: string): Promise<string | null> => {
-    const { rows } = await pool.query<{ slug: string }>(`
-      SELECT cp.slug
-      FROM products p
-      JOIN products cp ON cp.id = p.canonical_product_id
-      WHERE p.id = $1 AND ${CANONICAL_TARGET_INDEXABLE_SQL}
-    `, [productId])
-    return rows[0]?.slug ?? null
-  },
-  ['canonical-target'],
-  { revalidate: 3600, tags: ['products'] }
-)
-
 // Categoriile vizibile (administrate in /admin), cu numarul de produse (inclusiv subcategorii)
 export const getCategories = unstable_cache(
   async (): Promise<CategoryInfo[]> => {
@@ -754,16 +736,6 @@ export const getActiveRetailersPublic = unstable_cache(
   { revalidate: 3600, tags: ['products'] }
 )
 
-// Produsele unui tag (pagina /t/[slug])
-export const getTagBySlug = unstable_cache(
-  async (slug: string): Promise<{ id: number; name: string; slug: string } | null> => {
-    const { rows } = await pool.query('SELECT id, name, slug FROM tags WHERE slug = $1', [slug])
-    return rows[0] ?? null
-  },
-  ['tag-by-slug'],
-  { revalidate: 3600, tags: ['categories'] }
-)
-
 // Tag-urile transversale (Refurbished, Second Hand…) pentru meniul mobil — jetoane spre /t/<slug>.
 // Tabel mic (câteva rânduri), cache 1 h ca meniul; nu le scriem de mână în componentă.
 export const getMenuTags = unstable_cache(
@@ -775,140 +747,6 @@ export const getMenuTags = unstable_cache(
   },
   ['menu-tags'],
   { revalidate: 3600, tags: ['categories', 'menu'] }
-)
-
-export const getTagProducts = unstable_cache(
-  async (slug: string, page = 1): Promise<ProductWithDiscount[]> => {
-    const offset = (page - 1) * PAGE_SIZE
-    const { rows } = await pool.query<ProductWithDiscount>(`
-      SELECT
-        p.id::text, p.name, p.slug, p.category, p.brand, p.image_url,
-        o.id::text AS offer_id, o.current_price::float AS current_price,
-        o.affiliate_url, o.in_stock,
-        r.name AS retailer_name, r.slug AS retailer_slug,
-        mp.median_price::float AS median_price,
-        mp.min_30d::float AS min_30d, mp.max_30d::float AS max_30d,
-        CASE
-          WHEN mp.median_price IS NOT NULL AND o.current_price < mp.median_price * 0.95
-          THEN ROUND(((mp.median_price - o.current_price) / mp.median_price * 100)::numeric, 1)::float
-          ELSE NULL
-        END AS discount_pct
-      FROM products p
-      JOIN product_tags pt ON pt.product_id = p.id
-      JOIN tags t ON t.id = pt.tag_id AND t.slug = $1
-      JOIN offers o ON o.product_id = p.id
-      JOIN retailers r ON r.id = o.retailer_id
-      LEFT JOIN (SELECT offer_id, median_30d AS median_price, min_30d, max_30d, price_changes_60d FROM offer_price_stats) mp ON mp.offer_id = o.id
-      WHERE o.current_price IS NOT NULL AND ${OFFER_AVAILABLE_SQL}
-      ORDER BY current_price ASC NULLS LAST
-      LIMIT $2 OFFSET $3
-    `, [slug, PAGE_SIZE, offset])
-    return attachStoreCounts(rows)
-  },
-  ['tag-products-v2'],
-  { revalidate: 3600, tags: ['products'] }
-)
-
-export const getTagProductCount = unstable_cache(
-  async (slug: string): Promise<number> => {
-    const { rows } = await pool.query(`
-      SELECT count(DISTINCT p.id)::int AS count
-      FROM products p
-      JOIN product_tags pt ON pt.product_id = p.id
-      JOIN tags t ON t.id = pt.tag_id AND t.slug = $1
-      JOIN offers o ON o.product_id = p.id
-      WHERE o.current_price IS NOT NULL AND ${OFFER_AVAILABLE_SQL}
-    `, [slug])
-    return rows[0]?.count ?? 0
-  },
-  ['tag-count'],
-  { revalidate: 3600, tags: ['products'] }
-)
-
-// Toate produsele pentru sitemap (si generateStaticParams pe /p/).
-// `lastmod` = momentul ULTIMEI SCHIMBARI DE PRET (nu products.updated_at, care se atinge la fiecare
-// sync si facea ca 97% din sitemap sa fie „modificat azi” — Google ignora un lastmod care minte).
-// Per oferta disponibila: prima inregistrare din ultimul sir de preturi egale cu pretul curent,
-// cautata doar in ultimele 90 de zile (partitiile vechi nu se citesc; cheia (offer_id, recorded_at)
-// face fiecare cautare un index scan scurt). Daca pretul NU s-a schimbat in 90 de zile, data reala
-// e mai veche si n-o stim → null (fara <lastmod>; altfel data ar „aluneca” zilnic odata cu
-// fereastra), cu exceptia ofertelor noi (create in fereastra) → prima lor inregistrare.
-// Ordinea dupa id e stabila, ca impartirea sitemap-ului pe fisiere sa nu se miste.
-export const getAllProductSlugs = unstable_cache(
-  async (): Promise<Array<{ slug: string; lastmod: string | null }>> => {
-    const { rows } = await pool.query(`
-      SELECT p.slug, max(lc.changed_at) AS lastmod
-      FROM products p
-      -- Regula de indexare a paginilor de produs (decizia SEO din 5 oct. 2026,
-      -- lib/seo/product-index.ts): categorie mapata + vizibila, fara Sanatate & Naturale,
-      -- urmarit de cel putin 30 de zile; din 21 oct. 2026 si „are poveste” (≥ 2 magazine sau ≥ 3
-      -- schimbari de pret in 60 de zile). Restul raman pe site cu noindex si NU intra in sitemap.
-      JOIN categories c ON c.id = p.category_id
-      LEFT JOIN categories pc ON pc.id = c.parent_id
-      JOIN offers o ON o.product_id = p.id AND ${OFFER_AVAILABLE_SQL}
-      LEFT JOIN LATERAL (
-        SELECT max(ph2.recorded_at) AS last_diff
-        FROM price_history ph2
-        WHERE ph2.offer_id = o.id
-          AND ph2.recorded_at >= now() - INTERVAL '90 days'
-          AND ph2.price IS DISTINCT FROM o.current_price
-      ) d ON true
-      LEFT JOIN LATERAL (
-        SELECT min(ph.recorded_at) AS changed_at
-        FROM price_history ph
-        WHERE ph.offer_id = o.id
-          AND ph.recorded_at >= now() - INTERVAL '90 days'
-          AND ph.recorded_at > COALESCE(d.last_diff, '-infinity'::timestamptz)
-          AND (d.last_diff IS NOT NULL OR o.created_at >= now() - INTERVAL '90 days')
-      ) lc ON true
-      -- doar produsele cu cel putin o oferta disponibila (cele „indisponibile” nu se indexeaza)
-      WHERE ${PRODUCT_INDEXABLE_SQL}
-        -- variantele (alte culori) cu canonical spre o principala indexabila nu intra in sitemap
-        -- (migratia 035; principala intra singura, prin aceeasi regula)
-        AND NOT ${CANONICAL_TARGET_INDEXABLE_SQL}
-      GROUP BY p.id, p.slug
-      ORDER BY p.id
-    `)
-    return rows.map((r) => ({ slug: r.slug as string, lastmod: r.lastmod ? new Date(r.lastmod).toISOString() : null }))
-  },
-  ['all-slugs-v4'],
-  { revalidate: 86400, tags: ['products'] }
-)
-
-// Toate produsele in stoc pentru feed Google Shopping
-export const getProductsForFeed = unstable_cache(
-  async (): Promise<Array<{
-    id: string
-    offer_id: string
-    name: string
-    slug: string
-    category: string
-    brand: string | null
-    image_url: string | null
-    current_price: number | null
-    affiliate_url: string | null
-  }>> => {
-    const { rows } = await pool.query(`
-      SELECT
-        p.id::text,
-        o.id::text AS offer_id,
-        p.name,
-        p.slug,
-        p.category,
-        p.brand,
-        p.image_url,
-        o.current_price::float AS current_price,
-        o.affiliate_url
-      FROM products p
-      JOIN offers o ON o.product_id = p.id
-      WHERE ${OFFER_AVAILABLE_SQL} AND o.current_price IS NOT NULL
-      ORDER BY p.name ASC
-      LIMIT 5000
-    `)
-    return rows
-  },
-  ['products-feed'],
-  { revalidate: 86400, tags: ['products'] }
 )
 
 // Inregistreaza un click (folosit de ruta /go)

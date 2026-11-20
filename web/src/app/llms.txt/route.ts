@@ -1,8 +1,8 @@
 import { buildLlmsTxt } from '@/lib/seo/llms'
 import { loadLlmsData } from '@/lib/seo/llms-data'
 
-// /llms.txt — rezumat al site-ului pentru asistentii AI (propunere de standard: llmstxt.org).
-// Textul se construieste in lib/seo/llms.ts (cifre live, categorii, ghiduri, operator).
+// /llms.txt — rezumat al blogului pentru asistentii AI (propunere de standard: llmstxt.org).
+// Textul se construieste in lib/seo/llms.ts (identitate, metodologie, articole, teme, operator).
 // Dinamic (nu la build: DB-ul nu e accesibil atunci), cu cache HTTP de o ora.
 export const dynamic = 'force-dynamic'
 
