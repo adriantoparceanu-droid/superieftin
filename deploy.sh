@@ -84,6 +84,8 @@ rsync -az worker/Dockerfile "$D/worker/Dockerfile"
 # web: codul + fișierele statice + configurările (next.config.ts setează domeniul canonic)
 rsync -az --delete --exclude='.DS_Store' web/src/ "$D/web/src/"
 rsync -az --delete --exclude='.DS_Store' web/public/ "$D/web/public/"
+# Fonturile TTF pentru imaginile Open Graph (opengraph-image.tsx le citește din web/assets/fonts)
+rsync -az --delete --exclude='.DS_Store' web/assets/ "$D/web/assets/"
 rsync -az web/package.json web/next.config.ts web/tsconfig.json web/postcss.config.mjs web/eslint.config.mjs "$D/web/"
 # worker
 rsync -az --delete --exclude='dist' --exclude='.DS_Store' worker/src/ "$D/worker/src/"
