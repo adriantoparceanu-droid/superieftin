@@ -1,11 +1,11 @@
 {
   "slug": "reduceri-reale-black-friday-cum-verifici",
   "title": "Black Friday 2026: cum verifici dacă o reducere e reală",
-  "meta_description": "Ce înseamnă prețul tăiat după regula celor 30 de zile, de ce mediana prețului spune mai mult și cum verifici în câțiva pași o reducere de Black Friday.",
+  "meta_description": "Ce înseamnă prețul tăiat după regula celor 30 de zile, de ce contează prețul obișnuit și cum verifici singur, în câțiva pași, o reducere de Black Friday.",
   "kind": "categorie",
   "category_slug": null,
-  "summary": "Pe scurt: prețul tăiat trebuie să fie cel mai mic preț practicat de magazin în ultimele 30 de zile, dar asta nu îți spune dacă prețul e bun față de alte magazine sau față de lunile trecute. Verifică produsul exact pe superieftin.ro: verdictul compară prețul de azi cu mediana ultimelor 30 de zile, graficul arată ultimele 90 de zile, iar ofertele sunt ordonate după preț.",
-  "body_md": "## Ce spune legea despre prețul tăiat?\n\nDin 2022, în Uniunea Europeană, inclusiv în România, se aplică o regulă clară pentru anunțurile de reducere. Ea vine din Directiva 98/6/CE privind indicarea prețurilor, articolul 6a, introdus prin Directiva (UE) 2019/2161, numită și „Omnibus”:\n\n- orice anunț de reducere de preț trebuie să arate **prețul anterior** aplicat de magazin;\n- prețul anterior este **cel mai mic preț practicat de acel magazin în cele 30 de zile dinaintea reducerii**;\n- dacă reducerea crește treptat (de exemplu, de la o săptămână la alta), prețul anterior rămâne cel dinaintea primei reduceri;\n- pentru produsele perisabile și pentru cele aflate de mai puțin de 30 de zile pe piață, regulile pot fi diferite.\n\nPractic, regula oprește trucul clasic: un magazin nu poate urca prețul cu o săptămână înainte de campanie și apoi să anunțe o reducere mare față de prețul urcat, pentru că referința trebuie să fie minimul din ultimele 30 de zile.\n\n## Ce nu îți spune prețul tăiat?\n\nChiar și corect afișat, prețul anterior răspunde doar la o întrebare: „e mai ieftin decât a fost la acest magazin în ultima lună?”. Nu îți spune:\n\n- **dacă prețul e bun față de alte magazine**. Același produs poate fi mai ieftin în altă parte, fără nicio „reducere”;\n- **cum a fost prețul acum două-trei luni**. Dacă un produs a fost scumpit cu mai mult de 30 de zile înainte, minimul din ultima lună e deja prețul mai mare;\n- **ce reprezintă exact prețul tăiat**, dacă nu e prețul anterior al magazinului. Uneori lângă el scrie altceva, de exemplu „preț recomandat de producător”. Citește eticheta, nu doar procentul.\n\n## Minimul de 30 de zile sau mediana de 30 de zile?\n\nPe superieftin.ro nu ne uităm la prețul tăiat. Pentru fiecare ofertă salvăm zilnic prețul și calculăm **mediana ultimelor 30 de zile**, adică prețul „din mijloc” al lunii trecute: jumătate din zile prețul a fost mai mare, jumătate mai mic.\n\n| | Prețul anterior (legea) | Mediana 30 de zile (superieftin.ro) |\n|---|---|---|\n| Ce este | cel mai mic preț din ultimele 30 de zile, la acel magazin | prețul „din mijloc” din ultimele 30 de zile, pentru acea ofertă |\n| Cine îl calculează | magazinul | noi, din istoricul salvat zilnic |\n| La ce răspunde | „e mai ieftin decât minimul lunii?” | „e mai ieftin decât prețul obișnuit al lunii?” |\n| Unde îl vezi | lângă prețul redus, pe site-ul magazinului | pe pagina produsului, în verdictul de preț |\n\nUn exemplu în cuvinte: un produs stă 25 de zile la prețul lui obișnuit, iar 5 zile e mai ieftin. Minimul din lege e prețul din cele 5 zile ieftine. Mediana rămâne prețul obișnuit, pentru că a fost practicat în majoritatea zilelor. Cele două se completează: minimul arată cel mai bun moment al lunii, mediana arată ce plăteai de obicei.\n\nUn preț e marcat la noi **„reducere reală”** doar dacă e cu cel puțin 5% sub mediana de 30 de zile. Între 5% sub și 5% peste mediană îl numim preț obișnuit, iar peste acest interval îl marcăm ca mai scump decât de obicei. Detaliile sunt în [metodologie](/ghiduri/metodologie).\n\n## Cum verifici o reducere în câțiva pași\n\n1. **Caută produsul exact pe superieftin.ro**, cu același cod de model, aceeași memorie și aceeași culoare. Variantele diferite au prețuri și istoric diferite.\n2. **Citește verdictul de preț**: reducere reală, preț obișnuit sau mai scump decât de obicei.\n3. **Uită-te la graficul pe 90 de zile**. Arată dacă produsul a fost mai ieftin cu câteva săptămâni în urmă sau dacă prețul a urcat înainte de campanie.\n4. **Compară magazinele**. Pe pagina produsului, ofertele sunt ordonate după preț, de la cel mai mic.\n5. **Verifică prețul final la magazin**: transportul, garanția și condițiile de retur pot schimba costul total. Prețul final și stocul sunt cele afișate de magazin la comandă.\n6. **Dacă nu te grăbești, setează o alertă de preț** pe Telegram de pe pagina produsului. Primești un mesaj când prețul scade.\n\n## Exemple live: cum arată verdictul și graficul\n\nMai jos sunt patru produse pe care le urmărim zilnic din iunie 2026, din categorii diferite: [Telefoane mobile](/c/telefoane-mobile), [Televizoare](/c/televizoare), [Laptopuri](/c/laptopuri) și [Încărcătoare & cabluri](/c/incarcatoare-cabluri). Verdictele se calculează din nou la fiecare actualizare a paginii, deci pot arăta oricând reducere reală, preț obișnuit sau preț mai mare decât de obicei. Nu le-am ales pentru că ar fi reduse acum, ci pentru că au istoric suficient cât să vezi cum funcționează verificarea.\n\n### Un telefon: Samsung Galaxy S26 Ultra 256 GB\n\n{{reducere:telefon-mobil-galaxy-s26-ultra-256gb-12gb-ram-dual-sim-5g-cobalt-violet}}\n\n{{istoric-pret:telefon-mobil-galaxy-s26-ultra-256gb-12gb-ram-dual-sim-5g-cobalt-violet}}\n\n### Un televizor: TCL 55C6KS, 55 inch\n\n{{reducere:televizor-qd-mini-led-139-cm-55inch-55c6ks-ultra-hd-4k-smart-tv-wifi-ci}}\n\n{{istoric-pret:televizor-qd-mini-led-139-cm-55inch-55c6ks-ultra-hd-4k-smart-tv-wifi-ci}}\n\n### Un laptop: Dell Pro 15 Essential\n\n{{reducere:laptop-dell-pro-15-essential-pv15255-procesor-amd-ryzen-5-7520u-4m-cache-up-to-4-30-ghz-15-4270254}}\n\n{{istoric-pret:laptop-dell-pro-15-essential-pv15255-procesor-amd-ryzen-5-7520u-4m-cache-up-to-4-30-ghz-15-4270254}}\n\n### Un accesoriu: încărcătorul Samsung de 45 W\n\n{{reducere:incarcator-retea-ep-t4511nbegeu-super-fast-charger-45w-port-usb-type-c-fara-cablu-negru}}\n\n{{istoric-pret:incarcator-retea-ep-t4511nbegeu-super-fast-charger-45w-port-usb-type-c-fara-cablu-negru}}\n\n## Unde găsești reducerile reale de acum\n\nProdusele care sunt acum cu cel puțin 5% sub mediana lor apar automat pe paginile de reduceri reale, pe categorii:\n\n- [Telefoane mobile](/reduceri-reale/telefoane-mobile)\n- [Televizoare](/reduceri-reale/televizoare)\n- [Laptopuri](/reduceri-reale/laptopuri)\n- [Încărcătoare și cabluri](/reduceri-reale/incarcatoare-cabluri)\n\nNu știm dinainte ce produse vor avea reduceri reale în campanii și nici dacă produsul pe care îl vrei va fi printre ele. Ce poți face de acum: notează prețul obișnuit al produsului, urmărește graficul și setează o alertă. Așa vei recunoaște o reducere reală când apare, oricând ar fi ea.\n\nDacă alegi un produs anume, ghidurile noastre explică și ce să verifici dincolo de preț: [ce diagonală de televizor să alegi](/ghiduri/televizor-43-50-55-65-inch-ce-diagonala), [ce laptop pentru facultate sau birou](/ghiduri/laptopuri-pentru-studenti-si-birou) și [ce încărcător USB-C îți trebuie](/ghiduri/incarcator-usb-c-gan-ce-putere).\n\n## Cum am făcut acest ghid\n\nRegula legală e rezumată din Directiva 98/6/CE (articolul 6a, introdus de Directiva (UE) 2019/2161); textul nu e consultanță juridică. Verdictele și graficele vin din istoricul nostru de preț, salvat zilnic din iunie 2026, și se actualizează automat. Produsele din exemple au fost verificate ca disponibile pe 4 octombrie 2026. Detalii: [metodologia](/ghiduri/metodologie).",
+  "summary": "Pe scurt: prețul tăiat trebuie să fie cel mai mic preț practicat de magazin în ultimele 30 de zile, dar asta nu îți spune dacă prețul e bun față de alte magazine sau față de lunile trecute. Verifică singur: notează din timp prețul produsului exact (o captură de ecran cu data ajunge), compară-l la mai multe magazine și calculează costul final, cu transport și retur.",
+  "body_md": "## Ce spune legea despre prețul tăiat?\n\nDin 2022, în Uniunea Europeană, inclusiv în România, se aplică o regulă clară pentru anunțurile de reducere. Ea vine din Directiva 98/6/CE privind indicarea prețurilor, articolul 6a, introdus prin Directiva (UE) 2019/2161, numită și „Omnibus”:\n\n- orice anunț de reducere de preț trebuie să arate **prețul anterior** aplicat de magazin;\n- prețul anterior este **cel mai mic preț practicat de acel magazin în cele 30 de zile dinaintea reducerii**;\n- dacă reducerea crește treptat (de exemplu, de la o săptămână la alta), prețul anterior rămâne cel dinaintea primei reduceri;\n- pentru produsele perisabile și pentru cele aflate de mai puțin de 30 de zile pe piață, regulile pot fi diferite.\n\nPractic, regula oprește trucul clasic: un magazin nu poate urca prețul cu o săptămână înainte de campanie și apoi să anunțe o reducere mare față de prețul urcat, pentru că referința trebuie să fie minimul din ultimele 30 de zile.\n\n## Ce nu îți spune prețul tăiat?\n\nChiar și corect afișat, prețul anterior răspunde doar la o întrebare: „e mai ieftin decât a fost la acest magazin în ultima lună?”. Nu îți spune:\n\n- **dacă prețul e bun față de alte magazine**. Același produs poate fi mai ieftin în altă parte, fără nicio „reducere”;\n- **cum a fost prețul acum două-trei luni**. Dacă un produs a fost scumpit cu mai mult de 30 de zile înainte, minimul din ultima lună e deja prețul mai mare;\n- **ce reprezintă exact prețul tăiat**, dacă nu e prețul anterior al magazinului. Uneori lângă el scrie altceva, de exemplu „preț recomandat de producător”. Citește eticheta, nu doar procentul.\n\n## Prețul minim sau prețul obișnuit?\n\nPrețul anterior din lege e **minimul** lunii: cel mai mic preț practicat de magazin, chiar dacă a durat o singură zi. Pentru o decizie de cumpărare contează însă și **prețul obișnuit**, adică prețul la care s-a vândut produsul în majoritatea zilelor. Statisticienii îi spun mediană: jumătate din zile prețul a fost mai mare, jumătate mai mic.\n\nUn exemplu în cuvinte: un produs stă 25 de zile la prețul lui obișnuit, iar 5 zile e mai ieftin. Minimul din lege e prețul din cele 5 zile ieftine. Prețul obișnuit rămâne cel din celelalte 25 de zile. Cele două se completează: minimul arată cel mai bun moment al lunii, prețul obișnuit arată ce plăteai de regulă.\n\nMagazinul îți arată doar prețul anterior. Prețul obișnuit îl afli singur, urmărind produsul o vreme, ca în pașii de mai jos.\n\n## Cum verifici o reducere în câțiva pași\n\n1. **Alege produsul exact**: același cod de model, aceeași memorie și aceeași culoare. Variantele diferite au prețuri diferite.\n2. **Notează prețul din timp.** Cu câteva săptămâni înainte de campanie, fă o captură de ecran a paginii produsului, cu data vizibilă, la magazinul preferat și la încă unul sau două. Repet-o o dată pe săptămână: așa afli prețul obișnuit.\n3. **Caută copii mai vechi ale paginii.** Unele extensii de browser păstrează prețurile văzute în magazine, iar arhivele web (de exemplu web.archive.org) pot avea copii mai vechi ale paginii produsului, dacă aceasta a fost arhivată.\n4. **Citește eticheta reducerii.** Verifică dacă prețul tăiat e prețul anterior al magazinului sau altceva, de exemplu „preț recomandat de producător”.\n5. **Compară prețul de campanie cu cel notat**, nu doar cu prețul tăiat. Dacă reducerea te aduce doar la prețul obișnuit, nu e mare lucru.\n6. **Compară magazinele.** Același produs poate fi mai ieftin în altă parte, fără nicio „reducere”.\n7. **Verifică prețul final la magazin**: transportul, garanția și condițiile de retur pot schimba costul total. Prețul final și stocul sunt cele afișate de magazin la comandă.\n\n## Exersează pe câteva produse\n\nMai jos sunt patru produse din categorii diferite: [Telefoane mobile](/c/telefoane-mobile), [Televizoare](/c/televizoare), [Laptopuri](/c/laptopuri) și [Încărcătoare & cabluri](/c/incarcatoare-cabluri). Cardurile arată cel mai bun preț găsit acum la magazinele partenere. Nu le-am ales pentru că ar fi reduse acum, ci ca exemple: notează prețul de azi și compară-l cu cel din zilele de campanie.\n\n### Un telefon: Samsung Galaxy S26 Ultra 256 GB\n\n{{oferte:telefon-mobil-galaxy-s26-ultra-256gb-12gb-ram-dual-sim-5g-cobalt-violet}}\n{{pro: Ecran de 6,9 inch cu Privacy Display}}\n{{pro: S Pen inclus și baterie de 5.000 mAh}}\n{{pro: Rezistență IP68}}\n{{contra: Fără slot microSD}}\n\n### Un televizor: TCL 55C6KS, 55 inch\n\n{{oferte:televizor-qd-mini-led-139-cm-55inch-55c6ks-ultra-hd-4k-smart-tv-wifi-ci}}\n{{pro: QD-Mini LED 4K, 55 inch (139 cm)}}\n{{pro: Smart TV cu Wi-Fi}}\n{{contra: LCD cu iluminare din spate: contrast sub un OLED}}\n\n### Un laptop: Dell Pro 15 Essential\n\n{{oferte:laptop-dell-pro-15-essential-pv15255-procesor-amd-ryzen-5-7520u-4m-cache-up-to-4-30-ghz-15-4270254}}\n{{pro: AMD Ryzen 5 7520U, 4 nuclee și 8 fire}}\n{{pro: SSD de 512 GB, ecran 15,6 inch FHD și Windows 11 Pro}}\n{{contra: Doar 8 GB RAM}}\n{{contra: Grafică integrată Radeon 610M}}\n\n### Un accesoriu: încărcătorul Samsung de 45 W\n\n{{oferte:incarcator-retea-ep-t4511nbegeu-super-fast-charger-45w-port-usb-type-c-fara-cablu-negru}}\n{{pro: 45 W pentru „Super Fast Charging 2.0” pe Galaxy Ultra}}\n{{pro: Încărcător original Samsung, port USB-C}}\n{{contra: Se vinde fără cablu}}\n{{contra: Pentru 45 W îți trebuie un cablu USB-C de 5 A}}\n\n## Ce poți face de acum\n\nNu știm dinainte ce produse vor avea reduceri reale în campanii și nici dacă produsul pe care îl vrei va fi printre ele. Ce poți face de acum: notează prețul obișnuit al produsului, la mai multe magazine, și compară-l cu prețul din ziua campaniei. Așa vei recunoaște o reducere reală când apare, oricând ar fi ea.\n\nDacă alegi un produs anume, ghidurile noastre explică și ce să verifici dincolo de preț: [ce diagonală de televizor să alegi](/ghiduri/televizor-43-50-55-65-inch-ce-diagonala), [ce laptop pentru facultate sau birou](/ghiduri/laptopuri-pentru-studenti-si-birou) și [ce încărcător USB-C îți trebuie](/ghiduri/incarcator-usb-c-gan-ce-putere).\n\n## Cum am făcut acest ghid\n\nRegula legală e rezumată din Directiva 98/6/CE (articolul 6a, introdus de Directiva (UE) 2019/2161); textul nu e consultanță juridică. Produsele din exemple au fost verificate ca disponibile pe 4 octombrie 2026; prețurile din carduri vin de la magazinele partenere și se actualizează automat. Detalii: [metodologia](/ghiduri/metodologie).",
   "faq": [
     {
       "q": "Ce este „prețul anterior” afișat lângă o reducere?",
@@ -17,15 +17,15 @@
     },
     {
       "q": "Pot avea încredere în procentul de reducere afișat de magazin?",
-      "a": "Procentul e calculat față de prețul de referință al magazinului. Verifică ce reprezintă acel preț și compară cu verdictul de pe pagina produsului de la noi și cu prețurile din alte magazine."
+      "a": "Procentul e calculat față de prețul de referință al magazinului. Verifică ce reprezintă acel preț și compară cu prețul notat de tine în săptămânile dinainte și cu prețurile din alte magazine."
     },
     {
-      "q": "De ce un produs poate apărea „mai scump decât de obicei” chiar în campanie?",
-      "a": "Pentru că verdictul compară prețul de azi cu mediana ultimelor 30 de zile ale aceleiași oferte. Dacă prețul a urcat, verdictul o arată, indiferent de mesajele campaniei."
+      "q": "Poate fi un produs mai scump decât de obicei chiar în campanie?",
+      "a": "Da. Dacă prețul a urcat cu mai mult de 30 de zile înainte, prețul anterior din lege e deja cel urcat, iar „reducerea” te poate aduce doar înapoi la prețul obișnuit. De aceea contează prețul notat de tine din timp."
     },
     {
       "q": "Cum aflu când scade prețul unui produs?",
-      "a": "Setează o alertă de preț pe Telegram de pe pagina produsului. Primești un mesaj când prețul scade."
+      "a": "Verifică prețul periodic, de exemplu o dată pe săptămână, la magazinele care te interesează și păstrează câte o captură de ecran cu data. Așa vezi singur când scade."
     }
   ],
   "product_slugs": [
@@ -66,6 +66,76 @@
         "source_type": "web",
         "source": "https://www.superieftin.ro/reduceri-reale/televizoare",
         "status": "confirmat"
+      },
+      {
+        "claim": "S26 Ultra: ecran 6,9 inch cu Privacy Display, funcție disponibilă doar pe S26 Ultra",
+        "source_type": "web",
+        "source": "https://www.samsung.com/ie/smartphones/galaxy-s26-ultra/",
+        "status": "confirmat",
+        "note": "Preluat din fișa ghidului care descrie produsul (punctele tari/slabe din cardurile-exemplu)"
+      },
+      {
+        "claim": "S26 Ultra: 5.000 mAh, 214 g, 7,9 mm, ramă Armor Aluminum, S Pen",
+        "source_type": "web",
+        "source": "https://www.samsung.com/ie/smartphones/galaxy-s26-ultra/",
+        "status": "confirmat",
+        "note": "Preluat din fișa ghidului care descrie produsul (punctele tari/slabe din cardurile-exemplu)"
+      },
+      {
+        "claim": "S26 Ultra: IP68",
+        "source_type": "web",
+        "source": "https://www.gsmarena.com/samsung_galaxy_s26_ultra_5g-14320.php",
+        "status": "confirmat",
+        "note": "Sursă secundară. Pagina Samsung IE nu afișa clasa IP în extragere."
+      },
+      {
+        "claim": "S26 Ultra: fără microSD",
+        "source_type": "web",
+        "source": "https://www.gsmarena.com/samsung_galaxy_s26_ultra_5g-14320.php",
+        "status": "confirmat",
+        "note": "Sursă secundară"
+      },
+      {
+        "claim": "Samsung Super Fast Charging 2.0 (45 W): telefon compatibil, încărcător PPS 9 V/5 A, cablu USB-C la USB-C de 5 A",
+        "source_type": "web",
+        "source": "https://service.anker.com/article-description/Why-does-my-Samsung-phone-not-appear-Super-fast-charging-2-0",
+        "status": "confirmat",
+        "note": "S22 Ultra–S25 Ultra: 45 W (S26 Ultra: 60 W, vezi ghidul S26 Ultra). Samsung 25 W „Super Fast Charging” folosește tot PD cu PPS."
+      },
+      {
+        "claim": "Puterea, porturile și tehnologia produselor (Apple MHJE3ZM/A 20 W, Samsung EP-TA800 25 W, UGREEN Nexode 30 W GaN PD, Samsung EP-T4511 45 W fără cablu, Samsung cablu 5 A 1,8 m, Hama Mini GaN 65 W 2C+1A, Anker Prime GaN PPS 100 W 2C+1A)",
+        "source_type": "db",
+        "source": "feed ITGalaxy / baza noastră (numele produselor 21345, 21344, 19815, 19740, 21212, 20489, 20016)",
+        "status": "confirmat",
+        "note": "Preluat din fișa ghidului care descrie produsul (punctele tari/slabe din cardurile-exemplu)"
+      },
+      {
+        "claim": "LED/QLED/Mini LED sunt LCD cu iluminare din spate; OLED e autoemisiv",
+        "source_type": "web",
+        "source": "https://www.trustedreviews.com/opinions/oled-vs-led-lcd",
+        "status": "confirmat",
+        "note": "Preluat din fișa ghidului care descrie produsul (punctele tari/slabe din cardurile-exemplu)"
+      },
+      {
+        "claim": "Tipul ecranului produselor: Samsung QE43Q7FAA/QE55Q7FAA/QE65Q7FAA QLED, LG 50QNED80A3A QNED, TCL 55C6KS QD-Mini LED, LG OLED55C44LA OLED",
+        "source_type": "db",
+        "source": "feed evomag / baza noastră (numele produselor 25384, 25436, 25386, 25765, 25438, 25387)",
+        "status": "confirmat",
+        "note": "Preluat din fișa ghidului care descrie produsul (punctele tari/slabe din cardurile-exemplu)"
+      },
+      {
+        "claim": "Dell Pro 15 Essential PV15255: Ryzen 5 7520U, 8 GB, SSD 512 GB, 15,6 inch FHD, Radeon 610M, Windows 11 Pro",
+        "source_type": "db",
+        "source": "feed evomag / baza noastră (numele produsului, id 22307)",
+        "status": "confirmat",
+        "note": "Din numele produsului; în text nu afirmăm nimic despre extinderea memoriei."
+      },
+      {
+        "claim": "AMD Ryzen 5 7520U: 4 nuclee / 8 fire, până la 4,3 GHz",
+        "source_type": "web",
+        "source": "https://www.amd.com/en/products/processors/laptop/ryzen/7000-series/amd-ryzen-5-7520u.html",
+        "status": "confirmat",
+        "note": "Preluat din fișa ghidului care descrie produsul (punctele tari/slabe din cardurile-exemplu)"
       }
     ],
     "checklist": [
@@ -77,7 +147,8 @@
     "warnings": [
       "Ghid nou, publicat automat prin import pe 04.10.2026 (decizia proprietarului): autor Adrian, verificator Echipa Superieftin.ro.",
       "Afirmația juridică (directiva + aplicarea în România din 2022) e rezumată, nu consultanță; dacă proprietarul vrea actul normativ român exact, de adăugat după verificare pe legislatie.just.ro.",
-      "Când apare hubul /reduceri-reale (pachetul A), merită adăugat linkul în secțiunea „Unde găsești reducerile reale de acum”."
+      "Când apare hubul /reduceri-reale (pachetul A), merită adăugat linkul în secțiunea „Unde găsești reducerile reale de acum”.",
+      "Rescris pe 20.11.2026 (reorganizarea în blog): fără trimiteri la verdictul de preț, grafic, mediana de pe site, alerte sau paginile /reduceri-reale/, care nu mai sunt publice. Faptele despre metodologie și /reduceri-reale/ de mai sus sunt vechi, păstrate doar ca istoric al fișei."
     ]
   },
   "publish": {
