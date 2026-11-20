@@ -177,8 +177,10 @@ export function buildLlmsTxt(d: LlmsData): string {
   return lines.join('\n')
 }
 
-// Marcajele live din ghiduri ({{oferte:ref}}, {{pret:ref}}…) → text simplu, fara preturi
-const MARKER_RE = /\{\{\s*(oferte|pret|istoric-pret|reducere|comparatie)\s*:\s*([^{}\n]+?)\s*\}\}/g
+// Marcajele live din ghiduri ({{oferte:ref}}, {{pret:ref}}…) → text simplu, fara preturi.
+// {{reducere}} si {{istoric-pret}} au iesit din setul public (lib/guides/markers.ts) → dispar ca
+// orice marcaj necunoscut (al doilea replace).
+const MARKER_RE = /\{\{\s*(oferte|pret|comparatie)\s*:\s*([^{}\n]+?)\s*\}\}/g
 
 export function stripGuideMarkers(md: string, guideUrl: string): string {
   return md.replace(MARKER_RE, (_m, _type: string, refs: string) => {

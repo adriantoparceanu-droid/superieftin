@@ -45,8 +45,20 @@ export interface DraftPublish {
   reviewer_slug: string   // guide_authors.slug — „Verificat de”
 }
 
-// Aceleasi tipuri ca in web/src/lib/guides/markers.ts (MARKER_TYPES) — modifica-le impreuna.
-export const MARKER_TYPES = ['oferte', 'pret', 'istoric-pret', 'reducere', 'comparatie'] as const
+// Aceleasi tipuri si reguli ca in web/src/lib/guides/markers.ts (MARKER_TYPES, REMOVED_MARKER_TYPES,
+// regulile pro/contra) — modifica-le impreuna (testul de paritate din guide-drafts.test.ts citeste
+// fisierul din web).
+// pro/contra = punctele tari/slabe ale produsului din {{oferte}}/{{pret}} de DEASUPRA (imediat sub
+// el, doar spatii intre ele), 0–5 din fiecare, text 3–120 caractere (cerinta proprietarului, 2026-11-20).
+export const MARKER_TYPES = ['oferte', 'pret', 'comparatie', 'pro', 'contra'] as const
+const NOTE_TYPES = ['pro', 'contra']
+export const MAX_NOTES = 5
+export const NOTE_MIN_CHARS = 3
+export const NOTE_MAX_CHARS = 120
+// Scoase din setul public la reorganizarea in blog (2026-11-20): istoricul de pret e DOAR intern.
+// Site-ul nu le mai randeaza, deci un articol importat cu ele ar avea blocuri lipsa → respinse,
+// cu mesaj dedicat (nu „necunoscut”, ca autorul sa stie ce sa puna in loc).
+export const REMOVED_MARKER_TYPES = ['istoric-pret', 'reducere'] as const
 // Slug-uri rezervate sub /ghiduri/ (ca RESERVED_GUIDE_SLUGS din web/src/lib/guides/format.ts)
 export const RESERVED_GUIDE_SLUGS = ['metodologie']
 const MAX_COMPARE = 6
@@ -105,19 +117,48 @@ export interface MarkerCheck {
   errors: string[]
 }
 
-// Verifica marcajele din corp: tip cunoscut, referinta prezenta, comparatie cu 2–6 produse.
+// Verifica marcajele din corp: tip cunoscut, referinta prezenta, comparatie cu 2–6 produse,
+// pro/contra atasate unui produs.
 export function checkMarkers(body: string): MarkerCheck {
   const refs = new Set<string>()
   const errors: string[] = []
+  // Pot urma note pro/contra? Da doar imediat dupa un {{oferte}}/{{pret}} (doar spatii intre ele)
+  let attach = false
+  let counts: Record<string, number> = { pro: 0, contra: 0 }
+  let last = 0
   for (const m of body.matchAll(ANY_MARKER_RE)) {
     const type = m[1].toLowerCase()
+    const idx = m.index ?? 0
+    if (body.slice(last, idx).trim()) attach = false
+    last = idx + m[0].length
+    if (NOTE_TYPES.includes(type)) {
+      if (!attach) {
+        errors.push(`„${m[0]}”: punctele tari/slabe se pun imediat după {{oferte:…}} sau {{pret:…}}`)
+        continue
+      }
+      const n = [...m[2].trim()].length
+      if (n < NOTE_MIN_CHARS || n > NOTE_MAX_CHARS) errors.push(`„${m[0]}”: textul trebuie să aibă ${NOTE_MIN_CHARS}–${NOTE_MAX_CHARS} caractere`)
+      counts[type]++
+      if (counts[type] === MAX_NOTES + 1) errors.push(`„${m[0]}”: maximum ${MAX_NOTES} marcaje ${type} pe produs`)
+      // Textul notei NU e referinta de produs
+      continue
+    }
+    attach = type === 'oferte' || type === 'pret'
+    counts = { pro: 0, contra: 0 }
     const list = m[2].split(',').map((r) => r.trim()).filter(Boolean)
+    if ((REMOVED_MARKER_TYPES as readonly string[]).includes(type)) {
+      errors.push(`marcajul „${m[0]}” nu mai este permis (istoricul de preț e doar intern) — folosește {{oferte:…}}`)
+      attach = false
+      continue
+    }
     if (!(MARKER_TYPES as readonly string[]).includes(type)) {
       errors.push(`marcaj necunoscut „${m[0]}” (permise: ${MARKER_TYPES.join(', ')})`)
+      attach = false
       continue
     }
     if (!list.length) {
       errors.push(`marcajul „${m[0]}” nu are produs`)
+      attach = false
       continue
     }
     if (type === 'comparatie') {

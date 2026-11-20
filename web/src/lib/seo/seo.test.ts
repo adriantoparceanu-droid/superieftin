@@ -334,4 +334,6 @@ test('llms-full.txt: textul ghidului fara marcaje si fara preturi', () => {
 
 test('stripGuideMarkers: marcaje necunoscute dispar, textul ramane', () => {
   assert.equal(stripGuideMarkers('a {{necunoscut:x}} b', 'u'), 'a  b')
+  // Marcajele scoase din setul public (istoricul de pret e intern) dispar si ele
+  assert.equal(stripGuideMarkers('a {{reducere:x}} {{istoric-pret:y}} b', 'u'), 'a   b')
 })

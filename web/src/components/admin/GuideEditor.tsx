@@ -205,7 +205,8 @@ export function GuideEditor({ guide, authors, categories, initial }: Props) {
                 <span className="flex-1 min-w-48">
                   <span className="text-muted text-xs mr-1">#{p.id}</span>{p.name}
                 </span>
-                {(['oferte', 'pret', 'reducere', 'istoric-pret'] as const).map((t) => (
+                {/* Doar marcajele publice (lib/guides/markers.ts): {{reducere}} si {{istoric-pret}} au fost scoase */}
+                {(['oferte'] as const).map((t) => (
                   <button key={t} type="button" onClick={() => insertMarker(`{{${t}:${p.id}}}`)} className="text-[11px] border border-line rounded px-1.5 py-0.5 hover:border-brand">
                     +{t}
                   </button>
@@ -259,11 +260,11 @@ export function GuideEditor({ guide, authors, categories, initial }: Props) {
         <details className="text-xs text-muted">
           <summary className="cursor-pointer">Marcaje live (prețuri actualizate automat)</summary>
           <ul className="mt-1 list-disc pl-5 space-y-0.5">
-            <li><code>{'{{oferte:ID}}'}</code> — ofertele disponibile, cu butoane spre magazine</li>
-            <li><code>{'{{pret:ID}}'}</code> — cel mai mic preț de acum</li>
-            <li><code>{'{{reducere:ID}}'}</code> — verdictul față de mediana 30 de zile</li>
-            <li><code>{'{{istoric-pret:ID}}'}</code> — graficul de preț (90 de zile)</li>
-            <li><code>{'{{comparatie:ID1,ID2,…}}'}</code> — tabel comparativ (max. 6)</li>
+            <li><code>{'{{oferte:ID}}'}</code> — cardul produsului: cel mai bun preț la magazinele partenere + un buton spre magazin</li>
+            <li><code>{'{{pret:ID}}'}</code> — același card (sinonim păstrat pentru textele vechi)</li>
+            <li><code>{'{{comparatie:ID1,ID2,…}}'}</code> — tabel față în față (max. 6), cu câte un card compact pe produs</li>
+            <li><code>{'{{pro: text}}'}</code> / <code>{'{{contra: text}}'}</code> — imediat sub <code>{'{{oferte:ID}}'}</code>: punctele tari / slabe ale produsului (0–5 din fiecare, 3–120 caractere), afișate în card</li>
+            <li><code>{'{{reducere:…}}'}</code> și <code>{'{{istoric-pret:…}}'}</code> nu mai sunt permise (istoricul de preț e doar intern) — salvarea le respinge.</li>
             <li>ID = id-ul produsului (#…) sau slug-ul din /p/…. Pune fiecare marcaj pe rând separat. Nu scrie prețuri sau procente de mână.</li>
           </ul>
         </details>

@@ -11,6 +11,7 @@ import { pingIndexNow } from '../guides/indexnow'
 import { GuideBody } from '@/components/guides/GuideBody'
 import type { FaqItem } from '../guides/queries'
 import { unverifiedFields } from '../guides/review'
+import { guideMarkerErrors } from '../guides/markers'
 
 export type GuideFormState = { error?: string; message?: string } | null
 
@@ -57,6 +58,13 @@ export async function saveGuideAction(_prev: GuideFormState, formData: FormData)
   if (!title) return { error: 'Titlul este obligatoriu.' }
   if (!slug) return { error: 'Slug invalid.' }
   if (RESERVED_GUIDE_SLUGS.includes(slug)) return { error: `Slug-ul „${slug}” este rezervat (pagină existentă).` }
+
+  // Marcajele scoase din setul public ({{reducere}}, {{istoric-pret}} — istoricul de pret e doar
+  // intern) se resping la orice salvare, ca la importul din worker (checkMarkers). Pe pagina nu
+  // s-ar randa oricum; mai bine aflam acum decat sa lipseasca un bloc din articol. Tot aici:
+  // {{pro}}/{{contra}} fara produs inainte, cu text prea scurt/lung sau peste 5 pe produs.
+  const markerErrors = guideMarkerErrors(body)
+  if (markerErrors.length) return { error: `Corpul articolului: ${markerErrors.join('; ')}.` }
 
   // Starea finala
   let status: 'draft' | 'published'

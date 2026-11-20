@@ -49,8 +49,13 @@ aici au în plus un bloc `publish` și sunt importate **direct ca ghiduri public
 | `review` | da | fișa de verificare (vezi mai jos) — **nu apare niciodată pe site** |
 
 **Marcaje live** în `body_md` (fiecare pe rând separat; `ref` = slug sau id de produs existent):
-`{{oferte:ref}}`, `{{pret:ref}}`, `{{reducere:ref}}`, `{{istoric-pret:ref}}`, `{{comparatie:ref1,ref2}}` (2–6).
-Orice alt `{{…}}` e eroare la import.
+`{{oferte:ref}}` (cardul produsului: cel mai bun preț la magazinele partenere + un buton),
+`{{pret:ref}}` (același card), `{{comparatie:ref1,ref2}}` (2–6, tabel + câte un card compact).
+Puncte tari / slabe: imediat sub un `{{oferte:ref}}` / `{{pret:ref}}` (doar rânduri goale între ele),
+rânduri `{{pro: text}}` și `{{contra: text}}` — 0–5 din fiecare pe produs, text de 3–120 caractere,
+fără acolade. Apar în card („Bun:” / „Mai slab:”). Un `{{pro}}`/`{{contra}}` fără produs deasupra = eroare.
+`{{reducere:…}}` și `{{istoric-pret:…}}` au fost scoase (reorganizarea în blog, 2026-11-20 — istoricul
+de preț e doar intern) și sunt respinse. Orice alt `{{…}}` e eroare la import.
 
 **Locuri nesigure**: în text se marchează `[DE VERIFICAT: ce anume]`. Publicarea e blocată
 (în editor ȘI pe server) cât timp există vreun marcaj în titlu, meta, rezumat, corp sau FAQ.
