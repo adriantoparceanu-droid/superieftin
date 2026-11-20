@@ -135,5 +135,9 @@
       "Paragraful despre scăderea prețului după lansarea iPhone 18 descrie ce s-a întâmplat până pe 26.09.2026. Dacă ghidul se publică mult mai târziu, recitește-l față de grafic.",
       "Fraza „teleobiectiv 4x” e confirmată. Nu am folosit zoom-ul 8x pentru că extragerea automată de pe apple.com a fost ambiguă."
     ]
+  },
+  "publish": {
+    "author_slug": "adrian",
+    "reviewer_slug": "echipa-superieftin"
   }
 }
