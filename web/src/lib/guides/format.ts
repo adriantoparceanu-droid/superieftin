@@ -23,10 +23,6 @@ export function slugify(name: string): string {
 }
 
 // Afirmatii de sanatate interzise (REGULI.md regula 8) — publicarea e blocata daca apar in text.
-// Lista e scurta si evidenta; nu inlocuieste citirea atenta a verificatorului.
-const HEALTH_CLAIMS = ['vindeca', 'vindecă', 'trateaza', 'tratează', 'detoxifica', 'detoxifică', 'detoxifiere', 'previne boli', 'combate boli', 'elimina toxinele', 'elimină toxinele']
-
-export function findHealthClaims(text: string): string[] {
-  const low = text.toLowerCase()
-  return [...new Set(HEALTH_CLAIMS.filter((w) => new RegExp(`(^|[^a-zăâîșț])${w}`, 'i').test(low)))]
-}
+// Lista (expresii, fara diacritice obligatorii) sta in lib/medical-content.ts, dublata identic in
+// worker; nu inlocuieste citirea atenta a verificatorului.
+export { findHealthClaims } from '../medical-content'

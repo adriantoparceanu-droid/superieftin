@@ -9,6 +9,7 @@
 // abia pe pagina publica.
 
 import { toSlug } from './slug.js'
+import { findHealthClaims } from './medical-content.js'
 
 export interface DraftFact {
   claim: string
@@ -69,14 +70,10 @@ const ANY_MARKER_RE = /\{\{\s*([a-z-]+)\s*:\s*([^{}\n]*?)\s*\}\}/gi
 
 export const UNVERIFIED_MARK = '[DE VERIFICAT'
 
-// Afirmatii de sanatate interzise (REGULI.md regula 8). Copie a HEALTH_CLAIMS / findHealthClaims
-// din web/src/lib/guides/format.ts (worker-ul nu poate importa din web) — modifica-le impreuna.
-const HEALTH_CLAIMS = ['vindeca', 'vindecă', 'trateaza', 'tratează', 'detoxifica', 'detoxifică', 'detoxifiere', 'previne boli', 'combate boli', 'elimina toxinele', 'elimină toxinele']
-
-export function findHealthClaims(text: string): string[] {
-  const low = text.toLowerCase()
-  return [...new Set(HEALTH_CLAIMS.filter((w) => new RegExp(`(^|[^a-zăâîșț])${w}`, 'i').test(low)))]
-}
+// Afirmatii de sanatate interzise (REGULI.md regula 8): lista sta in lib/medical-content.ts
+// (copie identica a web/src/lib/medical-content.ts, cu test de paritate). Re-exportata aici pentru
+// importurile existente (category-texts.ts, teste).
+export { findHealthClaims }
 
 // Pret scris de mana („1.299 lei”, „2499,99 RON”) — preturile vin DOAR din marcajele live.
 const HANDWRITTEN_PRICE_RE = /\d[\d.,\s]*\s?(lei|ron)\b/i

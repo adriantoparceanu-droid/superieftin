@@ -36,8 +36,10 @@ export default async function CercetarePage({ searchParams }: Props) {
     <div className="max-w-[1400px]">
       <h1 className="text-2xl font-bold mb-2">Cercetare pentru articole</h1>
       <p className="text-sm text-muted mb-5 max-w-4xl">
-        Produse disponibile acum la magazine partenere (cu link afiliat), fără Sănătate &amp; Naturale și
-        farmacie veterinară. „Cel mai bun preț” = cea mai ieftină ofertă disponibilă cu link afiliat (la
+        Produse disponibile acum la magazine partenere (cu link afiliat). Din Sănătate &amp; Naturale și
+        farmacie veterinară: pe blog DOAR produse ne-medicale (marcate „doar ne-medical”); cele care par
+        suplimente/medicamente sunt ascunse — „Arată și medicalele” le afișează marcate, dar în ghiduri sunt
+        refuzate. „Cel mai bun preț” = cea mai ieftină ofertă disponibilă cu link afiliat (la
         egalitate, cea confirmată mai recent); mediana și min./max. pe 30 de zile sunt ale acelei oferte.
         Reducere reală = preț sub mediana pe 30 de zile × 0,95. Slug-ul se folosește în marcaje:{' '}
         <code className="text-xs">{'{{oferte:<slug>}}'}</code>.
@@ -50,9 +52,9 @@ export default async function CercetarePage({ searchParams }: Props) {
             <option value="">Toate temele</option>
             {themes.map((t) => (
               <optgroup key={t.id} label={t.name}>
-                <option value={t.slug}>{t.name} — toată tema{t.is_visible ? '' : ' (ascunsă)'}</option>
+                <option value={t.slug}>{t.name} — toată tema{t.is_visible ? '' : ' (ascunsă)'}{t.health ? ' (doar ne-medical)' : ''}</option>
                 {t.children.map((c) => (
-                  <option key={c.id} value={c.slug}>{c.name}{c.is_visible ? '' : ' (ascunsă)'}</option>
+                  <option key={c.id} value={c.slug}>{c.name}{c.is_visible ? '' : ' (ascunsă)'}{c.health ? ' (doar ne-medical)' : ''}</option>
                 ))}
               </optgroup>
             ))}
@@ -72,8 +74,12 @@ export default async function CercetarePage({ searchParams }: Props) {
           <input type="checkbox" name="reale" value="1" defaultChecked={cur.reale} />
           Doar reduceri reale
         </label>
+        <label className="flex items-center gap-2 text-sm pb-2" title="Produsele din Sănătate & Naturale / farmacie veterinară care par suplimente sau medicamente — refuzate în ghiduri">
+          <input type="checkbox" name="toate" value="1" defaultChecked={cur.toate} />
+          Arată și medicalele (marcate)
+        </label>
         <button type="submit" className="px-4 py-2 rounded-lg bg-brand text-white text-sm font-semibold">Aplică</button>
-        {(cur.tema || cur.buget != null || cur.reale) && (
+        {(cur.tema || cur.buget != null || cur.reale || cur.toate) && (
           <Link href="/admin/cercetare" className="text-sm text-muted hover:text-brand pb-2">Resetează</Link>
         )}
       </form>
@@ -109,6 +115,13 @@ export default async function CercetarePage({ searchParams }: Props) {
                       {r.name}
                     </Link>
                     {r.category_name && <div className="text-xs text-muted">{r.category_name}</div>}
+                    {r.medical_terms.length > 0 ? (
+                      <div className="text-xs font-semibold text-red-ink" title={r.medical_terms.join(', ')}>
+                        Medical/supliment — nu se recomandă pe blog ({r.medical_terms.join(', ')})
+                      </div>
+                    ) : r.health_tree && (
+                      <div className="text-xs text-amber-700">Doar ne-medical: fără afirmații de sănătate</div>
+                    )}
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap">{r.brand ?? <span className="text-muted">—</span>}</td>
                   <td className="px-3 py-2 text-right whitespace-nowrap">

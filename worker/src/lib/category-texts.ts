@@ -3,7 +3,7 @@
 //
 // Contractul fisierului e documentat in content/categorii/README.md. Aici sunt DOAR verificarile
 // fara baza de date (structura, marcaje, formulari interzise), ca sa poata fi testate unitar.
-// Existenta categoriei, vizibilitatea si excluderile (regula 8) se verifica in script.
+// Existenta categoriei, vizibilitatea si avertismentul pentru arborii de sanatate sunt in script.
 //
 // ATENTIE — COPIE: validateCategoryText / validateCategoryContent / CAT_MARKER_KEYS / MAX_FAQ
 // sunt copia exacta a celor din web/src/lib/category-markers.ts (validarea de la salvarea din
@@ -108,16 +108,12 @@ const TOP_KEYS = ['slug', 'intro_md', 'faq', 'review']
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 export const UNVERIFIED_MARK = '[DE VERIFICAT'
 
-// Categoriile excluse (REGULI.md regula 8): Sanatate & Naturale cu tot ce e sub ea
-// (EXCLUDED_AD_ROOTS din web/src/lib/seo/site.ts) + farmacia veterinara (afirmatii de sanatate,
-// CLAUDE.md „Petmart”). Scriptul primeste slug-ul categoriei si slug-urile stramosilor ei.
-export const EXCLUDED_ROOTS = ['sanatate-naturale']
-export const EXCLUDED_SLUGS = ['farmacie-veterinara']
-
-export function isExcludedCategory(slug: string, ancestorSlugs: string[]): boolean {
-  return EXCLUDED_SLUGS.includes(slug) || EXCLUDED_ROOTS.includes(slug)
-    || ancestorSlugs.some((s) => EXCLUDED_ROOTS.includes(s) || EXCLUDED_SLUGS.includes(s))
-}
+// Arborii de sanatate (Sanatate & Naturale, farmacie-veterinara, cu tot ce e sub ei): din
+// 20.11.2026 (decizia proprietarului) textele de tema NU mai sunt refuzate aici — blogul poate
+// scrie despre produsele ne-medicale. Afirmatiile de sanatate raman blocate de findHealthClaims
+// (lista extinsa, lib/medical-content.ts); importul doar avertizeaza sa fie citit cu atentie.
+// Reclamele raman excluse (REGULI.md regula 8 — EXCLUDED_AD_ROOTS / guardrails, neatinse).
+export { isHealthTree } from './medical-content.js'
 
 const isObj = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v)
 

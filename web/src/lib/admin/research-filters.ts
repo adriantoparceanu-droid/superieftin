@@ -6,9 +6,11 @@
 import { REAL_DISCOUNT_PCT } from '../discount'
 import { parsePage } from './alerts-format'
 
-// Arborii exclusi (REGULI.md regula 8: fara afirmatii de sanatate; aceeasi lista ca observatorul):
-// o categorie e exclusa daca ea SAU parintele ei e in lista.
-export const RESEARCH_EXCLUDED_SLUGS = ['sanatate-naturale', 'farmacie-veterinara']
+// Arborii de sanatate (Sanatate & Naturale, farmacie veterinara): din 20.11.2026 (decizia
+// proprietarului) apar in cercetare, marcati „doar ne-medical”; produsele lor cu denumire de
+// supliment/medicament (lib/medical-content.ts) sunt ascunse implicit — „toate=1” le arata marcate.
+// Reclamele raman excluse pe acesti arbori (REGULI.md regula 8).
+export { HEALTH_TREE_ROOTS as RESEARCH_HEALTH_ROOTS } from '../medical-content'
 
 export const RESEARCH_PAGE_SIZE = 50
 
@@ -31,6 +33,7 @@ export interface ResearchParams {
   tema: string | null      // slug de categorie (parinte = cu subcategoriile; subcategorie = doar ea)
   buget: number | null     // pretul maxim, in lei (inclusiv)
   reale: boolean           // doar reduceri reale (pret < mediana 30 z × 0,95)
+  toate: boolean           // arata si produsele medicale/suplimente din arborii de sanatate (marcate)
   sort: ResearchSort
   pagina: number
 }
@@ -75,6 +78,7 @@ export function parseResearchParams(sp: Record<string, string | string[] | undef
     tema: parseTheme(sp.tema),
     buget: parseBudget(sp.buget),
     reale: parseRealOnly(sp.reale),
+    toate: parseRealOnly(sp.toate),   // aceeasi regula de casuta: doar „1” = bifat
     sort: parseSort(sp.sort),
     pagina: parsePage(sp.pagina),
   }
@@ -89,6 +93,7 @@ export function researchHref(cur: ResearchParams, change: Partial<ResearchParams
   if (next.tema) p.set('tema', next.tema)
   if (next.buget != null) p.set('buget', String(next.buget))
   if (next.reale) p.set('reale', '1')
+  if (next.toate) p.set('toate', '1')
   if (next.sort !== DEFAULT_SORT) p.set('sort', next.sort)
   if (next.pagina > 1) p.set('pagina', String(next.pagina))
   const s = p.toString()
