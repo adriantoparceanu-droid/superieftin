@@ -1,8 +1,14 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { getPublishedGuide, getGuideProductIds, loadLiveProducts, refsKey } from '@/lib/guides/queries'
-import { blogPostingLd, breadcrumbLd, faqLd, productLd, ldScript } from '@/lib/guides/jsonld'
+import {
+  getPublishedGuide, getGuideProductIds, loadLiveProducts, refsKey, getGuideTheme, getRelatedGuides,
+  type Guide, type GuideAuthor,
+} from '@/lib/guides/queries'
+import { articleLd, articleProducts, articleCrumbs, ldScript } from '@/lib/guides/jsonld'
+import { collectRefs, splitGuideBody } from '@/lib/guides/markers'
+import { guideToc } from '@/lib/guides/toc'
+import { RSS_PATH, RSS_TITLE } from '@/lib/guides/rss'
 import { formatGuideDate } from '@/lib/guides/format'
 import { renderMarkdown } from '@/lib/guides/markdown'
 import { formatPrice } from '@/lib/discount'
@@ -10,8 +16,8 @@ import { GuideBody, PROSE_CLASS } from '@/components/guides/GuideBody'
 import { ARTICLE_CARD, ARTICLE_H1 } from '@/components/article'
 import { Crumbs, InfoIcon } from '@/components/listing/ListingParts'
 
-// ISR: pagina se regenereaza cel mult la 15 minute (preturile din blocurile live raman proaspete,
-// ca pe /reduceri-reale/), iar la salvare / publicare din admin se invalideaza imediat (revalidatePath).
+// ISR: pagina se regenereaza cel mult la 15 minute (preturile din blocurile live raman proaspete),
+// iar la salvare / publicare din admin se invalideaza imediat (revalidatePath).
 export const revalidate = 900
 export const dynamicParams = true
 
@@ -23,6 +29,14 @@ export async function generateStaticParams() {
 
 type Props = { params: Promise<{ slug: string }> }
 
+// Referintele de produs din corp + cele legate in admin — aceeasi cheie pentru toate query-urile
+// (React cache() refoloseste rezultatul intre metadata, pagina si GuideBody).
+async function guideRefs(guide: Guide) {
+  const bodyRefs = collectRefs(splitGuideBody(guide.body_md))
+  const linkedIds = await getGuideProductIds(guide.id)
+  return { bodyRefs, linkedIds, key: refsKey(bodyRefs) }
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
   const guide = await getPublishedGuide(slug)
@@ -31,7 +45,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: guide.title,
     description,
-    alternates: { canonical: `/ghiduri/${guide.slug}` },
+    alternates: {
+      canonical: `/ghiduri/${guide.slug}`,
+      types: { 'application/rss+xml': [{ url: RSS_PATH, title: RSS_TITLE }] },
+    },
+    // Imaginea (og:image) vine din opengraph-image.tsx de langa pagina — Next o adauga singur.
     openGraph: {
       type: 'article',
       // openGraph din pagina inlocuieste complet pe cel din layout → repetam siteName / locale
@@ -42,8 +60,24 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       url: `/ghiduri/${guide.slug}`,
       publishedTime: guide.published_at ?? undefined,
       modifiedTime: guide.updated_at,
+      ...(guide.author ? { authors: [`/autori/${guide.author.slug}`] } : {}),
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: guide.title,
+      description,
+      images: [`/ghiduri/${guide.slug}/opengraph-image`],
     },
   }
+}
+
+// Numele autorului / verificatorului → pagina lui (/autori/<slug>)
+function AuthorLink({ a }: { a: GuideAuthor }) {
+  return (
+    <Link href={`/autori/${a.slug}`} className="font-semibold text-ink underline-offset-2 hover:text-red-ink hover:underline">
+      {a.name}
+    </Link>
+  )
 }
 
 export default async function GuidePage({ params }: Props) {
@@ -52,23 +86,35 @@ export default async function GuidePage({ params }: Props) {
   // Ciornele si ghidurile retrase nu sunt publice → 404
   if (!guide) notFound()
 
-  const linkedIds = await getGuideProductIds(guide.id)
-  const linked = await loadLiveProducts(refsKey(linkedIds))
+  const { bodyRefs, linkedIds, key } = await guideRefs(guide)
+  const [live, linked, theme] = await Promise.all([
+    loadLiveProducts(key),
+    loadLiveProducts(refsKey(linkedIds)),
+    getGuideTheme(guide.id, guide.category_slug, refsKey([...bodyRefs, ...linkedIds])),
+  ])
+  const related = await getRelatedGuides(guide.id, key).catch(() => [])
   const linkedProducts = linkedIds.map((id) => linked.get(id)).filter((p) => !!p)
 
-  const ld = [
-    blogPostingLd(guide),
-    breadcrumbLd(guide),
-    faqLd(guide),
-    ...linkedProducts.map(productLd),
-  ].filter(Boolean)
+  // JSON-LD: articol + pagina (verificator) + firimituri + lista produselor + recenziile editoriale
+  // (doar produsele cu pro/contra) + FAQ. Fara preturi si fara linkuri spre /p/ (lib/guides/jsonld.ts).
+  const ldInput = {
+    slug: guide.slug,
+    title: guide.title,
+    description: guide.meta_description,
+    publishedAt: guide.published_at,
+    updatedAt: guide.updated_at,
+    section: theme,
+    author: guide.author,
+    reviewer: guide.reviewer,
+    products: articleProducts(guide.body_md, live),
+    faq: guide.faq,
+  }
+  const ld = articleLd(ldInput)
+  const crumbs = articleCrumbs(ldInput)
 
+  const faq = guide.faq.filter((f) => f.q.trim() && f.a.trim())
+  const toc = guideToc(guide.body_md)
   const updatedDiffers = guide.published_at && formatGuideDate(guide.published_at) !== formatGuideDate(guide.updated_at)
-
-  const nameOf = (a: NonNullable<typeof guide.author>) =>
-    a.url
-      ? <Link href={a.url} className="font-semibold text-ink underline-offset-2 hover:text-red-ink hover:underline">{a.name}</Link>
-      : <span className="font-semibold text-ink">{a.name}</span>
 
   return (
     <>
@@ -77,21 +123,21 @@ export default async function GuidePage({ params }: Props) {
       ))}
 
       <div className="mx-auto mb-3 max-w-[46rem]">
-        <Crumbs items={[{ label: 'Acasă', href: '/' }, { label: 'Ghiduri', href: '/ghiduri' }, { label: guide.title }]} />
+        <Crumbs items={crumbs.map((c, i) => (i < crumbs.length - 1 ? { label: c.name, href: c.path } : { label: c.name }))} />
       </div>
 
       <article className={ARTICLE_CARD}>
-        {guide.category_slug && guide.category_name && (
-          <Link href={`/c/${guide.category_slug}`} className="text-[12px] font-extrabold uppercase tracking-[.06em] text-red-ink hover:underline underline-offset-2">
-            {guide.category_name}
+        {theme && (
+          <Link href={`/c/${theme.slug}`} className="text-[12px] font-extrabold uppercase tracking-[.06em] text-red-ink hover:underline underline-offset-2">
+            {theme.name}
           </Link>
         )}
         <h1 className={`mt-1.5 ${ARTICLE_H1}`}>{guide.title}</h1>
 
-        {/* Semnatura: autor, verificator, date — sub titlu, cum promite /ghiduri/metodologie */}
+        {/* Semnatura: autor, verificator (cu link spre pagina lor), date — sub titlu */}
         <div className="mt-4 flex flex-wrap gap-x-5 gap-y-1.5 border-y border-line py-3 text-[13.5px] text-ink-3">
-          {guide.author && <span>De {nameOf(guide.author)}</span>}
-          {guide.reviewer && <span>Verificat de: {nameOf(guide.reviewer)}</span>}
+          {guide.author && <span>De <AuthorLink a={guide.author} /></span>}
+          {guide.reviewer && <span>Verificat de: <AuthorLink a={guide.reviewer} /></span>}
           {guide.published_at && (
             <span>Publicat: <time dateTime={guide.published_at} className="text-ink-2">{formatGuideDate(guide.published_at)}</time></span>
           )}
@@ -104,8 +150,7 @@ export default async function GuidePage({ params }: Props) {
         <p className="mt-4 flex gap-2 rounded-xl bg-surface-2 px-3 py-2.5 text-[12.5px] leading-snug text-ink-3">
           <InfoIcon className="mt-px h-4 w-4 shrink-0" />
           <span>
-            Articolul conține linkuri de afiliere: dacă cumperi prin ele, primim un comision de la magazin,
-            fără cost suplimentar pentru tine. Comisionul nu schimbă ordinea ofertelor.{' '}
+            Unele linkuri sunt de afiliere: dacă cumperi, primim un comision, fără cost pentru tine.{' '}
             <Link href="/ghiduri/metodologie" className="text-red-ink underline underline-offset-2">Cum lucrăm</Link>
           </span>
         </p>
@@ -117,15 +162,30 @@ export default async function GuidePage({ params }: Props) {
           </section>
         )}
 
+        {/* Cuprins: H2-urile din corp (id-uri puse de lib/guides/markdown.ts) + FAQ. Doar de la 2 sectiuni. */}
+        {toc.length + (faq.length ? 1 : 0) >= 2 && (
+          <nav aria-labelledby="cuprins" className="mt-6 border-l-[3px] border-line pl-4">
+            <h2 id="cuprins" className="text-[13px] font-extrabold uppercase tracking-[.06em] text-ink-3">Cuprins</h2>
+            <ol className="mt-2 space-y-1.5 text-[15px] leading-snug">
+              {toc.map((h) => (
+                <li key={h.id}><a href={`#${h.id}`} className="text-ink-2 underline-offset-2 hover:text-red-ink hover:underline">{h.text}</a></li>
+              ))}
+              {faq.length > 0 && (
+                <li><a href="#faq" className="text-ink-2 underline-offset-2 hover:text-red-ink hover:underline">Întrebări frecvente</a></li>
+              )}
+            </ol>
+          </nav>
+        )}
+
         <div className="mt-6">
           <GuideBody body={guide.body_md} />
         </div>
 
-        {guide.faq.length > 0 && (
+        {faq.length > 0 && (
           <section aria-labelledby="faq" className="mt-10">
             <h2 id="faq" className="text-[21px] font-extrabold leading-tight text-ink sm:text-[24px]">Întrebări frecvente</h2>
             <div className="mt-3 divide-y divide-line border-y border-line">
-              {guide.faq.map((f, i) => (
+              {faq.map((f, i) => (
                 <div key={i} className="py-4">
                   <h3 className="text-[17px] font-bold leading-snug text-ink">{f.q}</h3>
                   <p className="mt-1.5 whitespace-pre-line text-[16px] leading-[1.65] text-ink-2 sm:text-[17px]">{f.a}</p>
@@ -135,7 +195,7 @@ export default async function GuidePage({ params }: Props) {
           </section>
         )}
 
-        {/* Legaturi interne spre paginile de produs (fiecare cu istoricul complet de pret) */}
+        {/* Legaturi interne spre paginile de produs. Dispar in etapa 6 (odata cu /p/). */}
         {linkedProducts.length > 0 && (
           <section aria-labelledby="produse" className="mt-10">
             <h2 id="produse" className="text-[18px] font-extrabold text-ink">Produsele din acest ghid</h2>
@@ -153,11 +213,33 @@ export default async function GuidePage({ params }: Props) {
         )}
 
         <p className="mt-8 text-xs leading-relaxed text-ink-3">
-          Prețurile și reducerile din articol se actualizează automat din datele noastre; prețul final
-          este cel afișat de magazin la comandă. Vezi{' '}
+          Prețurile din articol se actualizează automat din datele noastre; prețul final este cel
+          afișat de magazin la comandă. Vezi{' '}
           <Link href="/ghiduri/metodologie" className="underline underline-offset-2 hover:text-ink">metodologia</Link>.
         </p>
       </article>
+
+      {/* Articole inrudite: aceleasi categorii de produse (sau acelasi parinte), altfel cele mai noi */}
+      {related.length > 0 && (
+        <section aria-labelledby="articole-inrudite" className="mx-auto mt-6 max-w-[46rem]">
+          <h2 id="articole-inrudite" className="text-[18px] font-extrabold text-ink">Articole înrudite</h2>
+          <ul className="mt-3 grid gap-3 sm:grid-cols-2">
+            {related.map((r) => (
+              <li key={r.slug}>
+                <Link href={`/ghiduri/${r.slug}`} className="block h-full rounded-2xl bg-surface p-4 shadow-card ring-1 ring-transparent transition hover:ring-line-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink">
+                  {r.category_name && (
+                    <span className="text-[11.5px] font-extrabold uppercase tracking-[.06em] text-red-ink">{r.category_name}</span>
+                  )}
+                  <span className="mt-1 block font-display text-[16px] font-extrabold leading-snug text-ink">{r.title}</span>
+                  {r.meta_description && (
+                    <span className="mt-1.5 block text-[13.5px] leading-snug text-ink-3 line-clamp-2">{r.meta_description}</span>
+                  )}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </>
   )
 }

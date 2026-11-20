@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { listPublishedGuides, getGuideCategories } from '@/lib/guides/queries'
 import { formatGuideDate } from '@/lib/guides/format'
+import { RSS_PATH, RSS_TITLE } from '@/lib/guides/rss'
 
 // Randata la cerere: filtrul ?categorie= o face dinamica oricum, iar la build DB-ul nu e
 // accesibil. Interogarea e mica (doar tabela guides), deci nu incarca serverul.
@@ -14,7 +15,11 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   return {
     title: 'Ghiduri de cumpărare — prețuri verificate',
     description: 'Ghiduri de cumpărare cu prețuri actualizate automat și reduceri verificate față de mediana ultimelor 30 de zile.',
-    alternates: { canonical: '/ghiduri' },
+    alternates: {
+      canonical: '/ghiduri',
+      // Fluxul RSS al articolelor (descoperit automat de cititoare si agregatoare)
+      types: { 'application/rss+xml': [{ url: RSS_PATH, title: RSS_TITLE }] },
+    },
     // Variantele filtrate nu se indexeaza separat (continut duplicat al listei principale)
     ...(categorie ? { robots: { index: false, follow: true } } : {}),
   }
