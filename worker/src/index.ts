@@ -33,7 +33,8 @@ const ADS_GUARD_CRON = process.env.ADS_GUARD_CRON || '0 7 * * *'
 const GA4_SYNC_CRON = process.env.GA4_SYNC_CRON || '15 6 * * *'
 // Digestul alertelor pe email: o trecere pe ora trimite alertele amanate de plafonul zilnic (si pe
 // cele declansate de preturi schimbate in afara joburilor de sync). Pe langa asta, digestul se cere
-// si dupa fiecare job care schimba preturi (sync.worker.ts).
+// si dupa fiecare job care schimba preturi (sync.worker.ts). Cu alertele inchise (PRICE_ALERTS_ENABLED
+// oprit, implicit din 20 nov. 2026) trecerea orara face doar curatenia GDPR a datelor ramase.
 // Indicele lunar al preturilor (/indice) + „Cand sa cumperi” (/cand-sa-cumperi), lib/price-index.ts:
 // pe 1 ale lunii, dupa feed-sync (04:00) → editia lunii incheiate. O trecere saptamanala (luni)
 // recalculeaza seria „Cand sa cumperi” si recupereaza o editie ratata (cea publicata nu se rescrie).
