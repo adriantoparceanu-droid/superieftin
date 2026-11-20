@@ -1,0 +1,109 @@
+{
+  "slug": "cum-alegi-baterie-externa",
+  "title": "Cum alegi o baterie externă: mAh, wați, avion și 4 modele potrivite",
+  "meta_description": "Ce înseamnă mAh și Wh, câți wați îți trebuie pentru telefon sau laptop, ce baterii externe poți lua în avion și patru recomandări: Anker, Samsung, Ugreen.",
+  "kind": "categorie",
+  "category_slug": "baterii-externe",
+  "summary": "Pe scurt: capacitatea în mAh nu ajunge integral în telefon, iar pentru avion contează valoarea în Wh (până la 100 Wh, doar în bagajul de mână). Pentru telefon ajung 20–30 W; pentru laptop îți trebuie 65 W sau mai mult. Pentru majoritatea oamenilor, o baterie de 20.000 mAh e alegerea potrivită; recomandăm Anker PowerCore 20000, Samsung 45 W pentru telefoane Samsung, Ugreen Magnetic pentru iPhone și Anker 165 W pentru laptop.",
+  "body_md": "## mAh nu spune tot\n\nCapacitatea în mAh e cifra cea mai mare de pe cutie, dar nu înseamnă că o baterie de 20.000 mAh îți încarcă telefonul de patru ori dacă telefonul are 5.000 mAh. Celulele din baterie lucrează la o tensiune mai mică decât cea la care încarcă telefonul, iar o parte din energie se pierde la conversie și sub formă de căldură. În practică, din capacitatea scrisă ajunge în telefon mai puțin; o regulă prudentă e să te bazezi pe aproximativ două treimi [DE VERIFICAT: randamentul tipic declarat de producători].\n\nMai util decât mAh e **Wh** (watt-oră), energia reală. Se calculează așa: mAh × tensiunea celulelor (de obicei 3,6–3,7 V) / 1.000. O baterie de 20.000 mAh are aproximativ 72–74 Wh.\n\n## Avion: limita de 100 Wh\n\nAsociația internațională a transportatorilor aerieni (IATA) permite bateriile externe **doar în bagajul de mână**, niciodată în cel de cală. Până la 100 Wh sunt în general permise fără aprobare; între 100 și 160 Wh e nevoie de acordul companiei aeriene. Peste 160 Wh nu se acceptă. Regulile se pot înăspri, iar fiecare companie poate avea limite proprii, așa că verifică înainte de zbor.\n\nCe înseamnă asta în mAh: o baterie de 20.000 mAh e confortabil sub limită, una de 25.000 mAh e aproape de ea (verifică valoarea în Wh scrisă pe carcasă), iar una de 80.000 mAh are în jur de 300 Wh și nu o poți lua în avion.\n\n## Puterea (W): cât de repede încarcă\n\nA doua cifră importantă e puterea de ieșire, în wați:\n\n- **20–30 W** ajung pentru încărcarea rapidă a majorității telefoanelor.\n- **45 W** sunt utili pentru telefoanele care acceptă încărcare la 45 W (de exemplu unele Samsung) și pentru tablete.\n- **65 W sau mai mult** contează doar dacă vrei să încarci și un **laptop** prin USB-C.\n\nCaută și **PD** (Power Delivery) pe USB-C: e standardul folosit de majoritatea telefoanelor și laptopurilor noi.\n\n## Câte porturi și ce cabluri\n\nDacă încarci telefonul și căștile deodată, ai nevoie de cel puțin două ieșiri. Un cablu integrat e comod, pentru că nu îl uiți acasă. Bateriile magnetice se lipesc de spatele unui iPhone compatibil MagSafe și încarcă fără fir, mai lent decât prin cablu.\n\n## 1. Anker PowerCore 20000 (30 W): alegerea pentru majoritatea\n\n**De ce e aici:** 20.000 mAh ajung pentru câteva încărcări de telefon, iar 30 W sunt suficienți pentru încărcare rapidă. Are două porturi USB-C, unul USB-A și un **cablu USB-C integrat**.\n\n**Ce trebuie să știi:** 30 W nu ajung pentru a încărca un laptop în timp ce lucrezi pe el. Pentru telefoane, tablete și căști e tot ce trebuie.\n\n{{oferte:acumulator-extern-anker-powercore-20000-mah-30w-2x-usb-c-1x-usb-a-cablu-usb-c-incorporat-negru}}\n{{pro: 20.000 mAh, sub limita de avion}}\n{{pro: cablu USB-C integrat}}\n{{pro: trei ieșiri: două USB-C și una USB-A}}\n{{contra: 30 W nu ajung pentru laptop}}\n\n## 2. Samsung 20.000 mAh (45 W): pentru telefoane Samsung\n\n**De ce e aici:** livrează până la 45 W, deci încarcă la viteză maximă telefoanele Samsung care acceptă 45 W, cum e Galaxy A36. Are trei porturi USB-C cu PD.\n\n**Ce trebuie să știi:** nu are port USB-A, deci pentru dispozitive vechi îți trebuie un cablu sau adaptor USB-C.\n\n{{oferte:acumulator-extern-samsung-eb-p4520xuegeu-20000mah-45w-pd-3x-usb-c-bej}}\n{{pro: până la 45 W, cu Power Delivery}}\n{{pro: trei porturi USB-C}}\n{{pro: 20.000 mAh, sub limita de avion}}\n{{contra: fără port USB-A}}\n\n## 3. Ugreen Magnetic 10.000 mAh: pentru iPhone, fără cabluri\n\n**De ce e aici:** se lipește magnetic de spatele unui iPhone compatibil MagSafe și încarcă wireless, deci poți folosi telefonul în timp ce se încarcă. Are și USB-C cu PD 20 W pentru încărcare prin cablu.\n\n**Ce trebuie să știi:** 10.000 mAh înseamnă mai puțină energie decât celelalte din listă, iar încărcarea wireless e mai lentă și pierde mai multă energie decât cea prin cablu.\n\n{{oferte:baterie-externa-ugreen-magnetic-10-000-mah-wireless-pd-20w-usb-c-negru}}\n{{pro: se prinde magnetic și încarcă wireless}}\n{{pro: USB-C cu PD 20 W}}\n{{contra: doar 10.000 mAh}}\n{{contra: încărcarea wireless e mai lentă decât prin cablu}}\n\n## 4. Anker 25.000 mAh (165 W): pentru laptop\n\n**De ce e aici:** cu 165 W în total poate încărca un laptop prin USB-C, plus telefonul, în același timp. Are trei porturi USB-C și unul USB-A.\n\n**Ce trebuie să știi:** e mai mare și mai greu decât o baterie de 20.000 mAh. 25.000 mAh e aproape de limita de 100 Wh pentru avion [DE VERIFICAT: valoarea în Wh a modelului Anker A1695, de pe carcasă sau anker.com]. 165 W e puterea totală, împărțită între porturi când încarci mai multe dispozitive.\n\n{{oferte:baterie-externa-anker-a1695h11-25000mah-165w-qc-pd-1-x-usb-a-3-x-usb-c-gri}}\n{{pro: 165 W în total, poate încărca un laptop}}\n{{pro: patru ieșiri: trei USB-C și una USB-A}}\n{{contra: mai mare și mai grea decât una de 20.000 mAh}}\n{{contra: aproape de limita de avion, verifică Wh pe carcasă}}\n\n## Pe care am alege-o\n\n- **Telefon și căști, pentru zi cu zi și călătorii:** Anker PowerCore 20000.\n- **Telefon Samsung cu încărcare la 45 W:** Samsung 20.000 mAh.\n- **iPhone, fără cabluri:** Ugreen Magnetic.\n- **Laptop cu USB-C:** Anker 25.000 mAh (165 W).\n",
+  "faq": [
+    {
+      "q": "Pot lua în avion o baterie externă de 80.000 mAh?",
+      "a": "Nu. Are în jur de 300 Wh, mult peste limitele obișnuite (100 Wh fără aprobare, 160 Wh cu aprobarea companiei aeriene)."
+    },
+    {
+      "q": "De câte ori îmi încarcă telefonul o baterie de 20.000 mAh?",
+      "a": "Depinde de telefon. Din cauza pierderilor la conversie, ajunge în telefon mai puțin decât scrie pe cutie; pentru un telefon cu baterie de 5.000 mAh, socotește câteva încărcări complete, nu patru."
+    },
+    {
+      "q": "Pot pune bateria externă în bagajul de cală?",
+      "a": "Nu. Bateriile externe se transportă doar în bagajul de mână."
+    }
+  ],
+  "product_slugs": [
+    "acumulator-extern-anker-powercore-20000-mah-30w-2x-usb-c-1x-usb-a-cablu-usb-c-incorporat-negru",
+    "acumulator-extern-samsung-eb-p4520xuegeu-20000mah-45w-pd-3x-usb-c-bej",
+    "baterie-externa-ugreen-magnetic-10-000-mah-wireless-pd-20w-usb-c-negru",
+    "baterie-externa-anker-a1695h11-25000mah-165w-qc-pd-1-x-usb-a-3-x-usb-c-gri"
+  ],
+  "review": {
+    "facts": [
+      {
+        "claim": "Bateriile externe: doar în bagajul de mână; până la 100 Wh în general permise; 100–160 Wh cu aprobarea companiei; peste 160 Wh nepermise",
+        "source_type": "web",
+        "source": "https://www.iata.org/en/youandiata/travelers/batteries/",
+        "status": "confirmat",
+        "note": "Pagina IATA citită pe 20.11.2026; presa semnalează posibile înăspriri din 2027 — de aceea textul spune „verifică înainte de zbor”"
+      },
+      {
+        "claim": "Wh = mAh × tensiune nominală (3,6–3,7 V) / 1.000; 20.000 mAh ≈ 72–74 Wh; 80.000 mAh ≈ 300 Wh",
+        "source_type": "db",
+        "source": "calcul",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Randament tipic: aproximativ două treimi din capacitatea scrisă ajunge în telefon",
+        "source_type": "web",
+        "source": "https://www.anker.com/",
+        "status": "de_verificat"
+      },
+      {
+        "claim": "Anker PowerCore 20000: 30 W, 2× USB-C, 1× USB-A, cablu USB-C integrat",
+        "source_type": "db",
+        "source": "feed evomag / baza noastră (numele produsului)",
+        "status": "confirmat",
+        "note": "id 273408"
+      },
+      {
+        "claim": "Samsung EB-P4520: 20.000 mAh, 45 W, PD, 3× USB-C",
+        "source_type": "db",
+        "source": "feed evomag / baza noastră (numele produsului)",
+        "status": "confirmat",
+        "note": "id 272911"
+      },
+      {
+        "claim": "Galaxy A36 acceptă încărcare la 45 W",
+        "source_type": "web",
+        "source": "https://www.samsungmobilepress.com/press-releases/samsung-marks-a-step-forward-with-ai-for-everyone-by-introducing-new-galaxy-a56-5g-galaxy-a36-5g-and-galaxy-a26-5g",
+        "status": "confirmat"
+      },
+      {
+        "claim": "Ugreen Magnetic: 10.000 mAh, wireless, PD 20 W, USB-C",
+        "source_type": "db",
+        "source": "feed evomag / baza noastră (numele produsului)",
+        "status": "confirmat",
+        "note": "id 273589"
+      },
+      {
+        "claim": "Anker A1695: 25.000 mAh, 165 W, QC + PD, 1× USB-A, 3× USB-C",
+        "source_type": "db",
+        "source": "feed evomag / baza noastră (numele produsului)",
+        "status": "confirmat",
+        "note": "id 273781"
+      },
+      {
+        "claim": "Anker A1695: valoarea în Wh",
+        "source_type": "web",
+        "source": "https://www.anker.com/",
+        "status": "de_verificat"
+      },
+      {
+        "claim": "Toate au ofertă disponibilă cu link afiliat la 20.11.2026 (evomag)",
+        "source_type": "db",
+        "source": "baza noastră, offers",
+        "status": "confirmat"
+      }
+    ],
+    "checklist": [
+      "Am deschis fiecare produs în admin și are ofertă disponibilă cu link afiliat",
+      "Am verificat specificațiile față de sursele din fișă și am rezolvat toate [DE VERIFICAT]",
+      "Am citit tot textul: fără prețuri scrise de mână, fără procente de reducere, fără promisiuni",
+      "Punctele „Bun / Mai slab” de sub fiecare card sunt adevărate pentru varianta exactă din link",
+      "Am verificat regulile IATA actuale pentru bateriile externe"
+    ],
+    "warnings": [
+      "Bateriile externe nu sunt mapate pe categoria baterii-externe în baza noastră (doar 3 produse mapate); category_slug e setat pe baterii-externe.",
+      "Subiect din căutări reale: „baterie externa 80000 mah”, „baterie externa roz” (gsc_daily)."
+    ]
+  }
+}

@@ -1,0 +1,83 @@
+{
+  "slug": "xiaomi-15t-vs-15t-pro",
+  "title": "Xiaomi 15T vs 15T Pro: merită diferența de preț?",
+  "meta_description": "Xiaomi 15T și 15T Pro, ambele cu 12 GB RAM și 512 GB: ce au la fel, ce primești în plus la Pro (procesor, zoom, încărcare wireless) și pe care să-l alegi.",
+  "kind": "produs",
+  "category_slug": "telefoane-mobile",
+  "summary": "Pe scurt: 15T și 15T Pro au același ecran de 6,83 inch și, în variantele comparate, aceeași memorie. Pro adaugă un procesor de top (Dimensity 9400+), zoom mai mare și încărcare wireless. Pentru folosire obișnuită, 15T e alegerea mai rațională; Pro merită dacă fotografiezi mult de la distanță sau joci jocuri grele.",
+  "body_md": "## Aceeași carcasă, alt telefon pe dinăuntru\n\nXiaomi 15T și 15T Pro arată aproape la fel: ecran AMOLED de 6,83 inch, trei camere pe spate (50 + 50 + 12 MP) și, în variantele comparate aici, 12 GB RAM și 512 GB stocare. Diferența de preț dintre ele e însă vizibilă, așa că întrebarea e simplă: ce primești în plus la Pro și dacă folosești acele lucruri.\n\nAm comparat variantele cu aceeași memorie, ca diferența de preț să reflecte doar diferențele reale. Nu le-am testat în mână. Datele din denumirea ofertelor sunt sigure; cele din presa de specialitate sunt marcate pentru verificare, pentru că site-ul Xiaomi nu a putut fi consultat automat.\n\n{{comparatie:telefon-mobil-xiaomi-15t-procesor-octa-core-mediatek-dimensity-8400-ultra-amoled-touchscreen-6-83inch-12gb-ram-512gb-fla,telefon-mobil-xiaomi-15t-pro-procesor-octa-core-mediatek-dimensity-9400-amoled-touchscreen-6-83inch-12gb-ram-512gb-flash}}\n\n## Ce au la fel\n\n- Ecran AMOLED de 6,83 inch.\n- 12 GB RAM și 512 GB stocare (în variantele comparate).\n- Trei camere pe spate cu aceeași rezoluție pe hârtie: 50 + 50 + 12 MP.\n- Baterie de 5.500 mAh [DE VERIFICAT: capacitatea bateriei la ambele, pe mi.com].\n\n## Ce primești în plus la 15T Pro\n\n**1. Procesorul.** 15T are MediaTek Dimensity 8400 Ultra, 15T Pro are Dimensity 9400+, un procesor de top. În folosirea de zi cu zi (aplicații, browser, poze) diferența se simte puțin. Se simte în jocuri grele și când telefonul are câțiva ani: un procesor mai puternic îmbătrânește mai lent.\n\n**2. Zoomul.** A doua cameră de 50 MP e teleobiectiv la ambele, dar la Pro e un periscop cu zoom mai mare [DE VERIFICAT: 15T are teleobiectiv 2x, 15T Pro periscop 5x]. Dacă fotografiezi des de la distanță (concerte, copii la serbare, natură), aici e diferența cea mai vizibilă în poze.\n\n**3. Încărcarea.** 15T Pro se încarcă mai repede cu fir și, spre deosebire de 15T, se încarcă și wireless [DE VERIFICAT: 15T 67 W fără wireless; 15T Pro 90 W cu fir și 50 W wireless].\n\n**4. Ecranul.** Ambele au 6,83 inch, dar Pro urcă la o frecvență mai mare [DE VERIFICAT: 120 Hz la 15T, 144 Hz la 15T Pro]. Diferența se observă mai ales în jocuri.\n\n## Ce e bun și ce e mai slab\n\n**Xiaomi 15T**\n\n- Bun: aceeași memorie (12 GB RAM, 512 GB) și același ecran ca Pro, la un preț mai mic.\n- Bun: Dimensity 8400 Ultra e suficient pentru orice aplicație obișnuită.\n- Mai slab: fără încărcare wireless.\n- Mai slab: zoomul optic e mai mic decât la Pro.\n\n**Xiaomi 15T Pro**\n\n- Bun: procesor de top, Dimensity 9400+.\n- Bun: zoom mai mare la teleobiectiv.\n- Bun: încărcare mai rapidă și încărcare wireless.\n- Mai slab: diferența de preț față de 15T e mare pentru cine nu folosește zoomul sau jocurile grele.\n\n## Verdict\n\n**Alege 15T** dacă folosești telefonul pentru aplicații obișnuite, social media și poze de zi cu zi. Primești același ecran și aceeași memorie, iar diferența de bani rămâne la tine.\n\n**Alege 15T Pro** dacă fotografiezi des de la distanță, joci jocuri grele sau vrei încărcare wireless. Mai merită dacă vrei ca telefonul să rămână rapid mulți ani.\n\nDacă bugetul e mai mic, vezi [telefoanele bune sub 1.500 de lei](/ghiduri/telefoane-bune-sub-1500-lei).\n",
+  "faq": [
+    {
+      "q": "Se încarcă Xiaomi 15T wireless?",
+      "a": "Nu, încărcarea wireless e doar la 15T Pro. [DE VERIFICAT: confirmă pe mi.com]"
+    },
+    {
+      "q": "Procesorul 15T e suficient pentru jocuri?",
+      "a": "Pentru majoritatea jocurilor, da. Pentru jocuri grele la setări maxime, Dimensity 9400+ din 15T Pro ține mai bine pasul."
+    },
+    {
+      "q": "Au aceeași cameră principală?",
+      "a": "Pe hârtie au aceeași rezoluție, 50 MP. Diferența mare dintre ele e la teleobiectiv, nu la camera principală."
+    }
+  ],
+  "product_slugs": [
+    "telefon-mobil-xiaomi-15t-procesor-octa-core-mediatek-dimensity-8400-ultra-amoled-touchscreen-6-83inch-12gb-ram-512gb-fla",
+    "telefon-mobil-xiaomi-15t-pro-procesor-octa-core-mediatek-dimensity-9400-amoled-touchscreen-6-83inch-12gb-ram-512gb-flash"
+  ],
+  "review": {
+    "facts": [
+      {
+        "claim": "Xiaomi 15T: Dimensity 8400 Ultra, AMOLED 6,83 inch, 12 GB RAM, 512 GB, camere 50+50+12 MP",
+        "source_type": "db",
+        "source": "feed evomag / baza noastră (numele produsului)",
+        "status": "confirmat",
+        "note": "id 275340"
+      },
+      {
+        "claim": "Xiaomi 15T Pro: Dimensity 9400+, AMOLED 6,83 inch, 12 GB RAM, 512 GB, camere 50+50+12 MP",
+        "source_type": "db",
+        "source": "feed evomag / baza noastră (numele produsului)",
+        "status": "confirmat",
+        "note": "id 274695"
+      },
+      {
+        "claim": "Baterie 5.500 mAh la ambele; 15T 67 W fără wireless; 15T Pro 90 W + 50 W wireless; 120 Hz vs 144 Hz",
+        "source_type": "web",
+        "source": "https://www.phonearena.com/phones/compare/Xiaomi-15T,Xiaomi-15T-Pro/phones/12847,12848",
+        "status": "de_verificat",
+        "note": "Din presa de specialitate (PhoneArena/GSMArena); mi.com a răspuns 403"
+      },
+      {
+        "claim": "Teleobiectiv: 15T 2x, 15T Pro periscop 5x",
+        "source_type": "web",
+        "source": "https://www.mi.com/global/product/xiaomi-15t-pro/specs/",
+        "status": "de_verificat",
+        "note": "Nu am găsit o sursă confirmată; din memorie, de verificat"
+      },
+      {
+        "claim": "Camera principală are aceeași rezoluție la ambele (50 MP)",
+        "source_type": "web",
+        "source": "https://www.mi.com/global/",
+        "status": "de_verificat",
+        "note": "Rezoluția reiese din denumiri; senzorul poate diferi"
+      },
+      {
+        "claim": "Ambele au ofertă disponibilă cu link afiliat la 20.11.2026 (evomag)",
+        "source_type": "db",
+        "source": "baza noastră, offers",
+        "status": "confirmat"
+      }
+    ],
+    "checklist": [
+      "Am deschis fiecare produs în admin și are ofertă disponibilă cu link afiliat",
+      "Am verificat specificațiile față de sursele din fișă și am rezolvat toate [DE VERIFICAT]",
+      "Am citit tot textul: fără prețuri scrise de mână, fără procente de reducere, fără promisiuni",
+      "Punctele „Bun / Mai slab” de sub fiecare card sunt adevărate pentru varianta exactă din link",
+      "Am confirmat pe mi.com bateria, încărcarea, frecvența ecranului și zoomul pentru ambele"
+    ],
+    "warnings": [
+      "Pro/contra sunt în text, nu ca marcaje (cerința pentru comparații).",
+      "Mai există și 15T 12/256 GB (id 275366), mai ieftin — nu l-am inclus ca să comparăm aceeași memorie."
+    ]
+  }
+}
