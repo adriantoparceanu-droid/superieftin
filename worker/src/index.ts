@@ -44,10 +44,24 @@ const PRICE_INDEX_TZ = 'Europe/Bucharest'
 const EMAIL_DIGEST_CRON = process.env.EMAIL_DIGEST_CRON || '5 * * * *'
 
 async function scheduleRepeatingJobs() {
+  // Reincercare automata (20 nov. 2026): pe 19 nov. jobul de la 04:00 a picat pe o eroare DNS
+  // de moment (EAI_AGAIN api.profitshare.ro) si s-a pierdut o zi intreaga de preturi.
+  // 4 incercari in total, la 10 → 20 → 40 de minute dupa esec (backoff exponential).
+  // Sincronizarea se poate relua fara grija: ofertele se scriu prin upsert.
+  // BullMQ copiaza optiunile din jobul curent in urmatoarea iteratie, deci o programare
+  // veche din Redis ar rula la nesfarsit FARA reincercari → o stergem si o recream.
+  for (const r of await syncQueue.getRepeatableJobs()) {
+    if (r.name === 'feed-sync') await syncQueue.removeRepeatableByKey(r.key)
+  }
   await syncQueue.add(
     'feed-sync',
     { type: 'feed-sync' },
-    { repeat: { pattern: FEED_SYNC_CRON }, jobId: 'feed-sync-repeat' }
+    {
+      repeat: { pattern: FEED_SYNC_CRON },
+      jobId: 'feed-sync-repeat',
+      attempts: 4,
+      backoff: { type: 'exponential', delay: 10 * 60 * 1000 },
+    }
   )
   logger.info({ cron: FEED_SYNC_CRON }, 'Job repeating programat: feed-sync')
 
